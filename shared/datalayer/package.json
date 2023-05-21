@@ -1,0 +1,22 @@
+{
+  "name": "@shared/datalayer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "MFT",
+  "license": "MIT",
+  "dependencies": {
+    "config": "3.3.9",
+    "debug": "4.3.4",
+    "mongoose": "7.2.0",
+    "mongoose-plugin-autoinc": "^1.1.9"
+  },
+  "devDependencies": {
+    "eslint": "^6.7.1",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2"
+  }
+}

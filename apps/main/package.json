@@ -1,0 +1,24 @@
+{
+  "name": "@msm/main",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "MFT",
+  "license": "MIT",
+  "dependencies": {
+    "config": "3.3.9",
+    "debug": "4.3.4",
+    "express": "^4.18.2",
+    "express-openapi-validator": "^5.0.4",
+    "jsonwebtoken": "^9.0.0",
+    "@shared/datalayer": "*"
+  },
+  "devDependencies": {
+    "eslint": "^6.7.1",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2"
+  }
+}

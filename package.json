@@ -1,0 +1,10 @@
+{
+  "name": "mostsecuremessenger",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "shared/*"
+  ],
+  "author": "MFT",
+  "license": "MIT"
+}

@@ -1,0 +1,247 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Most Secure Messenger
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:3001
+paths:
+  /users:
+    post:
+      summary: Create a new user
+      operationId: createUser
+      x-eov-operation-handler: api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/Challenge"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: Get users' list
+      operationId: getUsers
+      x-eov-operation-handler: api
+      parameters:
+        - name: search
+          in: query
+          description: Start of users name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/UsersList"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                
+  /user:
+    put:
+      summary: Login
+      operationId: login
+      x-eov-operation-handler: api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Identifier'
+      responses:
+        '200':
+          description: Encrypted Bearer token
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/Challenge"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                
+  /inbox:
+    get:
+      summary: Get a user inbox
+      description: |
+        A list of messages headers, the challenge should contain:
+        - from
+        - sentAt
+        - title
+      operationId: getInbox
+      x-eov-operation-handler: api
+      responses:
+        '200':
+          description: A list of messages headers
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/Inbox"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                
+  /message:
+    post:
+      summary: Send a message
+      operationId: writeMessage
+      x-eov-operation-handler: api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Post'
+      responses:
+        '201':
+          description: Message sent
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                
+  /message/{msgId}:
+    get:
+      summary: Get a message content and delete it from DB
+      description: |
+        One full message, the challenge should contain:
+        - from
+        - sentAt
+        - title
+        - content
+      operationId: getMessage
+      x-eov-operation-handler: api
+      parameters:
+        - name: msgId
+          in: path
+          required: true
+          description: The ID of the message to fetch
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A complete message
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/Message"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - at
+        - key
+      properties:
+        at:
+          type: string
+        key:
+          type: string
+    Identifier:
+      type: object
+      required:
+        - at
+      properties:
+        at:
+          type: string
+    Challenge:
+      type: object
+      required:
+        - token
+        - passphrase
+        - iv
+      properties:
+        token:
+          type: string
+        passphrase:
+          type: string
+        iv:
+          type: string
+    UsersList:
+      type: array
+      items:
+        $ref: "#/components/schemas/User"
+    Inbox:
+      type: array
+      items:
+        $ref: "#/components/schemas/InboxHeader"
+    InboxHeader:
+      type: object
+      required:
+        - id
+        - challenge
+      properties:
+        id:
+          type: integer
+        challenge:
+          $ref: "#/components/schemas/Challenge"
+    Message:
+      type: object
+      required:
+        - id
+        - challenge
+      properties:
+        id:
+          type: integer
+        challenge:
+          $ref: "#/components/schemas/Challenge"
+    Post:
+      type: object
+      required:
+        - anonymous
+        - to
+        - sentAt
+        - title
+        - content
+      properties:
+        anonymous:
+          type: boolean
+        to:
+          type: string
+        sentAt:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+    Error:
+      type: object
+      properties:
+        status:
+          type: integer
+          format: int32
+        failedValidation:
+          type: boolean
+        code:
+          type: string
+        message:
+          type: string
