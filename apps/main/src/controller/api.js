@@ -1,4 +1,7 @@
+const config = require('config');
+const AuthMiddleware = require('../lib/auth');
 const User = require('./actions/users');
+const Message = require('./actions/messages');
 
 module.exports = {
   createUser: (req, res, next) => {
@@ -14,7 +17,6 @@ module.exports = {
     } = req;
     User.createUser(db, { at, key })
       .then((challenge) => {
-        console.log('challenge', challenge);
         res.statusCode = 201;
         res.json(challenge);
       })
@@ -40,7 +42,68 @@ module.exports = {
         next(err);
       });
   },
-  getInbox: () => {},
-  writeMessage: () => {},
-  getMessage: () => {},
+  getInbox: [
+    AuthMiddleware.verify(config.get('auth')),
+    (req, res, next) => {
+      const {
+        auth,
+        app: {
+          locals: db,
+        },
+      } = req;
+      Message.getInbox(db, auth)
+        .then((inbox) => {
+          res.json(inbox);
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
+  writeMessage: [
+    AuthMiddleware.verify(config.get('auth')),
+    (req, res, next) => {
+      const {
+        auth,
+        body,
+        app: {
+          locals: db,
+        },
+      } = req;
+      Message.writeMessage(db, body, auth)
+        .then(() => {
+          res.status(201).send();
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
+  getMessage: [
+    AuthMiddleware.verify(config.get('auth')),
+    (req, res, next) => {
+      const {
+        auth,
+        params: {
+          msgId,
+        },
+        app: {
+          locals: db,
+        },
+      } = req;
+      Message.getMessage(db, msgId, auth)
+        .then((fullMessage) => {
+          res.json(fullMessage);
+
+          Message.autoMessageRemoval(db, msgId)
+            .catch((err) => {
+              console.error('error on auto removal');
+              console.error(err);
+            });
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
 };

@@ -15,10 +15,10 @@ class Encryption {
     const encrypted = cipher.update(txt);
     const cypheredText = Buffer.concat([encrypted, cipher.final(), cipher.getAuthTag()]);
 
-    const cypheredPass = crypto.publicEncrypt({ 
-      key, 
+    const cypheredPass = crypto.publicEncrypt({
+      key,
       oaepHash: 'sha256',
-      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING
+      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
     }, pass);
 
     return {

@@ -17,7 +17,7 @@ class User {
     const newUser = new db.users.Doc();
     newUser.username = at;
     newUser.key = key;
-    newUser.lastActivity = new Date();
+    newUser.lastActivity = Date.now();
     newUser.security = 'safe';
 
     const created = await newUser.save();
@@ -52,6 +52,7 @@ class User {
     };
     debug('changeUserToAuth payload', payload);
     payload.token = jwt.sign(payload, config.get('auth'));
+
     return payload;
   }
 }

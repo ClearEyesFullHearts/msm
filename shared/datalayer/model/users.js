@@ -16,10 +16,10 @@ class UserData {
         type: String,
         required: true,
       },
-      lastActivity: Date,
+      lastActivity: Number,
       security: {
         type: String,
-        enum: ['safe', 'hosted'],
+        enum: ['safe', 'custom', 'hosted'],
         default: 'safe',
       },
     });

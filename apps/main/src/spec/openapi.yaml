@@ -219,7 +219,6 @@ components:
       required:
         - anonymous
         - to
-        - sentAt
         - title
         - content
       properties:
@@ -227,12 +226,10 @@ components:
           type: boolean
         to:
           type: string
-        sentAt:
-          type: string
         title:
-          type: string
+          $ref: "#/components/schemas/Challenge"
         content:
-          type: string
+          $ref: "#/components/schemas/Challenge"
     Error:
       type: object
       properties:
