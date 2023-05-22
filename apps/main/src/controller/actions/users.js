@@ -43,10 +43,10 @@ class User {
   static changeUserToAuth(usr) {
     const payload = {
       auth: true,
+      connection: Date.now(),
       user: {
         id: usr.id,
         username: usr.username,
-        key: usr.key,
         security: usr.security,
       },
     };
