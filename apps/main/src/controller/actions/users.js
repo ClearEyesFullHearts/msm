@@ -23,8 +23,7 @@ class User {
     const created = await newUser.save();
     debug('createNewUser newUser', created);
 
-    const auth = this.changeUserToAuth(newUser);
-    return Encryption.hybrid(JSON.stringify(auth), key);
+    return true;
   }
 
   static async getCredentials(db, { at }) {
@@ -38,6 +37,16 @@ class User {
     }
 
     throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
+  }
+
+  static async getUsers(db, { search }) {
+    debug('search for users with @ like:', search);
+    const users = await db.users.Doc
+      .find({ $text: { $search: search } })
+      .limit(15);
+
+    debug('found', users.length);
+    return users.map(({ username, key }) => ({ at: username, key }));
   }
 
   static changeUserToAuth(usr) {

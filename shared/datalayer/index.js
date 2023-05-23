@@ -14,7 +14,7 @@ class Data {
     try {
       debug('initialize mongodb connection');
       this.connection = await mongoose.connect(config.get('mongo.url'), {
-        autoIndex: false,
+        autoIndex: true,
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });

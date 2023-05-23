@@ -25,43 +25,43 @@ class Message {
     } = msg;
 
     const targetUser = await db.users.Doc.findOne({ username: to });
-    if (targetUser) {
-      debug('known user');
-
-      const { id: targetId, key } = targetUser;
-
-      const from = anonymous ? 'No signature' : `from: @${user.at}`;
-      const sentAt = Date.now();
-
-      const headerPlain = {
-        from,
-        sentAt,
-        title,
-      };
-      const headerChallenge = Encryption.hybrid(JSON.stringify(headerPlain), key);
-      const fullPlain = {
-        from,
-        sentAt,
-        title,
-        content,
-      };
-      const fullChallenge = Encryption.hybrid(JSON.stringify(fullPlain), key);
-
-      const newMsg = db.messages.Doc();
-      newMsg.userId = targetId;
-      newMsg.readAt = 0;
-      newMsg.header = headerChallenge;
-      newMsg.full = fullChallenge;
-
-      await newMsg.save();
-      debug('message saved');
-
-      const sender = await db.users.Doc.findOne({ id: user.id });
-      sender.lastActivity = Date.now();
-      await sender.save();
-      debug('sender updated');
+    if (!targetUser) {
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'target @ not found');
     }
-    throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'target @ not found');
+    debug('known user');
+
+    const { id: targetId, key } = targetUser;
+
+    const from = anonymous ? 'No signature' : `from: @${user.username}`;
+    const sentAt = Date.now();
+
+    const headerPlain = {
+      from,
+      sentAt,
+      title,
+    };
+    const headerChallenge = Encryption.hybrid(JSON.stringify(headerPlain), key);
+    const fullPlain = {
+      from,
+      sentAt,
+      title,
+      content,
+    };
+    const fullChallenge = Encryption.hybrid(JSON.stringify(fullPlain), key);
+
+    const newMsg = db.messages.Doc();
+    newMsg.userId = targetId;
+    newMsg.readAt = 0;
+    newMsg.header = headerChallenge;
+    newMsg.full = fullChallenge;
+
+    await newMsg.save();
+    debug('message saved');
+
+    const sender = await db.users.Doc.findOne({ id: user.id });
+    sender.lastActivity = Date.now();
+    await sender.save();
+    debug('sender updated');
   }
 
   static async getMessage(db, msgId, user) {

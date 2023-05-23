@@ -3,7 +3,7 @@
     "url": "mongodb://127.0.0.1:27017/msm"
   },
   "instance": {
-    "port": 3000,
+    "port": 4000,
     "cors":{
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,OPTIONS",

@@ -16,22 +16,41 @@ module.exports = {
       },
     } = req;
     User.createUser(db, { at, key })
-      .then((challenge) => {
-        res.statusCode = 201;
-        res.json(challenge);
+      .then(() => {
+        res.status(201).send();
       })
       .catch((err) => {
         next(err);
       });
   },
-  getUsers: () => {},
+  getUsers: (req, res, next) => {
+    const {
+      query: {
+        search,
+      },
+      app: {
+        locals: {
+          db,
+        },
+      },
+    } = req;
+    User.getUsers(db, { search })
+      .then((users) => {
+        res.json(users);
+      })
+      .catch((err) => {
+        next(err);
+      });
+  },
   login: (req, res, next) => {
     const {
       body: {
         at,
       },
       app: {
-        locals: db,
+        locals: {
+          db,
+        },
       },
     } = req;
     User.getCredentials(db, { at })
@@ -48,7 +67,9 @@ module.exports = {
       const {
         auth,
         app: {
-          locals: db,
+          locals: {
+            db,
+          },
         },
       } = req;
       Message.getInbox(db, auth)
@@ -67,9 +88,12 @@ module.exports = {
         auth,
         body,
         app: {
-          locals: db,
+          locals: {
+            db,
+          },
         },
       } = req;
+      console.log('auth', auth);
       Message.writeMessage(db, body, auth)
         .then(() => {
           res.status(201).send();
@@ -88,7 +112,9 @@ module.exports = {
           msgId,
         },
         app: {
-          locals: db,
+          locals: {
+            db,
+          },
         },
       } = req;
       Message.getMessage(db, msgId, auth)
