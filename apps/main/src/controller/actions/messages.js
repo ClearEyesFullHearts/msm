@@ -6,7 +6,7 @@ const Encryption = require('../../lib/encryption');
 class Message {
   static async getInbox(db, user) {
     debug(`get inbox for user ${user.id}`);
-    const allMessages = await db.messages.Doc.find({ userId: user.id });
+    const allMessages = await db.messages.Doc.find({ userId: user.id }).sort({ id: 'desc' });
     if (!allMessages) {
       return [];
     }
@@ -95,6 +95,7 @@ class Message {
       }
       await db.messages.Doc.deleteOne({ id: msgId });
       debug('message removed');
+      return;
     }
     debug('message do not exists, do nothing');
   }
@@ -108,6 +109,7 @@ class Message {
       debug('message found');
       await db.messages.Doc.deleteOne({ id: msgId });
       debug('message removed');
+      return;
     }
     debug('message do not exists, no action');
   }

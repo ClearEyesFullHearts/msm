@@ -12,7 +12,8 @@ export const useMessagesStore = defineStore({
     state: () => ({
         headers: {},
         message: {},
-        targets: {}
+        targets: {},
+        contentLength: 0
     }),
     actions: {
         async getHeaders() {
@@ -43,21 +44,20 @@ export const useMessagesStore = defineStore({
                         sentAt,
                         title
                     });
-                    const alertStore = useAlertStore();
                 }
             } catch (error) {
                 this.headers = { error };
             }
         },
         async getMessage(msgId) {
-            this.message = { loading: true };
             try {
-                const challenge = await fetchWrapper.get(`${baseUrl}/message/${msgId}`);
+                const { id, challenge } = await fetchWrapper.get(`${baseUrl}/message/${msgId}`);
 
                 const authStore = useAuthStore();
                 const pem = authStore.pem;
 
                 const objStr = await mycrypto.resolve(pem, challenge);
+
                 const {
                     from,
                     sentAt,
@@ -67,8 +67,9 @@ export const useMessagesStore = defineStore({
 
                 const titleBuff = await mycrypto.privateDecrypt(pem, cryptedTitle);
                 const contentBuff = await mycrypto.privateDecrypt(pem, cryptedContent);
-                const dec = new TextDecoder();
+                let dec = new TextDecoder();
                 const title = dec.decode(titleBuff);
+                dec = new TextDecoder();
                 const content = dec.decode(contentBuff);
 
                 this.message = {
@@ -78,9 +79,12 @@ export const useMessagesStore = defineStore({
                     title,
                     content,
                 };
+
+                const alertStore = useAlertStore();
                 alertStore.success('Reminder: This message will disappear from the server 2 minutes from now');
             } catch (error) {
-                this.message = { error };
+                const alertStore = useAlertStore();
+                alertStore.error(`An error occured: ${error}`);
             }
         },
         async write(at, targetPem, title, text, isAnonymous) {
@@ -96,12 +100,12 @@ export const useMessagesStore = defineStore({
                 };
                 
                 await fetchWrapper.post(`${baseUrl}/message`, reqBody);
-                const alertStore = useAlertStore();
-                alertStore.success('Your message is sent');
+                return true;
             } catch (error) {
-                this.users = { error };
+                const alertStore = useAlertStore();
+                alertStore.error(`An error occured: ${error}`);
             }
-            
+            return false;
         }
     }
 });

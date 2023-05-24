@@ -89,7 +89,7 @@ class CryptoHelper {
     async publicEncrypt(pem, plaintext) {
       const importedKey = await this.importCryptoKey(pem, 'spki', 'PUBLIC');
       const arrTxt = this.clearTextToArBuff(plaintext);
-  
+      console.log('publicEncrypt arBuff length', arrTxt.byteLength)
       const encrypted = await window.crypto.subtle.encrypt(
         { name: 'RSA-OAEP' },
         importedKey,

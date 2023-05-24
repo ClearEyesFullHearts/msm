@@ -2,16 +2,18 @@
 import { Form, Field } from 'vee-validate';
 import * as Yup from 'yup';
 import { storeToRefs } from 'pinia';
+import { useRouter } from 'vue-router';
 
 import { useMessagesStore, useAlertStore, useUsersStore } from '@/stores';
-import { router } from '@/router';
+const router = useRouter();
 
 const messageStore = useMessagesStore();
 const alertStore = useAlertStore();
 const userStore = useUsersStore();
 
 let title = 'Write a Message';
-const { targets } = storeToRefs(messageStore);
+const { targets, contentLength } = storeToRefs(messageStore);
+messageStore.contentLength = 0;
 
 
 const schema = Yup.object().shape({
@@ -22,7 +24,7 @@ const schema = Yup.object().shape({
         .max(125, 'Title size is limited to 125 characters'),
     content: Yup.string()
         .required('Message text is required')
-        .max(470, 'Message size is limited to 470 basic characters')
+        .max(470, 'Message size is limited to 446 basic characters')
 });
 
 async function onSubmit(values) {
@@ -35,14 +37,20 @@ async function onSubmit(values) {
             content,
         } = values;
         await userStore.getAll(at);
-        console.log(userStore.users);
         const [{ at: targetAt, key: targetPem }] = userStore.users;
-        await messageStore.write(targetAt, targetPem, title, content, false);
-        await router.push('/messages');
-        alertStore.success('Your message has been sent');
+
+        const success = await messageStore.write(targetAt, targetPem, title, content, false);
+        
+        if(success) {
+            await router.push('/messages');
+            alertStore.success('Your message has been sent');
+        }
     } catch (error) {
         alertStore.error(error);
     }
+}
+function onInputText(str) {
+    messageStore.contentLength = (new TextEncoder().encode(str)).length;
 }
 </script>
 
@@ -65,7 +73,8 @@ async function onSubmit(values) {
             <div class="form-row">
                 <div class="form-group col">
                     <label>Message text</label>
-                    <Field name="content" as="textarea" cols="30" rows="10" class="form-control" :class="{ 'is-invalid': errors.content }" />
+                    <Field @input="event => onInputText(event.target.value)" name="content" as="textarea" cols="30" rows="10" class="form-control" :class="{ 'is-invalid': errors.content }" />
+                    <span class="limiter">{{ contentLength }} / 446</span>
                     <div class="invalid-feedback">{{ errors.content }}</div>
                 </div>
                 

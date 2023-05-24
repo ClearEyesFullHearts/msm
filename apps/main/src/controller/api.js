@@ -93,7 +93,7 @@ module.exports = {
           },
         },
       } = req;
-      console.log('auth', auth);
+
       Message.writeMessage(db, body, auth)
         .then(() => {
           res.status(201).send();

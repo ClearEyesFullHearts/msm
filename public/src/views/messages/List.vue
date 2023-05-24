@@ -34,10 +34,6 @@ messagesStore.getHeaders();
                     <td>{{ new Date(msg.sentAt).toLocaleString() }}</td>
                     <td style="white-space: nowrap">
                         <router-link :to="`/messages/show/${msg.id}`" class="btn btn-sm btn-primary mr-1">Decrypt</router-link>
-                        <!-- <button @click="usersStore.delete(user.id)" class="btn btn-sm btn-danger btn-delete-user" :disabled="user.isDeleting">
-                            <span v-if="user.isDeleting" class="spinner-border spinner-border-sm"></span>
-                            <span v-else>Delete</span>
-                        </button> -->
                     </td>
                 </tr>
             </template>

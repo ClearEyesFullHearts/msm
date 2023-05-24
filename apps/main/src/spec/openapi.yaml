@@ -183,6 +183,8 @@ components:
         passphrase:
           type: string
           format: byte
+          minLength: 684
+          maxLength: 684
         iv:
           type: string
           format: byte
@@ -229,9 +231,13 @@ components:
         title:
           type: string
           format: byte
+          minLength: 684
+          maxLength: 684
         content:
           type: string
           format: byte
+          minLength: 684
+          maxLength: 684
     Error:
       type: object
       properties:

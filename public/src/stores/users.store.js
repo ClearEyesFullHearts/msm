@@ -28,12 +28,12 @@ export const useUsersStore = defineStore({
     actions: {
         async register(user) {
             const { PK, SK } = await mycrypto.generateKeyPair();
-            downloadKey(user.username, SK);
             const send = {
                 at: user.username,
                 key: PK,
             }
             await fetchWrapper.post(`${baseUrl}`, send);
+            downloadKey(user.username, SK);
         },
         async getAll(search) {
             if(search.length < 3) return;

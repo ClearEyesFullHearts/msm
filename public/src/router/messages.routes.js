@@ -1,4 +1,4 @@
-import { Layout, WriteMessage, List } from '@/views/messages';
+import { Layout, WriteMessage, List, ShowMessage } from '@/views/messages';
 
 export default {
     path: '/messages',
@@ -6,6 +6,6 @@ export default {
     children: [
         { path: '', component: List },
         { path: 'write', component: WriteMessage },
-        // { path: 'show/:id', component: AddEdit }
+        { path: 'show/:id', component: ShowMessage }
     ]
 };
