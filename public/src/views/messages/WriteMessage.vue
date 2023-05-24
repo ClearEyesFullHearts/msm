@@ -12,7 +12,7 @@ const alertStore = useAlertStore();
 const userStore = useUsersStore();
 
 let title = 'Write a Message';
-const { targets, contentLength } = storeToRefs(messageStore);
+const { targetMessage, contentLength } = storeToRefs(messageStore);
 messageStore.contentLength = 0;
 
 
@@ -57,7 +57,7 @@ function onInputText(str) {
 <template>
     <h1>{{title}}</h1>
     <template v-if="true">
-        <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
+        <Form @submit="onSubmit" :validation-schema="schema" :initial-values="targetMessage" v-slot="{ errors, isSubmitting }">
             <div class="form-row">
                 <div class="form-group col">
                     <label>@</label>

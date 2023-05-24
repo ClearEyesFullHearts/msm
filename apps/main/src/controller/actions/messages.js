@@ -32,7 +32,7 @@ class Message {
 
     const { id: targetId, key } = targetUser;
 
-    const from = anonymous ? 'No signature' : `from: @${user.username}`;
+    const from = anonymous ? 'No signature' : `@${user.username}`;
     const sentAt = Date.now();
 
     const headerPlain = {
@@ -59,7 +59,7 @@ class Message {
     debug('message saved');
 
     const sender = await db.users.Doc.findOne({ id: user.id });
-    sender.lastActivity = Date.now();
+    sender.lastActivity = Math.floor(Date.now() / (3 * 60000)) * (3 * 60000);
     await sender.save();
     debug('sender updated');
   }

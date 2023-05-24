@@ -1,12 +1,21 @@
 <script setup>
 import { storeToRefs } from 'pinia';
+import { useRouter } from 'vue-router';
 
 import { useMessagesStore } from '@/stores';
+const router = useRouter();
 
 const messagesStore = useMessagesStore();
 const { headers } = storeToRefs(messagesStore);
+messagesStore.targetMessage = {};
 
 messagesStore.getHeaders();
+
+async function replyTo(from, reTitle) {
+    messagesStore.targetMessage.at = from.substring(1);
+    if(reTitle.length > 0) messagesStore.targetMessage.title = `Re: ${reTitle}`;
+    await router.push('/messages/write');
+}
 </script>
 
 <template>
@@ -29,8 +38,8 @@ messagesStore.getHeaders();
         <tbody>
             <template v-if="headers.length">
                 <tr v-for="msg in headers" :key="msg.id">
-                    <td>{{ msg.from }}</td>
-                    <td>{{ msg.title }}</td>
+                    <td><a href="#" @click="replyTo(msg.from, '')">{{ msg.from }}</a></td>
+                    <td><a href="#" @click="replyTo(msg.from, msg.title)">{{ msg.title }}</a></td>
                     <td>{{ new Date(msg.sentAt).toLocaleString() }}</td>
                     <td style="white-space: nowrap">
                         <router-link :to="`/messages/show/${msg.id}`" class="btn btn-sm btn-primary mr-1">Decrypt</router-link>

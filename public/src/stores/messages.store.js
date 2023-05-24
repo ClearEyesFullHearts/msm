@@ -7,11 +7,14 @@ import { useAuthStore, useAlertStore } from '@/stores';
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 const mycrypto = new CryptoHelper();
 
+
+
 export const useMessagesStore = defineStore({
     id: 'messages',
     state: () => ({
         headers: {},
         message: {},
+        targetMessage: {},
         targets: {},
         contentLength: 0
     }),
@@ -106,6 +109,28 @@ export const useMessagesStore = defineStore({
                 alertStore.error(`An error occured: ${error}`);
             }
             return false;
+        },
+        async downloadMessage() {
+            var a = window.document.createElement('a');
+            const {
+                id,
+                ...restMessage
+            } = this.message;
+        
+            const authStore = useAuthStore();
+            const pem = authStore.pem;
+        
+            const challenge = await mycrypto.challenge(pem, JSON.stringify(restMessage));
+        
+            a.href = window.URL.createObjectURL(new Blob([JSON.stringify({ id, challenge })]));
+            a.download = `@${at}.pem`;
+        
+            // Append anchor to body.
+            document.body.appendChild(a)
+            a.click()
+        
+            // Remove anchor from body
+            document.body.removeChild(a)
         }
     }
 });
