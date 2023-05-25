@@ -21,7 +21,6 @@ async function replyTo(from, reTitle) {
 
 <template>
     <h1>Inbox</h1>
-
     <button @click="messagesStore.getHeaders()" class="btn btn-sm btn-secondary" :disabled="headers.loading">
         <span v-if="headers.loading" class="spinner-border spinner-border-sm"></span>
         <span v-else>Refresh</span>

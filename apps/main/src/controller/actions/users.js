@@ -5,6 +5,20 @@ const debug = require('debug')('msm-main:user');
 const ErrorHelper = require('../../lib/error');
 const Encryption = require('../../lib/encryption');
 
+function createSearchTerms(str) {
+  const l = str.length;
+  const terms = [];
+  for (let i = 0; i < l - 2; i += 1) {
+    for (let j = i + 3; j < l; j += 1) {
+      terms.push(str.substring(i, j));
+    }
+    if (i > 0) {
+      terms.push(str.substring(i));
+    }
+  }
+  return terms;
+}
+
 class User {
   static async createUser(db, { at, key }) {
     debug('check for user with username:', at);
@@ -23,12 +37,13 @@ class User {
     debug('create new user');
     const newUser = new db.users.Doc();
     newUser.username = at;
+    newUser.searchTerms = createSearchTerms(at);
     newUser.key = key;
     newUser.lastActivity = Date.now();
     newUser.security = 'safe';
 
-    const created = await newUser.save();
-    debug('createNewUser newUser', created);
+    await newUser.save();
+    debug('createNewUser newUser');
 
     return true;
   }

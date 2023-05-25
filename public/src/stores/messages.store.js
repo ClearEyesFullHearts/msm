@@ -15,6 +15,7 @@ export const useMessagesStore = defineStore({
         headers: {},
         message: {},
         targetMessage: {},
+        targetAt: [],
         contentLength: 0
     }),
     actions: {

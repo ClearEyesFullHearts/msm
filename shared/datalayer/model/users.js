@@ -12,6 +12,7 @@ class UserData {
         type: String,
         unique: true,
       },
+      searchTerms: [String],
       key: {
         type: String,
         required: true,
@@ -23,7 +24,7 @@ class UserData {
         default: 'safe',
       },
     });
-    this.userSchema.index({ username: 'text' });
+    this.userSchema.index({ username: 'text', searchTerms: 'text' });
   }
 
   async init(conn) {

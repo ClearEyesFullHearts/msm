@@ -9,6 +9,7 @@ const schema = Yup.object().shape({
     username: Yup.string()
         .required('User @ is required')
         .min(3, 'Your @ should be at least 3 characters long')
+        .max(125, 'Your @ should not be longer than 125 characters')
 });
 
 async function onSubmit(values) {

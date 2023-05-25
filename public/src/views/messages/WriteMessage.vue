@@ -4,6 +4,7 @@ import * as Yup from 'yup';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 
+import { Autocomplete } from '@/components';
 import { useMessagesStore, useAlertStore, useUsersStore } from '@/stores';
 const router = useRouter();
 
@@ -12,13 +13,15 @@ const alertStore = useAlertStore();
 const userStore = useUsersStore();
 
 let title = 'Write a Message';
-const { targetMessage, contentLength } = storeToRefs(messageStore);
+const { targetMessage, contentLength, targetAt } = storeToRefs(messageStore);
 messageStore.contentLength = 0;
+messageStore.targetAt = [];
+const { users } = storeToRefs(userStore);
 
 
 const schema = Yup.object().shape({
-    at: Yup.string()
-        .required('Target @ is required'),
+    // at: Yup.string()
+    //     .required('Target @ is required'),
     title: Yup.string()
         .required('Title is required')
         .max(125, 'Title size is limited to 125 characters'),
@@ -32,19 +35,39 @@ async function onSubmit(values) {
         let message;
 
         const {
-            at,
             title,
             content,
         } = values;
-        await userStore.getAll(at);
-        const [{ at: targetAt, key: targetPem }] = userStore.users;
-
-        const success = await messageStore.write(targetAt, targetPem, title, content, false);
         
-        if(success) {
-            await router.push('/messages');
-            alertStore.success('Your message has been sent');
+        const result = {
+            success: [],
+            failure: []
         }
+        messageStore.targetAt.forEach(async ({ at, key }) => {
+            try{
+                await messageStore.write(at, key, title, content, false);
+                result.success.push(at);
+            }catch(err){
+                result.failure.push({at, err});
+            }
+        
+            if(result.success.length === messageStore.targetAt.length) {
+                await router.push('/messages');
+                alertStore.success('Your message has been sent');
+            }
+
+            if(result.failure.length > 0) {
+                const errorMessage = '';
+                result.failure.forEach(({ at, err }) => {
+                    errorMessage += `Message to @${at} has not been sent:
+                    ${err.message}
+                    `;
+                })
+                alertStore.error(errorMessage);
+            }
+        });
+
+        
     } catch (error) {
         alertStore.error(error);
     }
@@ -60,8 +83,10 @@ function onInputText(str) {
         <Form @submit="onSubmit" :validation-schema="schema" :initial-values="targetMessage" v-slot="{ errors, isSubmitting }">
             <div class="form-row">
                 <div class="form-group col">
-                    <label>@</label>
-                    <Field name="at" type="text" class="form-control" :class="{ 'is-invalid': errors.at }" />
+                    <Autocomplete></Autocomplete>
+                    <div>
+                        Send to: <span v-for="user in targetAt" class="badge badge-info mr-1">{{ `@${user.at}` }}</span>
+                    </div>
                     <div class="invalid-feedback">{{ errors.at }}</div>
                 </div>
                 <div class="form-group col">
