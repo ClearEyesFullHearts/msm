@@ -50,7 +50,7 @@ async function onSubmit(values) {
     }
 }
 function onInputText(str) {
-    messageStore.contentLength = (new TextEncoder().encode(str)).length;
+    messageStore.contentLength = (new TextEncoder().encode(messageStore.encodeText(str))).length;
 }
 </script>
 

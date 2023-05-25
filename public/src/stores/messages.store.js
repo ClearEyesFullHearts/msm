@@ -44,7 +44,7 @@ export const useMessagesStore = defineStore({
                         id,
                         from,
                         sentAt,
-                        title: decodeURIComponent(title)
+                        title: this.decodeText(title)
                     });
                 }
             } catch (error) {
@@ -78,8 +78,8 @@ export const useMessagesStore = defineStore({
                     id,
                     from,
                     sentAt,
-                    title: decodeURIComponent(title),
-                    content: decodeURIComponent(content),
+                    title: this.decodeText(title),
+                    content: this.decodeText(content),
                 };
 
                 const alertStore = useAlertStore();
@@ -91,8 +91,8 @@ export const useMessagesStore = defineStore({
         },
         async write(at, targetPem, title, text, isAnonymous) {
             try {
-                const b64Title = await mycrypto.publicEncrypt(targetPem, encodeURIComponent(title));
-                const b64Content = await mycrypto.publicEncrypt(targetPem, encodeURIComponent(text));
+                const b64Title = await mycrypto.publicEncrypt(targetPem, this.encodeText(title));
+                const b64Content = await mycrypto.publicEncrypt(targetPem, this.encodeText(text));
 
                 const reqBody = {
                     to: at,
@@ -130,6 +130,17 @@ export const useMessagesStore = defineStore({
         
             // Remove anchor from body
             document.body.removeChild(a)
+        },
+        encodeText(str) {
+            return str.split("")
+                 .map(function (char) {
+                     var charCode = char.charCodeAt(0);
+                     return charCode > 127 ? encodeURIComponent(char) : char;
+                 })
+                 .join("");
+        },
+        decodeText(str) {
+            return decodeURIComponent(str);
         }
     }
 });

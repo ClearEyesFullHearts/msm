@@ -54,7 +54,7 @@ async function replyTo(from, reTitle) {
             </tr>
             <tr v-if="headers.error">
                 <td colspan="4">
-                    <div class="text-danger">Error loading users: {{headers.error}}</div>
+                    <div class="text-danger">Error loading headers: {{headers.error}}</div>
                 </td>
             </tr>            
         </tbody>
