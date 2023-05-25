@@ -3,6 +3,7 @@ const debug = require('debug')('msm-main:error');
 class ErrorHelper {
   static get CODE() {
     return {
+      BAD_REQUEST_FORMAT: 'BAD_REQUEST_FORMAT',
       BAD_ROLE: 'BAD_ROLE',
       BAD_TOKEN: 'BAD_TOKEN',
       MIS_AUTH_HEADER: 'MIS_AUTH_HEADER',

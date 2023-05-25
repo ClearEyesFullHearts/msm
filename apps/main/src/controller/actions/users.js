@@ -8,6 +8,13 @@ const Encryption = require('../../lib/encryption');
 class User {
   static async createUser(db, { at, key }) {
     debug('check for user with username:', at);
+    if (at.length !== encodeURIComponent(at).length) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have any special character');
+    }
+    if (!Encryption.isValidPemPk(key)) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong public key format');
+    }
+
     const knownUser = await db.users.Doc.findOne({ username: at });
     if (knownUser) {
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, '@ name already taken');

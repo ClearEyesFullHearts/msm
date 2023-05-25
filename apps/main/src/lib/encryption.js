@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const ALGORITHM = 'aes-256-gcm';
 const PASS_SIZE = 32;
 const IV_SIZE = 16;
+const PK_START = '-----BEGIN PUBLIC KEY-----';
+const PK_END = '-----END PUBLIC KEY-----';
 
 class Encryption {
   static hybrid(txt, key) {
@@ -26,6 +28,17 @@ class Encryption {
       passphrase: cypheredPass.toString('base64'),
       iv: iv.toString('base64'),
     };
+  }
+
+  static isValidPemPk(str) {
+    if (str.length !== 788) return false;
+    if (str.substring(0, PK_START.length) !== PK_START) return false;
+    if (str.substring(str.length - PK_END.length) !== PK_END) return false;
+
+    const properKey = str.substring(PK_START.length + 1, str.length - PK_END.length - 1);
+    if (Buffer.from(properKey, 'base64').toString('base64') !== properKey) return false;
+
+    return true;
   }
 }
 

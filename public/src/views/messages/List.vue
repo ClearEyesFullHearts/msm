@@ -40,7 +40,7 @@ async function replyTo(from, reTitle) {
             <template v-if="headers.length">
                 <tr v-for="msg in headers" :key="msg.id">
                     <td><a href="#" @click="replyTo(msg.from, '')">{{ msg.from }}</a></td>
-                    <td><a href="#" @click="replyTo(msg.from, msg.title)">{{ msg.title }}</a></td>
+                    <td>{{ msg.title }}</td>
                     <td>{{ new Date(msg.sentAt).toLocaleString() }}</td>
                     <td style="white-space: nowrap">
                         <router-link :to="`/messages/show/${msg.id}`" class="btn btn-sm btn-primary mr-1">Decrypt</router-link>

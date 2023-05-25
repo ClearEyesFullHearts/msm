@@ -86,9 +86,9 @@ function onInputText(str) {
             <div class="form-group">
                 <button class="btn btn-primary" :disabled="isSubmitting">
                     <span v-show="isSubmitting" class="spinner-border spinner-border-sm mr-1"></span>
-                    Save
+                    Send
                 </button>
-                <router-link to="/messages" class="btn btn-link">Cancel</router-link>
+                <router-link to="/messages" class="btn btn-link">Back to inbox</router-link>
             </div>
         </Form>
     </template>
