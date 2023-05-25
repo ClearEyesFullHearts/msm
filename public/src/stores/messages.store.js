@@ -15,7 +15,6 @@ export const useMessagesStore = defineStore({
         headers: {},
         message: {},
         targetMessage: {},
-        targets: {},
         contentLength: 0
     }),
     actions: {
@@ -45,7 +44,7 @@ export const useMessagesStore = defineStore({
                         id,
                         from,
                         sentAt,
-                        title
+                        title: decodeURIComponent(title)
                     });
                 }
             } catch (error) {
@@ -79,8 +78,8 @@ export const useMessagesStore = defineStore({
                     id,
                     from,
                     sentAt,
-                    title,
-                    content,
+                    title: decodeURIComponent(title),
+                    content: decodeURIComponent(content),
                 };
 
                 const alertStore = useAlertStore();
@@ -92,8 +91,8 @@ export const useMessagesStore = defineStore({
         },
         async write(at, targetPem, title, text, isAnonymous) {
             try {
-                const b64Title = await mycrypto.publicEncrypt(targetPem, title);
-                const b64Content = await mycrypto.publicEncrypt(targetPem, text);
+                const b64Title = await mycrypto.publicEncrypt(targetPem, encodeURIComponent(title));
+                const b64Content = await mycrypto.publicEncrypt(targetPem, encodeURIComponent(text));
 
                 const reqBody = {
                     to: at,
@@ -123,7 +122,7 @@ export const useMessagesStore = defineStore({
             const challenge = await mycrypto.challenge(pem, JSON.stringify(restMessage));
         
             a.href = window.URL.createObjectURL(new Blob([JSON.stringify({ id, challenge })]));
-            a.download = `@${at}.pem`;
+            a.download = `${id}.ysypya`;
         
             // Append anchor to body.
             document.body.appendChild(a)

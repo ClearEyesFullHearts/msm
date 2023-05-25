@@ -8,6 +8,7 @@ const router = useRouter();
 const messagesStore = useMessagesStore();
 const { headers } = storeToRefs(messagesStore);
 messagesStore.targetMessage = {};
+messagesStore.message = {};
 
 messagesStore.getHeaders();
 

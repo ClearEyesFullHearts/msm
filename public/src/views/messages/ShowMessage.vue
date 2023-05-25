@@ -14,9 +14,10 @@ let message = null;
 ({ message } = storeToRefs(messagesStore));
 messagesStore.getMessage(id);
 
-async function replyTo(from, reTitle) {
+async function replyTo(from, reTitle, content) {
     messagesStore.targetMessage.at = from.substring(1);
-    if(reTitle.length > 0) messagesStore.targetMessage.title = `Re: ${reTitle}`;
+    messagesStore.targetMessage.title = `Re: ${reTitle}`;
+    messagesStore.targetMessage.quote = content;
     await router.push('/messages/write');
 }
 
@@ -36,7 +37,7 @@ async function download() {
             {{ message.title }}
           </h3>
           <div class="blog-post">
-            <h2 class="blog-post-title">{{ message.content }}</h2>
+            <h2 class="blog-post-title"><pre>{{ message.content }}</pre></h2>
             <p class="blog-post-meta">{{ message.from }}, {{ new Date(message.sentAt).toLocaleString() }}</p>
           </div><!-- /.blog-post -->
 
@@ -46,7 +47,7 @@ async function download() {
 
     </main>
     <div class="form-group">
-        <a href="#" @click="replyTo(message.from, message.title)">Reply</a>
+        <a href="#" @click="replyTo(message.from, message.title, message.content)">Reply</a>
         <a class="float-right" href="#" @click="download()">Download</a>
     </div>
 </template>
@@ -62,5 +63,12 @@ async function download() {
 .blog-post-meta {
   margin-bottom: 1.25rem;
   color: #999;
+}
+pre {
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
 }
 </style>

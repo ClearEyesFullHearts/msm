@@ -17,7 +17,7 @@ class CryptoHelper {
         return window.btoa(str)
       }
       
-      this.importCryptoKey = async (pem, format, keyType) => {
+      this.importCryptoKey = async (pem, format, keyType, extractable = false) => {
         const usage = keyType === 'PUBLIC' ? ['encrypt'] : ['decrypt'];
         // fetch the part of the PEM string between header and footer
         const pemHeader = `-----BEGIN ${keyType} KEY-----`
@@ -33,7 +33,7 @@ class CryptoHelper {
             name: 'RSA-OAEP',
             hash: 'SHA-256'
           },
-          false,
+          extractable,
           usage
         )
       }
@@ -46,7 +46,7 @@ class CryptoHelper {
       }
 
       this.getPublicKey = async (pem) => {
-        const privateKey = await this.importCryptoKey(pem, 'pkcs8', 'PRIVATE');
+        const privateKey = await this.importCryptoKey(pem, 'pkcs8', 'PRIVATE', true);
         // export private key to JWK
         const jwk = await crypto.subtle.exportKey("jwk", privateKey);
 

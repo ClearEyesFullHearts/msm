@@ -70,6 +70,10 @@ function onInputText(str) {
                     <div class="invalid-feedback">{{ errors.title }}</div>
                 </div>
             </div>
+            <div v-if="targetMessage.quote">
+                <label>Reply to:</label>
+                <pre>{{targetMessage.quote}}</pre>
+            </div>
             <div class="form-row">
                 <div class="form-group col">
                     <label>Message text</label>
@@ -89,3 +93,14 @@ function onInputText(str) {
         </Form>
     </template>
 </template>
+
+<style>
+
+pre {
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+</style>
