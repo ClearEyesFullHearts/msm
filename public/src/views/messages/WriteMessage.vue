@@ -93,14 +93,15 @@ function removeUser(user) {
     <template v-if="true">
         <Form @submit="onSubmit" :validation-schema="schema" :initial-values="targetMessage" v-slot="{ errors, isSubmitting }">
             <div class="form-row">
-                <div class="form-group col"></div>
                 <div class="form-group col"><Autocomplete></Autocomplete></div>
             </div>
             <div class="form-row">
                 <div class="form-group col">
-                    
                     <div>
-                        Send to: <span v-for="user in targetAt" @click="removeUser(user)" class="badge badge-info mr-1 pointer">{{ `@${user.at}` }}</span>
+                        Send to:
+                    </div>
+                    <div>
+                        <span v-for="user in targetAt" @click="removeUser(user)" class="badge badge-info mr-1 pointer">{{ `@${user.at}` }}</span>
                     </div>
                     <div class="invalid-feedback">{{ errors.at }}</div>
                 </div>
