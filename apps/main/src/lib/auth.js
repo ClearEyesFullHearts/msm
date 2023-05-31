@@ -3,7 +3,7 @@ const debug = require('debug')('msm-main:auth');
 const ErrorHelper = require('./error');
 
 class AuthMiddleware {
-  static verify(secret) {
+  static verify(secret, timeToWait) {
     return function verifyMiddleware(req, res, next) {
       debug('Route is guarded');
       if (req.headers.authorization) {
@@ -19,7 +19,7 @@ class AuthMiddleware {
           }
           debug('verify ok', payload);
           const elapsedTime = Date.now() - payload.connection;
-          if (elapsedTime > (15 * 60 * 1000)) {
+          if (elapsedTime > timeToWait) {
             debug('session expired');
             return next(ErrorHelper.getCustomError(401, ErrorHelper.CODE.SESSION_EXPIRED, 'Session expired after 15 minutes'));
           }

@@ -1,3 +1,4 @@
+const config = require('config');
 const debug = require('debug')('msm-main:message');
 
 const ErrorHelper = require('../../lib/error');
@@ -24,10 +25,10 @@ class Message {
     } = msg;
 
     const targetUser = await db.users.Doc.findOne({ username: to });
-    if (!targetUser) {
+    if (!targetUser || targetUser.lastActivity < 0) {
       throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'target @ not found');
     }
-    debug('known user');
+    debug('known active user');
 
     const { id: targetId, key } = targetUser;
 
@@ -105,7 +106,8 @@ class Message {
 
   static async autoMessageRemoval(db, msgId) {
     debug('Auto Message Removal');
-    await new Promise((resolve) => setTimeout(resolve, (2 * 60 * 1000)));
+    const timeToWait = config.get('timer.removal.message');
+    await new Promise((resolve) => setTimeout(resolve, timeToWait));
     debug(`remove message ${msgId}`);
     const message = await db.messages.Doc.findOne({ id: msgId });
     if (message) {

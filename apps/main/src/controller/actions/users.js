@@ -95,7 +95,8 @@ class User {
 
   static async autoUserRemoval(db, userId) {
     debug('Auto User Removal');
-    await new Promise((resolve) => setTimeout(resolve, (10 * 60 * 1000)));
+    const timeToWait = config.get('timer.removal.user');
+    await new Promise((resolve) => setTimeout(resolve, timeToWait));
     debug(`remove user ${userId}`);
     const user = await db.users.Doc.findOne({ id: userId });
     if (user) {

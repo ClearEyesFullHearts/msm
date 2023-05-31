@@ -12,7 +12,14 @@
   },
   "welcome": {
     "title": "Welcome to ySyPyA",
-    "content": "Welcome,\n\nySyPyA stands for \"your Security your Privacy your Anonymity\"\nYour account is now valid.\n\nThe ySyPyA team."
+    "content": "Welcome,\n\nySyPyA stands for \"your Security your Privacy your Anonymity\"\nYour account is now activated.\n\nThe ySyPyA team."
   },
-  "auth": "supersecret"
+  "auth": "supersecret",
+  "timer": {
+    "removal": {
+      "message": 120000,
+      "user": 600000,
+      "session": 900000
+    }
+  }
 }

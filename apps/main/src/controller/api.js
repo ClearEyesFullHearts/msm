@@ -30,7 +30,7 @@ module.exports = {
       });
   },
   getUsers: [
-    AuthMiddleware.verify(config.get('auth')),
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
     (req, res, next) => {
       const {
         query: {
@@ -52,7 +52,7 @@ module.exports = {
     },
   ],
   getOneUser: [
-    AuthMiddleware.verify(config.get('auth')),
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
     (req, res, next) => {
       const {
         params: {
@@ -93,7 +93,7 @@ module.exports = {
       });
   },
   getInbox: [
-    AuthMiddleware.verify(config.get('auth')),
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
     (req, res, next) => {
       const {
         auth,
@@ -113,7 +113,7 @@ module.exports = {
     },
   ],
   writeMessage: [
-    AuthMiddleware.verify(config.get('auth')),
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
     (req, res, next) => {
       const {
         auth,
@@ -135,7 +135,7 @@ module.exports = {
     },
   ],
   getMessage: [
-    AuthMiddleware.verify(config.get('auth')),
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
     (req, res, next) => {
       const {
         auth,
