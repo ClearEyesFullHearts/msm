@@ -42,6 +42,25 @@ module.exports = {
         next(err);
       });
   },
+  getOneUser: (req, res, next) => {
+    const {
+      params: {
+        at,
+      },
+      app: {
+        locals: {
+          db,
+        },
+      },
+    } = req;
+    User.getUserByName(db, at)
+      .then((user) => {
+        res.json(user);
+      })
+      .catch((err) => {
+        next(err);
+      });
+  },
   login: (req, res, next) => {
     const {
       body: {

@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import CryptoHelper from '@/lib/cryptoHelper';
 import { fetchWrapper } from '@/helpers';
 
-const baseUrl = `${import.meta.env.VITE_API_URL}/users`;
+const baseUrl = `${import.meta.env.VITE_API_URL}`;
 const mycrypto = new CryptoHelper();
 
 function downloadKey(at, text) {
@@ -32,17 +32,21 @@ export const useUsersStore = defineStore({
                 at: user.username,
                 key: PK,
             }
-            await fetchWrapper.post(`${baseUrl}`, send);
+            await fetchWrapper.post(`${baseUrl}/users`, send);
             downloadKey(user.username, SK);
         },
         async getAll(search) {
             if(search.length < 3) return;
             this.users = { loading: true };
             try {
-                this.users = await fetchWrapper.get(`${baseUrl}?search=${search}`);    
+                this.users = await fetchWrapper.get(`${baseUrl}/users?search=${search}`);    
             } catch (error) {
                 this.users = { error };
             }
         },
+        async returnOne(at) {
+            const user = await fetchWrapper.get(`${baseUrl}/user/${at}`);
+            return user;
+        }
     }
 });

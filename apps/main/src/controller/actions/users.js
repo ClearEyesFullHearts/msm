@@ -12,9 +12,7 @@ function createSearchTerms(str) {
     for (let j = i + 3; j < l; j += 1) {
       terms.push(str.substring(i, j));
     }
-    if (i > 0) {
-      terms.push(str.substring(i));
-    }
+    terms.push(str.substring(i));
   }
   return terms;
 }
@@ -69,6 +67,20 @@ class User {
 
     debug('found', users.length);
     return users.map(({ username, key }) => ({ at: username, key }));
+  }
+
+  static async getUserByName(db, username) {
+    debug('search for user with exact @:', username);
+    const knownUser = await db.users.Doc.findOne({ username });
+    if (!knownUser) {
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, '@ unknown');
+    }
+
+    debug('found', knownUser.id);
+    const {
+      username: at, key,
+    } = knownUser;
+    return { at, key };
   }
 
   static changeUserToAuth(usr) {

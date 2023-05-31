@@ -24,7 +24,7 @@ class UserData {
         default: 'safe',
       },
     });
-    this.userSchema.index({ username: 'text', searchTerms: 'text' });
+    this.userSchema.index({ searchTerms: 'text' });
   }
 
   async init(conn) {

@@ -30,6 +30,13 @@ const schema = Yup.object().shape({
         .max(470, 'Message size is limited to 446 basic characters')
 });
 
+if(messageStore.targetMessage.at){
+    userStore.returnOne(messageStore.targetMessage.at)
+        .then((target) => {
+            messageStore.targetAt.push(target);
+        });
+}
+
 async function onSubmit(values) {
     try {
         let message;
@@ -75,6 +82,10 @@ async function onSubmit(values) {
 function onInputText(str) {
     messageStore.contentLength = (new TextEncoder().encode(messageStore.encodeText(str))).length;
 }
+function removeUser(user) {
+    const i = messageStore.targetAt.findIndex((el) => el.at === user.at);
+    messageStore.targetAt.splice(i, 1);
+}
 </script>
 
 <template>
@@ -82,10 +93,14 @@ function onInputText(str) {
     <template v-if="true">
         <Form @submit="onSubmit" :validation-schema="schema" :initial-values="targetMessage" v-slot="{ errors, isSubmitting }">
             <div class="form-row">
+                <div class="form-group col"></div>
+                <div class="form-group col"><Autocomplete></Autocomplete></div>
+            </div>
+            <div class="form-row">
                 <div class="form-group col">
-                    <Autocomplete></Autocomplete>
+                    
                     <div>
-                        Send to: <span v-for="user in targetAt" class="badge badge-info mr-1">{{ `@${user.at}` }}</span>
+                        Send to: <span v-for="user in targetAt" @click="removeUser(user)" class="badge badge-info mr-1 pointer">{{ `@${user.at}` }}</span>
                     </div>
                     <div class="invalid-feedback">{{ errors.at }}</div>
                 </div>
@@ -127,5 +142,8 @@ pre {
     white-space: -pre-wrap;      /* Opera 4-6 */
     white-space: -o-pre-wrap;    /* Opera 7 */
     word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+.pointer {
+    cursor: pointer;
 }
 </style>

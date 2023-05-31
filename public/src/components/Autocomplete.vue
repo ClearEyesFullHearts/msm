@@ -1,6 +1,7 @@
 <script setup>
 import { storeToRefs } from 'pinia';
 import { useUsersStore, useMessagesStore } from '@/stores';
+import { ref } from 'vue'
 
 const userStore = useUsersStore();
 const messagesStore = useMessagesStore();
@@ -8,6 +9,7 @@ const { users } = storeToRefs(userStore);
 
 userStore.users = [];
 messagesStore.targetAt = [];
+const searchinput = ref(null)
 
 function onInputText(txt){
     if(txt.length > 2){
@@ -19,6 +21,9 @@ function onInputText(txt){
 
 function selectUser(user) {
     messagesStore.targetAt.push(user);
+    
+    searchinput.value.value = '';
+    userStore.users = [];
 }
 
 </script>
@@ -30,7 +35,7 @@ function selectUser(user) {
             search&nbsp;
             </label>
 
-            <input type="text" id="search" @input="event => onInputText(event.target.value)" placeholder="Type here...">
+            <input type="text" ref="searchinput" id="search" @input="event => onInputText(event.target.value)" placeholder="Type here...">
 
             <ul v-if="users.length">
                 <li
