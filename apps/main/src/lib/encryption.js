@@ -40,6 +40,28 @@ class Encryption {
 
     return true;
   }
+
+  static encryptMessage(target, title, text) {
+    const { username, key } = target;
+
+    const cypheredTitle = crypto.publicEncrypt({
+      key,
+      oaepHash: 'sha256',
+      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+    }, title);
+
+    const cypheredText = crypto.publicEncrypt({
+      key,
+      oaepHash: 'sha256',
+      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+    }, text);
+
+    return {
+      to: username,
+      title: cypheredTitle.toString('base64'),
+      content: cypheredText.toString('base64'),
+    };
+  }
 }
 
 module.exports = Encryption;

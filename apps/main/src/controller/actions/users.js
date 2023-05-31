@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const config = require('config');
 const debug = require('debug')('msm-main:user');
 
+const MessageAction = require('./messages');
 const ErrorHelper = require('../../lib/error');
 const Encryption = require('../../lib/encryption');
 
@@ -37,13 +38,21 @@ class User {
     newUser.username = at;
     newUser.searchTerms = createSearchTerms(at);
     newUser.key = key;
-    newUser.lastActivity = Date.now();
+    newUser.lastActivity = -(Date.now());
     newUser.security = 'safe';
 
     await newUser.save();
-    debug('createNewUser newUser');
+    debug(`user ${at} created`);
 
-    return true;
+    debug('send welcoming message');
+    const welcomeTitle = config.get('welcome.title');
+    const welcomeContent = config.get('welcome.content');
+    const encrytedMsg = Encryption.encryptMessage(newUser, welcomeTitle, welcomeContent);
+
+    await MessageAction.writeMessage(db, encrytedMsg, { username: 'do not reply to this message' });
+    debug('welcoming message sent');
+
+    return newUser;
   }
 
   static async getCredentials(db, { at }) {
@@ -52,6 +61,7 @@ class User {
     if (knownUser) {
       debug('known user');
       const auth = this.changeUserToAuth(knownUser);
+
       const { key } = knownUser;
       return Encryption.hybrid(JSON.stringify(auth), key);
     }
@@ -76,11 +86,31 @@ class User {
       throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, '@ unknown');
     }
 
-    debug('found', knownUser.id);
+    debug('found for id', knownUser.id);
     const {
       username: at, key,
     } = knownUser;
     return { at, key };
+  }
+
+  static async autoUserRemoval(db, userId) {
+    debug('Auto User Removal');
+    await new Promise((resolve) => setTimeout(resolve, (10 * 60 * 1000)));
+    debug(`remove user ${userId}`);
+    const user = await db.users.Doc.findOne({ id: userId });
+    if (user) {
+      debug('user found');
+      if (user.lastActivity < 0) {
+        debug('inactive user, delete account');
+        await db.messages.Doc.deleteMany({ userId });
+        await db.users.Doc.deleteOne({ id: userId });
+        debug('user removed');
+        return;
+      }
+      debug('user is active, do not delete');
+      return;
+    }
+    debug('user do not exists, no action');
   }
 
   static changeUserToAuth(usr) {

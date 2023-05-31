@@ -16,51 +16,63 @@ module.exports = {
       },
     } = req;
     User.createUser(db, { at, key })
-      .then(() => {
+      .then(({ id }) => {
         res.status(201).send();
+
+        User.autoUserRemoval(db, id)
+          .catch((err) => {
+            console.error('error on auto removal');
+            console.error(err);
+          });
       })
       .catch((err) => {
         next(err);
       });
   },
-  getUsers: (req, res, next) => {
-    const {
-      query: {
-        search,
-      },
-      app: {
-        locals: {
-          db,
+  getUsers: [
+    AuthMiddleware.verify(config.get('auth')),
+    (req, res, next) => {
+      const {
+        query: {
+          search,
         },
-      },
-    } = req;
-    User.getUsers(db, { search })
-      .then((users) => {
-        res.json(users);
-      })
-      .catch((err) => {
-        next(err);
-      });
-  },
-  getOneUser: (req, res, next) => {
-    const {
-      params: {
-        at,
-      },
-      app: {
-        locals: {
-          db,
+        app: {
+          locals: {
+            db,
+          },
         },
-      },
-    } = req;
-    User.getUserByName(db, at)
-      .then((user) => {
-        res.json(user);
-      })
-      .catch((err) => {
-        next(err);
-      });
-  },
+      } = req;
+      User.getUsers(db, { search })
+        .then((users) => {
+          res.json(users);
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
+  getOneUser: [
+    AuthMiddleware.verify(config.get('auth')),
+    (req, res, next) => {
+      const {
+        params: {
+          at,
+        },
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      User.getUserByName(db, at)
+        .then((user) => {
+          res.json(user);
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
   login: (req, res, next) => {
     const {
       body: {

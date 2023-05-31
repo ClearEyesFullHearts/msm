@@ -10,5 +10,9 @@
       "Access-Control-Allow-Headers": "Content-Type, Authorization, Content-Length"
     }
   },
+  "welcome": {
+    "title": "Welcome to ySyPyA",
+    "content": "Welcome,\n\nySyPyA stands for \"your Security your Privacy your Anonymity\"\nYour account is now valid.\n\nThe ySyPyA team."
+  },
   "auth": "supersecret"
 }

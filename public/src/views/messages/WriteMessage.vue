@@ -20,8 +20,6 @@ const { users } = storeToRefs(userStore);
 
 
 const schema = Yup.object().shape({
-    // at: Yup.string()
-    //     .required('Target @ is required'),
     title: Yup.string()
         .required('Title is required')
         .max(125, 'Title size is limited to 125 characters'),
@@ -34,6 +32,9 @@ if(messageStore.targetMessage.at){
     userStore.returnOne(messageStore.targetMessage.at)
         .then((target) => {
             messageStore.targetAt.push(target);
+        })
+        .catch((err) => {
+            alertStore.error(`${err}`);
         });
 }
 
@@ -52,7 +53,7 @@ async function onSubmit(values) {
         }
         messageStore.targetAt.forEach(async ({ at, key }) => {
             try{
-                await messageStore.write(at, key, title, content, false);
+                await messageStore.write(at, key, title, content);
                 result.success.push(at);
             }catch(err){
                 result.failure.push({at, err});
@@ -103,7 +104,6 @@ function removeUser(user) {
                     <div>
                         <span v-for="user in targetAt" @click="removeUser(user)" class="badge badge-info mr-1 pointer">{{ `@${user.at}` }}</span>
                     </div>
-                    <div class="invalid-feedback">{{ errors.at }}</div>
                 </div>
                 <div class="form-group col">
                     <label>Message Title</label>

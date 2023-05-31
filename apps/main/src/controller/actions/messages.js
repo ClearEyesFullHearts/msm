@@ -18,7 +18,6 @@ class Message {
 
   static async writeMessage(db, msg, user) {
     const {
-      anonymous,
       to,
       title,
       content,
@@ -32,7 +31,7 @@ class Message {
 
     const { id: targetId, key } = targetUser;
 
-    const from = anonymous ? 'No signature' : `@${user.username}`;
+    const from = `@${user.username}`;
     const sentAt = Date.now();
 
     const headerPlain = {
@@ -51,17 +50,12 @@ class Message {
 
     const newMsg = db.messages.Doc();
     newMsg.userId = targetId;
-    newMsg.readAt = 0;
+    newMsg.hasBeenRead = false;
     newMsg.header = headerChallenge;
     newMsg.full = fullChallenge;
 
     await newMsg.save();
     debug('message saved');
-
-    const sender = await db.users.Doc.findOne({ id: user.id });
-    sender.lastActivity = Math.floor(Date.now() / (3 * 60000)) * (3 * 60000);
-    await sender.save();
-    debug('sender updated');
   }
 
   static async getMessage(db, msgId, user) {
@@ -72,7 +66,16 @@ class Message {
       if (message.userId !== user.id) {
         throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot access this message');
       }
+      message.hasBeenRead = true;
+      await message.save();
+      debug('message marked as read');
+
       const { id, full } = message;
+
+      const reader = await db.users.Doc.findOne({ id: user.id });
+      reader.lastActivity = Math.floor(Date.now() / (15 * 60000)) * (15 * 60000);
+      await reader.save();
+      debug('reader updated');
 
       debug('full message sent');
       return {

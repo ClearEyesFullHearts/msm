@@ -11,8 +11,8 @@ class MessageData {
       userId: {
         type: Number,
       },
-      readAt: {
-        type: Number,
+      hasBeenRead: {
+        type: Boolean,
       },
       header: {
         token: {

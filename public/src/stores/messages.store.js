@@ -31,6 +31,7 @@ export const useMessagesStore = defineStore({
                 for(let i = 0; i < challenges.length; i++){
                     const { id, challenge } = challenges[i];
                     const objStr = await mycrypto.resolve(pem, challenge);
+                    
                     const {
                         from,
                         sentAt,
@@ -90,7 +91,7 @@ export const useMessagesStore = defineStore({
                 alertStore.error(`An error occured: ${error}`);
             }
         },
-        async write(at, targetPem, title, text, isAnonymous) {
+        async write(at, targetPem, title, text) {
             try {
                 const b64Title = await mycrypto.publicEncrypt(targetPem, this.encodeText(title));
                 const b64Content = await mycrypto.publicEncrypt(targetPem, this.encodeText(text));
@@ -99,7 +100,6 @@ export const useMessagesStore = defineStore({
                     to: at,
                     title: b64Title,
                     content: b64Content,
-                    anonymous: isAnonymous,
                 };
                 
                 await fetchWrapper.post(`${baseUrl}/message`, reqBody);

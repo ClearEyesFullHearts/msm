@@ -249,13 +249,10 @@ components:
     Post:
       type: object
       required:
-        - anonymous
         - to
         - title
         - content
       properties:
-        anonymous:
-          type: boolean
         to:
           type: string
         title:

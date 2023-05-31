@@ -25,7 +25,11 @@ class Data {
 
     debug('initialize users collection');
     await this.users.init(this.connection);
+    debug('initialize messages collection');
     await this.messages.init(this.connection);
+
+    debug('clean up read messages');
+    await this.messages.Doc.deleteMany({ hasBeenRead: true });
 
     debug('finished initialization');
   }
