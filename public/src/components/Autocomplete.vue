@@ -38,7 +38,7 @@ function selectUser(user) {
                 <div class="input-group-prepend">
                     <span class="input-group-text" id="basic-addon1">@</span>
                 </div>
-                <input type="text" id="search" ref="searchinput" class="form-control" placeholder="Username" @input="event => onInputText(event.target.value)">
+                <input type="text" id="search" ref="searchinput" class="form-control" autocomplete="off" placeholder="Username" @input="event => onInputText(event.target.value)">
             </div>
             <ul v-if="users.length" class="list-group list-group-flush">
                 <li

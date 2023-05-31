@@ -1,13 +1,20 @@
 <script setup>
-import { Form, Field } from 'vee-validate';
-import * as Yup from 'yup';
+import { ref } from 'vue'
 
 import { useAuthStore } from '@/stores';
 
-const schema = Yup.object().shape({
-    username: Yup.string().required('Username is required'),
-    secret: Yup.array().required('Your key is required')
-});
+const loginInput = ref(null);
+const fileInput = ref(null);
+let isSubmitting = false;
+
+async function onFilePicked(evt){
+    const files = evt.target.files;
+    console.log('onFilePicked', files)
+    const secret = files
+    const username = loginInput.value.value;
+
+    await onSubmit({ username, secret });
+}
 
 async function loadTextFromFile(ev) {
     return new Promise((resolve) => {
@@ -17,6 +24,7 @@ async function loadTextFromFile(ev) {
         reader.onload = (e) => {
             resolve(e.target.result)
         }
+    console.log('loadTextFromFile', file)
         reader.readAsText(file)
     })
 }
@@ -25,7 +33,12 @@ async function onSubmit(values) {
     const authStore = useAuthStore();
     const { username, secret } = values;
     const key = await loadTextFromFile(secret);
+    isSubmitting = false;
     await authStore.login(username, key);
+}
+async function onLog(){
+    isSubmitting = true;
+    fileInput.value.click();
 }
 </script>
 
@@ -33,7 +46,28 @@ async function onSubmit(values) {
     <div class="card m-3">
         <h4 class="card-header">Login</h4>
         <div class="card-body">
-            <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
+            <form>
+                <div class="form-group">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="basic-addon1">@</span>
+                        </div>
+                        <input type="text" id="search" ref="loginInput" class="form-control" autocomplete="off" placeholder="Your username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    
+                </div>
+            </form>
+            <div>
+                <button class="btn btn-primary" @click="onLog()" :disabled="isSubmitting">
+                    <span v-show="isSubmitting" class="spinner-border spinner-border-sm mr-1"></span>
+                    Login
+                </button>
+                <router-link to="register" class="btn btn-link">Register</router-link>
+            </div>
+            <input hidden type="file" ref="fileInput" @change="onFilePicked" style="opacity: none;" />
+            <!-- <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
                 <div class="form-group">
                     <label>@</label>
                     <Field name="username" type="text" class="form-control" :class="{ 'is-invalid': errors.username }" />
@@ -52,7 +86,7 @@ async function onSubmit(values) {
                     <router-link to="register" class="btn btn-link">Register</router-link>
                 </div>
                 
-            </Form>
+            </Form> -->
         </div>
     </div>
 </template>
