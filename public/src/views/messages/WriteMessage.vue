@@ -65,11 +65,9 @@ async function onSubmit(values) {
             }
 
             if(result.failure.length > 0) {
-                const errorMessage = '';
+                let errorMessage = '';
                 result.failure.forEach(({ at, err }) => {
-                    errorMessage += `Message to @${at} has not been sent:
-                    ${err.message}
-                    `;
+                    errorMessage += `Message to @${at} has not been sent:\n${err}\n`;
                 })
                 alertStore.error(errorMessage);
             }

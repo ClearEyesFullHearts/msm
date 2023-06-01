@@ -9,7 +9,6 @@ let isSubmitting = false;
 
 async function onFilePicked(evt){
     const files = evt.target.files;
-    console.log('onFilePicked', files)
     const secret = files
     const username = loginInput.value.value;
 
@@ -24,7 +23,6 @@ async function loadTextFromFile(ev) {
         reader.onload = (e) => {
             resolve(e.target.result)
         }
-    console.log('loadTextFromFile', file)
         reader.readAsText(file)
     })
 }

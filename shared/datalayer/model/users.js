@@ -11,11 +11,13 @@ class UserData {
       username: {
         type: String,
         unique: true,
+        required: true,
       },
       searchTerms: [String],
       key: {
         type: String,
         required: true,
+        unique: true,
       },
       lastActivity: Number,
       security: {

@@ -25,6 +25,11 @@ async function download() {
   await messagesStore.downloadMessage();
 }
 
+async function forceDelete() {
+    await messagesStore.deleteMessage(id);
+    await router.push('/messages');
+}
+
 </script>
 
 
@@ -35,21 +40,27 @@ async function download() {
         <div class="col-md-8 blog-main">
           <h3 class="pb-3 mb-4 font-italic border-bottom">
             {{ message.title }}
+            <button @click="forceDelete()" class="btn btn-sm btn-danger float-right">
+                Delete
+            </button>
           </h3>
+          
           <div class="blog-post">
             <h2 class="blog-post-title"><pre>{{ message.content }}</pre></h2>
             <p class="blog-post-meta">{{ message.from }}, {{ new Date(message.sentAt).toLocaleString() }}</p>
           </div><!-- /.blog-post -->
 
+          <div class="form-group">
+              <a href="#" @click="replyTo(message.from, message.title, message.content)">Reply</a>
+              <a class="float-right" href="#" @click="download()">Download</a>
+          </div>
+
         </div><!-- /.blog-main -->
 
       </div><!-- /.row -->
-
+      
     </main>
-    <div class="form-group">
-        <a href="#" @click="replyTo(message.from, message.title, message.content)">Reply</a>
-        <a class="float-right" href="#" @click="download()">Download</a>
-    </div>
+    
 </template>
 
 <style>

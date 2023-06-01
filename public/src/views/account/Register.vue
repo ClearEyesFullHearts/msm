@@ -32,7 +32,7 @@ async function onSubmit(values) {
             <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
                 <div class="form-group">
                     <label>User @</label>
-                    <Field name="username" type="text" class="form-control" :class="{ 'is-invalid': errors.username }" />
+                    <Field name="username" autocomplete="off" type="text" class="form-control" :class="{ 'is-invalid': errors.username }" />
                     <div class="invalid-feedback">{{ errors.username }}</div>
                 </div>
                 <div class="form-group">

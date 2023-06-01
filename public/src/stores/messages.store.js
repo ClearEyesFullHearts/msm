@@ -92,23 +92,16 @@ export const useMessagesStore = defineStore({
             }
         },
         async write(at, targetPem, title, text) {
-            try {
-                const b64Title = await mycrypto.publicEncrypt(targetPem, this.encodeText(title));
-                const b64Content = await mycrypto.publicEncrypt(targetPem, this.encodeText(text));
+            const b64Title = await mycrypto.publicEncrypt(targetPem, this.encodeText(title));
+            const b64Content = await mycrypto.publicEncrypt(targetPem, this.encodeText(text));
 
-                const reqBody = {
-                    to: at,
-                    title: b64Title,
-                    content: b64Content,
-                };
-                
-                await fetchWrapper.post(`${baseUrl}/message`, reqBody);
-                return true;
-            } catch (error) {
-                const alertStore = useAlertStore();
-                alertStore.error(`An error occured: ${error}`);
-            }
-            return false;
+            const reqBody = {
+                to: at,
+                title: b64Title,
+                content: b64Content,
+            };
+            
+            await fetchWrapper.post(`${baseUrl}/message`, reqBody);
         },
         async downloadMessage() {
             var a = window.document.createElement('a');
@@ -131,6 +124,15 @@ export const useMessagesStore = defineStore({
         
             // Remove anchor from body
             document.body.removeChild(a)
+        },
+        async deleteMessage(msgId) {
+            const alertStore = useAlertStore();
+            try {
+                await fetchWrapper.delete(`${baseUrl}/message/${msgId}`);
+                alertStore.success('The message has been deleted');
+            } catch (error) {
+                alertStore.error(`An error occured: ${error}`);
+            }
         },
         encodeText(str) {
             return str.split("")

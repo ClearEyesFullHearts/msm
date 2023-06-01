@@ -103,6 +103,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete every reference to an account
+      description: Incinerate an account entirely
+      operationId: incinerate
+      x-eov-operation-handler: api
+      parameters:
+        - name: at
+          in: path
+          required: true
+          description: The ID of the user to delete
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The account doesn't exists anymore
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
                 
   /inbox:
     get:
@@ -165,7 +186,7 @@ paths:
           required: true
           description: The ID of the message to fetch
           schema:
-            type: string
+            type: integer
       responses:
         '200':
           description: A complete message
@@ -173,6 +194,27 @@ paths:
             application/json:    
               schema:
                 $ref: "#/components/schemas/Message"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Force removal of a message
+      description: Delete a message from db
+      operationId: removeMessage
+      x-eov-operation-handler: api
+      parameters:
+        - name: msgId
+          in: path
+          required: true
+          description: The ID of the message to delete
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The message is removed
         default:
           description: unexpected error
           content:

@@ -49,7 +49,7 @@ class User {
     const welcomeContent = config.get('welcome.content');
     const encrytedMsg = Encryption.encryptMessage(newUser, welcomeTitle, welcomeContent);
 
-    await MessageAction.writeMessage(db, encrytedMsg, { username: 'do not reply to this message' });
+    await MessageAction.writeMessage(db, encrytedMsg, { username: 'do not reply to this message' }, false);
     debug('welcoming message sent');
 
     return newUser;
@@ -91,6 +91,22 @@ class User {
       username: at, key,
     } = knownUser;
     return { at, key };
+  }
+
+  static async removeUser(db, userId, askingUser) {
+    if (askingUser.id !== userId) {
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot access this account');
+    }
+    debug(`remove user ${userId}`);
+    const user = await db.users.Doc.findOne({ id: userId });
+    if (user) {
+      debug('user found, delete account');
+      await db.messages.Doc.deleteMany({ userId });
+      await db.users.Doc.deleteOne({ id: userId });
+      debug('user removed');
+      return;
+    }
+    debug('user do not exists, no action');
   }
 
   static async autoUserRemoval(db, userId) {

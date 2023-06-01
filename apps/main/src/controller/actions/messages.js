@@ -17,7 +17,7 @@ class Message {
     }));
   }
 
-  static async writeMessage(db, msg, user) {
+  static async writeMessage(db, msg, user, checkUser = true) {
     const {
       to,
       title,
@@ -25,8 +25,10 @@ class Message {
     } = msg;
 
     const targetUser = await db.users.Doc.findOne({ username: to });
-    if (!targetUser || targetUser.lastActivity < 0) {
-      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'target @ not found');
+    if (checkUser) {
+      if (!targetUser || targetUser.lastActivity < 0) {
+        throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'target @ not found');
+      }
     }
     debug('known active user');
 

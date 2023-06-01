@@ -73,6 +73,29 @@ module.exports = {
         });
     },
   ],
+  incinerate: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        auth,
+        params: {
+          at,
+        },
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      User.removeUser(db, Number(at), auth)
+        .then(() => {
+          res.status(200).send();
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
   login: (req, res, next) => {
     const {
       body: {
@@ -157,6 +180,29 @@ module.exports = {
               console.error('error on auto removal');
               console.error(err);
             });
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
+  removeMessage: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        auth,
+        params: {
+          msgId,
+        },
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      Message.removeMessage(db, Number(msgId), auth)
+        .then(() => {
+          res.status(200).send();
         })
         .catch((err) => {
           next(err);
