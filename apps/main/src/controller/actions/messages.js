@@ -7,7 +7,7 @@ const Encryption = require('../../lib/encryption');
 class Message {
   static async getInbox(db, user) {
     debug(`get inbox for user ${user.id}`);
-    const allMessages = await db.messages.Doc.find({ userId: user.id }).sort({ id: 'desc' });
+    const allMessages = await db.messages.getUserMessages(user.id);
     if (!allMessages) {
       return [];
     }
@@ -24,7 +24,7 @@ class Message {
       content,
     } = msg;
 
-    const targetUser = await db.users.Doc.findOne({ username: to });
+    const targetUser = await db.users.findByName(to);
     if (checkUser) {
       if (!targetUser || targetUser.lastActivity < 0) {
         throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'target @ not found');
@@ -63,7 +63,7 @@ class Message {
 
   static async getMessage(db, msgId, user) {
     debug(`get message ${msgId}`);
-    const message = await db.messages.Doc.findOne({ id: msgId });
+    const message = await db.messages.findByID(msgId);
     if (message) {
       debug('message found');
       if (message.userId !== user.id) {
@@ -75,7 +75,7 @@ class Message {
 
       const { id, full } = message;
 
-      const reader = await db.users.Doc.findOne({ id: user.id });
+      const reader = await db.users.findByID(user.id);
       reader.lastActivity = Math.floor(Date.now() / (15 * 60000)) * (15 * 60000);
       await reader.save();
       debug('reader updated');
@@ -93,13 +93,13 @@ class Message {
 
   static async removeMessage(db, msgId, user) {
     debug(`remove message ${msgId}`);
-    const message = await db.messages.Doc.findOne({ id: msgId });
+    const message = await db.messages.findByID(msgId);
     if (message) {
       debug('message found');
       if (message.userId !== user.id) {
         throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot access this message');
       }
-      await db.messages.Doc.deleteOne({ id: msgId });
+      await db.messages.deleteID(msgId);
       debug('message removed');
       return;
     }
@@ -111,10 +111,10 @@ class Message {
     const timeToWait = config.get('timer.removal.message');
     await new Promise((resolve) => setTimeout(resolve, timeToWait));
     debug(`remove message ${msgId}`);
-    const message = await db.messages.Doc.findOne({ id: msgId });
+    const message = await db.messages.findByID(msgId);
     if (message) {
       debug('message found');
-      await db.messages.Doc.deleteOne({ id: msgId });
+      await db.messages.deleteID(msgId);
       debug('message removed');
       return;
     }

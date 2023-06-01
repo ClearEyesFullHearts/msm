@@ -28,7 +28,7 @@ class User {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong public key format');
     }
 
-    const knownUser = await db.users.Doc.findOne({ username: at });
+    const knownUser = await db.users.findByName(at);
     if (knownUser) {
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, '@ name already taken');
     }
@@ -57,7 +57,7 @@ class User {
 
   static async getCredentials(db, { at }) {
     debug('check for user with @:', at);
-    const knownUser = await db.users.Doc.findOne({ username: at });
+    const knownUser = await db.users.findByName(at);
     if (knownUser) {
       debug('known user');
       const auth = this.changeUserToAuth(knownUser);
@@ -71,9 +71,7 @@ class User {
 
   static async getUsers(db, { search }) {
     debug('search for users with @ like:', search);
-    const users = await db.users.Doc
-      .find({ $text: { $search: search } })
-      .limit(15);
+    const users = await db.users.searchUsername(search);
 
     debug('found', users.length);
     return users.map(({ username, key }) => ({ at: username, key }));
@@ -81,7 +79,7 @@ class User {
 
   static async getUserByName(db, username) {
     debug('search for user with exact @:', username);
-    const knownUser = await db.users.Doc.findOne({ username });
+    const knownUser = await db.users.findByName(username);
     if (!knownUser) {
       throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, '@ unknown');
     }
@@ -101,8 +99,7 @@ class User {
     const user = await db.users.Doc.findOne({ id: userId });
     if (user) {
       debug('user found, delete account');
-      await db.messages.Doc.deleteMany({ userId });
-      await db.users.Doc.deleteOne({ id: userId });
+      await db.clearUserAccount(userId);
       debug('user removed');
       return;
     }
@@ -114,13 +111,12 @@ class User {
     const timeToWait = config.get('timer.removal.user');
     await new Promise((resolve) => setTimeout(resolve, timeToWait));
     debug(`remove user ${userId}`);
-    const user = await db.users.Doc.findOne({ id: userId });
+    const user = await db.users.findByID(userId);
     if (user) {
       debug('user found');
       if (user.lastActivity < 0) {
         debug('inactive user, delete account');
-        await db.messages.Doc.deleteMany({ userId });
-        await db.users.Doc.deleteOne({ id: userId });
+        await db.clearUserAccount(userId);
         debug('user removed');
         return;
       }

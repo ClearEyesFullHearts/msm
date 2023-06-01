@@ -31,6 +31,19 @@ class MSMMain {
     await data.init();
     this.app.locals.db = data;
 
+    debug('clear all read messages');
+    await data.clearReadMessages();
+    debug('clear all inactive users');
+    await data.deactivateAccounts();
+
+    // clear everything once a day
+    this.interval = setInterval(async () => {
+      debug('clear all read messages');
+      await data.clearReadMessages();
+      debug('clear all inactive users');
+      await data.deactivateAccounts();
+    }, config.get('timer.interval.clear'));
+
     //  Install the OpenApiValidator on your express app
     this.app.use(
       OpenApiValidator.middleware({

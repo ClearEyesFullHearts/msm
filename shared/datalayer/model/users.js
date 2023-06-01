@@ -34,6 +34,21 @@ class UserData {
     this.Doc = conn.model('User', this.userSchema);
     await this.Doc.init();
   }
+
+  async findByID(userId) {
+    const user = await this.Doc.findOne({ id: userId });
+    return user;
+  }
+
+  async findByName(at) {
+    const user = await this.Doc.findOne({ username: at });
+    return user;
+  }
+
+  async searchUsername(search) {
+    const users = await this.Doc.find({ $text: { $search: search } }).limit(15);
+    return users;
+  }
 }
 
 module.exports = UserData;

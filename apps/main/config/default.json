@@ -19,7 +19,12 @@
     "removal": {
       "message": 120000,
       "user": 600000,
-      "session": 900000
+      "session": 900000,
+      "inactivity": 2592000000
+    },
+    "interval": {
+      "clear": 86400000,
+      "poll": 120000
     }
   }
 }

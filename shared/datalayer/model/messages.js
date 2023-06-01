@@ -44,6 +44,21 @@ class MessageData {
     this.Doc = conn.model('Message', this.messageSchema);
     await this.Doc.init();
   }
+
+  async findByID(msgId) {
+    const message = await this.Doc.findOne({ id: msgId });
+    return message;
+  }
+
+  async getUserMessages(userId) {
+    const messages = await this.Doc.find({ userId }).sort({ id: 'desc' });
+    return messages;
+  }
+
+  async deleteID(msgId) {
+    const result = await this.Doc.deleteOne({ id: msgId });
+    return result;
+  }
 }
 
 module.exports = MessageData;
