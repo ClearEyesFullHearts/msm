@@ -7,7 +7,7 @@ import { useMessagesStore } from '@/stores';
 const messagesStore = useMessagesStore();
 const router = useRouter();
 const route = useRoute();
-const id = route.params.id;
+const { id } = route.params;
 messagesStore.targetMessage = {};
 
 let message = null;
@@ -15,10 +15,10 @@ let message = null;
 messagesStore.getMessage(id);
 
 async function replyTo(from, reTitle, content) {
-    messagesStore.targetMessage.at = from.substring(1);
-    messagesStore.targetMessage.title = `Re: ${reTitle}`;
-    messagesStore.targetMessage.quote = content;
-    await router.push('/messages/write');
+  messagesStore.targetMessage.at = from.substring(1);
+  messagesStore.targetMessage.title = `Re: ${reTitle}`;
+  messagesStore.targetMessage.quote = content;
+  await router.push('/messages/write');
 }
 
 async function download() {
@@ -26,41 +26,58 @@ async function download() {
 }
 
 async function forceDelete() {
-    await messagesStore.deleteMessage(id);
-    await router.push('/messages');
+  await messagesStore.deleteMessage(id);
+  await router.push('/messages');
 }
 
 </script>
 
-
 <template>
-  <router-link to="/messages" class="btn btn-link">Back to inbox</router-link>
-    <main role="main" class="container">
-      <div class="row">
-        <div class="col-md-8 blog-main">
-          <h3 class="pb-3 mb-4 font-italic border-bottom">
-            {{ message.title }}
-            <button @click="forceDelete()" class="btn btn-sm btn-danger float-right">
-                Delete
-            </button>
-          </h3>
-          
-          <div class="blog-post">
-            <h2 class="blog-post-title"><pre>{{ message.content }}</pre></h2>
-            <p class="blog-post-meta">{{ message.from }}, {{ new Date(message.sentAt).toLocaleString() }}</p>
-          </div><!-- /.blog-post -->
+  <router-link
+    to="/messages"
+    class="btn btn-link"
+  >
+    Back to inbox
+  </router-link>
+  <main
+    role="main"
+    class="container"
+  >
+    <div class="row">
+      <div class="col-md-8 blog-main">
+        <h3 class="pb-3 mb-4 font-italic border-bottom">
+          {{ message.title }}
+          <button
+            class="btn btn-sm btn-danger float-right"
+            @click="forceDelete()"
+          >
+            Delete
+          </button>
+        </h3>
 
-          <div class="form-group">
-              <a href="#" @click="replyTo(message.from, message.title, message.content)">Reply</a>
-              <a class="float-right" href="#" @click="download()">Download</a>
-          </div>
+        <div class="blog-post">
+          <h2 class="blog-post-title">
+            <pre>{{ message.content }}</pre>
+          </h2>
+          <p class="blog-post-meta">
+            {{ message.from }}, {{ new Date(message.sentAt).toLocaleString() }}
+          </p>
+        </div><!-- /.blog-post -->
 
-        </div><!-- /.blog-main -->
-
-      </div><!-- /.row -->
-      
-    </main>
-    
+        <div class="form-group">
+          <a
+            href="#"
+            @click="replyTo(message.from, message.title, message.content)"
+          >Reply</a>
+          <a
+            class="float-right"
+            href="#"
+            @click="download()"
+          >Download</a>
+        </div>
+      </div><!-- /.blog-main -->
+    </div><!-- /.row -->
+  </main>
 </template>
 
 <style>

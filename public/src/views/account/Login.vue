@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref } from 'vue';
 
 import { useAuthStore } from '@/stores';
 
@@ -7,65 +7,93 @@ const loginInput = ref(null);
 const fileInput = ref(null);
 let isSubmitting = false;
 
-async function onFilePicked(evt){
-    const files = evt.target.files;
-    const secret = files
-    const username = loginInput.value.value;
+async function onFilePicked(evt) {
+  const { files } = evt.target;
+  const secret = files;
+  const username = loginInput.value.value;
 
-    await onSubmit({ username, secret });
+  await onSubmit({ username, secret });
 }
 
 async function loadTextFromFile(ev) {
-    return new Promise((resolve) => {
-        const file = ev[0]
-        const reader = new FileReader()
+  return new Promise((resolve) => {
+    const file = ev[0];
+    const reader = new FileReader();
 
-        reader.onload = (e) => {
-            resolve(e.target.result)
-        }
-        reader.readAsText(file)
-    })
+    reader.onload = (e) => {
+      resolve(e.target.result);
+    };
+    reader.readAsText(file);
+  });
 }
 
 async function onSubmit(values) {
-    const authStore = useAuthStore();
-    const { username, secret } = values;
-    const key = await loadTextFromFile(secret);
-    isSubmitting = false;
-    await authStore.login(username, key);
+  const authStore = useAuthStore();
+  const { username, secret } = values;
+  const key = await loadTextFromFile(secret);
+  isSubmitting = false;
+  await authStore.login(username, key);
 }
-async function onLog(){
-    isSubmitting = true;
-    fileInput.value.click();
+async function onLog() {
+  isSubmitting = true;
+  fileInput.value.click();
 }
 </script>
 
 <template>
-    <div class="card m-3">
-        <h4 class="card-header">Login</h4>
-        <div class="card-body">
-            <form>
-                <div class="form-group">
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" id="basic-addon1">@</span>
-                        </div>
-                        <input type="text" id="search" ref="loginInput" class="form-control" autocomplete="off" placeholder="Your username">
-                    </div>
-                </div>
-                <div class="form-group">
-                    
-                </div>
-            </form>
-            <div>
-                <button class="btn btn-primary" @click="onLog()" :disabled="isSubmitting">
-                    <span v-show="isSubmitting" class="spinner-border spinner-border-sm mr-1"></span>
-                    Login
-                </button>
-                <router-link to="register" class="btn btn-link">Register</router-link>
+  <div class="card m-3">
+    <h4 class="card-header">
+      Login
+    </h4>
+    <div class="card-body">
+      <form>
+        <div class="form-group">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span
+                id="basic-addon1"
+                class="input-group-text"
+              >@</span>
             </div>
-            <input hidden type="file" ref="fileInput" @change="onFilePicked" style="opacity: none;" />
-            <!-- <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
+            <input
+              id="search"
+              ref="loginInput"
+              type="text"
+              class="form-control"
+              autocomplete="off"
+              placeholder="Your username"
+            >
+          </div>
+        </div>
+        <div class="form-group" />
+      </form>
+      <div>
+        <button
+          class="btn btn-primary"
+          :disabled="isSubmitting"
+          @click="onLog()"
+        >
+          <span
+            v-show="isSubmitting"
+            class="spinner-border spinner-border-sm mr-1"
+          />
+          Login
+        </button>
+        <router-link
+          to="register"
+          class="btn btn-link"
+        >
+          Register
+        </router-link>
+      </div>
+      <input
+        ref="fileInput"
+        hidden
+        type="file"
+        style="opacity: none;"
+        @change="onFilePicked"
+      >
+      <!-- <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
                 <div class="form-group">
                     <label>@</label>
                     <Field name="username" type="text" class="form-control" :class="{ 'is-invalid': errors.username }" />
@@ -83,8 +111,8 @@ async function onLog(){
                     </button>
                     <router-link to="register" class="btn btn-link">Register</router-link>
                 </div>
-                
+
             </Form> -->
-        </div>
     </div>
+  </div>
 </template>
