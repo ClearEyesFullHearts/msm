@@ -21,7 +21,7 @@ async function replyTo(from, reTitle) {
 </script>
 
 <template>
-  <h1>Inbox</h1>
+  <h1>InBox</h1>
   <button
     class="btn btn-sm btn-secondary"
     :disabled="headers.loading"

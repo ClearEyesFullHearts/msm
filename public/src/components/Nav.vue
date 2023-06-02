@@ -31,7 +31,7 @@ async function incinerate() {
         to="/messages"
         class="nav-item nav-link"
       >
-        Inbox
+        InBox
       </router-link>
       <router-link
         to="/memory"

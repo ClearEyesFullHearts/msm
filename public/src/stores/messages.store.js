@@ -105,13 +105,19 @@ export const useMessagesStore = defineStore({
       const a = window.document.createElement('a');
       const {
         id,
-        ...restMessage
+        title: clearTitle,
+        content: clearText,
+        ...restMsg
       } = this.message;
 
       const authStore = useAuthStore();
       const { pem } = authStore;
 
-      const challenge = await mycrypto.challenge(pem, JSON.stringify(restMessage));
+      const challenge = await mycrypto.challenge(pem, JSON.stringify({
+        title: this.encodeText(clearTitle),
+        content: this.encodeText(clearText),
+        ...restMsg
+      }));
 
       a.href = window.URL.createObjectURL(new Blob([JSON.stringify({ id, challenge })]));
       a.download = `${id}.ysypya`;
