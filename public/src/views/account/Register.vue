@@ -1,9 +1,12 @@
 <script setup>
 import { Form, Field } from 'vee-validate';
+import { ref } from 'vue';
 import * as Yup from 'yup';
 
 import { useUsersStore, useAlertStore } from '@/stores';
 import { router } from '@/router';
+
+const gotKey = ref(false);
 
 const schema = Yup.object().shape({
   username: Yup.string()
@@ -15,6 +18,7 @@ const schema = Yup.object().shape({
 async function onSubmit(values) {
   const usersStore = useUsersStore();
   const alertStore = useAlertStore();
+
   try {
     await usersStore.register(values);
     await router.push('/account/login');
@@ -23,6 +27,7 @@ async function onSubmit(values) {
     alertStore.error(error);
   }
 }
+
 </script>
 
 <template>
@@ -47,6 +52,29 @@ async function onSubmit(values) {
           />
           <div class="invalid-feedback">
             {{ errors.username }}
+          </div>
+
+          <div>
+            <p>
+              <a
+                href="#"
+                role="button"
+                @click="gotKey = !gotKey"
+              >
+                I got my own key
+              </a>
+            </p>
+            <div v-show="gotKey">
+              <p>Paste your public key here:</p>
+              <Field
+                name="publicKey"
+                autocomplete="off"
+                as="textarea"
+                cols="30"
+                rows="10"
+                class="form-control"
+              />
+            </div>
           </div>
         </div>
         <div class="form-group">
