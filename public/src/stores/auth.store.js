@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia';
+import { defineStore, getActivePinia } from 'pinia';
 
 import { fetchWrapper } from '@/helpers';
 import { router } from '@/router';
@@ -58,7 +58,8 @@ export const useAuthStore = defineStore({
       }
     },
     logout() {
-      this.user = null;
+      const pinia = getActivePinia();
+      pinia._s.forEach((store) => store.$reset())
       router.push('/account/login');
       clearInterval(interval);
     },
