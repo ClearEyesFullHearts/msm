@@ -5,15 +5,6 @@ import { useAuthStore } from '@/stores';
 
 const loginInput = ref(null);
 const fileInput = ref(null);
-let isSubmitting = false;
-
-async function onFilePicked(evt) {
-  const { files } = evt.target;
-  const secret = files;
-  const username = loginInput.value.value;
-
-  await onSubmit({ username, secret });
-}
 
 async function loadTextFromFile(ev) {
   return new Promise((resolve) => {
@@ -31,11 +22,20 @@ async function onSubmit(values) {
   const authStore = useAuthStore();
   const { username, secret } = values;
   const key = await loadTextFromFile(secret);
-  isSubmitting = false;
   await authStore.login(username, key);
 }
+
+async function onFilePicked(evt) {
+  const { files } = evt.target;
+  const secret = files;
+  const username = loginInput.value.value;
+
+  await onSubmit({ username, secret });
+}
 async function onLog() {
-  isSubmitting = true;
+  if (!loginInput.value.value.length || loginInput.value.value.length < 3) {
+    return;
+  }
   fileInput.value.click();
 }
 </script>
@@ -70,13 +70,8 @@ async function onLog() {
       <div>
         <button
           class="btn btn-primary"
-          :disabled="isSubmitting"
           @click="onLog()"
         >
-          <span
-            v-show="isSubmitting"
-            class="spinner-border spinner-border-sm mr-1"
-          />
           Login
         </button>
         <router-link
@@ -93,26 +88,6 @@ async function onLog() {
         style="opacity: none;"
         @change="onFilePicked"
       >
-      <!-- <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
-                <div class="form-group">
-                    <label>@</label>
-                    <Field name="username" type="text" class="form-control" :class="{ 'is-invalid': errors.username }" />
-                    <div class="invalid-feedback">{{ errors.username }}</div>
-                </div>
-                <div class="form-group">
-                    <label>Your secret key</label>
-                    <Field name="secret" type="file" class="form-control" :class="{ 'is-invalid': errors.secret }" />
-                    <div class="invalid-feedback">{{ errors.secret }}</div>
-                </div>
-                <div class="form-group">
-                    <button class="btn btn-primary" :disabled="isSubmitting">
-                        <span v-show="isSubmitting" class="spinner-border spinner-border-sm mr-1"></span>
-                        Login
-                    </button>
-                    <router-link to="register" class="btn btn-link">Register</router-link>
-                </div>
-
-            </Form> -->
     </div>
   </div>
 </template>

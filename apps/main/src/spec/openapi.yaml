@@ -242,6 +242,8 @@ components:
       properties:
         at:
           type: string
+          minLength: 3
+          maxLength: 125
     Challenge:
       type: object
       required:
