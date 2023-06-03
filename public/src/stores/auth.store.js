@@ -51,7 +51,7 @@ export const useAuthStore = defineStore({
         }, 1000);
 
         // redirect to previous url or default to home page
-        router.push(this.returnUrl || '/');
+        router.push(this.returnUrl || '/messages');
       } catch (error) {
         const alertStore = useAlertStore();
         alertStore.error(error);
