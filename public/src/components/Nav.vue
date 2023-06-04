@@ -17,12 +17,52 @@ async function incinerate() {
 
 <template>
   <nav
-    v-if="authStore.user"
+    v-if="!authStore.user"
     class="navbar navbar-expand navbar-dark bg-dark"
   >
     <div class="navbar-nav mr-auto">
       <router-link
         to="/"
+        class="nav-item nav-link"
+      >
+        ySyPyA
+      </router-link>
+    </div>
+    <div>
+      <router-link
+        v-slot="{href, navigate}"
+        to="/account/login"
+      >
+        <button
+          :href="href"
+          class="btn btn-outline-light"
+          @click="navigate"
+        >
+          Login
+        </button>
+      </router-link>
+      &nbsp;
+      <router-link
+        v-slot="{href, navigate}"
+        to="/account/register"
+      >
+        <button
+          :href="href"
+          class="btn btn-outline-light"
+          @click="navigate"
+        >
+          Register
+        </button>
+      </router-link>
+    </div>
+  </nav>
+  <nav
+    v-if="authStore.user"
+    class="navbar navbar-expand navbar-dark bg-dark"
+  >
+    <div class="navbar-nav mr-auto">
+      <router-link
+        to="/home"
         class="nav-item nav-link"
       >
         Home

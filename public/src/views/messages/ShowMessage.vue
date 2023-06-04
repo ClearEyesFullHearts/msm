@@ -41,7 +41,7 @@ async function forceDelete() {
   </router-link>
   <main
     role="main"
-    class="container"
+    class="container pt-4 pb-4"
   >
     <div class="row">
       <div class="col-md-8 blog-main">
