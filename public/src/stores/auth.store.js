@@ -28,7 +28,7 @@ export const useAuthStore = defineStore({
 
         // update pinia state
         this.user = user;
-        const countDownDate = user.connection + (15 * 60 * 1000);
+        const countDownDate = user.connection + user.config.sessionTime;
 
         interval = setInterval(() => {
           // Get today's date and time

@@ -11,7 +11,7 @@ export const useMemoryStore = defineStore({
     messages: [],
   }),
   actions: {
-    async readMessage({ id, challenge }) {
+    async readMessage(challenge) {
       try {
         const authStore = useAuthStore();
         const { pem } = authStore;
@@ -26,7 +26,6 @@ export const useMemoryStore = defineStore({
         } = JSON.parse(objStr);
 
         this.messages.unshift({
-          id,
           from,
           sentAt,
           title: this.decodeText(title),

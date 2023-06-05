@@ -12,6 +12,7 @@ const writingSchema = Yup.object().shape({
 });
 const publicKeyInput = ref(null);
 const publicUploadBtn = ref(null);
+const extractKeyInput = ref(null);
 const secretKeyInput = ref(null);
 const secretUploadBtn = ref(null);
 const challengeKeyInput = ref(null);
@@ -61,6 +62,15 @@ async function onGenerateKey() {
   const { PK, SK } = await mycrypto.generateKeyPair();
   downloadFile('private.pem', SK);
   downloadFile('public.pem', PK);
+}
+async function onExtractKey() {
+  extractKeyInput.value.click();
+}
+async function onExtractFilePicked(evt) {
+  const { files } = evt.target;
+  secretKey = await loadTextFromFile(files);
+  const pk = await mycrypto.getPublicKey(secretKey);
+  downloadFile('public.pem', pk);
 }
 
 async function onWritingSubmit(values) {
@@ -226,7 +236,21 @@ async function onChallengeFilePicked(evt) {
               @click="onGenerateKey()"
             >
               Generate Keys
+            </button>&nbsp;
+            <button
+              class="btn btn-sm btn-success"
+              @click="onExtractKey()"
+            >
+              Extract PK from SK
             </button>
+
+            <input
+              ref="extractKeyInput"
+              hidden
+              type="file"
+              style="opacity: none;"
+              @change="onExtractFilePicked"
+            >
           </div>
           <div class="card-body">
             <div class="card m-3">

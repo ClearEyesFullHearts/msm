@@ -1,17 +1,31 @@
 <script setup>
+import { onUnmounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 
-import { useMessagesStore } from '@/stores';
+import { useAuthStore, useMessagesStore } from '@/stores';
 
 const router = useRouter();
 
 const messagesStore = useMessagesStore();
+const authStore = useAuthStore();
 const { headers } = storeToRefs(messagesStore);
 messagesStore.targetMessage = {};
 messagesStore.message = {};
 
-messagesStore.getHeaders();
+let interval;
+messagesStore.getHeaders().then(() => {
+  const pollingTime = authStore.user?.config?.pollingTime;
+  
+  if (pollingTime && pollingTime > 0) {
+    interval = setInterval(() => {
+      console.log('interval!!');
+      messagesStore.getHeaders();
+    }, pollingTime);
+  }
+});
+
+onUnmounted(() => clearInterval(interval));
 
 async function replyTo(from, reTitle) {
   messagesStore.targetMessage.at = from.substring(1);

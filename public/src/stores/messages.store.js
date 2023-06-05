@@ -119,7 +119,7 @@ export const useMessagesStore = defineStore({
         ...restMsg
       }));
 
-      a.href = window.URL.createObjectURL(new Blob([JSON.stringify({ id, challenge })]));
+      a.href = window.URL.createObjectURL(new Blob([JSON.stringify(challenge)]));
       a.download = `${id}.ysypya`;
 
       // Append anchor to body.

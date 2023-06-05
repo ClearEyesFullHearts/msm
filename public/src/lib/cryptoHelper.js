@@ -46,32 +46,6 @@ class CryptoHelper {
 
       return pemExported;
     };
-
-    this.getPublicKey = async (pem) => {
-      const privateKey = await this.importCryptoKey(pem, 'pkcs8', 'PRIVATE', true);
-      // export private key to JWK
-      const jwk = await crypto.subtle.exportKey('jwk', privateKey);
-
-      // remove private data from JWK
-      delete jwk.d;
-      delete jwk.dp;
-      delete jwk.dq;
-      delete jwk.q;
-      delete jwk.qi;
-      jwk.key_ops = ['encrypt'];
-
-      // import public key
-      const publicKeyBuff = await crypto.subtle.importKey('jwk', jwk,
-        {
-          name: 'RSA-OAEP',
-          modulusLength: 4096,
-          publicExponent: new Uint8Array([1, 0, 1]),
-          hash: 'SHA-256',
-        },
-        true, ['encrypt']);
-      const publicKey = await this.exportCryptoKey(publicKeyBuff, 'spki', 'PUBLIC');
-      return publicKey;
-    };
   }
 
   async generateKeyPair() {
@@ -93,6 +67,32 @@ class CryptoHelper {
       PK,
       SK,
     };
+  }
+
+  async getPublicKey(pem) {
+    const privateKey = await this.importCryptoKey(pem, 'pkcs8', 'PRIVATE', true);
+    // export private key to JWK
+    const jwk = await crypto.subtle.exportKey('jwk', privateKey);
+
+    // remove private data from JWK
+    delete jwk.d;
+    delete jwk.dp;
+    delete jwk.dq;
+    delete jwk.q;
+    delete jwk.qi;
+    jwk.key_ops = ['encrypt'];
+
+    // import public key
+    const publicKeyBuff = await crypto.subtle.importKey('jwk', jwk,
+      {
+        name: 'RSA-OAEP',
+        modulusLength: 4096,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: 'SHA-256',
+      },
+      true, ['encrypt']);
+    const publicKey = await this.exportCryptoKey(publicKeyBuff, 'spki', 'PUBLIC');
+    return publicKey;
   }
 
   async challenge(pem, dataStr) {

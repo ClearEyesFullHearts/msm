@@ -130,6 +130,10 @@ class User {
     const payload = {
       auth: true,
       connection: Date.now(),
+      config: {
+        sessionTime: config.get('timer.removal.session'),
+        pollingTime: config.get('timer.interval.poll'),
+      },
       user: {
         id: usr.id,
         username: usr.username,
