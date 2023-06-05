@@ -21,6 +21,17 @@ let publicKey;
 let secretKey;
 let challenge;
 
+function encodeText(str) {
+  return str.split('')
+    .map((char) => {
+      const charCode = char.charCodeAt(0);
+      return charCode > 127 ? encodeURIComponent(char) : char;
+    })
+    .join('');
+}
+function decodeText(str) {
+  return decodeURIComponent(str);
+}
 async function loadTextFromFile(ev) {
   return new Promise((resolve) => {
     const file = ev[0];
@@ -55,7 +66,7 @@ async function onGenerateKey() {
 async function onWritingSubmit(values) {
   const { content } = values;
 
-  const { passphrase, iv, token } = await mycrypto.symmetricEncrypt(content);
+  const { passphrase, iv, token } = await mycrypto.symmetricEncrypt(encodeText(content));
   const clearPass = window.atob(passphrase);
   const cryptedPass = await mycrypto.publicEncrypt(publicKey, clearPass);
 
@@ -84,7 +95,7 @@ async function onReadingSubmit() {
   const objChallenge = JSON.parse(challenge);
   const clearText = await mycrypto.resolve(secretKey, objChallenge);
 
-  targetText.value.innerHTML = clearText;
+  targetText.value.innerHTML = decodeText(clearText);
 }
 async function onUploadSecret() {
   secretKeyInput.value.click();
