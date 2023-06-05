@@ -31,7 +31,6 @@ async function onFilePicked(evt) {
   }
   const results = await Promise.all(promises);
   const loaded = results.map((result) => JSON.parse(result));
-  loaded.sort((a, b) => a.id - b.id);
 
   for (let i = 0; i < loaded.length; i += 1) {
     await memoryStore.readMessage(loaded[i]);

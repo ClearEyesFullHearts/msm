@@ -19,7 +19,6 @@ messagesStore.getHeaders().then(() => {
   
   if (pollingTime && pollingTime > 0) {
     interval = setInterval(() => {
-      console.log('interval!!');
       messagesStore.getHeaders();
     }, pollingTime);
   }

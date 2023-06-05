@@ -85,10 +85,72 @@ const { user } = storeToRefs(authStore);
       <h1>FAQ</h1>
       <hr>
       <h4>What is the MemoryBox?</h4>
+      <p>
+        We understand that the "burnt after reading" character of the messages can be annoying
+        and we cannot stop you from doing something dumb to circonvene it,
+        like taking picture of the screen or some other stuff like that, so we provide you with
+        a way to store messages as securely as possible should you want to.
+      </p>
+      <p>
+        When you read a message you can download it as an ecrypted file
+        that you can later upload in the memory box so that you can locally recreate your InBox.
+        Only your Secret Key can decrypt those files.
+      </p>
+      <p>
+        Obviously you shouldn't store those encrypted messages in the same place as your Secret Key.
+      </p>
+      <p>
+        You can also decrypt those files from the ySyPyA public home page
+        and create fake ones if you need to for whatever reasons.
+      </p>
       <h4>Why can't I write longer messages?</h4>
+      <p>
+        Paedophiles, that's why.
+      </p>
+      <p>
+        We want to ensure that no paedo-pornographic material transit directly through our system
+        and the best way to do this is to limit the size of the messages.
+      </p>
+      <p>
+        The maximum size itself (446 ASCII characters) comes from the number of Bytes
+        you can encrypt with a 4096 RSA public key.
+      </p>
       <h4>Why can't I see the messages I sent?</h4>
+      <p>
+        Because we don't keep track of that information.
+        The sender data that you see in the messages you receive is added and encrypted
+        just like the rest of the message's informations.
+      </p>
+      <p>
+        You will soon be able to download a draft version before you send it and
+        load it in the MemoryBox or load it up and send it from the regular place.
+      </p>
       <h4>What kind of data do you keep?</h4>
+      <p>
+        Someone with full access to our database can only know your @,
+        the last time you read a message, your public key and the number of messages in your Inbox.
+        We keep no other information.
+      </p>
+      <p>
+        An attacker with access to our system could know whose @ is sending messages to whom
+        at the time it happens, since the sender information is added on our side before
+        the final message encryption.
+      </p>
+      <p>
+        An attacker with network surveillance capability could link your IP address
+        to your @ on login, maybe?
+      </p>
       <h4>What next?</h4>
+      <p>
+        <ul>
+          <li>
+            Enable donations through coinbase.
+          </li>
+          <li>
+            Create a paying user tier with more functionalities.
+          </li>
+        </ul>
+      </p>
       <p>
         <router-link to="/messages">
           Go to your inbox
