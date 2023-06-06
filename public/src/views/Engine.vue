@@ -132,6 +132,40 @@ async function onChallengeFilePicked(evt) {
 
 <template>
   <div class="container-fluid">
+    <h1 class="text-center">ySyPyA</h1>
+    <h2 class="text-center">RSA Encryption/Decryption Engine</h2>
+    <div class="card-body text-center">
+      <p>
+        If you don't have a key pair, click on "Generate Keys"
+        and send the "public.pem" file to everyone that wants to
+        communicate safely with you
+      </p>
+      <p>
+        If you only have your Secret Key, from our registering process for example,
+        click on "Extract PK from SK"
+        to get your Public Key
+      </p>
+      <button
+        class="btn btn-sm btn-success"
+        @click="onGenerateKey()"
+      >
+        Generate Keys
+      </button>&nbsp;
+      <button
+        class="btn btn-sm btn-success"
+        @click="onExtractKey()"
+      >
+        Extract PK from SK
+      </button>
+
+      <input
+        ref="extractKeyInput"
+        hidden
+        type="file"
+        style="opacity: none;"
+        @change="onExtractFilePicked"
+      >
+    </div>
     <div class="row">
       <div class="col">
         <div class="card m-3">
@@ -225,33 +259,6 @@ async function onChallengeFilePicked(evt) {
           <h4 class="card-header">
             Reading
           </h4>
-          <div class="card-body text-center">
-            <p>
-              If you don't have a key pair, click on "Generate Keys"
-              and send the "public.pem" file to everyone that wants to
-              communicate safely with you
-            </p>
-            <button
-              class="btn btn-sm btn-success"
-              @click="onGenerateKey()"
-            >
-              Generate Keys
-            </button>&nbsp;
-            <button
-              class="btn btn-sm btn-success"
-              @click="onExtractKey()"
-            >
-              Extract PK from SK
-            </button>
-
-            <input
-              ref="extractKeyInput"
-              hidden
-              type="file"
-              style="opacity: none;"
-              @change="onExtractFilePicked"
-            >
-          </div>
           <div class="card-body">
             <div class="card m-3">
               <h4 class="card-header">

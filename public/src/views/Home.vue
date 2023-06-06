@@ -26,7 +26,7 @@ const { user } = storeToRefs(authStore);
       </p>
       <p>
         As you can see we respect too much the work of
-        professional graphic designer to try and do it ourself. Sorry for the eyesore!
+        professional graphic designers to try and do it ourself. Sorry for the eyesore!
       </p>
       <hr>
       <h2>Mission statement</h2>
@@ -84,6 +84,16 @@ const { user } = storeToRefs(authStore);
       <br>
       <h1>FAQ</h1>
       <hr>
+      <h4>Why do you insist that my security is my responsibility?</h4>
+      <p>
+        RSA encryption is <i>as far as we know</i> unbreakable, and we keep no informations
+        that could link you to your account or the accounts you're messaging with.
+      </p>
+      <p>
+        It means that if someone wants to know who you're talking to
+        and what you say, it is far easier to have physical surveillance or hack
+        into your devices. To prevent that is your responsability. :)
+      </p>
       <h4>What is the MemoryBox?</h4>
       <p>
         We understand that the "burnt after reading" character of the messages can be annoying
@@ -140,9 +150,16 @@ const { user } = storeToRefs(authStore);
         An attacker with network surveillance capability could link your IP address
         to your @ on login, maybe?
       </p>
+      <p>
+        An attacker that get access to <i>our</i> secret could send message under
+        a false account identity. (We're working on that one)
+      </p>
       <h4>What next?</h4>
       <p>
         <ul>
+          <li>
+            Signing of the actions.
+          </li>
           <li>
             Enable donations through coinbase.
           </li>
