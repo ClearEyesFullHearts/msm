@@ -36,6 +36,10 @@ class MSMMain {
     debug('clear all inactive users');
     await data.deactivateAccounts();
 
+    this.app.get('/health', (req, res) => {
+      res.status(200).send();
+    });
+
     // clear everything once a day
     this.interval = setInterval(async () => {
       debug('clear all read messages');

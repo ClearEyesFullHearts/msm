@@ -26,7 +26,7 @@ class UserData {
         default: 'safe',
       },
     });
-    this.userSchema.index({ searchTerms: 'text' });
+    // this.userSchema.index({ searchTerms: 'text' });
   }
 
   async init(conn) {
@@ -46,7 +46,7 @@ class UserData {
   }
 
   async searchUsername(search) {
-    const users = await this.Doc.find({ $text: { $search: search } }).limit(15);
+    const users = await this.Doc.find({ searchTerms: search }).limit(15);
     return users;
   }
 }

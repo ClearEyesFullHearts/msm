@@ -1,0 +1,7 @@
+{
+    "mongo": {
+      "url": "KEY_MONGO_URL"
+    },
+    "auth": "KEY_AUTH_SIGN"
+  }
+  

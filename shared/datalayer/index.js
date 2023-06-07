@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const config = require('config');
 const debug = require('debug')('datalayer:data');
+const path = require('path');
 const UserData = require('./model/users');
 const MessageData = require('./model/messages');
 
@@ -13,10 +14,19 @@ class Data {
   async init() {
     try {
       debug('initialize mongodb connection');
+      let options = {};
+      if (config.get('mongo.ssl')) {
+        options = {
+          ssl: true,
+          sslValidate: false,
+          sslCA: path.join(__dirname, 'ssl/ca.pem'),
+        };
+      }
       this.connection = await mongoose.connect(config.get('mongo.url'), {
         autoIndex: true,
         useNewUrlParser: true,
         useUnifiedTopology: true,
+        ...options,
       });
     } catch (err) {
       debug('initialization connection error', err);
