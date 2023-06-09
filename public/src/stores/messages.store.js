@@ -26,6 +26,7 @@ export const useMessagesStore = defineStore({
         const { pem } = authStore;
 
         this.headers = [];
+        document.title = 'ySyPyA';
         for (let i = 0; i < challenges.length; i++) {
           const { id, challenge } = challenges[i];
           const objStr = await mycrypto.resolve(pem, challenge);
@@ -46,6 +47,7 @@ export const useMessagesStore = defineStore({
             sentAt,
             title: this.decodeText(title),
           });
+          document.title = `ySyPyA (${this.headers.length})`;
         }
       } catch (error) {
         this.headers = { error };

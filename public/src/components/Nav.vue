@@ -58,45 +58,63 @@ async function incinerate() {
   </nav>
   <nav
     v-if="authStore.user"
-    class="navbar navbar-expand navbar-dark bg-dark"
+    class="navbar navbar-expand-lg navbar-dark bg-dark"
   >
-    <div class="navbar-nav mr-auto">
-      <router-link
-        to="/home"
-        class="nav-item nav-link"
-      >
-        Home
-      </router-link>
-      <router-link
-        to="/messages"
-        class="nav-item nav-link"
-      >
-        InBox
-      </router-link>
-      <router-link
-        to="/memory"
-        class="nav-item nav-link"
-      >
-        MemoryBox
-      </router-link>
-    </div>
-    <div class="navbar-nav mr-auto">
-      <button
-        class="btn btn-outline-danger"
-        @click="incinerate()"
-      >
-        Incinerate @{{ authStore?.user?.user?.username }}
-      </button>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-toggle="collapse"
+      data-target="#navbarTogglerDemo01"
+      aria-controls="navbarTogglerDemo01"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon" />
+    </button>
+    <div
+      id="navbarTogglerDemo01"
+      class="collapse navbar-collapse"
+    >
+      <div class="navbar-nav mr-auto">
+        <router-link
+          to="/home"
+          class="nav-item nav-link"
+        >
+          Home
+        </router-link>
+        <router-link
+          to="/messages"
+          class="nav-item nav-link"
+        >
+          InBox
+        </router-link>
+        <router-link
+          to="/memory"
+          class="nav-item nav-link"
+        >
+          MemoryBox
+        </router-link>
+      </div>
+
+      <div class="navbar-nav m-1 mr-auto">
+        <button
+          class="btn btn-outline-danger"
+          @click="incinerate()"
+        >
+          Incinerate @{{ authStore?.user?.user?.username }}
+        </button>
+      </div>
+      <div class="navbar-nav m-1">
+        <button
+          class="btn btn-outline-light"
+          @click="authStore.logout()"
+        >
+          Logout
+        </button>
+      </div>
     </div>
     <div>
       <span class="navbar-text">Your session will expire in {{ countDownMsg }}</span>
-            &nbsp;
-      <button
-        class="btn btn-outline-light"
-        @click="authStore.logout()"
-      >
-        Logout
-      </button>
     </div>
   </nav>
 </template>

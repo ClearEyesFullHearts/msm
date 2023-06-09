@@ -61,6 +61,7 @@ export const useAuthStore = defineStore({
       const pinia = getActivePinia();
       pinia._s.forEach((store) => store.$reset())
       router.push('/');
+      document.title = 'ySyPyA';
       clearInterval(interval);
     },
   },
