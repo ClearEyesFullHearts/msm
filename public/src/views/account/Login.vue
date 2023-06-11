@@ -43,6 +43,26 @@ async function onLog() {
 <template>
   <div class="card m-3">
     <h4 class="card-header">
+      TL/DR
+    </h4>
+    <div class="card-body">
+      <ul>
+        <li>Enter your username</li>
+        <li>Click on "Login", it will open a window for you to choose a file</li>
+        <li>
+          Look for the file that was downloaded during the registration process,
+          i.e. "@[your username].pem" in the download folder if you haven't done anything
+        </li>
+        <li>
+          If you're on mobile you may have to choose an app to pick the file,
+          choose "Files" or something similar, then pick the file.
+        </li>
+        <li>You will be connected and redirected to your InBox</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card m-3">
+    <h4 class="card-header">
       Login
     </h4>
     <div class="card-body">
@@ -88,6 +108,25 @@ async function onLog() {
         style="opacity: none;"
         @change="onFilePicked"
       >
+    </div>
+  </div>
+
+  <div class="card m-3">
+    <h4 class="card-header">
+      Full explanation
+    </h4>
+    <div
+      class="card-body"
+    >
+      <p>
+        When you click on the "Login" button, the browser request connection informations
+        for that username. The response is encrypted with that user's Public Key.
+      </p>
+      <p>
+        The file you pick is your Secret Key and is used to decrypt the server's response.
+        Once decrypted we use the JWT from the connection information to identify with the
+        server.
+      </p>
     </div>
   </div>
 </template>

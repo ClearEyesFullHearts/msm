@@ -6,14 +6,14 @@
   "instance": {
     "port": 4000,
     "cors":{
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": "http://localhost:3000",
       "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization, Content-Length"
     }
   },
   "welcome": {
     "title": "Welcome to ySyPyA",
-    "content": "Welcome,\n\nySyPyA stands for \"your Security your Privacy your Anonymity\"\nYour account is now activated.\nIf it's the first time you create an account, please visit the Home page.\n\nThe ySyPyA team."
+    "content": "Welcome,\n\nySyPyA stands for \"your Security your Privacy your Anonymity\"\nYour account is now activated.\n\nIf it's the first time you create an account, please visit the Home page.\n\nThe ySyPyA team."
   },
   "auth": "supersecret",
   "timer": {

@@ -27,6 +27,12 @@ async function incinerate() {
       >
         ySyPyA
       </router-link>
+      <router-link
+        to="/engine"
+        class="nav-item nav-link"
+      >
+        Engine
+      </router-link>
     </div>
     <div>
       <router-link

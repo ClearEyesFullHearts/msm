@@ -132,8 +132,12 @@ async function onChallengeFilePicked(evt) {
 
 <template>
   <div class="container-fluid">
-    <h1 class="text-center">ySyPyA</h1>
-    <h2 class="text-center">RSA Encryption/Decryption Engine</h2>
+    <h1 class="text-center">
+      ySyPyA
+    </h1>
+    <h2 class="text-center">
+      RSA Encryption/Decryption Engine
+    </h2>
     <div class="card-body text-center">
       <p>
         If you don't have a key pair, click on "Generate Keys"
@@ -144,6 +148,14 @@ async function onChallengeFilePicked(evt) {
         If you only have your Secret Key, from our registering process for example,
         click on "Extract PK from SK"
         to get your Public Key
+      </p>
+      <p>
+        If you have no idea what we are talking about here, report to the home page
+        or read that very short introduction:
+        <a
+          href="https://github.com/ClearEyesFullHearts/msm/blob/main/INTRODUCTION.md"
+          target="_blank"
+        >encrypted communication intro.</a>
       </p>
       <button
         class="btn btn-sm btn-success"
@@ -179,7 +191,10 @@ async function onChallengeFilePicked(evt) {
               </h4>
               <div class="card-body">
                 <ul>
-                  <li>Click on "Upload Key" and choose your recipient's Public Key file</li>
+                  <li>
+                    Click on "Upload target Public Key" and choose your
+                    recipient's Public Key file
+                  </li>
                   <li>Write your text</li>
                   <li>Click on "Encrypt"</li>
                   <li>Send the resulting (downloaded) file to your recipient</li>

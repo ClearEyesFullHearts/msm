@@ -37,10 +37,13 @@ async function onSubmit(values) {
     </h4>
     <div class="card-body">
       <ul>
-        <li>Enter your new username</li>
-        <li>Click the Register button</li>
-        <li>Save the file that is automatically downloaded somewhere safe</li>
-        <li>Use it when prompted on Login</li>
+        <li>Enter the username you want to use</li>
+        <li>Click the "Register" button</li>
+        <li>
+          A file named "@[your username].pem" is automatically downloaded in your "Download" folder
+          (even you don't see it, believe us it did)
+        </li>
+        <li>Use that file when prompted on Login</li>
         <li>You have 10 minutes to activate your account by opening the "Welcome" message</li>
       </ul>
     </div>
