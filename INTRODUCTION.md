@@ -18,5 +18,6 @@ The PK is used to encrypt the message and then it can only be decrypted by the S
 # ySyPyA
 By now you should have understood that ySyPyA use asymmetric key encryption (well a mix of symmetric and asymmetric actually, called hybrid encryption) to ensure the privacy of your conversation.  
 With the public engine you can generate asymmetric keys (a key pair) and use them to allow anyone to write to you in a secured way.  
-Our free tier is mostly a public keys directory with added tools to make the sharing of messages easier.  
+Our free tier is mostly a public keys directory with added tools to make the sharing of messages easier. The file that is created and downloaded when you create your account is your Secret Key, it is not shared with us and you are responsible for its integrity and security.  
+  
 If you're interested in more technical details, visit the README (coming soon)
