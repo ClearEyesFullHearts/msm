@@ -11,20 +11,23 @@ function createSearchTerms(str) {
   const terms = [];
   for (let i = 0; i < l - 2; i += 1) {
     for (let j = i + 3; j < l; j += 1) {
-      terms.push(str.substring(i, j));
+      terms.push(str.substring(i, j).toUpperCase());
     }
-    terms.push(str.substring(i));
+    terms.push(str.substring(i).toUpperCase());
   }
   return terms;
 }
 
 class User {
-  static async createUser(db, { at, key }) {
+  static async createUser(db, { at, key, signature }) {
     debug('check for user with username:', at);
     if (at.length !== encodeURIComponent(at).length) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have any special character');
     }
     if (!Encryption.isValidPemPk(key)) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong public key format');
+    }
+    if (!Encryption.isValidPemPk(signature)) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong public key format');
     }
 
@@ -36,8 +39,10 @@ class User {
     debug('create new user');
     const newUser = new db.users.Doc();
     newUser.username = at;
+    newUser.size = at.length;
     newUser.searchTerms = createSearchTerms(at);
     newUser.key = key;
+    newUser.signature = signature;
     newUser.lastActivity = -(Date.now());
     newUser.security = 'safe';
 
@@ -71,7 +76,7 @@ class User {
 
   static async getUsers(db, { search }) {
     debug('search for users with @ like:', search);
-    const users = await db.users.searchUsername(search);
+    const users = await db.users.searchUsername(search.toUpperCase());
 
     debug('found', users.length);
     return users.map(({ username, key }) => ({ at: username, key }));

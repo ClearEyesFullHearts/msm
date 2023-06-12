@@ -14,9 +14,14 @@ class UserData {
         required: true,
       },
       searchTerms: [String],
+      size: Number,
       key: {
         type: String,
         required: true,
+        unique: true,
+      },
+      signature: {
+        type: String,
         unique: true,
       },
       lastActivity: Number,
@@ -46,7 +51,7 @@ class UserData {
   }
 
   async searchUsername(search) {
-    const users = await this.Doc.find({ searchTerms: search }).limit(15);
+    const users = await this.Doc.find({ searchTerms: search }).sort({ size: -1 }).limit(15);
     return users;
   }
 }

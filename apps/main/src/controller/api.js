@@ -7,7 +7,9 @@ module.exports = {
   createUser: (req, res, next) => {
     const {
       body: {
-        at, key,
+        at,
+        key,
+        signature,
       },
       app: {
         locals: {
@@ -15,7 +17,7 @@ module.exports = {
         },
       },
     } = req;
-    User.createUser(db, { at, key })
+    User.createUser(db, { at, key, signature })
       .then(({ id }) => {
         res.status(201).send();
 
@@ -98,7 +100,7 @@ module.exports = {
   ],
   login: (req, res, next) => {
     const {
-      body: {
+      params: {
         at,
       },
       app: {

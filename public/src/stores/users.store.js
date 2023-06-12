@@ -34,12 +34,16 @@ export const useUsersStore = defineStore({
 
       if (!publicKey || !publicKey.length) {
         const { PK, SK } = await mycrypto.generateKeyPair();
+        const { PK: signPK, SK: signSK } = await mycrypto.generateSignatureKeyPair();
+        
         const send = {
           at: username,
           key: PK,
+          signature: signPK,
         };
         await fetchWrapper.post(`${baseUrl}/users`, send);
-        downloadKey(user.username, SK);
+        const skFileContent = `${SK}${CryptoHelper.SEPARATOR}${signSK}`;
+        downloadKey(user.username, skFileContent);
       } else {
         const pemHeader = '-----BEGIN PUBLIC KEY-----';
         const pemFooter = '-----END PUBLIC KEY-----';

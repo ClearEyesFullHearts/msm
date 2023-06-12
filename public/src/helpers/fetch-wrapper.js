@@ -1,4 +1,6 @@
 import { useAuthStore } from '@/stores';
+import CryptoHelper from '@/lib/cryptoHelper';
+const mycrypto = new CryptoHelper();
 
 export const fetchWrapper = {
     get: request('GET'),
@@ -8,10 +10,11 @@ export const fetchWrapper = {
 };
 
 function request(method) {
-    return (url, body) => {
+    return async (url, body) => {
+        const headers = await authHeader(url, method, body);
         const requestOptions = {
             method,
-            headers: authHeader(url)
+            headers
         };
         if (body) {
             requestOptions.headers['Content-Type'] = 'application/json';
@@ -23,13 +26,27 @@ function request(method) {
 
 // helper functions
 
-function authHeader(url) {
+async function authHeader(url, method, body) {
     // return auth header with jwt if user is logged in and request is to the api url
-    const { user } = useAuthStore();
+    const { user, signing } = useAuthStore();
+    
     const isLoggedIn = !!user?.token;
     const isApiUrl = url.startsWith(import.meta.env.VITE_API_URL);
     if (isLoggedIn && isApiUrl) {
-        return { Authorization: `Bearer ${user.token}` };
+        const { token, ...restUser } = user;
+        const headers = {
+            Authorization: `Bearer ${token}`
+        }
+        if(['POST', 'PUT', 'DELETE'].includes(method)){
+            const data = JSON.stringify({
+                ...restUser,
+                ...body,
+            });
+            
+            const signature = await mycrypto.sign(signing, data);
+            headers['X-msm-Sig'] = signature;
+        }
+        return headers;
     } else {
         return {};
     }

@@ -16,7 +16,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/NewUser'
       responses:
         '201':
           description: User created
@@ -52,16 +52,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
                 
-  /user:
-    put:
+  /identity/{at}:
+    get:
       summary: Login
       operationId: login
       x-eov-operation-handler: api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Identifier'
+      parameters:
+        - name: at
+          in: path
+          description: Start of users name
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 125
       responses:
         '200':
           description: Encrypted Bearer token
@@ -109,12 +113,22 @@ paths:
       operationId: incinerate
       x-eov-operation-handler: api
       parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          description: SK signature of the body
+          schema:
+            type: string
+            format: byte
+            minLength: 172
+            maxLength: 172
         - name: at
           in: path
           required: true
           description: The ID of the user to delete
           schema:
             type: integer
+
       responses:
         '200':
           description: The account doesn't exists anymore
@@ -154,6 +168,16 @@ paths:
       summary: Send a message
       operationId: writeMessage
       x-eov-operation-handler: api
+      parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          description: SK signature of the body
+          schema:
+            type: string
+            format: byte
+            minLength: 172
+            maxLength: 172
       requestBody:
         content:
           application/json:
@@ -206,6 +230,15 @@ paths:
       operationId: removeMessage
       x-eov-operation-handler: api
       parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          description: SK signature of the body
+          schema:
+            type: string
+            format: byte
+            minLength: 172
+            maxLength: 172
         - name: msgId
           in: path
           required: true
@@ -223,11 +256,12 @@ paths:
                 $ref: "#/components/schemas/Error"
 components:
   schemas:
-    User:
+    NewUser:
       type: object
       required:
         - at
         - key
+        - signature
       properties:
         at:
           type: string
@@ -235,15 +269,12 @@ components:
           maxLength: 125
         key:
           type: string
-    Identifier:
-      type: object
-      required:
-        - at
-      properties:
-        at:
+          minLength: 788
+          maxLength: 788
+        signature:
           type: string
-          minLength: 3
-          maxLength: 125
+          minLength: 268
+          maxLength: 268
     Challenge:
       type: object
       required:
@@ -262,6 +293,20 @@ components:
         iv:
           type: string
           format: byte
+    User:
+      type: object
+      required:
+        - at
+        - key
+      properties:
+        at:
+          type: string
+          minLength: 3
+          maxLength: 125
+        key:
+          type: string
+          minLength: 788
+          maxLength: 788
     UsersList:
       type: array
       items:

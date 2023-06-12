@@ -1,4 +1,6 @@
 class CryptoHelper {
+  static get SEPARATOR() { return '\n----- SIGNATURE -----\n'; }
+
   constructor() {
     this.clearTextToArBuff = (txt) => {
       const buf = new ArrayBuffer(txt.length);
@@ -46,6 +48,28 @@ class CryptoHelper {
 
       return pemExported;
     };
+    this.importSigningKey = async (pem, format, keyType, extractable = true) => {
+      const usage = keyType === 'PUBLIC' ? ['verify'] : ['sign'];
+      // fetch the part of the PEM string between header and footer
+      const pemHeader = `-----BEGIN ${keyType} KEY-----`;
+      const pemFooter = `-----END ${keyType} KEY-----`;
+      const pemContents = pem.substring(pemHeader.length, pem.length - pemFooter.length - 1);
+
+      const binaryDer = this.base64ToArBuff(pemContents);
+
+      const importedKey = await window.crypto.subtle.importKey(
+        format,
+        binaryDer,
+        {
+          name: 'RSA-PSS',
+          hash: 'SHA-256',
+        },
+        extractable,
+        usage,
+      );
+
+      return importedKey;
+    };
   }
 
   async generateKeyPair() {
@@ -58,6 +82,27 @@ class CryptoHelper {
       },
       true,
       ['encrypt', 'decrypt'],
+    );
+
+    const PK = await this.exportCryptoKey(keyPair.publicKey, 'spki', 'PUBLIC');
+    const SK = await this.exportCryptoKey(keyPair.privateKey, 'pkcs8', 'PRIVATE');
+
+    return {
+      PK,
+      SK,
+    };
+  }
+
+  async generateSignatureKeyPair() {
+    const keyPair = await window.crypto.subtle.generateKey(
+      {
+        name: 'RSA-PSS',
+        modulusLength: 1024,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: 'SHA-256',
+      },
+      true,
+      ['sign', 'verify'],
     );
 
     const PK = await this.exportCryptoKey(keyPair.publicKey, 'spki', 'PUBLIC');
@@ -192,6 +237,22 @@ class CryptoHelper {
       arrCryptedText,
     );
     return decripted;
+  }
+
+  async sign(signingKey, dataStr) {
+    const privateKey = await this.importSigningKey(signingKey, 'pkcs8', 'PRIVATE');
+    const encoded = this.clearTextToArBuff(dataStr);
+
+    const signature = await window.crypto.subtle.sign(
+      {
+        name: 'RSA-PSS',
+        saltLength: 32,
+      },
+      privateKey,
+      encoded,
+    );
+
+    return this.ArBuffToBase64(signature);
   }
 }
 

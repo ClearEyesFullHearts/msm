@@ -30,8 +30,17 @@ class Encryption {
     };
   }
 
+  static verifySignature(key, data, signature) {
+    const bufData = Buffer.from(data);
+    const bufSig = Buffer.from(signature, 'base64');
+    return crypto.verify('rsa-sha256', bufData, {
+      key,
+      padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+      saltLength: 32,
+    }, bufSig);
+  }
+
   static isValidPemPk(str) {
-    if (str.length !== 788) return false;
     if (str.substring(0, PK_START.length) !== PK_START) return false;
     if (str.substring(str.length - PK_END.length) !== PK_END) return false;
 

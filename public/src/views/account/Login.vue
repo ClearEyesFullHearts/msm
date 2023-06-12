@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 
 import { useAuthStore } from '@/stores';
+import CryptoHelper from '@/lib/cryptoHelper';
 
 const loginInput = ref(null);
 const fileInput = ref(null);
@@ -21,8 +22,10 @@ async function loadTextFromFile(ev) {
 async function onSubmit(values) {
   const authStore = useAuthStore();
   const { username, secret } = values;
-  const key = await loadTextFromFile(secret);
-  await authStore.login(username, key);
+  const keys = await loadTextFromFile(secret);
+  const [key, signKey] = keys.split(CryptoHelper.SEPARATOR);
+
+  await authStore.login(username, key, signKey);
 }
 
 async function onFilePicked(evt) {

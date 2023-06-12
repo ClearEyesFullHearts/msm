@@ -5,7 +5,7 @@ import { router } from '@/router';
 import { useAlertStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 
-const baseUrl = `${import.meta.env.VITE_API_URL}/user`;
+const baseUrl = `${import.meta.env.VITE_API_URL}/identity`;
 const mycrypto = new CryptoHelper();
 let interval;
 
@@ -14,17 +14,19 @@ export const useAuthStore = defineStore({
   state: () => ({
     user: null,
     pem: null,
+    signing: null,
     returnUrl: null,
     countDownMsg: null,
   }),
   actions: {
-    async login(username, key) {
+    async login(username, key, signKey) {
       try {
-        const challenge = await fetchWrapper.put(`${baseUrl}`, { at: username });
+        const challenge = await fetchWrapper.get(`${baseUrl}/${username}`);
         const userStr = await mycrypto.resolve(key, challenge);
 
         const user = JSON.parse(userStr);
         this.pem = key;
+        this.signing = signKey;
 
         // update pinia state
         this.user = user;
