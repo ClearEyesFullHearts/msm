@@ -7,9 +7,10 @@
     "port": 4000,
     "cors":{
       "Access-Control-Allow-Origin": "http://localhost:3000",
-      "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,OPTIONS",
+      "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE",
       "Access-Control-Allow-Headers": "Content-Type, Authorization, Content-Length, X-msm-Sig"
-    }
+    },
+    "reportTarget": "mat"
   },
   "welcome": {
     "title": "Welcome to ySyPyA",
@@ -21,7 +22,8 @@
       "message": 120000,
       "user": 600000,
       "session": 900000,
-      "inactivity": 2592000000
+      "inactivity": 2592000000,
+      "frozen": 7776000000
     },
     "interval": {
       "clear": 86400000,

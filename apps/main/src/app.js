@@ -6,6 +6,8 @@ const debug = require('debug')('msm-main:server');
 const Data = require('@shared/datalayer');
 const CORS = require('./lib/cors');
 const ErrorHelper = require('./lib/error');
+const Encryption = require('./lib/encryption');
+const MessageAction = require('./controller/actions/messages');
 
 const APP_ID = 'msm-main';
 
@@ -35,6 +37,8 @@ class MSMMain {
     await data.clearReadMessages();
     debug('clear all inactive users');
     await data.deactivateAccounts();
+    debug('unfreeze usernames');
+    await data.unfreezeUsername();
 
     this.app.get('/health', (req, res) => {
       res.status(200).send();
@@ -46,6 +50,10 @@ class MSMMain {
       await data.clearReadMessages();
       debug('clear all inactive users');
       await data.deactivateAccounts();
+      debug('unfreeze usernames');
+      await data.unfreezeUsername();
+      debug('send report');
+      await this.sendActivityReport();
     }, config.get('timer.interval.clear'));
 
     //  Install the OpenApiValidator on your express app
@@ -67,6 +75,30 @@ class MSMMain {
         resolve();
       });
     }));
+  }
+
+  async sendActivityReport() {
+    const {
+      locals: {
+        db,
+      },
+    } = this.app;
+
+    const target = await db.users.findByName(config.get('instance.reportTarget'));
+
+    if (target) {
+      const {
+        activeUsers,
+        waitingMessages,
+      } = await db.activityReport();
+
+      debug('send report message');
+      const reportTitle = 'Here is today\'s activity report';
+      const reportContent = `We have ${activeUsers} active users\nWe have ${waitingMessages} unread messages\n`;
+      const encrytedMsg = Encryption.encryptMessage(target, reportTitle, reportContent);
+      await MessageAction.writeMessage(db, encrytedMsg, { username: 'Daily Report' });
+      debug('report message sent');
+    }
   }
 }
 

@@ -35,6 +35,10 @@ class User {
     if (knownUser) {
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, '@ name already taken');
     }
+    const frozenUser = await db.freezer.findByName(at);
+    if (frozenUser) {
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, '@ name already taken');
+    }
 
     debug('create new user');
     const newUser = new db.users.Doc();
@@ -101,10 +105,10 @@ class User {
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot access this account');
     }
     debug(`remove user ${userId}`);
-    const user = await db.users.Doc.findOne({ id: userId });
+    const user = await db.users.findByID(userId);
     if (user) {
       debug('user found, delete account');
-      await db.clearUserAccount(userId);
+      await db.clearUserAccount({ userId: user.id, username: user.username });
       debug('user removed');
       return;
     }
@@ -121,7 +125,7 @@ class User {
       debug('user found');
       if (user.lastActivity < 0) {
         debug('inactive user, delete account');
-        await db.clearUserAccount(userId);
+        await db.clearUserAccount({ userId: user.id, username: user.username }, false);
         debug('user removed');
         return;
       }

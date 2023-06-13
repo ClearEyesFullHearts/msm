@@ -31,7 +31,7 @@ class UserData {
         default: 'safe',
       },
     });
-    // this.userSchema.index({ searchTerms: 'text' });
+    this.userSchema.index({ searchTerms: -1 });
   }
 
   async init(conn) {
@@ -51,7 +51,7 @@ class UserData {
   }
 
   async searchUsername(search) {
-    const users = await this.Doc.find({ searchTerms: search }).sort({ size: -1 }).limit(15);
+    const users = await this.Doc.find({ searchTerms: search }).sort({ size: 1 }).limit(15);
     return users;
   }
 }

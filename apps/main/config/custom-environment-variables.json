@@ -2,6 +2,9 @@
     "mongo": {
       "url": "KEY_MONGO_URL"
     },
-    "auth": "KEY_AUTH_SIGN"
+    "auth": "KEY_AUTH_SIGN",
+    "instance": {
+      "reportTarget": "KEY_REPORT_AT"
+    }
   }
   

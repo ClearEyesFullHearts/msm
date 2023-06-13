@@ -42,19 +42,25 @@ class AuthMiddleware {
             const { iat, ...restPayload } = payload;
             const { user: { id } } = restPayload;
 
-            return db.users.Doc.findOne({ id }).then(({ signature: verifPK }) => {
-              const data = JSON.stringify({
-                ...restPayload,
-                ...body,
-              });
-              const result = Encryption.verifySignature(verifPK, data, sig);
-              if (!result) {
-                return next(ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'Impersonation attempt'));
-              }
-              debug('signature checks out');
+            return db.users.Doc.findOne({ id })
+              .then((author) => {
+                if (!author) {
+                  return next(ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'Unknown user'));
+                }
+                const { signature: verifPK } = author;
+                const data = JSON.stringify({
+                  ...restPayload,
+                  ...body,
+                });
+                const result = Encryption.verifySignature(verifPK, data, sig);
+                if (!result) {
+                  return next(ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'Impersonation attempt'));
+                }
+                debug('signature checks out');
 
-              return next();
-            });
+                return next();
+              })
+              .catch(() => next(ErrorHelper.getCustomError(500, ErrorHelper.CODE.SERVER_ERROR, 'Server error')));
           }
           return next();
         });

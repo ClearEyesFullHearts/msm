@@ -37,6 +37,7 @@ class MessageData {
         },
       },
     });
+    this.messageSchema.index({ userId: -1 });
   }
 
   async init(conn) {
