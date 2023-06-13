@@ -48,7 +48,7 @@ class CryptoHelper {
 
       return pemExported;
     };
-    this.importSigningKey = async (pem, format, keyType, extractable = true) => {
+    this.importSigningKey = async (pem, format, keyType, extractable = false) => {
       const usage = keyType === 'PUBLIC' ? ['verify'] : ['sign'];
       // fetch the part of the PEM string between header and footer
       const pemHeader = `-----BEGIN ${keyType} KEY-----`;
@@ -136,6 +136,32 @@ class CryptoHelper {
         hash: 'SHA-256',
       },
       true, ['encrypt']);
+    const publicKey = await this.exportCryptoKey(publicKeyBuff, 'spki', 'PUBLIC');
+    return publicKey;
+  }
+
+  async getSigningPublicKey(pem) {
+    const privateKey = await this.importSigningKey(pem, 'pkcs8', 'PRIVATE', true);
+    // export private key to JWK
+    const jwk = await crypto.subtle.exportKey('jwk', privateKey);
+
+    // remove private data from JWK
+    delete jwk.d;
+    delete jwk.dp;
+    delete jwk.dq;
+    delete jwk.q;
+    delete jwk.qi;
+    jwk.key_ops = ['verify'];
+
+    // import public key
+    const publicKeyBuff = await crypto.subtle.importKey('jwk', jwk,
+      {
+        name: 'RSA-PSS',
+        modulusLength: 1024,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: 'SHA-256',
+      },
+      true, ['verify']);
     const publicKey = await this.exportCryptoKey(publicKeyBuff, 'spki', 'PUBLIC');
     return publicKey;
   }
@@ -253,6 +279,24 @@ class CryptoHelper {
     );
 
     return this.ArBuffToBase64(signature);
+  }
+
+  async verify(verifyKey, dataStr, signature) {
+    const publicKey = await this.importSigningKey(verifyKey, 'spki', 'PUBLIC');
+    const encoded = this.clearTextToArBuff(dataStr);
+    const paraph = this.base64ToArBuff(signature);
+
+    const result = await window.crypto.subtle.verify(
+      {
+        name: 'RSA-PSS',
+        saltLength: 32,
+      },
+      publicKey,
+      paraph,
+      encoded,
+    );
+
+    return result;
   }
 }
 
