@@ -47,7 +47,7 @@ const { user } = storeToRefs(authStore);
       <p>
         If you're unfamiliar with encryption, you can read a very short introduction
         <a
-          href="https://github.com/ClearEyesFullHearts/oldies/blob/master/PKI-server-node/KNOWLEDGE.md"
+          href="https://github.com/ClearEyesFullHearts/msm/blob/main/INTRODUCTION.md"
           target="_blank"
         >here</a>
       </p>
@@ -80,6 +80,13 @@ const { user } = storeToRefs(authStore);
             incinerated and nothing will remain on our side.
           </li>
         </ul>
+      </p>
+      <p>
+        If you want more technical details about what we do, go
+        <a
+          href="https://github.com/ClearEyesFullHearts/msm/blob/main/README.md"
+          target="_blank"
+        >there</a>
       </p>
       <br>
       <h1>FAQ</h1>
@@ -150,16 +157,9 @@ const { user } = storeToRefs(authStore);
         An attacker with network surveillance capability could link your IP address
         to your @ on login, maybe?
       </p>
-      <p>
-        An attacker that get access to <i>our</i> secret could send message under
-        a false account identity. (We're working on that one)
-      </p>
       <h4>What next?</h4>
       <p>
         <ul>
-          <li>
-            Signing of the actions.
-          </li>
           <li>
             Enable donations through coinbase.
           </li>

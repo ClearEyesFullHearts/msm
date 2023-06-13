@@ -61,6 +61,11 @@ async function onLog() {
           choose "Files" or something similar, then pick the file.
         </li>
         <li>You will be connected and redirected to your InBox</li>
+        <li>
+          If it's the first time you log in,
+          click on the "Decrypt" button to open the welcoming message
+          and activate your account
+        </li>
       </ul>
     </div>
   </div>

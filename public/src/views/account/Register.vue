@@ -41,7 +41,8 @@ async function onSubmit(values) {
         <li>Click the "Register" button</li>
         <li>
           A file named "@[your username].pem" is automatically downloaded in your "Download" folder
-          (even you don't see it, believe us it did)
+          (some browser may warn you about the safety of this download while others
+          won't even tell you you downloaded something but it should happen on all platform)
         </li>
         <li>Use that file when prompted on Login</li>
         <li>You have 10 minutes to activate your account by opening the "Welcome" message</li>
@@ -83,9 +84,18 @@ async function onSubmit(values) {
               </a>
             </p>
             <div v-show="gotKey">
-              <p>Paste your public key here:</p>
+              <p>Paste your encryption public key here:</p>
               <Field
                 name="publicKey"
+                autocomplete="off"
+                as="textarea"
+                cols="30"
+                rows="10"
+                class="form-control"
+              />
+              <p>Paste your signature public key here:</p>
+              <Field
+                name="sigPublicKey"
                 autocomplete="off"
                 as="textarea"
                 cols="30"
@@ -151,12 +161,28 @@ async function onSubmit(values) {
         <code>
           openssl genrsa -out key.pem 4096<br>
           openssl rsa -in key.pem -outform PEM -pubout -out public.pem<br>
+          openssl genrsa -out sigKey.pem 1024<br>
+          openssl rsa -in sigKey.pem -outform PEM -pubout -out sigPublic.pem<br>
         </code>
       </p>
       <p>
         Once you have created your keys, click on the "I got my own key" link and paste the content
-        of your PK (i.e. public.pem in our example) in the text input. Once your account is created
-        you will be able to use your SK (i.e. key.pem in our example) to connect.
+        of your PK (i.e. public.pem in our example) in the first text input and the content
+        of your signature PK (i.e. sigPublic.pem in our example) in the second one.<br>
+        You will now have to create a new file and copy/paste both SK into it separated by<br>
+        <code>----- SIGNATURE -----<br></code>
+        you should obtain something like that:<br>
+        <code>
+          -----BEGIN PRIVATE KEY-----<br>
+          ... this is key.pem ...<br>
+          -----END PRIVATE KEY-----<br>
+          ----- SIGNATURE -----<br>
+          -----BEGIN PRIVATE KEY-----<br>
+          ... this is sigKey.pem ...<br>
+          -----END PRIVATE KEY-----<br>
+        </code>
+        Once your account is created you will be able to use that file as your SK
+        to connect.
       </p>
     </div>
   </div>

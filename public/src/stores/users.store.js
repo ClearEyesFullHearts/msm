@@ -18,6 +18,24 @@ function downloadKey(at, text) {
   // Remove anchor from body
   document.body.removeChild(a);
 }
+function formatPK(publicKey, size) {
+  const pemHeader = '-----BEGIN PUBLIC KEY-----';
+  const pemFooter = '-----END PUBLIC KEY-----';
+  const trimmedPK = publicKey.replace(/\n/g, '');
+  const pemContents = trimmedPK.substring(pemHeader.length, trimmedPK.length - pemFooter.length);
+
+  const str = window.atob(pemContents);
+  const base64Key = window.btoa(str);
+  if (base64Key !== pemContents) {
+    throw new Error('Wrong public key format');
+  }
+
+  const key = `${pemHeader}\n${pemContents}\n${pemFooter}`;
+  if (key.length !== size) {
+    throw new Error('Wrong public key format');
+  }
+  return key;
+}
 
 export const useUsersStore = defineStore({
   id: 'users',
@@ -30,12 +48,13 @@ export const useUsersStore = defineStore({
       const {
         username,
         publicKey,
+        sigPublicKey,
       } = user;
 
       if (!publicKey || !publicKey.length) {
         const { PK, SK } = await mycrypto.generateKeyPair();
         const { PK: signPK, SK: signSK } = await mycrypto.generateSignatureKeyPair();
-        
+
         const send = {
           at: username,
           key: PK,
@@ -45,25 +64,10 @@ export const useUsersStore = defineStore({
         const skFileContent = `${SK}${CryptoHelper.SEPARATOR}${signSK}`;
         downloadKey(user.username, skFileContent);
       } else {
-        const pemHeader = '-----BEGIN PUBLIC KEY-----';
-        const pemFooter = '-----END PUBLIC KEY-----';
-        const trimmedPK = publicKey.replace(/\n/g, '');
-        const pemContents = trimmedPK.substring(pemHeader.length, trimmedPK.length - pemFooter.length);
-
-        const str = window.atob(pemContents);
-        const base64Key = window.btoa(str);
-        if(base64Key !== pemContents){
-          throw new Error('Wrong public key format');
-        }
-
-        const key = `${pemHeader}\n${pemContents}\n${pemFooter}`;
-        if(key.length !== 788){
-          throw new Error('Wrong public key format');
-        }
-        
         const send = {
           at: username,
-          key,
+          key: formatPK(publicKey, 788),
+          signature: formatPK(sigPublicKey, 268),
         };
         await fetchWrapper.post(`${baseUrl}/users`, send);
       }
