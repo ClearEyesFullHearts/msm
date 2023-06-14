@@ -4,7 +4,7 @@
   },
   "instance": {
     "cors":{
-      "Access-Control-Allow-Origin": "https://alpha.ysypya.com/"
+      "Access-Control-Allow-Origin": "https://alpha.ysypya.com"
     }
   }
 }
