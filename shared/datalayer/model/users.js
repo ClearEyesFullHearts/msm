@@ -51,7 +51,13 @@ class UserData {
   }
 
   async searchUsername(search) {
-    const users = await this.Doc.find({ searchTerms: search }).sort({ size: 1 }).limit(15);
+    const users = await this.Doc.find({
+      searchTerms: search,
+      lastActivity: { $gte: 0 },
+    })
+      .sort({ size: 1 })
+      .limit(15);
+
     return users;
   }
 }

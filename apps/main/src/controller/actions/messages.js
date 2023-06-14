@@ -24,6 +24,10 @@ class Message {
       content,
     } = msg;
 
+    if (user.lastActivity < 0) {
+      throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
+    }
+
     const targetUser = await db.users.findByName(to);
     if (checkUser) {
       if (!targetUser || targetUser.lastActivity < 0) {

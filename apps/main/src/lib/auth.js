@@ -57,7 +57,7 @@ class AuthMiddleware {
                   return next(ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'Impersonation attempt'));
                 }
                 debug('signature checks out');
-
+                req.auth = author;
                 return next();
               })
               .catch(() => next(ErrorHelper.getCustomError(500, ErrorHelper.CODE.SERVER_ERROR, 'Server error')));
