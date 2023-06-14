@@ -1,11 +1,19 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 
-import { useAuthStore } from '@/stores';
+import { useUsersStore, useAuthStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 
 const loginInput = ref(null);
 const fileInput = ref(null);
+
+onMounted(() => {
+  const usersStore = useUsersStore();
+  if (usersStore.newUsername) {
+    loginInput.value.value = usersStore.newUsername;
+    usersStore.newUsername = null;
+  }
+});
 
 async function loadTextFromFile(ev) {
   return new Promise((resolve) => {

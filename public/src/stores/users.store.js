@@ -42,6 +42,7 @@ export const useUsersStore = defineStore({
   state: () => ({
     users: {},
     user: {},
+    newUsername: null,
   }),
   actions: {
     async register(user) {
@@ -71,6 +72,7 @@ export const useUsersStore = defineStore({
         };
         await fetchWrapper.post(`${baseUrl}/users`, send);
       }
+      this.newUsername = username;
     },
     async getAll(search) {
       if (search.length < 3) return;

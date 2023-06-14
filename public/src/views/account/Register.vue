@@ -146,7 +146,7 @@ async function onSubmit(values) {
       </p>
       <p>
         Your SK is never shared with us, the login process only read it
-        and save it in memory to use it the time of your session.
+        and save it in memory, on the client side, to use it the time of your session.
       </p>
       <p>
         The registration process being so simple, you'll have to activate your account in less
