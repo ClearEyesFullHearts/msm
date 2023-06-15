@@ -1,11 +1,11 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: Most Secure Messenger
+  title: Most Secure Mailbox
   license:
     name: MIT
 servers:
-  - url: http://localhost:3001
+  - url: http://localhost:4000
 paths:
   /users:
     post:
@@ -29,7 +29,9 @@ paths:
     get:
       summary: Get users' list
       operationId: getUsers
-      x-eov-operation-handler: api
+      x-eov-operation-handler: api      
+      security:
+        - bearerAuth: []
       parameters:
         - name: search
           in: query
@@ -84,7 +86,9 @@ paths:
     get:
       summary: Get one user informations
       operationId: getOneUser
-      x-eov-operation-handler: api
+      x-eov-operation-handler: api      
+      security:
+        - bearerAuth: []
       parameters:
         - name: at
           in: path
@@ -111,7 +115,9 @@ paths:
       summary: Delete every reference to an account
       description: Incinerate an account entirely
       operationId: incinerate
-      x-eov-operation-handler: api
+      x-eov-operation-handler: api      
+      security:
+        - bearerAuth: []
       parameters:
         - in: header
           name: X-msm-Sig
@@ -148,7 +154,9 @@ paths:
         - sentAt
         - title
       operationId: getInbox
-      x-eov-operation-handler: api
+      x-eov-operation-handler: api      
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: A list of messages headers
@@ -167,7 +175,9 @@ paths:
     post:
       summary: Send a message
       operationId: writeMessage
-      x-eov-operation-handler: api
+      x-eov-operation-handler: api      
+      security:
+        - bearerAuth: []
       parameters:
         - in: header
           name: X-msm-Sig
@@ -203,7 +213,9 @@ paths:
         - title
         - content
       operationId: getMessage
-      x-eov-operation-handler: api
+      x-eov-operation-handler: api      
+      security:
+        - bearerAuth: []
       parameters:
         - name: msgId
           in: path
@@ -228,7 +240,9 @@ paths:
       summary: Force removal of a message
       description: Delete a message from db
       operationId: removeMessage
-      x-eov-operation-handler: api
+      x-eov-operation-handler: api      
+      security:
+        - bearerAuth: []
       parameters:
         - in: header
           name: X-msm-Sig
@@ -254,7 +268,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-components:
+components:  
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     NewUser:
       type: object

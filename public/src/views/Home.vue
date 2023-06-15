@@ -161,10 +161,13 @@ const { user } = storeToRefs(authStore);
       <p>
         <ul>
           <li>
-            Enable donations through coinbase.
+            Lower the cost of hosting this thing.
           </li>
           <li>
-            Create a paying user tier with more functionalities.
+            Adding the official tier.
+          </li>
+          <li>
+            Enable donations through coinbase.
           </li>
         </ul>
       </p>
