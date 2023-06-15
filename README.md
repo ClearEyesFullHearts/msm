@@ -54,6 +54,7 @@ The header contains only the sender information, the title of the message and th
 ## What's next
 - Write tests lol
 - Change datalayer to use dynamoDB
+- Stop the client session madness
 - Create the "Official" tier
-- implement donations through coinbase (if it still exists)
-- Use a lambda to for once a day cleaning
+- Implement donations through coinbase (if it still exists)
+- Use a lambda for once-a-day cleaning
