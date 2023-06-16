@@ -299,14 +299,6 @@ async function onVerifyFilePicked(evt) {
                         rows="10"
                         class="form-control"
                       />
-                      <!-- <Field
-                        ref="contentText"
-                        name="contentText"
-                        autocomplete="off"
-                        cols="30"
-                        rows="10"
-                        class="form-control"
-                      /> -->
                     </div>
                   </div>
                 </div>
