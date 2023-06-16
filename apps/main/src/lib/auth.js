@@ -9,7 +9,7 @@ class AuthMiddleware {
       debug('Route is guarded');
       if (req.headers.authorization) {
         const heads = req.headers.authorization.split(' ');
-        if (heads.length < 2) return next(ErrorHelper.getCustomError(401, ErrorHelper.CODE.MIS_AUTH_HEADER, 'Misformed authorization header'));
+        if (heads.length !== 2 || heads[0] !== 'Bearer') return next(ErrorHelper.getCustomError(401, ErrorHelper.CODE.MIS_AUTH_HEADER, 'Misformed authorization header'));
 
         const token = heads[1];
         debug('verify token', token);
@@ -19,13 +19,21 @@ class AuthMiddleware {
             return next(ErrorHelper.getCustomError(403, ErrorHelper.CODE.BAD_TOKEN, err.message));
           }
           debug('verify ok', payload);
-          const elapsedTime = Date.now() - payload.connection;
+          const {
+            connection,
+            user,
+          } = payload;
+          if (!connection || !user || !user.id) {
+            return next(ErrorHelper.getCustomError(401, ErrorHelper.CODE.MIS_AUTH_HEADER, 'Incorrect auth payload'));
+          }
+
+          const elapsedTime = Date.now() - connection;
           if (elapsedTime > timeToWait) {
             debug('session expired');
             return next(ErrorHelper.getCustomError(401, ErrorHelper.CODE.SESSION_EXPIRED, 'Session expired after 15 minutes'));
           }
 
-          req.auth = payload.user;
+          req.auth = user;
 
           if (req.headers['x-msm-sig']) {
             debug('verify signature');
@@ -42,7 +50,7 @@ class AuthMiddleware {
             const { iat, ...restPayload } = payload;
             const { user: { id } } = restPayload;
 
-            return db.users.Doc.findOne({ id })
+            return db.users.findByID(id)
               .then((author) => {
                 if (!author) {
                   return next(ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'Unknown user'));
