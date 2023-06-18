@@ -29,7 +29,7 @@ To "resolve" the challenge you go through those steps in reverse:
 ### Authentication
 Authentication is achieved through a simple bearer token mechanism that is computed on the server side and sent to anyone trying to log for a username as a challenge, ensuring that only the owner of the secret key can decrypt and use the token.  
 The secret used for that computation is the only secret really managed on the back-end side and as such is a big security risk.  
-We mitigate that risk by verifying the user signature for all actions on its account (all PUT, POST and DELETE request.) to be sure that regarless of our authentication mechanism the user has access to the secret key relative to its account.  
+We mitigate that risk by verifying the user signature for all actions on its account (all PUT, POST and DELETE request.) to be sure that regardless of our authentication mechanism the user has access to the secret key relative to its account.  
 
 ### User account
 A user is created with its username, its encryption public key and its verifying public key.  
