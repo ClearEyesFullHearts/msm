@@ -143,7 +143,7 @@ async function onReadingSubmit() {
     const { signature } = objChallenge;
     const isItSigned = await mycrypto.verify(verifyKey, decodedText, signature);
     if (isItSigned) {
-      decodedText = `Signature check out!\n\n${decodedText}`;
+      decodedText = `Signature checks out!\n\n${decodedText}`;
     } else {
       decodedText = `Signature don't match your key!\n\n${decodedText}`;
     }
@@ -261,6 +261,13 @@ async function onVerifyFilePicked(evt) {
                   </li>
                   <li>Click on "Encrypt"</li>
                   <li>Send the resulting (downloaded) file to your recipient</li>
+                  <li>
+                    You can also download the offline writer
+                    <a
+                      href="offline/writer.html"
+                      download="writer.html"
+                    >here</a>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -361,6 +368,13 @@ async function onVerifyFilePicked(evt) {
                   </li>
                   <li>Click on "Decrypt"</li>
                   <li>Read the message and refresh the page (hit F5) to clear it</li>
+                  <li>
+                    You can also download the offline reader
+                    <a
+                      href="offline/reader.html"
+                      download="reader.html"
+                    >here</a>
+                  </li>
                 </ul>
               </div>
             </div>

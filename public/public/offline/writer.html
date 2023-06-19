@@ -2,9 +2,9 @@
 <html lang="en">
 <script>
 function ArBuffToBase64(arBuff) {
-      const str = String.fromCharCode.apply(null, new Uint8Array(arBuff));
-      return window.btoa(str);
-    }
+  const str = String.fromCharCode.apply(null, new Uint8Array(arBuff));
+  return window.btoa(str);
+}
 function clearTextToArBuff(txt) {
   const buf = new ArrayBuffer(txt.length);
   const bufView = new Uint8Array(buf);
@@ -14,59 +14,59 @@ function clearTextToArBuff(txt) {
   return buf;
 }
 function base64ToArBuff(base64EncodedKey) {
-      const str = window.atob(base64EncodedKey); // decode base64
-      return this.clearTextToArBuff(str);
-    }
+  const str = window.atob(base64EncodedKey); // decode base64
+  return clearTextToArBuff(str);
+}
 async function exportCryptoKey(key, format, keyType) {
-      const exported = await window.crypto.subtle.exportKey(format, key);
-      const exportedAsBase64 = this.ArBuffToBase64(exported);
-      const pemExported = `-----BEGIN ${keyType} KEY-----\n${exportedAsBase64}\n-----END ${keyType} KEY-----`;
+  const exported = await window.crypto.subtle.exportKey(format, key);
+  const exportedAsBase64 = ArBuffToBase64(exported);
+  const pemExported = `-----BEGIN ${keyType} KEY-----\n${exportedAsBase64}\n-----END ${keyType} KEY-----`;
 
-      return pemExported;
-    }
+  return pemExported;
+}
 async function generateKeyPair() {
-    const keyPair = await window.crypto.subtle.generateKey(
-      {
-        name: 'RSA-OAEP',
-        modulusLength: 4096,
-        publicExponent: new Uint8Array([1, 0, 1]),
-        hash: 'SHA-256',
-      },
-      true,
-      ['encrypt', 'decrypt'],
-    );
+  const keyPair = await window.crypto.subtle.generateKey(
+    {
+      name: 'RSA-OAEP',
+      modulusLength: 4096,
+      publicExponent: new Uint8Array([1, 0, 1]),
+      hash: 'SHA-256',
+    },
+    true,
+    ['encrypt', 'decrypt'],
+  );
 
-    const PK = await this.exportCryptoKey(keyPair.publicKey, 'spki', 'PUBLIC');
-    const SK = await this.exportCryptoKey(keyPair.privateKey, 'pkcs8', 'PRIVATE');
+  const PK = await exportCryptoKey(keyPair.publicKey, 'spki', 'PUBLIC');
+  const SK = await exportCryptoKey(keyPair.privateKey, 'pkcs8', 'PRIVATE');
 
-    return {
-      PK,
-      SK,
-    };
-  }
+  return {
+    PK,
+    SK,
+  };
+}
 
-  async function generateSignatureKeyPair() {
-    const keyPair = await window.crypto.subtle.generateKey(
-      {
-        name: 'RSA-PSS',
-        modulusLength: 1024,
-        publicExponent: new Uint8Array([1, 0, 1]),
-        hash: 'SHA-256',
-      },
-      true,
-      ['sign', 'verify'],
-    );
+async function generateSignatureKeyPair() {
+  const keyPair = await window.crypto.subtle.generateKey(
+    {
+      name: 'RSA-PSS',
+      modulusLength: 1024,
+      publicExponent: new Uint8Array([1, 0, 1]),
+      hash: 'SHA-256',
+    },
+    true,
+    ['sign', 'verify'],
+  );
 
-    const PK = await this.exportCryptoKey(keyPair.publicKey, 'spki', 'PUBLIC');
-    const SK = await this.exportCryptoKey(keyPair.privateKey, 'pkcs8', 'PRIVATE');
+  const PK = await exportCryptoKey(keyPair.publicKey, 'spki', 'PUBLIC');
+  const SK = await exportCryptoKey(keyPair.privateKey, 'pkcs8', 'PRIVATE');
 
-    return {
-      PK,
-      SK,
-    };
-  }
+  return {
+    PK,
+    SK,
+  };
+}
 
-  function downloadFile(name, text) {
+function downloadFile(name, text) {
   const a = window.document.createElement('a');
   a.href = window.URL.createObjectURL(new Blob([text]));
   a.download = name;
@@ -80,14 +80,14 @@ async function generateKeyPair() {
 }
 
 async function onGenerate() {
-const keyPair = await generateKeyPair();
-const sigKeyPair = await generateSignatureKeyPair();
+  const keyPair = await generateKeyPair();
+  const sigKeyPair = await generateSignatureKeyPair();
 
-const privateKeys = `${keyPair.SK}\n----- SIGNATURE -----\n${sigKeyPair.SK}`;
-const publicKeys = `${keyPair.PK}\n----- SIGNATURE -----\n${sigKeyPair.PK}`;
+  const privateKeys = `${keyPair.SK}\n----- SIGNATURE -----\n${sigKeyPair.SK}`;
+  const publicKeys = `${keyPair.PK}\n----- SIGNATURE -----\n${sigKeyPair.PK}`;
 
-downloadFile('public.pem', publicKeys);
-downloadFile('private.pem', privateKeys);
+  downloadFile('public.pem', publicKeys);
+  downloadFile('private.pem', privateKeys);
 }
 
 async function loadTextFromFile(ev) {
@@ -126,102 +126,102 @@ function encodeText(str) {
     .join('');
 }
 async function symmetricEncrypt(txt) {
-    const iv = crypto.getRandomValues(new Uint8Array(16));
-    const arrPass = crypto.getRandomValues(new Uint8Array(32));
-    const arrTxt = this.clearTextToArBuff(txt);
-    const key = await window.crypto.subtle.importKey(
-      'raw',
-      arrPass,
-      {
-        name: 'AES-GCM',
-        iv,
-      },
-      false,
-      ['encrypt'],
-    );
-
-    const ctBuffer = await crypto.subtle.encrypt({
+  const iv = crypto.getRandomValues(new Uint8Array(16));
+  const arrPass = crypto.getRandomValues(new Uint8Array(32));
+  const arrTxt = clearTextToArBuff(txt);
+  const key = await window.crypto.subtle.importKey(
+    'raw',
+    arrPass,
+    {
       name: 'AES-GCM',
       iv,
-    }, key, arrTxt);
+    },
+    false,
+    ['encrypt'],
+  );
 
-    return {
-      iv: ArBuffToBase64(iv),
-      passphrase: ArBuffToBase64(arrPass),
-      token: ArBuffToBase64(ctBuffer),
-    };
-  }
-  async function importCryptoKey(pem, format, keyType, extractable = false) {
-      const usage = keyType === 'PUBLIC' ? ['encrypt'] : ['decrypt'];
-      // fetch the part of the PEM string between header and footer
-      const pemHeader = `-----BEGIN ${keyType} KEY-----`;
-      const pemFooter = `-----END ${keyType} KEY-----`;
-      const pemContents = pem.substring(pemHeader.length, pem.length - pemFooter.length - 1);
+  const ctBuffer = await crypto.subtle.encrypt({
+    name: 'AES-GCM',
+    iv,
+  }, key, arrTxt);
 
-      const binaryDer = base64ToArBuff(pemContents);
+  return {
+    iv: ArBuffToBase64(iv),
+    passphrase: ArBuffToBase64(arrPass),
+    token: ArBuffToBase64(ctBuffer),
+  };
+}
+async function importCryptoKey(pem, format, keyType, extractable = false) {
+    const usage = keyType === 'PUBLIC' ? ['encrypt'] : ['decrypt'];
+    // fetch the part of the PEM string between header and footer
+    const pemHeader = `-----BEGIN ${keyType} KEY-----`;
+    const pemFooter = `-----END ${keyType} KEY-----`;
+    const pemContents = pem.substring(pemHeader.length, pem.length - pemFooter.length - 1);
 
-      const imoprtedKey = await window.crypto.subtle.importKey(
-        format,
-        binaryDer,
-        {
-          name: 'RSA-OAEP',
-          hash: 'SHA-256',
-        },
-        extractable,
-        usage,
-      );
+    const binaryDer = base64ToArBuff(pemContents);
 
-      return imoprtedKey;
-    }
-  async function publicEncrypt(pem, plaintext) {
-    const importedKey = await importCryptoKey(pem, 'spki', 'PUBLIC');
-    const arrTxt = clearTextToArBuff(plaintext);
-
-    const encrypted = await window.crypto.subtle.encrypt(
-      { name: 'RSA-OAEP' },
-      importedKey,
-      arrTxt,
+    const imoprtedKey = await window.crypto.subtle.importKey(
+      format,
+      binaryDer,
+      {
+        name: 'RSA-OAEP',
+        hash: 'SHA-256',
+      },
+      extractable,
+      usage,
     );
 
-    return ArBuffToBase64(encrypted);
+    return imoprtedKey;
   }
-  async function importSigningKey(pem, format, keyType, extractable = false) {
-      const usage = keyType === 'PUBLIC' ? ['verify'] : ['sign'];
-      // fetch the part of the PEM string between header and footer
-      const pemHeader = `-----BEGIN ${keyType} KEY-----`;
-      const pemFooter = `-----END ${keyType} KEY-----`;
-      const pemContents = pem.substring(pemHeader.length, pem.length - pemFooter.length - 1);
+async function publicEncrypt(pem, plaintext) {
+  const importedKey = await importCryptoKey(pem, 'spki', 'PUBLIC');
+  const arrTxt = clearTextToArBuff(plaintext);
 
-      const binaryDer = base64ToArBuff(pemContents);
+  const encrypted = await window.crypto.subtle.encrypt(
+    { name: 'RSA-OAEP' },
+    importedKey,
+    arrTxt,
+  );
 
-      const importedKey = await window.crypto.subtle.importKey(
-        format,
-        binaryDer,
-        {
-          name: 'RSA-PSS',
-          hash: 'SHA-256',
-        },
-        extractable,
-        usage,
-      );
+  return ArBuffToBase64(encrypted);
+}
+async function importSigningKey(pem, format, keyType, extractable = false) {
+    const usage = keyType === 'PUBLIC' ? ['verify'] : ['sign'];
+    // fetch the part of the PEM string between header and footer
+    const pemHeader = `-----BEGIN ${keyType} KEY-----`;
+    const pemFooter = `-----END ${keyType} KEY-----`;
+    const pemContents = pem.substring(pemHeader.length, pem.length - pemFooter.length - 1);
 
-      return importedKey;
-    }
-  async function sign(signingKey, dataStr) {
-    const privateKey = await importSigningKey(signingKey, 'pkcs8', 'PRIVATE');
-    const encoded = clearTextToArBuff(dataStr);
+    const binaryDer = base64ToArBuff(pemContents);
 
-    const signature = await window.crypto.subtle.sign(
+    const importedKey = await window.crypto.subtle.importKey(
+      format,
+      binaryDer,
       {
         name: 'RSA-PSS',
-        saltLength: 32,
+        hash: 'SHA-256',
       },
-      privateKey,
-      encoded,
+      extractable,
+      usage,
     );
 
-    return ArBuffToBase64(signature);
+    return importedKey;
   }
+async function sign(signingKey, dataStr) {
+  const privateKey = await importSigningKey(signingKey, 'pkcs8', 'PRIVATE');
+  const encoded = clearTextToArBuff(dataStr);
+
+  const signature = await window.crypto.subtle.sign(
+    {
+      name: 'RSA-PSS',
+      saltLength: 32,
+    },
+    privateKey,
+    encoded,
+  );
+
+  return ArBuffToBase64(signature);
+}
 async function onEncrypt(){
   const content = document.getElementById("contentText").value;
 

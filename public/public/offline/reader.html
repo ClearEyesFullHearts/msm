@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<script>
+async function loadTextFromFile(ev) {
+  return new Promise((resolve) => {
+    const file = ev[0];
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      resolve(e.target.result);
+    };
+    reader.readAsText(file);
+  });
+}
+let decryptKeyContent;
+let verifyKeyContent;
+let challengeContent;
+async function onDecryptKeyUpload(evt) {
+  const { files } = evt.target;
+  const keys = await loadTextFromFile(files);
+  const [key] = keys.split('\n----- SIGNATURE -----\n');
+  decryptKeyContent = key;
+}
+async function onVerifyKeyUpload(evt) {
+  const { files } = evt.target;
+  const keys = await loadTextFromFile(files);
+  const [_, key] = keys.split('\n----- SIGNATURE -----\n');
+  verifyKeyContent = key;
+}
+async function onChallengeUpload(evt) {
+  const { files } = evt.target;
+  challengeContent = await loadTextFromFile(files);
+}
+
+function base64ToArBuff(base64EncodedKey) {
+  const str = window.atob(base64EncodedKey); // decode base64
+  return this.clearTextToArBuff(str);
+}
+async function importCryptoKey(pem, format, keyType, extractable = false) {
+  const usage = keyType === 'PUBLIC' ? ['encrypt'] : ['decrypt'];
+  // fetch the part of the PEM string between header and footer
+  const pemHeader = `-----BEGIN ${keyType} KEY-----`;
+  const pemFooter = `-----END ${keyType} KEY-----`;
+  const pemContents = pem.substring(pemHeader.length, pem.length - pemFooter.length - 1);
+
+  const binaryDer = base64ToArBuff(pemContents);
+
+  const imoprtedKey = await window.crypto.subtle.importKey(
+    format,
+    binaryDer,
+    {
+      name: 'RSA-OAEP',
+      hash: 'SHA-256',
+    },
+    extractable,
+    usage,
+  );
+
+  return imoprtedKey;
+}
+async function privateDecrypt(pem, cryptedText) {
+  const importedKey = await importCryptoKey(pem, 'pkcs8', 'PRIVATE');
+  const cypherTxt = base64ToArBuff(cryptedText);
+
+  const decripted = await window.crypto.subtle.decrypt(
+    { name: 'RSA-OAEP' },
+    importedKey,
+    cypherTxt,
+  );
+
+  return decripted;
+}
+async function symmetricDecrypt(pass, iv, cryptedText) {
+  const arrIV = base64ToArBuff(iv);
+  let arrPass = pass;
+  if (Object.prototype.toString.call(pass) === '[object String]') {
+    arrPass = base64ToArBuff(pass);
+  }
+  const arrCryptedText = base64ToArBuff(cryptedText);
+
+  const importedKey = await window.crypto.subtle.importKey(
+    'raw',
+    arrPass,
+    {
+      name: 'AES-GCM',
+    },
+    false,
+    ['encrypt', 'decrypt'],
+  );
+
+  const decripted = await window.crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: arrIV },
+    importedKey,
+    arrCryptedText,
+  );
+  return decripted;
+}
+async function resolve(pem, { token, passphrase, iv }) {
+  const clearPassBuff = await privateDecrypt(pem, passphrase);
+  const authBuff = await symmetricDecrypt(clearPassBuff, iv, token);
+  const dec = new TextDecoder();
+  return dec.decode(authBuff);
+}
+
+async function importSigningKey(pem, format, keyType, extractable = false) {
+  const usage = keyType === 'PUBLIC' ? ['verify'] : ['sign'];
+  // fetch the part of the PEM string between header and footer
+  const pemHeader = `-----BEGIN ${keyType} KEY-----`;
+  const pemFooter = `-----END ${keyType} KEY-----`;
+  const pemContents = pem.substring(pemHeader.length, pem.length - pemFooter.length - 1);
+
+  const binaryDer = base64ToArBuff(pemContents);
+
+  const importedKey = await window.crypto.subtle.importKey(
+    format,
+    binaryDer,
+    {
+      name: 'RSA-PSS',
+      hash: 'SHA-256',
+    },
+    extractable,
+    usage,
+  );
+
+  return importedKey;
+}
+function clearTextToArBuff(txt) {
+  const buf = new ArrayBuffer(txt.length);
+  const bufView = new Uint8Array(buf);
+  for (let i = 0, strLen = txt.length; i < strLen; i += 1) {
+    bufView[i] = txt.charCodeAt(i);
+  }
+  return buf;
+}
+async function verify(verifyKey, dataStr, signature) {
+  const publicKey = await importSigningKey(verifyKey, 'spki', 'PUBLIC');
+  const encoded = clearTextToArBuff(dataStr);
+  const paraph = base64ToArBuff(signature);
+
+  const result = await window.crypto.subtle.verify(
+    {
+      name: 'RSA-PSS',
+      saltLength: 32,
+    },
+    publicKey,
+    paraph,
+    encoded,
+  );
+
+  return result;
+}
+
+async function onDecrypt() {
+  if (!challengeContent || !challengeContent.length || !decryptKeyContent || !decryptKeyContent.length) return;
+
+  const objChallenge = JSON.parse(challengeContent);
+  const clearText = await resolve(decryptKeyContent, objChallenge);
+  let decodedText = decodeURIComponent(clearText);
+
+  if (!objChallenge.signature) {
+    decodedText = `Anonymous, there's no signature!\n\n${decodedText}`;
+  }
+
+  if (objChallenge.signature && verifyKeyContent) {
+    const { signature } = objChallenge;
+    const isItSigned = await verify(verifyKeyContent, decodedText, signature);
+    if (isItSigned) {
+      decodedText = `Signature checks out!\n\n${decodedText}`;
+    } else {
+      decodedText = `Signature don't match your key!\n\n${decodedText}`;
+    }
+  }
+
+  document.getElementById("txtContent").innerHTML = decodedText;
+}
+
+function ArBuffToBase64(arBuff) {
+  const str = String.fromCharCode.apply(null, new Uint8Array(arBuff));
+  return window.btoa(str);
+}
+async function exportCryptoKey(key, format, keyType) {
+  const exported = await window.crypto.subtle.exportKey(format, key);
+  const exportedAsBase64 = ArBuffToBase64(exported);
+  const pemExported = `-----BEGIN ${keyType} KEY-----\n${exportedAsBase64}\n-----END ${keyType} KEY-----`;
+
+  return pemExported;
+}
+async function generateKeyPair() {
+  const keyPair = await window.crypto.subtle.generateKey(
+    {
+      name: 'RSA-OAEP',
+      modulusLength: 4096,
+      publicExponent: new Uint8Array([1, 0, 1]),
+      hash: 'SHA-256',
+    },
+    true,
+    ['encrypt', 'decrypt'],
+  );
+
+  const PK = await exportCryptoKey(keyPair.publicKey, 'spki', 'PUBLIC');
+  const SK = await exportCryptoKey(keyPair.privateKey, 'pkcs8', 'PRIVATE');
+
+  return {
+    PK,
+    SK,
+  };
+}
+async function generateSignatureKeyPair() {
+  const keyPair = await window.crypto.subtle.generateKey(
+    {
+      name: 'RSA-PSS',
+      modulusLength: 1024,
+      publicExponent: new Uint8Array([1, 0, 1]),
+      hash: 'SHA-256',
+    },
+    true,
+    ['sign', 'verify'],
+  );
+
+  const PK = await exportCryptoKey(keyPair.publicKey, 'spki', 'PUBLIC');
+  const SK = await exportCryptoKey(keyPair.privateKey, 'pkcs8', 'PRIVATE');
+
+  return {
+    PK,
+    SK,
+  };
+}
+function downloadFile(name, text) {
+  const a = window.document.createElement('a');
+  a.href = window.URL.createObjectURL(new Blob([text]));
+  a.download = name;
+
+  // Append anchor to body.
+  document.body.appendChild(a);
+  a.click();
+
+  // Remove anchor from body
+  document.body.removeChild(a);
+}
+async function onGenerate() {
+  const keyPair = await generateKeyPair();
+  const sigKeyPair = await generateSignatureKeyPair();
+
+  const privateKeys = `${keyPair.SK}\n----- SIGNATURE -----\n${sigKeyPair.SK}`;
+  const publicKeys = `${keyPair.PK}\n----- SIGNATURE -----\n${sigKeyPair.PK}`;
+
+  downloadFile('public.pem', publicKeys);
+  downloadFile('private.pem', privateKeys);
+}
+</script>
+<body>
+  <div>
+      <button onclick="onGenerate()">generate key pair</button>
+  </div>
+    <div>
+        <label>Upload your Secret Key</label><input id="skfile" type="file" />
+    </div>
+    <div>
+        <label>Upload Message File</label><input id="msgfile" type="file" />
+    </div>
+    <div>
+        <label>(optional) Upload the sender's Public Key</label><input id="pkfile" type="file" />
+    </div>
+    <div>
+        <button onclick="onDecrypt()">Decrypt message</button>
+        <p>
+          <pre id="txtContent" />
+        </p>
+    </div>
+</body>
+<script>
+document.getElementById("skfile").addEventListener('change', async function(e) {
+  await onDecryptKeyUpload(e);
+});
+document.getElementById("msgfile").addEventListener('change', async function(e) {
+  await onChallengeUpload(e);
+});
+document.getElementById("pkfile").addEventListener('change', async function(e) {
+  await onVerifyKeyUpload(e);
+});
+</script>
+</html>
