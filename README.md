@@ -51,6 +51,31 @@ First the format of the title and the content of the message is highly controlle
 Second every messages are separated as a header and a full object, each stored as a challenge, ensuring that everything is encrypted at least once.  
 The header contains only the sender information, the title of the message and the time it was sent and is used for display in the inbox. The full object adds the content of the message and once it has been requested by the user it triggers the deletion of the message after 2 minutes.  
 
+## Trust issues
+If you have read everything up to here you probably have some trust issues and I can't blame you. You shouldn't trust me, I barely trust myself.  
+Like I said in the project description the heavy lifting is done on the client side, the Secret Key is never shared, never stored out of the memory and the messages are at no point sent in clear text, so I created a process to validate the code (and for me to be sure that no one tampers with it on the hosting side):
+- `git clone https://github.com/ClearEyesFullHearts/msm.git`
+- Get the commit hash of the url you want to validate in `./public/README.md`
+- At the root of the project, checkout the code with this hash
+```
+git checkout [commit hash]
+```
+- Review the code, be confident that it does what I say it does.
+- got to the `./public` folder et build the project with the bash script there
+```
+cd public/
+npm install
+./builder.sh
+```
+- got to the `./trust` folder and start the trustClient.js script
+```
+node trustClient.js
+```
+- The script tells you if the files that you built match those that are stored online and served to the browser.
+
+On the back-end side, being hosted by AWS, I'm thinking of writing some process for anyone to validate that the domain name is directly linked to a container from an image that you can validate too and nothing in between. That's a lot of work and that would not dispel the possibility that another service exists that could leak what happens on the database, at least, so it's not really a priority for the moment.  
+For the truly paranoid, you can always copy the reader and writer code available in `./public/offline` to encrypt your messages on an air-gapped computer. ;)
+
 ## What's next
 - Write tests lol
 - Change datalayer to use dynamoDB
