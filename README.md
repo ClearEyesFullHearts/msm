@@ -60,15 +60,24 @@ Like I said in the project description the heavy lifting is done on the client s
 ```
 git checkout [commit hash]
 ```
-- Review the code, be confident that it does what I say it does.
-- go to the `./public` folder et build the project with the bash script there
+- Review the code in `./public` folder, be confident that it does what I say it does.
+- go to the `./public` folder and setup the project by creating a `.env.production` file
 ```
 cd public/
 npm install
+touch .env.production
+```
+- add the api url in the environment file
+```
+VITE_API_URL=https://api.ysypya.com
+```
+- build the project with the script there
+```
 ./builder.sh
 ```
 - go to the `./trust` folder and start the trustClient.js script
 ```
+cd ../trust/
 node trustClient.js
 ```
 - The script tells you if the files that you built match those that are stored online and served to the browser.
