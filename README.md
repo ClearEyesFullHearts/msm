@@ -52,7 +52,7 @@ Second every messages are separated as a header and a full object, each stored a
 The header contains only the sender information, the title of the message and the time it was sent and is used for display in the inbox. The full object adds the content of the message and once it has been requested by the user it triggers the deletion of the message after 2 minutes.  
 
 ## Trust issues
-If you have read everything up to here you probably have some trust issues and I can't blame you. You shouldn't trust me, I barely trust myself.  
+If you have read everything up to here you probably have some trust issues and I can't blame you. You shouldn't trust me.  
 Like I said in the project description the heavy lifting is done on the client side, the Secret Key is never shared, never stored out of the memory and the messages are at no point sent in clear text, so I created a process to validate the code (and for me to be sure that no one tampers with it on the hosting side):
 - `git clone https://github.com/ClearEyesFullHearts/msm.git`
 - Get the commit hash of the url you want to validate in `./public/README.md`
@@ -61,13 +61,13 @@ Like I said in the project description the heavy lifting is done on the client s
 git checkout [commit hash]
 ```
 - Review the code, be confident that it does what I say it does.
-- got to the `./public` folder et build the project with the bash script there
+- go to the `./public` folder et build the project with the bash script there
 ```
 cd public/
 npm install
 ./builder.sh
 ```
-- got to the `./trust` folder and start the trustClient.js script
+- go to the `./trust` folder and start the trustClient.js script
 ```
 node trustClient.js
 ```
