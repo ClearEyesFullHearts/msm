@@ -63,7 +63,7 @@ function download(filename) {
     await download(paths[i]);
   }
 
-  // compute hash for the whole thing
+  // compare the files
   let distTxt = '';
   let downTxt = '';
   paths.forEach((p) => {

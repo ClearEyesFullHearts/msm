@@ -46,6 +46,10 @@ class MessageData {
     await this.Doc.init();
   }
 
+  getNew() {
+    return new this.Doc();
+  }
+
   async findByID(msgId) {
     const message = await this.Doc.findOne({ id: msgId });
     return message;

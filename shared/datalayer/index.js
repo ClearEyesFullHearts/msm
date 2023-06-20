@@ -50,7 +50,7 @@ class Data {
     await this.users.Doc.deleteOne({ id: userId });
 
     if (freeze) {
-      const newFreezer = new this.freezer.Doc();
+      const newFreezer = this.freezer.getNew();
       newFreezer.username = username;
       newFreezer.lastActivity = Date.now();
       await newFreezer.save();

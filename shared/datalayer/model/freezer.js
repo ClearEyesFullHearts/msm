@@ -17,6 +17,10 @@ class FreezerData {
     await this.Doc.init();
   }
 
+  getNew() {
+    return new this.Doc();
+  }
+
   async findByName(at) {
     const frozen = await this.Doc.findOne({ username: at });
     return frozen;

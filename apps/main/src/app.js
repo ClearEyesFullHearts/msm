@@ -4,6 +4,7 @@ const config = require('config');
 const OpenApiValidator = require('express-openapi-validator');
 const debug = require('debug')('msm-main:server');
 const Data = require('@shared/datalayer');
+const helmet = require('helmet');
 const CORS = require('./lib/cors');
 const ErrorHelper = require('./lib/error');
 const Encryption = require('./lib/encryption');
@@ -14,6 +15,8 @@ const APP_ID = 'msm-main';
 class MSMMain {
   constructor() {
     this.app = express();
+    this.app.use(helmet());
+    this.app.disable('x-powered-by');
     this.app.use(CORS.options());
     this.app.options('/*', (req, res) => res.sendStatus(200));
     this.app.use(express.urlencoded({ extended: false }));
@@ -66,6 +69,10 @@ class MSMMain {
         operationHandlers: path.join(__dirname, 'controller'), // default false
       }),
     );
+
+    this.app.use((req, res) => {
+      res.status(404).send("Sorry can't find that!");
+    });
 
     this.app.use(ErrorHelper.catchMiddleware());
 

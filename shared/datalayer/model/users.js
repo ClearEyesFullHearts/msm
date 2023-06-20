@@ -40,6 +40,10 @@ class UserData {
     await this.Doc.init();
   }
 
+  getNew() {
+    return new this.Doc();
+  }
+
   async findByID(userId) {
     const user = await this.Doc.findOne({ id: userId });
     return user;
@@ -58,7 +62,7 @@ class UserData {
       .sort({ size: 1 })
       .limit(15);
 
-    return users;
+    return users || [];
   }
 }
 

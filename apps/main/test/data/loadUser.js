@@ -7,7 +7,7 @@ module.exports = (id) => {
   const user = {
     id,
     username: `user${id}`,
-    searchTerms: ['use', 'user', `user${id}`, 'ser', `ser${id}`, `er${id}`],
+    searchTerms: ['USE', 'USER', `USER${id}`, 'SER', `SER${id}`, `ER${id}`],
     key: pub[0],
     signature: pub[1],
     lastActivity: Date.now(),

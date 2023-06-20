@@ -55,7 +55,7 @@ class Message {
     };
     const fullChallenge = Encryption.hybrid(JSON.stringify(fullPlain), key);
 
-    const newMsg = db.messages.Doc();
+    const newMsg = db.messages.getNew();
     newMsg.userId = targetId;
     newMsg.hasBeenRead = false;
     newMsg.header = headerChallenge;

@@ -41,7 +41,7 @@ class User {
     }
 
     debug('create new user');
-    const newUser = new db.users.Doc();
+    const newUser = db.users.getNew();
     newUser.username = at;
     newUser.size = at.length;
     newUser.searchTerms = createSearchTerms(at);
@@ -49,7 +49,6 @@ class User {
     newUser.signature = signature;
     newUser.lastActivity = -(Date.now());
     newUser.security = 'safe';
-
     await newUser.save();
     debug(`user ${at} created`);
 
@@ -69,7 +68,23 @@ class User {
     const knownUser = await db.users.findByName(at);
     if (knownUser) {
       debug('known user');
-      const auth = this.changeUserToAuth(knownUser);
+      const payload = {
+        auth: true,
+        connection: Date.now(),
+        config: {
+          sessionTime: config.get('timer.removal.session'),
+          pollingTime: config.get('timer.interval.poll'),
+        },
+        user: {
+          id: knownUser.id,
+          username: knownUser.username,
+          security: knownUser.security,
+        },
+      };
+      const auth = {
+        token: jwt.sign(payload, config.get('auth')),
+        ...payload,
+      };
 
       const { key } = knownUser;
       return Encryption.hybrid(JSON.stringify(auth), key);
@@ -133,26 +148,6 @@ class User {
       return;
     }
     debug('user do not exists, no action');
-  }
-
-  static changeUserToAuth(usr) {
-    const payload = {
-      auth: true,
-      connection: Date.now(),
-      config: {
-        sessionTime: config.get('timer.removal.session'),
-        pollingTime: config.get('timer.interval.poll'),
-      },
-      user: {
-        id: usr.id,
-        username: usr.username,
-        security: usr.security,
-      },
-    };
-    debug('changeUserToAuth payload', payload);
-    payload.token = jwt.sign(payload, config.get('auth'));
-
-    return payload;
   }
 }
 
