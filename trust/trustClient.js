@@ -67,18 +67,13 @@ function download(filename) {
   let distTxt = '';
   let downTxt = '';
   paths.forEach((p) => {
-    distTxt += fs.readFileSync(`./dist${p}`).toString('base64');
-    downTxt += fs.readFileSync(`./download${p}`).toString('base64');
+    distTxt = fs.readFileSync(`./dist${p}`).toString('base64');
+    downTxt = fs.readFileSync(`./download${p}`).toString('base64');
+
+    if (distTxt === downTxt) {
+      console.log(`You can trust ${p}`);
+    } else {
+      console.log(`No trust for ${p}`);
+    }
   });
-
-  const hashDist = crypto.createHash('sha256').update(distTxt).digest('hex');
-  const hashDown = crypto.createHash('sha256').update(downTxt).digest('hex');
-
-  if (hashDist === hashDown) {
-    console.log('You can trust it!');
-  } else {
-    console.log('No trust!');
-    console.log('DIST:', hashDist);
-    console.log('DOWNLOAD:', hashDown);
-  }
 })();

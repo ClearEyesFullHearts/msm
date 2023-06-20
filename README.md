@@ -80,7 +80,8 @@ VITE_API_URL=https://api.ysypya.com
 cd ../trust/
 node trustClient.js
 ```
-- The script tells you if the files that you built match those that are stored online and served to the browser.
+- The script tells you if the files that you built match those that are stored online and served to the browser.  
+(Note: If you do it on Windows be sure that you're EOL parameters are set to `\n` or you could have differences in the `.html` files.)
 
 On the back-end side, being hosted by AWS, I'm thinking of writing some process for anyone to validate that the domain name is directly linked to a container from an image that you can validate too and nothing in between. That's a lot of work and that would not dispel the possibility that another service exists that could leak what happens on the database, at least, so it's not really a priority for the moment.  
 For the truly paranoid, you can always copy the reader and writer code available in `./public/offline` to encrypt your messages on an air-gapped computer. ;)
