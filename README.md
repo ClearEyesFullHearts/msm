@@ -18,7 +18,7 @@ The "Secret key" file is actually both secret keys appended one after the other 
 A challenge is the main object that is shared between the client and the back-end.  
 This is the result of hybrid encryption of the piece of data you want to send. The process is simple:  
 - Generate a random password and initialization vector.
-- encrypt the data with this password. (this is symmetric encryption)
+- encrypt the data with this password and the vector. (this is symmetric encryption)
 - encrypt the password with the target public key. (this is asymmetric encryption)
 - send the encrypted data (the token), the encrypted password (the passphrase) and the vector (the iv).
   
