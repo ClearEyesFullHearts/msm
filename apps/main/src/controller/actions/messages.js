@@ -33,8 +33,8 @@ class Message {
       if (!targetUser || targetUser.lastActivity < 0) {
         throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'target @ not found');
       }
+      debug('known active user');
     }
-    debug('known active user');
 
     const { id: targetId, key } = targetUser;
 
@@ -66,6 +66,12 @@ class Message {
   }
 
   static async getMessage(db, msgId, user) {
+    debug(`get user ${user.id}`);
+    const reader = await db.users.findByID(user.id);
+    if (!reader) {
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'User not found');
+    }
+
     debug(`get message ${msgId}`);
     const message = await db.messages.findByID(msgId);
     if (message) {
@@ -79,7 +85,6 @@ class Message {
 
       const { id, full } = message;
 
-      const reader = await db.users.findByID(user.id);
       reader.lastActivity = Math.floor(Date.now() / (15 * 60000)) * (15 * 60000);
       await reader.save();
       debug('reader updated');

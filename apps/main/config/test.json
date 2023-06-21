@@ -1,6 +1,7 @@
 {
   "timer": {
     "removal": {
+      "message": 200,
       "user": 200
     }
   }
