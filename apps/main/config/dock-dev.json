@@ -1,6 +1,12 @@
 {
   "mongo": {
     "url": "mongodb://server-database:27017/msm"
+  },
+  "timer": {
+    "removal": {
+      "message": 200,
+      "user": 200
+    }
   }
 }
   

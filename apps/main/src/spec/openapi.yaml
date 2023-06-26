@@ -312,6 +312,8 @@ components:
         iv:
           type: string
           format: byte
+          minLength: 24
+          maxLength: 24
     User:
       type: object
       required:

@@ -37,6 +37,10 @@ class ErrorHelper {
         Object.defineProperty(err, 'message', { enumerable: true });
         error = err;
       }
+      if (error.errors && error.status) {
+        const [first] = error.errors;
+        error = ErrorHelper.getCustomError(error.status, ErrorHelper.CODE.BAD_REQUEST_FORMAT, first.errorCode);
+      }
       if (res.statusCode >= 400) {
         error.status = res.statusCode;
       }

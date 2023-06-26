@@ -1,5 +1,6 @@
 const fs = require('fs');
 const apickli = require('apickli');
+const axios = require('axios');
 const {
   Before, After, BeforeAll, AfterAll,
 } = require('@cucumber/cucumber');
@@ -17,17 +18,10 @@ Before(function () {
   this.apickli.addRequestHeader('Cache-Control', 'no-cache');
   this.apickli.addRequestHeader('Content-Type', 'application/json');
 
-  const publicK = fs.readFileSync('./data/user1/public.pem').toString();
-  const [epkFile, spkFile] = publicK.split('\n----- SIGNATURE -----\n');
-  this.apickli.storeValueInScenarioScope('EPK', JSON.stringify(epkFile));
-  this.apickli.storeValueInScenarioScope('SPK', JSON.stringify(spkFile));
-
-  // const obj = {
-  //   at: 'user',
-  //   key: epkFile,
-  //   signature: spkFile,
-  // };
-  // fs.writeFileSync('./data/user1/body.json', JSON.stringify(obj))
+  this.axios = axios.create({
+    baseURL: `${protocol}://${host}:${port}`,
+    timeout: 1000,
+  });
 });
 
 // After(async () => {
