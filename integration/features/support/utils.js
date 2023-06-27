@@ -1,10 +1,8 @@
-const {
-  generateKeyPair,
-} = require('crypto');
+const crypto = require('crypto');
 
 async function asyncGenerateKeyPair(modulo) {
   return new Promise((resolve, reject) => {
-    generateKeyPair('rsa', {
+    crypto.generateKeyPair('rsa', {
       modulusLength: modulo,
       publicKeyEncoding: {
         type: 'spki',
@@ -51,6 +49,37 @@ class Util {
         signature: sigSK,
       },
     };
+  }
+
+  static resolve(pem, challenge) {
+    const { token, passphrase, iv } = challenge;
+    const key = crypto.privateDecrypt({
+      key: pem,
+      oaepHash: 'sha256',
+      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+    }, Buffer.from(passphrase, 'base64'));
+
+    const algorithm = 'aes-256-gcm';
+    const cipher = Buffer.from(token, 'base64');
+    const authTag = cipher.subarray(cipher.length - 16);
+    const crypted = cipher.subarray(0, cipher.length - 16);
+
+    const decipher = crypto.createDecipheriv(algorithm, key, Buffer.from(iv, 'base64'));
+    decipher.setAuthTag(authTag);
+    const decData = Buffer.concat([decipher.update(crypted), decipher.final()]);
+
+    return JSON.parse(decData.toString());
+  }
+
+  static getPathValue(obj, path) {
+    if (path[0] !== '$') throw new Error('Wrong path format');
+    const props = path.split('.');
+    let val = obj;
+    for (let i = 1; i < props.length; i += 1) {
+      if (!val[props[i]]) return undefined;
+      val = val[props[i]];
+    }
+    return val;
   }
 
   static getRandomString(length, base64 = false) {

@@ -77,3 +77,24 @@ Scenario: Signature should be in a PK format
     When I POST to /users
     Then response code should be 400
     And response body path $.code should be BAD_REQUEST_FORMAT
+
+Scenario: I cannot register 2 users with the same encryption key
+    Given I am a new invalidated user
+    And I load up user1 public keys
+    And I set body to { "at": "user2", "key":`NEW_EPK`, "signature":`SPK` }
+    When I POST to /users
+    Then response code should be 403
+
+Scenario: I cannot register 2 users with the same signature key
+    Given I am a new invalidated user
+    And I load up user1 public keys
+    And I set body to { "at": "user2", "key":`EPK`, "signature":`NEW_SPK` }
+    When I POST to /users
+    Then response code should be 403
+
+Scenario: Inactivate user is removed after a time
+    Given I am a new invalidated user
+    And I wait for 300 ms
+    And I set body to { "at": "user2", "key":`NEW_EPK`, "signature":`NEW_SPK` }
+    When I POST to /users
+    Then response code should be 201

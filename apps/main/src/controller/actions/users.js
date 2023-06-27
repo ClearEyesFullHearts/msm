@@ -49,7 +49,11 @@ class User {
     newUser.signature = signature;
     newUser.lastActivity = -(Date.now());
     newUser.security = 'safe';
-    await newUser.save();
+    try {
+      await newUser.save();
+    } catch (err) {
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, 'Key singularity');
+    }
     debug(`user ${at} created`);
 
     debug('send welcoming message');

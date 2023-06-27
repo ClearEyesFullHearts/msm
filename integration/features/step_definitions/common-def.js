@@ -1,4 +1,5 @@
 const fs = require('fs');
+const assert = require('assert')
 const { Given, Then } = require('@cucumber/cucumber');
 const Util = require('../support/utils');
 
@@ -13,21 +14,50 @@ Given(/^I set var (.*) to a (.*) characters long string$/, function (varName, le
   this.apickli.storeValueInScenarioScope(varName, Util.getRandomString(length));
 });
 
-Then('response body should be a challenge', function () {
+Then('response body should be a challenge', async function () {
   const respBody = JSON.parse(this.apickli.httpResponse.body);
-  if (!respBody.token) throw new Error('No token on challenge');
-  if (!respBody.passphrase) throw new Error('No passphrase on challenge');
-  if (!respBody.iv) throw new Error('No iv on challenge');
-  if (respBody.passphrase.length !== 684) throw new Error('Passphrase is not the right length');
-  if (respBody.iv.length !== 24) throw new Error('Iv is not the right length');
-  if (Buffer.from(respBody.token, 'base64').toString('base64') !== respBody.token) throw new Error('Token is not base64 encoded');
-  if (Buffer.from(respBody.passphrase, 'base64').toString('base64') !== respBody.passphrase) throw new Error('Passphrase is not base64 encoded');
-  if (Buffer.from(respBody.iv, 'base64').toString('base64') !== respBody.iv) throw new Error('Iv is not base64 encoded');
+  assert.ok(respBody.token);
+  assert.ok(respBody.passphrase);
+  assert.ok(respBody.iv);
+  assert.strictEqual(respBody.passphrase.length, 684);
+  assert.strictEqual(respBody.iv.length, 24);
+  assert.strictEqual(Buffer.from(respBody.token, 'base64').toString('base64'), respBody.token);
+  assert.strictEqual(Buffer.from(respBody.passphrase, 'base64').toString('base64'), respBody.passphrase);
+  assert.strictEqual(Buffer.from(respBody.iv, 'base64').toString('base64'), respBody.iv);
 
   this.apickli.storeValueInScenarioScope('challenge', respBody);
+  const pem = this.apickli.scenarioVariables.NEW_ESK;
+  const resolved = Util.resolve(pem, respBody);
+
+  this.apickli.storeValueInScenarioScope('resolved', resolved);
 });
 
-// Then('Decrypted challenge path (.*) should be (.*)', function (path, value) {
+Then(/^resolved challenge path (.*) should be (.*)$/, function (path, value) {
+  const obj = this.apickli.scenarioVariables.resolved;
+  const test = Util.getPathValue(obj, path);
+  const trueValue = this.apickli.replaceVariables(value);
+  assert.deepStrictEqual(test, trueValue);
+});
 
-//   // this.apickli.scenarioVariables
-// });
+Then(/^resolved challenge path (.*) should match (.*)$/, function (path, expression) {
+  const obj = this.apickli.scenarioVariables.resolved;
+  const regexp = this.apickli.replaceVariables(expression);
+  const regExpObject = new RegExp(regexp);
+  const test = Util.getPathValue(obj, path);
+  const success = regExpObject.test(test);
+  assert.ok(success);
+});
+
+Then(/^I wait for (.*) seconds$/, async function (seconds) {
+  const time = this.apickli.replaceVariables(seconds);
+  await new Promise((resolve) => {
+    setTimeout(resolve, (time * 1000));
+  });
+});
+
+Then(/^I wait for (.*) ms$/, async function (seconds) {
+  const time = this.apickli.replaceVariables(seconds);
+  await new Promise((resolve) => {
+    setTimeout(resolve, time);
+  });
+});
