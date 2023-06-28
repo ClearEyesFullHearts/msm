@@ -85,6 +85,8 @@ class Data {
         username,
         freeze,
       } = IDs[i];
+
+      debug('clear', userId, username);
       promises.push(this.clearUserAccount({ userId, username }, freeze));
     }
 

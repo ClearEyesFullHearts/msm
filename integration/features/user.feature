@@ -95,6 +95,18 @@ Scenario: I cannot register 2 users with the same signature key
 Scenario: Inactivate user is removed after a time
     Given I am a new invalidated user
     And I wait for 300 ms
-    And I set body to { "at": "user2", "key":`NEW_EPK`, "signature":`NEW_SPK` }
+    And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK` }
     When I POST to /users
     Then response code should be 201
+
+Scenario: You cannot create a user with a false encryption key
+    Given I generate a false encryption key
+    And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK` }
+    When I POST to /users
+    Then response code should be 500
+
+# Scenario: You cannot create a user with a false signature key
+#     Given I generate a false signature key
+#     And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK` }
+#     When I POST to /users
+#     Then response code should be 500

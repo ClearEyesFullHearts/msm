@@ -54,21 +54,31 @@ class User {
     } catch (err) {
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, 'Key singularity');
     }
-    debug(`user ${at} created`);
+    debug(`user ${at} created with ID = ${newUser.id}`);
 
-    debug('send welcoming message');
-    const welcomeTitle = config.get('welcome.title');
-    const welcomeContent = config.get('welcome.content');
-    const encrytedMsg = Encryption.encryptMessage(newUser, welcomeTitle, welcomeContent);
+    try {
+      debug('send welcoming message');
+      const welcomeTitle = config.get('welcome.title');
+      const welcomeContent = config.get('welcome.content');
 
-    await MessageAction.writeMessage(db, encrytedMsg, { username: 'do not reply to this message' }, false);
-    debug('welcoming message sent');
+      const encrytedMsg = Encryption.encryptMessage(newUser, welcomeTitle, welcomeContent);
+
+      await MessageAction.writeMessage(db, encrytedMsg, { username: 'do not reply to this message' }, false);
+      debug('welcoming message sent');
+    } catch (err) {
+      debug('Error on first message, user is removed');
+      await db.clearUserAccount({ userId: newUser.id, username: newUser.username }, false);
+      throw ErrorHelper.getCustomError(500, ErrorHelper.CODE.SERVER_ERROR, 'Encryption issue');
+    }
 
     return newUser;
   }
 
   static async getCredentials(db, { at }) {
     debug('check for user with @:', at);
+    if (at.length !== encodeURIComponent(at).length) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have any special character');
+    }
     const knownUser = await db.users.findByName(at);
     if (knownUser) {
       debug('known user');
@@ -94,7 +104,7 @@ class User {
       return Encryption.hybrid(JSON.stringify(auth), key);
     }
 
-    throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
+    throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
   }
 
   static async getUsers(db, { search }) {
@@ -135,7 +145,7 @@ class User {
   }
 
   static async autoUserRemoval(db, userId) {
-    debug('Auto User Removal');
+    debug('Auto User Removal for user', userId);
     const timeToWait = config.get('timer.removal.user');
     await new Promise((resolve) => setTimeout(resolve, timeToWait));
     debug(`remove user ${userId}`);

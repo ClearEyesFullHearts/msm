@@ -51,6 +51,20 @@ class Util {
     };
   }
 
+  static generateFalseKeyPair() {
+    const pemHeader = '-----BEGIN PUBLIC KEY-----';
+    const pemFooter = '-----END PUBLIC KEY-----';
+    const falseEPK = Util.getRandomString(552, true);// 4 * (n / 3) = length
+    const falseSPK = Util.getRandomString(162, true);// n = (length * 3) / 4
+
+    return {
+      public: {
+        encrypt: `${pemHeader}\n${falseEPK}\n${pemFooter}`,
+        signature: `${pemHeader}\n${falseSPK}\n${pemFooter}`,
+      },
+    };
+  }
+
   static resolve(pem, challenge) {
     const { token, passphrase, iv } = challenge;
     const key = crypto.privateDecrypt({
@@ -70,6 +84,15 @@ class Util {
 
     return JSON.parse(decData.toString());
   }
+
+  // static sign() {
+  //   const bufData = Buffer.from(data);
+  //   return crypto.verify('rsa-sha256', bufData, {
+  //     key,
+  //     padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+  //     saltLength: 32,
+  //   }, bufSig);
+  // }
 
   static getPathValue(obj, path) {
     if (path[0] !== '$') throw new Error('Wrong path format');
