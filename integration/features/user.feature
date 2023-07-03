@@ -110,3 +110,21 @@ Scenario: You cannot create a user with a false encryption key
 #     And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK` }
 #     When I POST to /users
 #     Then response code should be 500
+
+Scenario: A new user should validate its account by requesting the first message
+    Given I am a new invalidated user
+    And I GET /identity/`MY_AT`
+    And response body match a challenge
+    And I store the value of body path $.token as access token
+    And I set bearer token
+    And I GET /inbox
+    And response body path $.0.id should be ^[0-9]\d*$
+    And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
+    When I GET /message/`FIRST_MSG_ID`
+    Then response code should be 200
+    And response body path $.id should be ^[0-9]\d*$
+    And response body path $.challenge match a challenge
+    And I wait for 300 ms
+    And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK` }
+    When I POST to /users
+    Then response code should be 403
