@@ -41,3 +41,35 @@ Given('I generate a false signature key', function () {
   const username = Util.getRandomString(25);
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 });
+
+Given(/^I am authenticated user (.*)$/, async function (folder) {
+  // load keys
+  const publicK = fs.readFileSync(`./data/users/${folder}/public.pem`).toString();
+  const [epkFile, spkFile] = publicK.split('\n----- SIGNATURE -----\n');
+  this.apickli.storeValueInScenarioScope('EPK', epkFile);
+  this.apickli.storeValueInScenarioScope('SPK', spkFile);
+  const privateK = fs.readFileSync(`./data/users/${folder}/private.pem`).toString();
+  const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
+  this.apickli.storeValueInScenarioScope('ESK', eskFile);
+  this.apickli.storeValueInScenarioScope('SSK', sskFile);
+
+  // get identity challenge
+  await new Promise((resolve, reject) => {
+    this.apickli.get(`/identity/${folder}`, (error) => {
+      if (error) {
+        reject(error);
+      }
+
+      resolve();
+    });
+  });
+
+  // resolve it for body
+  const respBody = JSON.parse(this.apickli.httpResponse.body);
+  const pem = this.apickli.scenarioVariables.NEW_ESK;
+  const resolved = Util.resolve(pem, respBody);
+  this.apickli.httpResponse.body = JSON.stringify(resolved);
+
+  // set bearer token
+  this.apickli.setAccessTokenFromResponseBodyPath('$.token');
+});

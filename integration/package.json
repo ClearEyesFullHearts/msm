@@ -4,7 +4,8 @@
     "description": "Integration tests for MSM",
     "main": "",
     "scripts": {
-        "test": "./node_modules/.bin/cucumber-js"
+        "test": "./node_modules/.bin/cucumber-js",
+        "win-test": ".\\node_modules\\.bin\\cucumber-js features\\login.feature"
     },
     "author": "MFT",
     "license": "MIT",
@@ -14,6 +15,6 @@
         "@cucumber/cucumber": "^9.2.0",
         "cucumber-html-reporter": "^7.1.0",
         "jsonwebtoken": "^9.0.0",
-        "axios": "^1.4.0"
+        "mongodb-backup-4x": "3.2.1"
     }
 }

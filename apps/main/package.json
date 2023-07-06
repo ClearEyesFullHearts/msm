@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "win-launch": "set DEBUG=msm-main:*,datalayer:*&& node index.js",
+    "win-launch-test": "set NODE_ENV=test&& set DEBUG=msm-main:*,datalayer:*&& node index.js",
     "test": "jest"
   },
   "author": "MFT",

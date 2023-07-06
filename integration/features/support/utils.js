@@ -67,6 +67,7 @@ class Util {
 
   static resolve(pem, challenge) {
     const { token, passphrase, iv } = challenge;
+
     const key = crypto.privateDecrypt({
       key: pem,
       oaepHash: 'sha256',

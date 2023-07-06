@@ -1,13 +1,20 @@
 const fs = require('fs');
-const assert = require('assert')
+const assert = require('assert');
 const { Given, Then } = require('@cucumber/cucumber');
 const Util = require('../support/utils');
 
 Given(/^I load up (.*) public keys$/, function (folder) {
-  const publicK = fs.readFileSync(`./data/${folder}/public.pem`).toString();
+  const publicK = fs.readFileSync(`./data/users/${folder}/public.pem`).toString();
   const [epkFile, spkFile] = publicK.split('\n----- SIGNATURE -----\n');
   this.apickli.storeValueInScenarioScope('EPK', JSON.stringify(epkFile));
   this.apickli.storeValueInScenarioScope('SPK', JSON.stringify(spkFile));
+});
+
+Given(/^I load up (.*) private keys$/, function (folder) {
+  const privateK = fs.readFileSync(`./data/users/${folder}/private.pem`).toString();
+  const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
+  this.apickli.storeValueInScenarioScope('NEW_ESK', eskFile);
+  this.apickli.storeValueInScenarioScope('NEW_SSK', sskFile);
 });
 
 Given(/^I set var (.*) to a (.*) characters long string$/, function (varName, length) {

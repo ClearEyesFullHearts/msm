@@ -23,7 +23,7 @@ class AuthMiddleware {
             connection,
             user,
           } = payload;
-          if (!connection || !user || !user.id) {
+          if (!connection || !user || !Number.isInteger(user.id)) {
             return next(ErrorHelper.getCustomError(401, ErrorHelper.CODE.MIS_AUTH_HEADER, 'Incorrect auth payload'));
           }
 
