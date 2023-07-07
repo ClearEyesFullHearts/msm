@@ -22,6 +22,24 @@ Before(function () {
   this.apickli = new apickli.Apickli(protocol, `${host}:${port}`, 'data');
   this.apickli.addRequestHeader('Cache-Control', 'no-cache');
   this.apickli.addRequestHeader('Content-Type', 'application/json');
+
+  this.get = (url) => new Promise((resolve, reject) => {
+    this.apickli.get(url, (error) => {
+      if (error) {
+        reject(error);
+      }
+
+      resolve();
+    });
+  });
+  this.post = (url) => new Promise((resolve, reject) => {
+    this.apickli.post(url, (error) => {
+      if (error) {
+        reject(error);
+      }
+      resolve();
+    });
+  });
 });
 
 // After(async () => {

@@ -13,15 +13,16 @@ Given('I am a new invalidated user', async function () {
   const username = Util.getRandomString(25);
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 
-  await this.axios.post('/users', {
+  this.apickli.setRequestBody(JSON.stringify({
     at: username,
     key: epk,
     signature: spk,
-  });
+  }));
+  await this.post('/users');
 });
 
 Given('I generate a false encryption key', function () {
-  const publicK = fs.readFileSync('./data/user1/public.pem').toString();
+  const publicK = fs.readFileSync('./data/users/user1/public.pem').toString();
   const [_, spkFile] = publicK.split('\n----- SIGNATURE -----\n');
   const pair = Util.generateFalseKeyPair();
   const epk = pair.public.encrypt;
@@ -32,7 +33,7 @@ Given('I generate a false encryption key', function () {
 });
 
 Given('I generate a false signature key', function () {
-  const publicK = fs.readFileSync('./data/user1/public.pem').toString();
+  const publicK = fs.readFileSync('./data/users/user1/public.pem').toString();
   const [epkFile] = publicK.split('\n----- SIGNATURE -----\n');
   const pair = Util.generateFalseKeyPair();
   const spk = pair.public.signature;
@@ -54,22 +55,18 @@ Given(/^I am authenticated user (.*)$/, async function (folder) {
   this.apickli.storeValueInScenarioScope('SSK', sskFile);
 
   // get identity challenge
-  await new Promise((resolve, reject) => {
-    this.apickli.get(`/identity/${folder}`, (error) => {
-      if (error) {
-        reject(error);
-      }
-
-      resolve();
-    });
-  });
+  await this.get(`/identity/${folder}`);
 
   // resolve it for body
   const respBody = JSON.parse(this.apickli.httpResponse.body);
-  const pem = this.apickli.scenarioVariables.NEW_ESK;
+  const pem = this.apickli.scenarioVariables.ESK;
   const resolved = Util.resolve(pem, respBody);
+
+  this.apickli.storeValueInScenarioScope('AUTH', resolved);
+
   this.apickli.httpResponse.body = JSON.stringify(resolved);
 
   // set bearer token
   this.apickli.setAccessTokenFromResponseBodyPath('$.token');
+  this.apickli.setBearerToken();
 });

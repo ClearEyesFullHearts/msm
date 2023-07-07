@@ -42,4 +42,19 @@ Scenario: Authenticated user has access to its inbox
     And response body path $ should be of type array with length 1
     And response body path $.0.id should be ^[0-9]\d*$
     And response body path $.0.challenge match a challenge
-    
+
+Scenario: Authentication is mandatory to search user's list
+    When I GET /users?search=mat
+    Then response code should be 401
+
+Scenario: Authentication is mandatory to get user's detail
+    When I GET /user/mat
+    Then response code should be 401
+
+Scenario: Authentication is mandatory to get one's inbox
+    When I GET /inbox
+    Then response code should be 401
+
+Scenario: Authentication is mandatory to get a full message
+    When I GET /message/1
+    Then response code should be 401

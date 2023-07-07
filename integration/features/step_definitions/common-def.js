@@ -21,6 +21,19 @@ Given(/^I set var (.*) to a (.*) characters long string$/, function (varName, le
   this.apickli.storeValueInScenarioScope(varName, Util.getRandomString(length));
 });
 
+Given('I set signature header', function () {
+  const { token, ...restAuth } = this.apickli.scenarioVariables.AUTH;
+  const signatureKey = this.apickli.scenarioVariables.SSK || this.apickli.scenarioVariables.NEW_SSK;
+  const bodyObj = JSON.parse(this.apickli.requestBody);
+  const data = JSON.stringify({
+    ...restAuth,
+    ...bodyObj,
+  });
+
+  const sig = Util.sign(signatureKey, data);
+  this.apickli.addRequestHeader('x-msm-sig', sig);
+});
+
 Then('response body match a challenge', async function () {
   const respBody = JSON.parse(this.apickli.httpResponse.body);
   assert.ok(respBody.token);
@@ -59,21 +72,14 @@ Then(/^response body path (.*) match a challenge$/, async function (path) {
   this.apickli.storeValueInScenarioScope('resolved', resolved);
 });
 
-// Then(/^resolved challenge path (.*) should be (.*)$/, function (path, value) {
-//   const obj = this.apickli.scenarioVariables.resolved;
-//   const test = Util.getPathValue(obj, path);
-//   const trueValue = this.apickli.replaceVariables(value);
-//   assert.deepStrictEqual(test, trueValue);
-// });
-
-// Then(/^resolved challenge path (.*) should match (.*)$/, function (path, expression) {
-//   const obj = this.apickli.scenarioVariables.resolved;
-//   const regexp = this.apickli.replaceVariables(expression);
-//   const regExpObject = new RegExp(regexp);
-//   const test = Util.getPathValue(obj, path);
-//   const success = regExpObject.test(test);
-//   assert.ok(success);
-// });
+Then(/^resolved challenge path (.*) should match (.*)$/, function (path, expression) {
+  const obj = this.apickli.scenarioVariables.resolved;
+  const regexp = this.apickli.replaceVariables(expression);
+  const regExpObject = new RegExp(regexp);
+  const test = Util.getPathValue(obj, path);
+  const success = regExpObject.test(test);
+  assert.ok(success);
+});
 
 Then(/^I wait for (.*) seconds$/, async function (seconds) {
   const time = this.apickli.replaceVariables(seconds);

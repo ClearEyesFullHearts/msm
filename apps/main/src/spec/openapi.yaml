@@ -29,7 +29,7 @@ paths:
     get:
       summary: Get users' list
       operationId: getUsers
-      x-eov-operation-handler: api      
+      x-eov-operation-handler: api
       security:
         - bearerAuth: []
       parameters:
@@ -44,7 +44,7 @@ paths:
         '200':
           description: A list of users
           content:
-            application/json:    
+            application/json:
               schema:
                 $ref: "#/components/schemas/UsersList"
         default:
@@ -53,7 +53,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-                
+
   /identity/{at}:
     get:
       summary: Login
@@ -72,7 +72,7 @@ paths:
         '200':
           description: Encrypted Bearer token
           content:
-            application/json:    
+            application/json:
               schema:
                 $ref: "#/components/schemas/Challenge"
         default:
@@ -81,18 +81,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-                
+
   /user/{at}:
     get:
       summary: Get one user informations
       operationId: getOneUser
-      x-eov-operation-handler: api      
+      x-eov-operation-handler: api
       security:
         - bearerAuth: []
       parameters:
         - name: at
           in: path
-          description: Start of users name
+          description: The full user name
           required: true
           schema:
             type: string
@@ -102,7 +102,7 @@ paths:
         '200':
           description: One user
           content:
-            application/json:    
+            application/json:
               schema:
                 $ref: "#/components/schemas/User"
         default:
@@ -115,7 +115,7 @@ paths:
       summary: Delete every reference to an account
       description: Incinerate an account entirely
       operationId: incinerate
-      x-eov-operation-handler: api      
+      x-eov-operation-handler: api
       security:
         - bearerAuth: []
       parameters:
@@ -144,7 +144,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-                
+
   /inbox:
     get:
       summary: Get a user inbox
@@ -154,14 +154,14 @@ paths:
         - sentAt
         - title
       operationId: getInbox
-      x-eov-operation-handler: api      
+      x-eov-operation-handler: api
       security:
         - bearerAuth: []
       responses:
         '200':
           description: A list of messages headers
           content:
-            application/json:    
+            application/json:
               schema:
                 $ref: "#/components/schemas/Inbox"
         default:
@@ -170,12 +170,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-                
+
   /message:
     post:
       summary: Send a message
       operationId: writeMessage
-      x-eov-operation-handler: api      
+      x-eov-operation-handler: api
       security:
         - bearerAuth: []
       parameters:
@@ -202,7 +202,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-                
+
   /message/{msgId}:
     get:
       summary: Get a message content and delete it from DB
@@ -213,7 +213,7 @@ paths:
         - title
         - content
       operationId: getMessage
-      x-eov-operation-handler: api      
+      x-eov-operation-handler: api
       security:
         - bearerAuth: []
       parameters:
@@ -227,7 +227,7 @@ paths:
         '200':
           description: A complete message
           content:
-            application/json:    
+            application/json:
               schema:
                 $ref: "#/components/schemas/Message"
         default:
@@ -240,7 +240,7 @@ paths:
       summary: Force removal of a message
       description: Delete a message from db
       operationId: removeMessage
-      x-eov-operation-handler: api      
+      x-eov-operation-handler: api
       security:
         - bearerAuth: []
       parameters:
@@ -268,7 +268,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-components:  
+components:
   securitySchemes:
     bearerAuth:
       type: http

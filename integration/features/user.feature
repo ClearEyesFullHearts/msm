@@ -30,6 +30,25 @@ Scenario: Username should be less than 125 characters long
     Then response code should be 400
     And response body path $.code should be BAD_REQUEST_FORMAT
 
+Scenario: I cannot register 2 users with the same username
+    Given I load up user1 public keys
+    And I set body to { "at": "user1", "key":`EPK`, "signature":`SPK` }
+    And I POST to /users
+    Given I load up user2 public keys
+    And I set body to { "at": "user1", "key":`EPK`, "signature":`SPK` }
+    When I POST to /users
+    Then response code should be 403
+    And response body path $.code should be USER_EXISTS
+
+Scenario: Usernames are case-sensitive
+    Given I load up user1 public keys
+    And I set body to { "at": "user1", "key":`EPK`, "signature":`SPK` }
+    And I POST to /users
+    Given I load up user2 public keys
+    And I set body to { "at": "uSer1", "key":`EPK`, "signature":`SPK` }
+    When I POST to /users
+    Then response code should be 201
+
 Scenario: Key should not be less than 788 characters
     Given I set var KEY_TOO_SHORT to a 787 characters long string
     And I load up user1 public keys
@@ -124,7 +143,20 @@ Scenario: A new user should validate its account by requesting the first message
     Then response code should be 200
     And response body path $.id should be ^[0-9]\d*$
     And response body path $.challenge match a challenge
+    And resolved challenge path $.from should match @do not reply to this message
     And I wait for 300 ms
     And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK` }
     When I POST to /users
     Then response code should be 403
+
+Scenario: A user can delete its account
+    Given I am a new invalidated user
+    And I GET /identity/`MY_AT`
+    And response body match a challenge
+    And I store the value of body path $ as AUTH in scenario scope
+    And I store the value of body path $.user.id as MY_ID in scenario scope
+    And I store the value of body path $.token as access token
+    And I set bearer token
+    And I set signature header
+    When I DELETE /user/`MY_ID`
+    Then response code should be 200

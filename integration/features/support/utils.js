@@ -65,6 +65,16 @@ class Util {
     };
   }
 
+  static encrypt(pem, data) {
+    const crypted = crypto.publicEncrypt({
+      key: pem,
+      oaepHash: 'sha256',
+      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+    }, Buffer.from(data));
+
+    return Buffer.from(crypted).toString('base64');
+  }
+
   static resolve(pem, challenge) {
     const { token, passphrase, iv } = challenge;
 
@@ -86,14 +96,16 @@ class Util {
     return JSON.parse(decData.toString());
   }
 
-  // static sign() {
-  //   const bufData = Buffer.from(data);
-  //   return crypto.verify('rsa-sha256', bufData, {
-  //     key,
-  //     padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-  //     saltLength: 32,
-  //   }, bufSig);
-  // }
+  static sign(key, data) {
+    const bufData = Buffer.from(data);
+    const signature = crypto.sign('rsa-sha256', bufData, {
+      key,
+      padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+      saltLength: 32,
+    });
+
+    return Buffer.from(signature).toString('base64');
+  }
 
   static getPathValue(obj, path) {
     if (path[0] !== '$') throw new Error('Wrong path format');
