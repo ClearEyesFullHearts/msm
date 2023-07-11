@@ -53,9 +53,9 @@ The header contains only the sender information, the title of the message and th
 
 ## Trust issues
 If you have read everything up to here you probably have some trust issues and I can't blame you. You shouldn't trust me.  
-Like I said in the project description the heavy lifting is done on the client side, the Secret Key is never shared, never stored out of the memory and the messages are at no point sent in clear text, so I created a process to validate the code (and for me to be sure that no one tampers with it on the hosting side):
+Like I said in the project description the heavy lifting is done on the client side, the Secret Key is never shared, never stored out of the memory and the messages are at no point sent in clear text, so I wrote a simple script for you to be able to use the client code directly from your machine:  
 - `git clone https://github.com/ClearEyesFullHearts/msm.git`
-- Get the commit hash of the url you want to validate in `./public/README.md`
+- Get the commit hash of the online version in `./public/README.md`
 - At the root of the project, checkout the code with this hash
 ```
 git checkout [commit hash]
@@ -75,21 +75,29 @@ VITE_API_URL=https://api.ysypya.com
 ```
 ./builder.sh
 ```
-- go to the `./trust` folder and start the trustClient.js script
+- go to the `./trust` folder and start the serve.js script
 ```
 cd ../trust/
-node trustClient.js
+node serve.js
 ```
-- The script tells you if the files that you built match those that are stored online and served to the browser.  
-(Note: If you do it on Windows be sure that you're EOL parameters are set to `\n` or you could have differences in the `.html` files.)
+- Go to http://localhost:3000 in your browser and then you can be sure that the client code has not be tampered with.
 
-On the back-end side, being hosted by AWS, I'm thinking of writing some process for anyone to validate that the domain name is directly linked to a container from an image that you can validate too and nothing in between. That's a lot of work and that would not dispel the possibility that another service exists that could leak what happens on the database, at least, so it's not really a priority for the moment.  
-For the truly paranoid, you can always copy the reader and writer code available in `./public/offline` to encrypt your messages on an air-gapped computer. ;)
-
+I think it should be possible to write a Chrome and/or a Firefox extension to automatically validate that the files coming from the server in the browser match the repository, which would really help to use the site on mobile. I need to dig deeper into that.  
+  
+On the back-end side, the risk being that a malicious actor takes control over the server and serves duplicated public keys to be able to read, copy and re-send all the messages, a classic man-in-the-middle attack, the beta version will offer the possibility to validate accounts from people you know simply by sharing a signed hash of their public key through a different channel (IRL, Signal, emails, etc...) and comparing with the public key you get from the back-end.  
+This way you would be sure, whoever control the back-end, that your messages are safely encrypted and only readable by that account owner.  
+  
+We will automate this validation process by triggering, on account validation, a smart contract on the Ethereum network which will store the value of your signed key hash on the blockchain. Each user will be able to validate, on the client side, that the original hash (on the blockchain) match its own key and that other accounts' keys match their original hash too. This automatic validation, by yourself, of your own key should be enough to ensure everyone's safety.  
+  
+For the truly paranoid, you can always copy the reader and writer code available in `./public/offline` to encrypt your messages on an air-gapped computer. ;)  
+  
 ## What's next
 - Write tests lol
+- Add the signed hash to the account creation process
+- Add a contact book with a validation process for known accounts
+- Trigger the smart contract on account validation
+- Automatic client-side account validation
 - Change datalayer to use dynamoDB
 - Stop the client session madness
 - Create the "Official" tier
-- Implement donations through coinbase (if it still exists)
 - Use a lambda for once-a-day cleaning
