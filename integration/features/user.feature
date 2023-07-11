@@ -124,11 +124,11 @@ Scenario: You cannot create a user with a false encryption key
     When I POST to /users
     Then response code should be 500
 
-# Scenario: You cannot create a user with a false signature key
-#     Given I generate a false signature key
-#     And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK` }
-#     When I POST to /users
-#     Then response code should be 500
+Scenario: You cannot create a user with a false signature key
+    Given I generate a false signature key
+    And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK` }
+    When I POST to /users
+    Then response code should be 500
 
 Scenario: A new user should validate its account by requesting the first message
     Given I am a new invalidated user

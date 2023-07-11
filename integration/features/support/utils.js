@@ -39,10 +39,19 @@ class Util {
       { publicKey: sigPK, privateKey: sigSK },
     ] = doubleKeyPair;
 
+    const formattedPK = formatPK(publicKey);
+    const formattedSPK = formatPK(sigPK);
+    const hash = crypto.createHash('sha256');
+    hash.update(`${formattedPK}\n${formattedSPK}`);
+    const pkHash = hash.digest();
+
+    const signedHash = Util.sign(sigSK, pkHash);
+
     return {
       public: {
-        encrypt: formatPK(publicKey),
-        signature: formatPK(sigPK),
+        encrypt: formattedPK,
+        signature: formattedSPK,
+        signedHash,
       },
       private: {
         encrypt: privateKey,
@@ -56,11 +65,13 @@ class Util {
     const pemFooter = '-----END PUBLIC KEY-----';
     const falseEPK = Util.getRandomString(552, true);// 4 * (n / 3) = length
     const falseSPK = Util.getRandomString(162, true);// n = (length * 3) / 4
+    const falseHash = Util.getRandomString(129, true);
 
     return {
       public: {
         encrypt: `${pemHeader}\n${falseEPK}\n${pemFooter}`,
         signature: `${pemHeader}\n${falseSPK}\n${pemFooter}`,
+        signedHash: falseHash,
       },
     };
   }

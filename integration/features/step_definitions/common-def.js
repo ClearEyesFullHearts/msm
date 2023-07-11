@@ -4,10 +4,12 @@ const { Given, Then } = require('@cucumber/cucumber');
 const Util = require('../support/utils');
 
 Given(/^I load up (.*) public keys$/, function (folder) {
-  const publicK = fs.readFileSync(`./data/users/${folder}/public.pem`).toString();
+  const file = fs.readFileSync(`./data/users/${folder}/public.pem`).toString();
+  const [publicK, hash] = file.split('\n----- HASH -----\n');
   const [epkFile, spkFile] = publicK.split('\n----- SIGNATURE -----\n');
   this.apickli.storeValueInScenarioScope('EPK', JSON.stringify(epkFile));
   this.apickli.storeValueInScenarioScope('SPK', JSON.stringify(spkFile));
+  this.apickli.storeValueInScenarioScope('SHA', hash);
 });
 
 Given(/^I load up (.*) private keys$/, function (folder) {
