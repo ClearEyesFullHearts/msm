@@ -29,7 +29,7 @@
           </p>
         </li>
         <li>
-          <b>Burner</b>
+          <b>Burner (disabled, waiting for beta version)</b>
           <p>
             The "burner" tier is when you create a simple account with us.<br>
             You access our messaging platform where we manage all accounts public keys

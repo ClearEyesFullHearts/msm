@@ -43,6 +43,7 @@ async function incinerate() {
           :href="href"
           class="btn btn-outline-light"
           @click="navigate"
+          disabled
         >
           Login
         </button>
@@ -56,6 +57,7 @@ async function incinerate() {
           :href="href"
           class="btn btn-outline-light"
           @click="navigate"
+          disabled
         >
           Register
         </button>
