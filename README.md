@@ -80,7 +80,7 @@ VITE_API_URL=https://api.ysypya.com
 cd ../trust/
 node serve.js
 ```
-- Go to http://localhost:3000 in your browser and then you can be sure that the client code has not be tampered with.
+- Go to http://localhost:3000 in your browser and then you can be sure that the client code has not been tampered with.
 
 I think it should be possible to write a Chrome and/or a Firefox extension to automatically validate that the files coming from the server in the browser match the repository, which would really help to use the site on mobile. I need to dig deeper into that.  
   
@@ -88,6 +88,7 @@ On the back-end side, the risk being that a malicious actor takes control over t
 This way you would be sure, whoever control the back-end, that your messages are safely encrypted and only readable by that account owner.  
   
 We will automate this validation process by triggering, on account validation, a smart contract on the Ethereum network which will store the value of your signed key hash on the blockchain. Each user will be able to validate, on the client side, that the original hash (on the blockchain) match its own key and that other accounts' keys match their original hash too. This automatic validation, by yourself, of your own key should be enough to ensure everyone's safety.  
+Needless to say, if anyone note a mismatch between these values, they should alert the admin (me) to shut the whole thing down while we figure out what happened.  
   
 For the truly paranoid, you can always copy the reader and writer code available in `./public/offline` to encrypt your messages on an air-gapped computer. ;)  
   

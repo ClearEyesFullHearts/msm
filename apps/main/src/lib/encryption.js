@@ -40,6 +40,12 @@ class Encryption {
     }, bufSig);
   }
 
+  static hash(txt) {
+    const hash = crypto.createHash('sha256');
+    hash.update(txt);
+    return hash.digest();
+  }
+
   static isValidPemPk(str) {
     if (str.substring(0, PK_START.length) !== PK_START) return false;
     if (str.substring(str.length - PK_END.length) !== PK_END) return false;

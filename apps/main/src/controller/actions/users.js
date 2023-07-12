@@ -19,8 +19,10 @@ function createSearchTerms(str) {
 }
 
 class User {
-  static async createUser(db, { at, key, signature }) {
-    debug('check for user with username:', at);
+  static async createUser(db, {
+    at, key, signature, hash,
+  }) {
+    debug('check for user with username:', at, hash);
     if (at.length !== encodeURIComponent(at).length) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have any special character');
     }
@@ -30,6 +32,9 @@ class User {
     if (!Encryption.isValidPemPk(signature)) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong public key format');
     }
+    if (Buffer.from(hash, 'base64').toString('base64') !== hash) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong hash format');
+    }
 
     const knownUser = await db.users.findByName(at);
     if (knownUser) {
@@ -38,6 +43,16 @@ class User {
     const frozenUser = await db.freezer.findByName(at);
     if (frozenUser) {
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, '@ name already taken');
+    }
+
+    try {
+      const keyHash = Encryption.hash(`${key}\n${signature}`);
+      if (!Encryption.verifySignature(signature, keyHash, hash)) {
+        throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong hash format');
+      }
+    } catch (err) {
+      if (err.code === ErrorHelper.CODE.BAD_REQUEST_FORMAT) throw err;
+      throw ErrorHelper.getCustomError(500, ErrorHelper.CODE.SERVER_ERROR, 'Signature issue');
     }
 
     debug('create new user');

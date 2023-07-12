@@ -5,7 +5,7 @@ Feature: Data preparation
 Scenario: Validate "mat" user
     Given I load up mat public keys
     And I load up mat private keys
-    And I set body to { "at": "mat", "key":`EPK`, "signature":`SPK` }
+    And I set body to { "at": "mat", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`" }
     And I POST to /users
     And I GET /identity/mat
     And response body match a challenge
@@ -20,7 +20,7 @@ Scenario: Validate "mat" user
 Scenario: Validate "batmat" user
     Given I load up batmat public keys
     And I load up batmat private keys
-    And I set body to { "at": "batmat", "key":`EPK`, "signature":`SPK` }
+    And I set body to { "at": "batmat", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`" }
     And I POST to /users
     And I GET /identity/batmat
     And response body match a challenge

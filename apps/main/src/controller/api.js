@@ -10,6 +10,7 @@ module.exports = {
         at,
         key,
         signature,
+        hash,
       },
       app: {
         locals: {
@@ -17,7 +18,9 @@ module.exports = {
         },
       },
     } = req;
-    User.createUser(db, { at, key, signature })
+    User.createUser(db, {
+      at, key, signature, hash,
+    })
       .then(({ id }) => {
         res.status(201).send();
 

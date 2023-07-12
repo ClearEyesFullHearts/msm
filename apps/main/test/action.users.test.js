@@ -14,6 +14,7 @@ describe('User Action tests', () => {
         username: at,
         key,
         signature,
+        hash,
         searchTerms,
         size,
         security,
@@ -30,6 +31,7 @@ describe('User Action tests', () => {
               expect(this.username).toBe(at);
               expect(this.key).toBe(key);
               expect(this.signature).toBe(signature);
+              expect(this.hash).toBe(hash);
               expect(this.searchTerms).toStrictEqual(searchTerms);
               expect(this.size).toBe(size);
               expect(this.security).toBe(security);
@@ -58,12 +60,15 @@ describe('User Action tests', () => {
         },
       };
 
-      Action.createUser(mockDB, { at, key, signature });
+      Action.createUser(mockDB, {
+        at, key, signature, hash,
+      });
     });
     test('Bad username format throws', () => {
       const {
         key,
         signature,
+        hash,
       } = userLoader(1);
       const mockDB = {
         users: {
@@ -83,12 +88,15 @@ describe('User Action tests', () => {
           findByName: () => (Promise.resolve(null)),
         },
       };
-      expect(Action.createUser(mockDB, { at: '@rep sup', key, signature })).rejects.toThrow('@ name should not have any special character');
+      expect(Action.createUser(mockDB, {
+        at: '@rep sup', key, signature, hash,
+      })).rejects.toThrow('@ name should not have any special character');
     });
     test('Invalid key format throws', () => {
       const {
         username: at,
         signature,
+        hash,
       } = userLoader(1);
       const mockDB = {
         users: {
@@ -108,12 +116,15 @@ describe('User Action tests', () => {
           findByName: () => (Promise.resolve(null)),
         },
       };
-      expect(Action.createUser(mockDB, { at, signature, key: 'badkey' })).rejects.toThrow('Wrong public key format');
+      expect(Action.createUser(mockDB, {
+        at, signature, key: 'badkey', hash,
+      })).rejects.toThrow('Wrong public key format');
     });
     test('Invalid signature format throws', () => {
       const {
         username: at,
         key,
+        hash,
       } = userLoader(1);
       const mockDB = {
         users: {
@@ -133,13 +144,19 @@ describe('User Action tests', () => {
           findByName: () => (Promise.resolve(null)),
         },
       };
-      expect(Action.createUser(mockDB, { at, key, signature: 'badkey' })).rejects.toThrow('Wrong public key format');
+      expect(Action.createUser(mockDB, {
+        at,
+        key,
+        signature: 'badkey',
+        hash,
+      })).rejects.toThrow('Wrong public key format');
     });
     test('User already exists throws', () => {
       const {
         username: at,
         key,
         signature,
+        hash,
       } = userLoader(1);
       const mockDB = {
         users: {
@@ -159,13 +176,16 @@ describe('User Action tests', () => {
           findByName: () => (Promise.resolve(null)),
         },
       };
-      expect(Action.createUser(mockDB, { at, key, signature })).rejects.toThrow('@ name already taken');
+      expect(Action.createUser(mockDB, {
+        at, key, signature, hash,
+      })).rejects.toThrow('@ name already taken');
     });
     test('Username is frozen throws', () => {
       const {
         username: at,
         key,
         signature,
+        hash,
       } = userLoader(1);
       const mockDB = {
         users: {
@@ -185,8 +205,12 @@ describe('User Action tests', () => {
           findByName: () => (Promise.resolve({ username: at })),
         },
       };
-      expect(Action.createUser(mockDB, { at, key, signature })).rejects.toThrow('@ name already taken');
+      expect(Action.createUser(mockDB, {
+        at, key, signature, hash,
+      })).rejects.toThrow('@ name already taken');
     });
+    test('Invalid signed hash throws', () => {});
+    test('First message failure throws and cancel user creation', () => {});
   });
   describe('.getCredentials', () => {
     test('Correct data returns encrypted credentials', async () => {

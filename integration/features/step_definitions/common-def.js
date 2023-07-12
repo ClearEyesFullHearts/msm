@@ -19,8 +19,13 @@ Given(/^I load up (.*) private keys$/, function (folder) {
   this.apickli.storeValueInScenarioScope('NEW_SSK', sskFile);
 });
 
-Given(/^I set var (.*) to a (.*) characters long string$/, function (varName, length) {
-  this.apickli.storeValueInScenarioScope(varName, Util.getRandomString(length));
+Given(/^I set var (.*) to a (.*) characters long (.*)string$/, function (varName, length, format) {
+  const isBase64 = format === 'base64 ';
+  let str = Util.getRandomString(length, isBase64);
+  if (format === 'hex ') {
+    str = Buffer.from(str).toString('hex');
+  }
+  this.apickli.storeValueInScenarioScope(varName, str);
 });
 
 Given('I set signature header', function () {

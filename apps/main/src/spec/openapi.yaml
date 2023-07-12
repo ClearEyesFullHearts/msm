@@ -281,6 +281,7 @@ components:
         - at
         - key
         - signature
+        - hash
       properties:
         at:
           type: string
@@ -294,6 +295,11 @@ components:
           type: string
           minLength: 268
           maxLength: 268
+        hash:
+          type: string
+          format: byte
+          minLength: 172
+          maxLength: 172
     Challenge:
       type: object
       required:

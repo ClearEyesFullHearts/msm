@@ -7,9 +7,10 @@ Given('I am a new invalidated user', async function () {
   const keys = await Util.generateKeyPair();
   const epk = keys.public.encrypt;
   const spk = keys.public.signature;
+  const sha = keys.public.signedHash;
   this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(epk));
   this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(spk));
-  this.apickli.storeValueInScenarioScope('NEW_SHA', keys.public.signedHash);
+  this.apickli.storeValueInScenarioScope('NEW_SHA', sha);
   this.apickli.storeValueInScenarioScope('NEW_ESK', keys.private.encrypt);
   this.apickli.storeValueInScenarioScope('NEW_SSK', keys.private.signature);
   const username = Util.getRandomString(25);
@@ -19,6 +20,7 @@ Given('I am a new invalidated user', async function () {
     at: username,
     key: epk,
     signature: spk,
+    hash: sha,
   }));
   await this.post('/users');
 });
@@ -57,27 +59,32 @@ Given('I generate a false signature key', function () {
   const username = Util.getRandomString(25);
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 });
+Given(/^I hash and sign (.*) and (.*) into (.*) with (.*)$/, async function (pkVarName, skVarName, varName, sskVarName) {
+  const epk = this.apickli.scenarioVariables[pkVarName];
+  const spk = this.apickli.scenarioVariables[skVarName];
+  const ssk = this.apickli.scenarioVariables[sskVarName];
+
+  const hash = crypto.createHash('sha256');
+  hash.update(`${JSON.parse(epk)}\n${JSON.parse(spk)}`);
+  const pkHash = hash.digest();
+
+  const signedHash = Util.sign(ssk, pkHash);
+  this.apickli.storeValueInScenarioScope(varName, signedHash);
+});
 
 Given(/^I am authenticated user (.*)$/, async function (folder) {
   // load keys
   const file = fs.readFileSync(`./data/users/${folder}/public.pem`).toString();
-  const [publicK] = file.split('\n----- HASH -----\n');
+  const [publicK, hash] = file.split('\n----- HASH -----\n');
   const [epkFile, spkFile] = publicK.split('\n----- SIGNATURE -----\n');
 
   this.apickli.storeValueInScenarioScope('EPK', epkFile);
   this.apickli.storeValueInScenarioScope('SPK', spkFile);
-  // this.apickli.storeValueInScenarioScope('SHA', hash);
+  this.apickli.storeValueInScenarioScope('SHA', hash);
   const privateK = fs.readFileSync(`./data/users/${folder}/private.pem`).toString();
   const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
   this.apickli.storeValueInScenarioScope('ESK', eskFile);
   this.apickli.storeValueInScenarioScope('SSK', sskFile);
-
-  const hash = crypto.createHash('sha256');
-  hash.update(`${epkFile}\n${spkFile}`);
-  const pkHash = hash.digest();
-
-  const signedHash = Util.sign(sskFile, pkHash);
-  console.log('signedHash', signedHash);
 
   // get identity challenge
   await this.get(`/identity/${folder}`);
