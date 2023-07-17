@@ -62,6 +62,7 @@ class User {
     newUser.searchTerms = createSearchTerms(at);
     newUser.key = key;
     newUser.signature = signature;
+    newUser.hash = hash;
     newUser.lastActivity = -(Date.now());
     newUser.security = 'safe';
     try {

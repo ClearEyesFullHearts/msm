@@ -89,20 +89,20 @@ describe('Auth middleware tests', () => {
       const token = jwt.sign({
         connection: Date.now(),
         user: {
-          id: 'my user is fine',
+          id: 1789,
         },
       }, 'sercet');
 
       const req = { headers: { authorization: `Bearer ${token}` } };
       middleware(req, {}, () => {
-        expect(req.auth.id).toBe('my user is fine');
+        expect(req.auth.id).toBe(1789);
       });
     });
     test('Verification should fail on malformed payload', () => {
       const next = getErrorNext(401, 'MIS_AUTH_HEADER', 'Incorrect auth payload');
       let token = jwt.sign({
         user: {
-          id: 'my user is fine',
+          id: 1789,
         },
       }, 'sercet');
 
@@ -120,7 +120,7 @@ describe('Auth middleware tests', () => {
       const token = jwt.sign({
         connection: Date.now() - 1200000,
         user: {
-          id: 'my user is fine',
+          id: 1789,
         },
       }, 'sercet');
 

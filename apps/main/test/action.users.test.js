@@ -393,7 +393,7 @@ describe('User Action tests', () => {
   describe('.autoUserRemoval', () => {
     test('Inactive account is removed after interval set in config', async () => {
       const start = Date.now();
-      const userId = 1;
+      const userId = 1789;
       const mockDB = {
         clearUserAccount: ({ userId: givenId, username: givenAt }) => {
           expect(givenId).toBe(userId);

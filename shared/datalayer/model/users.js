@@ -24,6 +24,10 @@ class UserData {
         type: String,
         unique: true,
       },
+      hash: {
+        type: String,
+        unique: true,
+      },
       lastActivity: Number,
       security: {
         type: String,
