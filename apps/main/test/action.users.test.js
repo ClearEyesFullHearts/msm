@@ -209,8 +209,92 @@ describe('User Action tests', () => {
         at, key, signature, hash,
       })).rejects.toThrow('@ name already taken');
     });
-    test('Invalid signed hash throws', () => {});
-    test('First message failure throws and cancel user creation', () => {});
+    test('Invalid signed hash throws', () => {
+      const {
+        username: at,
+        key,
+        signature,
+      } = userLoader(1);
+
+      const mockDB = {
+        users: {
+          findByName: (userAt) => {
+            expect(userAt).toBe(at);
+            return Promise.resolve(null);
+          },
+        },
+        freezer: {
+          findByName: (userAt) => {
+            expect(userAt).toBe(at);
+            return Promise.resolve(null);
+          },
+        },
+      };
+
+      expect(Action.createUser(mockDB, {
+        at, key, signature, hash: Buffer.from('bad key').toString('base64'),
+      })).rejects.toThrow('Wrong hash format');
+    });
+    test('First message failure throws and cancel user creation', () => {
+      const {
+        username: at,
+        key,
+        signature,
+        hash,
+        searchTerms,
+        size,
+        security,
+      } = userLoader(1);
+
+      const mockDB = {
+        users: {
+          findByName: (userAt) => {
+            expect(userAt).toBe(at);
+            return Promise.resolve(null);
+          },
+          getNew: () => ({
+            save() {
+              expect(this.username).toBe(at);
+              expect(this.key).toBe(key);
+              expect(this.signature).toBe(signature);
+              expect(this.hash).toBe(hash);
+              expect(this.searchTerms).toStrictEqual(searchTerms);
+              expect(this.size).toBe(size);
+              expect(this.security).toBe(security);
+              expect(this.lastActivity).toBeLessThan(0);
+
+              this.id = 1;
+              mockDB.users.findByName = (userAt) => {
+                expect(userAt).toBe(at);
+                return Promise.resolve(this);
+              };
+            },
+          }),
+        },
+        messages: {
+          getNew: () => ({
+            save() {
+              throw new Error('Encryption error');
+            },
+          }),
+        },
+        freezer: {
+          findByName: (userAt) => {
+            expect(userAt).toBe(at);
+            return Promise.resolve(null);
+          },
+        },
+        clearUserAccount: ({ userId, username }, freeze) => {
+          expect(userId).toBe(1);
+          expect(username).toBe(at);
+          expect(freeze).toBeFalsy();
+        },
+      };
+
+      expect(Action.createUser(mockDB, {
+        at, key, signature, hash,
+      })).rejects.toThrow('Encryption issue');
+    });
   });
   describe('.getCredentials', () => {
     test('Correct data returns encrypted credentials', async () => {
