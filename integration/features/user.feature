@@ -129,14 +129,16 @@ Scenario: I cannot register 2 users with the same encryption key
     And I set body to { "at": "user2", "key":`NEW_EPK`, "signature":`SPK`, "hash":"`COMPUTED_SHA`" }
     When I POST to /users
     Then response code should be 403
+    And response body path $.code should be USER_EXISTS
 
 Scenario: I cannot register 2 users with the same signature key
     Given I am a new invalidated user
-    # And I load up user1 public keys
-    And I hash and sign NEW_EPK and NEW_SPK into COMPUTED_SHA with NEW_SSK
-    And I set body to { "at": "user2", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`COMPUTED_SHA`" }
+    And I load up user1 public keys
+    And I hash and sign EPK and NEW_SPK into COMPUTED_SHA with NEW_SSK
+    And I set body to { "at": "user2", "key":`EPK`, "signature":`NEW_SPK`, "hash":"`COMPUTED_SHA`" }
     When I POST to /users
     Then response code should be 403
+    And response body path $.code should be USER_EXISTS
 
 Scenario: Inactivate user is removed after a time
     Given I am a new invalidated user
@@ -150,12 +152,14 @@ Scenario: You cannot create a user with a false encryption key
     And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`" }
     When I POST to /users
     Then response code should be 500
+    And response body path $.code should be SERVER_ERROR
 
 Scenario: You cannot create a user with a false signature key
     Given I generate a false signature key
     And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`" }
     When I POST to /users
     Then response code should be 500
+    And response body path $.code should be SERVER_ERROR
 
 Scenario: A new user should validate its account by requesting the first message
     Given I am a new invalidated user
@@ -169,12 +173,13 @@ Scenario: A new user should validate its account by requesting the first message
     When I GET /message/`FIRST_MSG_ID`
     Then response code should be 200
     And response body path $.id should be ^[0-9]\d*$
-    And response body path $.challenge match a challenge
+    And response body path $ should match a challenge
     And resolved challenge path $.from should match @do not reply to this message
     And I wait for 300 ms
     And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`" }
     When I POST to /users
     Then response code should be 403
+    And response body path $.code should be USER_EXISTS
 
 Scenario: A user can delete its account
     Given I am a new invalidated user

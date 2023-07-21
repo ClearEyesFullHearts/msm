@@ -22,7 +22,7 @@ class User {
   static async createUser(db, {
     at, key, signature, hash,
   }) {
-    debug('check for user with username:', at, hash);
+    debug('check for user with username:', at);
     if (at.length !== encodeURIComponent(at).length) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have any special character');
     }

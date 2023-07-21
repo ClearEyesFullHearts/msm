@@ -5,7 +5,7 @@
     "main": "",
     "scripts": {
         "test": "./node_modules/.bin/cucumber-js",
-        "win-test": ".\\node_modules\\.bin\\cucumber-js  features\\inbox.feature"
+        "win-test": ".\\node_modules\\.bin\\cucumber-js"
     },
     "author": "MFT",
     "license": "MIT",

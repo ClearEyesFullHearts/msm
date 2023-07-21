@@ -60,23 +60,31 @@ Then('response body match a challenge', async function () {
   this.apickli.storeValueInScenarioScope('resolved', resolved);
 });
 
-Then(/^response body path (.*) match a challenge$/, async function (path) {
+Then(/^response body path (.*) should match a challenge$/, async function (path) {
   const body = JSON.parse(this.apickli.httpResponse.body);
   const respBody = Util.getPathValue(body, path);
-  assert.ok(respBody.token);
-  assert.ok(respBody.passphrase);
-  assert.ok(respBody.iv);
-  assert.strictEqual(respBody.passphrase.length, 684);
-  assert.strictEqual(respBody.iv.length, 24);
-  assert.strictEqual(Buffer.from(respBody.token, 'base64').toString('base64'), respBody.token);
-  assert.strictEqual(Buffer.from(respBody.passphrase, 'base64').toString('base64'), respBody.passphrase);
-  assert.strictEqual(Buffer.from(respBody.iv, 'base64').toString('base64'), respBody.iv);
+  const {
+    id,
+    challenge: {
+      token,
+      passphrase,
+      iv,
+    },
+  } = respBody;
+  assert.ok(token);
+  assert.ok(passphrase);
+  assert.ok(iv);
+  assert.strictEqual(passphrase.length, 684);
+  assert.strictEqual(iv.length, 24);
+  assert.strictEqual(Buffer.from(token, 'base64').toString('base64'), token);
+  assert.strictEqual(Buffer.from(passphrase, 'base64').toString('base64'), passphrase);
+  assert.strictEqual(Buffer.from(iv, 'base64').toString('base64'), iv);
 
   this.apickli.storeValueInScenarioScope('challenge', respBody);
-  const pem = this.apickli.scenarioVariables.NEW_ESK;
-  const resolved = Util.resolve(pem, respBody);
+  const pem = this.apickli.scenarioVariables.ESK || this.apickli.scenarioVariables.NEW_ESK;
+  const resolved = Util.resolve(pem, respBody.challenge);
 
-  this.apickli.storeValueInScenarioScope('resolved', resolved);
+  this.apickli.storeValueInScenarioScope('resolved', { id, ...resolved });
 });
 
 Then(/^resolved challenge path (.*) should match (.*)$/, function (path, expression) {

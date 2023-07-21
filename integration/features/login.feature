@@ -41,7 +41,7 @@ Scenario: Authenticated user has access to its inbox
     Then response code should be 200
     And response body path $ should be of type array with length 1
     And response body path $.0.id should be ^[0-9]\d*$
-    And response body path $.0.challenge match a challenge
+    And response body path $.0 should match a challenge
 
 Scenario: Authentication is mandatory to search user's list
     When I GET /users?search=mat
@@ -58,3 +58,23 @@ Scenario: Authentication is mandatory to get one's inbox
 Scenario: Authentication is mandatory to get a full message
     When I GET /message/1
     Then response code should be 401
+
+Scenario: Signature header is mandatory to delete one self
+    Given I am authenticated user batmat
+    And I store the value of body path $.user.id as MY_ID in scenario scope
+    When I DELETE /user/`MY_ID`
+    Then response code should be 400
+    And response body path $.code should be BAD_REQUEST_FORMAT
+
+Scenario: Signature header is mandatory to delete a message
+    Given I am authenticated user batmat
+    When I DELETE /message/0
+    Then response code should be 400
+    And response body path $.code should be BAD_REQUEST_FORMAT
+
+Scenario: Signature header is mandatory to send a message
+    Given I am authenticated user batmat
+    And I set message body to { "to": "mat" , "title": "Message Title" , "content": "Message content" }
+    When I POST to /message
+    Then response code should be 400
+    And response body path $.code should be BAD_REQUEST_FORMAT
