@@ -213,8 +213,8 @@ class CryptoHelper {
   }
 
   async symmetricEncrypt(txt) {
-    const iv = crypto.getRandomValues(new Uint8Array(16));
-    const arrPass = crypto.getRandomValues(new Uint8Array(32));
+    const iv = window.crypto.getRandomValues(new Uint8Array(16));
+    const arrPass = window.crypto.getRandomValues(new Uint8Array(32));
     const arrTxt = this.clearTextToArBuff(txt);
     const key = await window.crypto.subtle.importKey(
       'raw',
@@ -265,9 +265,14 @@ class CryptoHelper {
     return decripted;
   }
 
-  async sign(signingKey, dataStr) {
+  async sign(signingKey, dataStr, isBase64 = false) {
     const privateKey = await this.importSigningKey(signingKey, 'pkcs8', 'PRIVATE');
-    const encoded = this.clearTextToArBuff(dataStr);
+    let encoded;
+    if (isBase64) {
+      encoded = this.base64ToArBuff(dataStr);
+    } else {
+      encoded = this.clearTextToArBuff(dataStr);
+    }
 
     const signature = await window.crypto.subtle.sign(
       {
@@ -297,6 +302,16 @@ class CryptoHelper {
     );
 
     return result;
+  }
+
+  async hash(dataStr) {
+    const arrTxt = this.clearTextToArBuff(dataStr);
+
+    const digest = await window.crypto.subtle.digest({
+      name: 'SHA-256',
+    }, arrTxt);
+
+    return this.ArBuffToBase64(digest);
   }
 }
 

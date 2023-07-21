@@ -50,25 +50,35 @@ export const useUsersStore = defineStore({
         username,
         publicKey,
         sigPublicKey,
+        sigSk,
       } = user;
 
-      if (!publicKey || !publicKey.length) {
+      if (!publicKey || !publicKey.length || !sigPublicKey || !sigPublicKey.length) {
         const { PK, SK } = await mycrypto.generateKeyPair();
         const { PK: signPK, SK: signSK } = await mycrypto.generateSignatureKeyPair();
+
+        const clearHash = await mycrypto.hash(`${PK}\n${signPK}`);
+        const signedHash = await mycrypto.sign(signSK, clearHash, true);
 
         const send = {
           at: username,
           key: PK,
           signature: signPK,
+          hash: signedHash,
         };
         await fetchWrapper.post(`${baseUrl}/users`, send);
         const skFileContent = `${SK}${CryptoHelper.SEPARATOR}${signSK}`;
         downloadKey(user.username, skFileContent);
       } else {
+        const PK = formatPK(publicKey, 788);
+        const signPK = formatPK(sigPublicKey, 268);
+        const clearHash = await mycrypto.hash(`${PK}\n${signPK}`);
+        const signedHash = await mycrypto.sign(sigSk, clearHash, true);
         const send = {
           at: username,
-          key: formatPK(publicKey, 788),
-          signature: formatPK(sigPublicKey, 268),
+          key: PK,
+          signature: signPK,
+          hash: signedHash,
         };
         await fetchWrapper.post(`${baseUrl}/users`, send);
       }

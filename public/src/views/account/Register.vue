@@ -5,8 +5,11 @@ import * as Yup from 'yup';
 
 import { useUsersStore, useAlertStore } from '@/stores';
 import { router } from '@/router';
+import CryptoHelper from '@/lib/cryptoHelper';
 
 const gotKey = ref(false);
+const fileInput = ref(null);
+let valueStore;
 
 const schema = Yup.object().shape({
   username: Yup.string()
@@ -15,9 +18,27 @@ const schema = Yup.object().shape({
     .max(125, 'Your @ should not be longer than 125 characters'),
 });
 
+async function loadTextFromFile(ev) {
+  return new Promise((resolve) => {
+    const file = ev[0];
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      resolve(e.target.result);
+    };
+    reader.readAsText(file);
+  });
+}
+
 async function onSubmit(values) {
   const usersStore = useUsersStore();
   const alertStore = useAlertStore();
+
+  if (gotKey.value && values.publicKey && values.sigPublicKey) {
+    valueStore = values;
+    fileInput.value.click();
+    return;
+  }
 
   try {
     await usersStore.register(values);
@@ -26,6 +47,18 @@ async function onSubmit(values) {
   } catch (error) {
     alertStore.error(error);
   }
+}
+
+async function onFilePicked(evt) {
+  const { files } = evt.target;
+  const secret = files;
+
+  const keys = await loadTextFromFile(secret);
+  const [key, signKey] = keys.split(CryptoHelper.SEPARATOR);
+  valueStore.sigSk = signKey || key;
+
+  gotKey.value = false;
+  await onSubmit(valueStore);
 }
 
 </script>
@@ -56,7 +89,7 @@ async function onSubmit(values) {
     </h4>
     <div class="card-body">
       <Form
-        v-slot="{ errors, isSubmitting }"
+        v-slot="{ values, errors, isSubmitting }"
         :validation-schema="schema"
         @submit="onSubmit"
       >
@@ -122,6 +155,13 @@ async function onSubmit(values) {
           >
             Cancel
           </router-link>
+          <input
+            ref="fileInput"
+            hidden
+            type="file"
+            style="opacity: none;"
+            @change="onFilePicked"
+          >
         </div>
       </Form>
     </div>
@@ -181,7 +221,9 @@ async function onSubmit(values) {
           ... this is sigKey.pem ...<br>
           -----END PRIVATE KEY-----<br>
         </code>
-        Once your account is created you will be able to use that file as your SK
+        Now when you click on the Register button you will be asked to upload that file
+        to be able to send the signed hash of your public keys along with them.<br>
+        Once your account is created you will also use that file as your SK
         to connect.
       </p>
     </div>
