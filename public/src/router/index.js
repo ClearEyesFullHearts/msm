@@ -5,6 +5,7 @@ import { Home, Engine, Public } from '@/views';
 import accountRoutes from './account.routes';
 import messagesRoutes from './messages.routes';
 import memoryRoutes from './memory.routes';
+import profileRoutes from './profile.routes';
 
 export const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,6 +17,7 @@ export const router = createRouter({
         { ...accountRoutes },
         { ...messagesRoutes },
         { ...memoryRoutes },
+        { ...profileRoutes },
         // catch all redirect to home page
         { path: '/:pathMatch(.*)*', redirect: '/' }
     ]

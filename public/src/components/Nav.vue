@@ -172,7 +172,7 @@ async function incinerate() {
               Profile
             </router-link>
             <router-link
-              to="/contacts"
+              to="/profile/contacts"
               class="dropdown-item"
             >
               Contacts
