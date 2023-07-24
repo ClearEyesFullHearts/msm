@@ -70,44 +70,70 @@ async function incinerate() {
       class="navbar-toggler"
       type="button"
       data-toggle="collapse"
-      data-target="#navbarTogglerDemo01"
-      aria-controls="navbarTogglerDemo01"
+      data-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent"
       aria-expanded="false"
       aria-label="Toggle navigation"
     >
       <span class="navbar-toggler-icon" />
     </button>
     <div
-      id="navbarTogglerDemo01"
+      id="navbarSupportedContent"
       class="collapse navbar-collapse"
     >
-      <div class="navbar-nav mr-auto">
-        <router-link
-          to="/home"
-          class="nav-item nav-link"
-        >
-          Home
-        </router-link>
-        <router-link
-          to="/messages"
-          class="nav-item nav-link"
-        >
-          InBox
-        </router-link>
-        <router-link
-          to="/memory"
-          class="nav-item nav-link"
-        >
-          MemoryBox
-        </router-link>
-      </div>
-
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <router-link
+            to="/home"
+            class="nav-item nav-link"
+          >
+            Home
+          </router-link>
+        </li>
+        <li class="nav-item dropdown">
+          <a
+            id="navbarDropdown"
+            class="nav-link dropdown-toggle"
+            href="#"
+            role="button"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            Messages
+          </a>
+          <div
+            class="dropdown-menu dropdown-menu-dark"
+            aria-labelledby="navbarDropdown"
+          >
+            <router-link
+              to="/messages"
+              class="dropdown-item"
+            >
+              InBox
+            </router-link>
+            <router-link
+              to="/memory"
+              class="dropdown-item"
+            >
+              MemoryBox
+            </router-link>
+            <div class="dropdown-divider" />
+            <router-link
+              to="/messages/write"
+              class="dropdown-item"
+            >
+              New
+            </router-link>
+          </div>
+        </li>
+      </ul>
       <div class="navbar-nav m-1 mr-auto">
         <button
           class="btn btn-outline-danger"
           @click="incinerate()"
         >
-          Incinerate @{{ authStore?.user?.user?.username }}
+          Incinerate
         </button>
       </div>
       <div class="navbar-nav m-1">
@@ -118,9 +144,42 @@ async function incinerate() {
           Logout
         </button>
       </div>
-    </div>
-    <div>
-      <span class="navbar-text">Your session will expire in {{ countDownMsg }}</span>
+      <ul class="navbar-nav">
+        <li class="nav-item dropdown">
+          <a
+            id="navbarDropdown"
+            class="nav-link dropdown-toggle"
+            href="#"
+            role="button"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            @{{ authStore?.user?.user?.username }}
+          </a>
+          <div
+            class="dropdown-menu dropdown-menu-dark dropdown-menu-right"
+            aria-labelledby="navbarDropdown"
+          >
+            <div class="dropdown-item">
+              Session ends in {{ countDownMsg }}
+            </div>
+            <div class="dropdown-divider" />
+            <router-link
+              to="/profile"
+              class="dropdown-item"
+            >
+              Profile
+            </router-link>
+            <router-link
+              to="/contacts"
+              class="dropdown-item"
+            >
+              Contacts
+            </router-link>
+          </div>
+        </li>
+      </ul>
     </div>
   </nav>
 </template>

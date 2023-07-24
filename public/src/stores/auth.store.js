@@ -15,6 +15,7 @@ export const useAuthStore = defineStore({
     user: null,
     pem: null,
     signing: null,
+    publicHash: null,
     returnUrl: null,
     countDownMsg: null,
   }),
@@ -27,6 +28,11 @@ export const useAuthStore = defineStore({
         const user = JSON.parse(userStr);
         this.pem = key;
         this.signing = signKey;
+
+        const epk = await mycrypto.getPublicKey(this.pem);
+        const spk = await mycrypto.getSigningPublicKey(this.signing);
+
+        this.publicHash = await mycrypto.hash(`${epk}\n${spk}`);
 
         // update pinia state
         this.user = user;

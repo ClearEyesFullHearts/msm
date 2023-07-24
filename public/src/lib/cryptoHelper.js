@@ -286,9 +286,13 @@ class CryptoHelper {
     return this.ArBuffToBase64(signature);
   }
 
-  async verify(verifyKey, dataStr, signature) {
+  async verify(verifyKey, dataStr, signature, isBase64 = false) {
     const publicKey = await this.importSigningKey(verifyKey, 'spki', 'PUBLIC');
-    const encoded = this.clearTextToArBuff(dataStr);
+    let toCheck = dataStr;
+    if (isBase64) {
+      toCheck = window.atob(dataStr);
+    }
+    const encoded = this.clearTextToArBuff(toCheck);
     const paraph = this.base64ToArBuff(signature);
 
     const result = await window.crypto.subtle.verify(
