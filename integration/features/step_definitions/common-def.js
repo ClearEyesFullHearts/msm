@@ -43,6 +43,11 @@ Given('I set signature header', function () {
   this.apickli.addRequestHeader('x-msm-sig', sig);
 });
 
+Given('I set false signature header', function () {
+  const falseSig = Util.getRandomString(129, true);
+  this.apickli.addRequestHeader('x-msm-sig', falseSig);
+});
+
 Then('response body match a challenge', async function () {
   const respBody = JSON.parse(this.apickli.httpResponse.body);
   assert.ok(respBody.token);

@@ -9,6 +9,8 @@ Scenario: Get our user authentication data
     And response body match a challenge
     And response body path $.user.username should be `MY_AT`
     And response body path $.token should be ^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$
+    And response body path $.vault should be null
+    And response body path $.contacts should be null
 
 Scenario: Unknown username returns an error
     When I GET /identity/Unknown
@@ -62,19 +64,50 @@ Scenario: Authentication is mandatory to get a full message
 Scenario: Signature header is mandatory to delete one self
     Given I am authenticated user batmat
     And I store the value of body path $.user.id as MY_ID in scenario scope
+    And I set false signature header
     When I DELETE /user/`MY_ID`
-    Then response code should be 400
-    And response body path $.code should be BAD_REQUEST_FORMAT
+    Then response code should be 403
+    And response body path $.code should be FORBIDDEN
 
 Scenario: Signature header is mandatory to delete a message
     Given I am authenticated user batmat
+    And I set false signature header
     When I DELETE /message/0
-    Then response code should be 400
-    And response body path $.code should be BAD_REQUEST_FORMAT
+    Then response code should be 403
+    And response body path $.code should be FORBIDDEN
 
 Scenario: Signature header is mandatory to send a message
     Given I am authenticated user batmat
     And I set message body to { "to": "mat" , "title": "Message Title" , "content": "Message content" }
+    And I set false signature header
     When I POST to /message
-    Then response code should be 400
-    And response body path $.code should be BAD_REQUEST_FORMAT
+    Then response code should be 403
+    And response body path $.code should be FORBIDDEN
+
+Scenario: Signature header is mandatory to set up the vault
+    Given I am authenticated user batmat
+    And I set var TOKEN to a 256 characters long base64 string
+    And I set var IV to a 18 characters long base64 string
+    And I set body to { "token": "`TOKEN`", "iv": "`IV`" }
+    And I set false signature header
+    When I PUT /vault
+    Then response code should be 403
+    And response body path $.code should be FORBIDDEN
+
+Scenario: Signature header is mandatory to delete the vault
+    Given I am authenticated user batmat
+    And I set false signature header
+    When I DELETE /vault
+    Then response code should be 403
+    And response body path $.code should be FORBIDDEN
+
+Scenario: Signature header is mandatory to update the contact list
+    Given I am authenticated user batmat
+    And I set var TOKEN to a 900 characters long base64 string
+    And I set var IV to a 18 characters long base64 string
+    And I set var PASS to a 513 characters long base64 string
+    And I set body to { "token": "`TOKEN`", "iv": "`IV`", "passphrase": "`PASS`" }
+    And I set false signature header
+    When I PUT /contacts
+    Then response code should be 403
+    And response body path $.code should be FORBIDDEN
