@@ -80,6 +80,9 @@ function removeUser(user) {
   const i = messageStore.targetAt.findIndex((el) => el.at === user.at);
   messageStore.targetAt.splice(i, 1);
 }
+function addUser(user) {
+  messageStore.targetAt.push(user);
+}
 </script>
 
 <template>
@@ -93,7 +96,7 @@ function removeUser(user) {
     >
       <div class="form-row">
         <div class="form-group col">
-          <Autocomplete />
+          <Autocomplete @user-selected="addUser" />
         </div>
       </div>
       <div class="form-row">

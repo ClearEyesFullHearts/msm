@@ -1,14 +1,14 @@
 <script setup>
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
-import { useUsersStore, useMessagesStore } from '@/stores';
+import { useUsersStore } from '@/stores';
+
+const emit = defineEmits(['userSelected']);
 
 const userStore = useUsersStore();
-const messagesStore = useMessagesStore();
 const { users } = storeToRefs(userStore);
 
 userStore.users = [];
-messagesStore.targetAt = [];
 const searchinput = ref(null);
 
 function onInputText(txt) {
@@ -20,8 +20,7 @@ function onInputText(txt) {
 }
 
 function selectUser(user) {
-  messagesStore.targetAt.push(user);
-
+  emit('userSelected', user);
   searchinput.value.value = '';
   userStore.users = [];
 }
