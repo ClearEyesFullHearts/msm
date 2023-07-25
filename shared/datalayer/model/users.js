@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { autoIncrement } = require('mongoose-plugin-autoinc');
 const challengeSchema = require('./subSchema/challenge');
+const vaultItemSchema = require('./subSchema/vaultItem');
 
 class UserData {
   constructor() {
@@ -37,7 +38,7 @@ class UserData {
         maxLength: 172,
       },
       vault: {
-        type: challengeSchema,
+        type: vaultItemSchema,
         default: null,
       },
       contacts: {

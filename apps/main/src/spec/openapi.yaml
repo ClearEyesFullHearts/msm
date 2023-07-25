@@ -145,6 +145,95 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /contacts:
+    put:
+      summary: Save the contact list
+      operationId: setUserContactList
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          description: SK signature of the body
+          schema:
+            type: string
+            format: byte
+            minLength: 172
+            maxLength: 172
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Challenge'
+      responses:
+        '200':
+          description: List saved
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /vault:
+    put:
+      summary: Save the user encrypted secret key
+      operationId: setUserVaultItem
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          description: SK signature of the body
+          schema:
+            type: string
+            format: byte
+            minLength: 172
+            maxLength: 172
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VaultItem'
+      responses:
+        '200':
+          description: Key saved
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Remove the user encrypted secret key
+      operationId: removeUserVaultItem
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          description: SK signature of the body
+          schema:
+            type: string
+            format: byte
+            minLength: 172
+            maxLength: 172
+      responses:
+        '200':
+          description: Vault item is removed
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /inbox:
     get:
       summary: Get a user inbox
@@ -381,6 +470,20 @@ components:
           format: byte
           minLength: 684
           maxLength: 684
+    VaultItem:
+      type: object
+      required:
+        - token
+        - iv
+      properties:
+        token:
+          type: string
+          format: byte
+        iv:
+          type: string
+          format: byte
+          minLength: 24
+          maxLength: 24
     Error:
       type: object
       properties:

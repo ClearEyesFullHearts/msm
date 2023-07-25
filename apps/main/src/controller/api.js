@@ -120,6 +120,68 @@ module.exports = {
         next(err);
       });
   },
+  setUserContactList: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        auth,
+        body,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      User.setContacts(db, auth, body)
+        .then(() => {
+          res.status(200).send();
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
+  setUserVaultItem: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        auth,
+        body,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      User.setVaultItem(db, auth, body)
+        .then(() => {
+          res.status(200).send();
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
+  removeUserVaultItem: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        auth,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      User.removeVaultItem(db, auth.id)
+        .then(() => {
+          res.status(200).send();
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
   getInbox: [
     AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
     (req, res, next) => {

@@ -17,7 +17,6 @@ describe('User Action tests', () => {
         hash,
         searchTerms,
         size,
-        security,
       } = userLoader(1);
 
       const mockDB = {
@@ -34,7 +33,6 @@ describe('User Action tests', () => {
               expect(this.hash).toBe(hash);
               expect(this.searchTerms).toStrictEqual(searchTerms);
               expect(this.size).toBe(size);
-              expect(this.security).toBe(security);
               expect(this.lastActivity).toBeLessThan(0);
 
               this.id = 1;
@@ -235,7 +233,7 @@ describe('User Action tests', () => {
         at, key, signature, hash: Buffer.from('bad key').toString('base64'),
       })).rejects.toThrow('Wrong hash format');
     });
-    test.only('First message failure throws and cancel user creation', () => {
+    test('First message failure throws and cancel user creation', () => {
       const {
         username: at,
         key,
@@ -309,15 +307,16 @@ describe('User Action tests', () => {
       const { token, passphrase, iv } = await Action.getCredentials(mockDB, { at });
       expect(spyEncryptHybrid).toHaveBeenCalled();
       const [[authTxt, pk]] = spyEncryptHybrid.mock.calls;
+
       const {
         connection,
         config: authConfig,
         user: authUser,
         token: jwtToken,
         vault,
+        contacts,
       } = JSON.parse(authTxt);
 
-      expect(vault).toBeNull();
       expect(connection).toBeGreaterThanOrEqual(time);
       expect(authConfig).toEqual({
         sessionTime: config.get('timer.removal.session'),
@@ -332,11 +331,24 @@ describe('User Action tests', () => {
       expect(tokenParts).toHaveLength(3);
       expect(pk).toBe(user.key);
 
+      expect(contacts.passphrase).toHaveLength(684);
+      expect(Buffer.from(contacts.passphrase, 'base64').toString('base64')).toBe(contacts.passphrase);
+      expect(contacts.iv).toHaveLength(24);
+      expect(Buffer.from(contacts.iv, 'base64').toString('base64')).toBe(contacts.iv);
+      expect(contacts.token).toHaveLength(584);
+      expect(Buffer.from(contacts.token, 'base64').toString('base64')).toBe(contacts.token);
+
+      expect(vault.passphrase).toBeUndefined();
+      expect(vault.iv).toHaveLength(24);
+      expect(Buffer.from(vault.iv, 'base64').toString('base64')).toBe(vault.iv);
+      expect(vault.token).toHaveLength(5552);
+      expect(Buffer.from(vault.token, 'base64').toString('base64')).toBe(vault.token);
+
       expect(passphrase).toHaveLength(684);
       expect(Buffer.from(passphrase, 'base64').toString('base64')).toBe(passphrase);
       expect(iv).toHaveLength(24);
       expect(Buffer.from(iv, 'base64').toString('base64')).toBe(iv);
-      expect(token).toHaveLength(556);
+      expect(token).toHaveLength(9796);
       expect(Buffer.from(token, 'base64').toString('base64')).toBe(token);
     });
     test('Unknown user throws', async () => {

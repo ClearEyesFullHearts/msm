@@ -32,7 +32,7 @@ class User {
     if (!Encryption.isValidPemPk(signature)) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong public key format');
     }
-    if (Buffer.from(hash, 'base64').toString('base64') !== hash) {
+    if (!Encryption.isBase64(hash)) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong hash format');
     }
 
@@ -112,6 +112,7 @@ class User {
       const auth = {
         token: jwt.sign(payload, config.get('auth')),
         vault: knownUser.vault,
+        contacts: knownUser.contacts,
         ...payload,
       };
 
@@ -157,6 +158,46 @@ class User {
       return;
     }
     debug('user do not exists, no action');
+  }
+
+  static async removeVaultItem(db, userId) {
+    const user = await db.users.findByID(userId);
+    user.vault = null;
+    await user.save();
+  }
+
+  static async setVaultItem(db, user, item) {
+    const {
+      token,
+      iv,
+    } = item;
+
+    if (!Encryption.isBase64(token)
+    || !Encryption.isBase64(iv)) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong challenge format');
+    }
+
+    const asker = await db.users.findByID(user.id);
+    asker.vault = item;
+    await asker.save();
+  }
+
+  static async setContacts(db, user, challenge) {
+    const {
+      token,
+      passphrase,
+      iv,
+    } = challenge;
+
+    if (!Encryption.isBase64(token)
+    || !Encryption.isBase64(passphrase)
+    || !Encryption.isBase64(iv)) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong challenge format');
+    }
+
+    const asker = await db.users.findByID(user.id);
+    asker.contacts = challenge;
+    await asker.save();
   }
 
   static async autoUserRemoval(db, userId) {

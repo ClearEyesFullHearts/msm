@@ -29,7 +29,9 @@ Given(/^I set var (.*) to a (.*) characters long (.*)string$/, function (varName
 });
 
 Given('I set signature header', function () {
-  const { token, vault, ...restAuth } = this.apickli.scenarioVariables.AUTH;
+  const {
+    token, vault, contacts, ...restAuth
+  } = this.apickli.scenarioVariables.AUTH;
   const signatureKey = this.apickli.scenarioVariables.SSK || this.apickli.scenarioVariables.NEW_SSK;
   const bodyObj = JSON.parse(this.apickli.requestBody);
   const data = JSON.stringify({

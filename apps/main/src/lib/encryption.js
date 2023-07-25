@@ -51,9 +51,13 @@ class Encryption {
     if (str.substring(str.length - PK_END.length) !== PK_END) return false;
 
     const properKey = str.substring(PK_START.length + 1, str.length - PK_END.length - 1);
-    if (Buffer.from(properKey, 'base64').toString('base64') !== properKey) return false;
+    if (!this.isBase64(properKey)) return false;
 
     return true;
+  }
+
+  static isBase64(str) {
+    return Buffer.from(str, 'base64').toString('base64') === str;
   }
 
   static encryptMessage(target, title, text) {
