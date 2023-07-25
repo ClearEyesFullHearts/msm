@@ -25,7 +25,8 @@ module.exports = (id) => {
     signature: pub[1],
     hash: signedHash,
     lastActivity: Date.now(),
-    security: 'safe',
+    vault: null,
+    contacts: null,
     size: 5,
     private: {
       key: priv[0],

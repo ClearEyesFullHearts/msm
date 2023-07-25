@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { autoIncrement } = require('mongoose-plugin-autoinc');
+const challengeSchema = require('./subSchema/challenge');
 
 class UserData {
   constructor() {
@@ -12,6 +13,7 @@ class UserData {
         type: String,
         unique: true,
         required: true,
+        minLength: 3,
       },
       searchTerms: [String],
       size: Number,
@@ -19,21 +21,30 @@ class UserData {
         type: String,
         required: true,
         unique: true,
+        minLength: 788,
+        maxLength: 788,
       },
       signature: {
         type: String,
         unique: true,
+        minLength: 268,
+        maxLength: 268,
       },
       hash: {
         type: String,
         unique: true,
+        minLength: 172,
+        maxLength: 172,
+      },
+      vault: {
+        type: challengeSchema,
+        default: null,
+      },
+      contacts: {
+        type: challengeSchema,
+        default: null,
       },
       lastActivity: Number,
-      security: {
-        type: String,
-        enum: ['safe', 'custom', 'hosted'],
-        default: 'safe',
-      },
     });
     this.userSchema.index({ searchTerms: -1 });
   }

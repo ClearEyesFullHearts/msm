@@ -99,7 +99,6 @@ class User {
     if (knownUser) {
       debug('known user');
       const payload = {
-        auth: true,
         connection: Date.now(),
         config: {
           sessionTime: config.get('timer.removal.session'),
@@ -108,11 +107,11 @@ class User {
         user: {
           id: knownUser.id,
           username: knownUser.username,
-          security: knownUser.security,
         },
       };
       const auth = {
         token: jwt.sign(payload, config.get('auth')),
+        vault: knownUser.vault,
         ...payload,
       };
 

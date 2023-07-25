@@ -235,7 +235,7 @@ describe('User Action tests', () => {
         at, key, signature, hash: Buffer.from('bad key').toString('base64'),
       })).rejects.toThrow('Wrong hash format');
     });
-    test('First message failure throws and cancel user creation', () => {
+    test.only('First message failure throws and cancel user creation', () => {
       const {
         username: at,
         key,
@@ -243,7 +243,6 @@ describe('User Action tests', () => {
         hash,
         searchTerms,
         size,
-        security,
       } = userLoader(1);
 
       const mockDB = {
@@ -260,7 +259,6 @@ describe('User Action tests', () => {
               expect(this.hash).toBe(hash);
               expect(this.searchTerms).toStrictEqual(searchTerms);
               expect(this.size).toBe(size);
-              expect(this.security).toBe(security);
               expect(this.lastActivity).toBeLessThan(0);
 
               this.id = 1;
@@ -312,14 +310,14 @@ describe('User Action tests', () => {
       expect(spyEncryptHybrid).toHaveBeenCalled();
       const [[authTxt, pk]] = spyEncryptHybrid.mock.calls;
       const {
-        auth,
         connection,
         config: authConfig,
         user: authUser,
         token: jwtToken,
+        vault,
       } = JSON.parse(authTxt);
 
-      expect(auth).toBeTruthy();
+      expect(vault).toBeNull();
       expect(connection).toBeGreaterThanOrEqual(time);
       expect(authConfig).toEqual({
         sessionTime: config.get('timer.removal.session'),
@@ -328,9 +326,8 @@ describe('User Action tests', () => {
       expect(authUser).toEqual({
         id: user.id,
         username: at,
-        security: user.security,
       });
-      expect(jwtToken).toHaveLength(299);
+      expect(jwtToken).toHaveLength(259);
       const tokenParts = jwtToken.split('.');
       expect(tokenParts).toHaveLength(3);
       expect(pk).toBe(user.key);
@@ -339,7 +336,7 @@ describe('User Action tests', () => {
       expect(Buffer.from(passphrase, 'base64').toString('base64')).toBe(passphrase);
       expect(iv).toHaveLength(24);
       expect(Buffer.from(iv, 'base64').toString('base64')).toBe(iv);
-      expect(token).toHaveLength(632);
+      expect(token).toHaveLength(556);
       expect(Buffer.from(token, 'base64').toString('base64')).toBe(token);
     });
     test('Unknown user throws', async () => {

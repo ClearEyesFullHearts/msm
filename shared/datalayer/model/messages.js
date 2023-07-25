@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { autoIncrement } = require('mongoose-plugin-autoinc');
+const challengeSchema = require('./subSchema/challenge');
 
 class MessageData {
   constructor() {
@@ -7,34 +8,24 @@ class MessageData {
       id: {
         type: Number,
         unique: true,
+        required: true,
       },
       userId: {
         type: Number,
+        required: true,
       },
       hasBeenRead: {
         type: Boolean,
+        required: true,
+        default: false,
       },
       header: {
-        token: {
-          type: String,
-        },
-        passphrase: {
-          type: String,
-        },
-        iv: {
-          type: String,
-        },
+        type: challengeSchema,
+        required: true,
       },
       full: {
-        token: {
-          type: String,
-        },
-        passphrase: {
-          type: String,
-        },
-        iv: {
-          type: String,
-        },
+        type: challengeSchema,
+        required: true,
       },
     });
     this.messageSchema.index({ userId: -1 });
