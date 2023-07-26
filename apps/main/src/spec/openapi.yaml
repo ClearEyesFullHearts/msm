@@ -467,6 +467,8 @@ components:
       properties:
         to:
           type: string
+          minLength: 3
+          maxLength: 125
         title:
           type: string
           format: byte

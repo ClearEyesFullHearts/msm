@@ -269,7 +269,7 @@ describe('Message Action tests', () => {
       expect(saveMessage).toBeTruthy();
     });
   });
-  describe('.writeMessage', () => {
+  describe('.getMessage', () => {
     test('Correct data returns a message', async () => {
       const user = {
         id: 1,
@@ -300,7 +300,12 @@ describe('Message Action tests', () => {
               userId: 1,
               hasBeenRead: false,
               header: 'wrong',
-              full: 'right',
+              full: {
+                token: 'right',
+                passphrase: 'ok',
+                iv: 'fine',
+                _id: 'wrong',
+              },
               save() {
                 expect(this.hasBeenRead).toBeTruthy();
                 msgSaved = true;
@@ -313,7 +318,11 @@ describe('Message Action tests', () => {
 
       const { id, challenge } = await Action.getMessage(mockDB, msgId, user);
       expect(id).toBe(msgId);
-      expect(challenge).toBe('right');
+      expect(challenge).toEqual({
+        token: 'right',
+        passphrase: 'ok',
+        iv: 'fine',
+      });
       expect(userSaved).toBeTruthy();
       expect(msgSaved).toBeTruthy();
     });

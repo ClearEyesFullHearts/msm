@@ -96,7 +96,13 @@ class Message {
       await message.save();
       debug('message marked as read');
 
-      const { id, full } = message;
+      const {
+        id, full: {
+          token,
+          passphrase,
+          iv,
+        },
+      } = message;
 
       reader.lastActivity = Math.floor(Date.now() / (15 * 60000)) * (15 * 60000);
       await reader.save();
@@ -105,7 +111,11 @@ class Message {
       debug('full message sent');
       return {
         id,
-        challenge: full,
+        challenge: {
+          token,
+          passphrase,
+          iv,
+        },
       };
     }
     debug('message do not exists');
