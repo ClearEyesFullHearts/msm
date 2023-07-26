@@ -27,6 +27,9 @@ function formatPK(publicKey) {
   return `${pemHeader}\n${pemContents}\n${pemFooter}`;
 }
 
+const ALGORITHM = 'aes-256-gcm';
+const PASS_SIZE = 32;
+const IV_SIZE = 16;
 class Util {
   static async generateKeyPair() {
     const doubleKeyPair = await Promise.all([
@@ -124,6 +127,44 @@ class Util {
     });
 
     return Buffer.from(signature).toString('base64');
+  }
+
+  static symmetricEncrypt(txt, passphrase) {
+    const hash = crypto.createHash('sha256');
+    hash.update(passphrase);
+    const pass = hash.digest();
+
+    const iv = crypto.randomBytes(IV_SIZE);
+
+    const cipher = crypto.createCipheriv(
+      ALGORITHM, pass, iv,
+    );
+    const encrypted = cipher.update(txt);
+    const cypheredText = Buffer.concat([encrypted, cipher.final(), cipher.getAuthTag()]);
+
+    return {
+      token: cypheredText.toString('base64'),
+      iv: iv.toString('base64'),
+    };
+  }
+
+  static symmetricDecrypt(item, passphrase) {
+    const hash = crypto.createHash('sha256');
+    hash.update(passphrase);
+    const key = hash.digest();
+
+    const { iv, token } = item;
+
+    const algorithm = 'aes-256-gcm';
+    const cipher = Buffer.from(token, 'base64');
+    const authTag = cipher.subarray(cipher.length - 16);
+    const crypted = cipher.subarray(0, cipher.length - 16);
+
+    const decipher = crypto.createDecipheriv(algorithm, key, Buffer.from(iv, 'base64'));
+    decipher.setAuthTag(authTag);
+    const decData = Buffer.concat([decipher.update(crypted), decipher.final()]);
+
+    return decData.toString();
   }
 
   static getPathValue(obj, path) {

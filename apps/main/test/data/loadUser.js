@@ -45,12 +45,18 @@ module.exports = (id) => {
   const signedHash = Buffer.from(signature).toString('base64');
 
   const contactList = [
-    { at: 'test1', verified: false },
-    { at: 'test2', verified: true, hash: 'X3uo1ZRbB9zYh9qiR4cXHHkKF8/9tI4CSwg2y867cV4=' },
+    { id: 1, at: 'test1', verified: false },
     {
-      at: 'test3', verified: true, hash: 'L1USvP+ihWZKX+QyuZX4TsvsjdzeQ/IbKClu5doHy2U=', signature: 'rN5XWpQmJdmJdDLfMo7iPQhENwNz7U99+875+G/FevYXkg/9JcuU2fO12EsG5oUs5rSYu444Wq6Uh0s3fAW3JJo1Kq2ewqGgH02UcCr1qbcRpy/mEhSmDsaaMPT4trEpeLBD0TiQIn0RwlY8lwrxJ7NhBvOHI+Zhvzi3RK4LuCM=',
+      id: 2, at: 'test2', verified: true, hash: 'X3uo1ZRbB9zYh9qiR4cXHHkKF8/9tI4CSwg2y867cV4=',
     },
-    { at: 'test4', verified: false },
+    {
+      id: 3,
+      at: 'test3',
+      verified: true,
+      hash: 'L1USvP+ihWZKX+QyuZX4TsvsjdzeQ/IbKClu5doHy2U=',
+      signature: 'rN5XWpQmJdmJdDLfMo7iPQhENwNz7U99+875+G/FevYXkg/9JcuU2fO12EsG5oUs5rSYu444Wq6Uh0s3fAW3JJo1Kq2ewqGgH02UcCr1qbcRpy/mEhSmDsaaMPT4trEpeLBD0TiQIn0RwlY8lwrxJ7NhBvOHI+Zhvzi3RK4LuCM=',
+    },
+    { id: 4, at: 'test4', verified: false },
   ];
 
   const contacts = hybrid(JSON.stringify(contactList), pub[0]);
@@ -73,6 +79,7 @@ module.exports = (id) => {
     private: {
       key: priv[0],
       signature: priv[1],
+      passphrase: vaultItem.passphrase,
     },
   };
   return user;

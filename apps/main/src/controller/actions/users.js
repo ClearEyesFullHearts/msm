@@ -111,13 +111,26 @@ class User {
       };
       const auth = {
         token: jwt.sign(payload, config.get('auth')),
-        vault: knownUser.vault,
         contacts: knownUser.contacts,
         ...payload,
       };
 
       const { key } = knownUser;
-      return Encryption.hybrid(JSON.stringify(auth), key);
+      const rawChallenge = Encryption.hybrid(JSON.stringify(auth), key);
+      if (knownUser.vault !== null) {
+        const {
+          iv,
+          token,
+        } = knownUser.vault;
+        return {
+          ...rawChallenge,
+          vault: {
+            iv,
+            token,
+          },
+        };
+      }
+      return rawChallenge;
     }
 
     throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');

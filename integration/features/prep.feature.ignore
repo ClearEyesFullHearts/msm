@@ -52,3 +52,26 @@ Scenario: Send 1 message to batmat
     And I set signature header
     When I POST to /message
     Then response code should be 201
+
+Scenario: Validate "vaultUser" user
+    Given I load up vaultUser public keys
+    And I load up vaultUser private keys
+    And I set body to { "at": "vaultUser", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`" }
+    And I POST to /users
+    And I GET /identity/vaultUser
+    And response body match a challenge
+    And I store the value of body path $.token as access token
+    And I set bearer token
+    And I GET /inbox
+    And response body path $.0.id should be ^[0-9]\d*$
+    And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
+    When I GET /message/`FIRST_MSG_ID`
+    Then response code should be 200
+
+Scenario: Set up vaultUser vault
+    Given I am authenticated user vaultUser
+    And I set my vault item VAULT_ITEM with password iamapoorlonesomecowboy
+    And I set body to `VAULT_ITEM`
+    And I set signature header
+    When I PUT /vault
+    Then response code should be 200

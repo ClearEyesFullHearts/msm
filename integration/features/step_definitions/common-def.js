@@ -17,6 +17,8 @@ Given(/^I load up (.*) private keys$/, function (folder) {
   const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
   this.apickli.storeValueInScenarioScope('NEW_ESK', eskFile);
   this.apickli.storeValueInScenarioScope('NEW_SSK', sskFile);
+  // this.apickli.storeValueInScenarioScope('ESK', eskFile);
+  // this.apickli.storeValueInScenarioScope('SSK', sskFile);
 });
 
 Given(/^I set var (.*) to a (.*) characters long (.*)string$/, function (varName, length, format) {
@@ -60,7 +62,7 @@ Then('response body match a challenge', async function () {
   assert.strictEqual(Buffer.from(respBody.iv, 'base64').toString('base64'), respBody.iv);
 
   this.apickli.storeValueInScenarioScope('challenge', respBody);
-  const pem = this.apickli.scenarioVariables.NEW_ESK;
+  const pem = this.apickli.scenarioVariables.ESK || this.apickli.scenarioVariables.NEW_ESK;
   const resolved = Util.resolve(pem, respBody);
   this.apickli.httpResponse.body = JSON.stringify(resolved);
 

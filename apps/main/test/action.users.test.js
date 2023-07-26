@@ -304,7 +304,9 @@ describe('User Action tests', () => {
         },
       };
 
-      const { token, passphrase, iv } = await Action.getCredentials(mockDB, { at });
+      const {
+        token, passphrase, iv, vault,
+      } = await Action.getCredentials(mockDB, { at });
       expect(spyEncryptHybrid).toHaveBeenCalled();
       const [[authTxt, pk]] = spyEncryptHybrid.mock.calls;
 
@@ -313,7 +315,6 @@ describe('User Action tests', () => {
         config: authConfig,
         user: authUser,
         token: jwtToken,
-        vault,
         contacts,
       } = JSON.parse(authTxt);
 
@@ -335,7 +336,7 @@ describe('User Action tests', () => {
       expect(Buffer.from(contacts.passphrase, 'base64').toString('base64')).toBe(contacts.passphrase);
       expect(contacts.iv).toHaveLength(24);
       expect(Buffer.from(contacts.iv, 'base64').toString('base64')).toBe(contacts.iv);
-      expect(contacts.token).toHaveLength(584);
+      expect(contacts.token).toHaveLength(624);
       expect(Buffer.from(contacts.token, 'base64').toString('base64')).toBe(contacts.token);
 
       expect(vault.passphrase).toBeUndefined();
@@ -348,7 +349,7 @@ describe('User Action tests', () => {
       expect(Buffer.from(passphrase, 'base64').toString('base64')).toBe(passphrase);
       expect(iv).toHaveLength(24);
       expect(Buffer.from(iv, 'base64').toString('base64')).toBe(iv);
-      expect(token).toHaveLength(9796);
+      expect(token).toHaveLength(2376);
       expect(Buffer.from(token, 'base64').toString('base64')).toBe(token);
     });
     test('Unknown user throws', async () => {
@@ -543,5 +544,17 @@ describe('User Action tests', () => {
 
       await Action.autoUserRemoval(mockDB, userId);
     });
+  });
+
+  describe('.setVaultItem', () => {
+    test('Correct data adds a vault item to the user', () => {});
+    test('Invalid data throws', () => {});
+  });
+  describe('.removeVaultItem', () => {
+    test('Correct data removes the vault item from the user', () => {});
+  });
+  describe('.setContacts', () => {
+    test('Correct data adds contacts to the user', () => {});
+    test('Invalid data throws', () => {});
   });
 });

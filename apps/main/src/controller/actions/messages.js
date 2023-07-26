@@ -12,9 +12,22 @@ class Message {
       return [];
     }
     debug(`found ${allMessages.length} messages in inbox`);
-    return allMessages.map(({ id, header }) => ({
-      id, challenge: header,
-    }));
+    return allMessages.map(({ id, header }) => {
+      const {
+        token,
+        passphrase,
+        iv,
+      } = header;
+
+      return {
+        id,
+        challenge: {
+          token,
+          passphrase,
+          iv,
+        },
+      };
+    });
   }
 
   static async writeMessage(db, msg, user, checkUser = true) {

@@ -19,10 +19,12 @@ function downloadFile(at, text) {
 }
 
 async function signHash() {
-  const at = authStore.user.user.username;
+  const { id, username: at } = authStore.user.user;
   const signature = await mycrypto.sign(authStore.signing, authStore.publicHash, true);
   const obj = {
+    id,
     at,
+    hash: authStore.publicHash,
     signature,
   };
   downloadFile(at, JSON.stringify(obj));

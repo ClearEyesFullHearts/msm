@@ -17,15 +17,21 @@ describe('Message Action tests', () => {
       const user = {
         id: 1,
       };
+      const dbChallenge = {
+        iv: 'blala',
+        passphrase: 'blala',
+        token: 'blala',
+        _id: 'blala',
+      };
       const mockDB = {
         messages: {
           getUserMessages: (userId) => {
             expect(userId).toBe(user.id);
             const mails = [
-              { id: 3, header: 'blablabla' },
-              { id: 2, header: 'blablabla' },
-              { id: 1, header: 'blablabla' },
-              { id: 0, header: 'blablabla' },
+              { id: 3, header: dbChallenge },
+              { id: 2, header: dbChallenge },
+              { id: 1, header: dbChallenge },
+              { id: 0, header: dbChallenge },
             ];
             return Promise.resolve(mails);
           },
@@ -33,11 +39,15 @@ describe('Message Action tests', () => {
       };
 
       const results = await Action.getInbox(mockDB, user);
+      const {
+        _id,
+        ...challenge
+      } = dbChallenge;
       expect(results).toEqual([
-        { id: 3, challenge: 'blablabla' },
-        { id: 2, challenge: 'blablabla' },
-        { id: 1, challenge: 'blablabla' },
-        { id: 0, challenge: 'blablabla' },
+        { id: 3, challenge },
+        { id: 2, challenge },
+        { id: 1, challenge },
+        { id: 0, challenge },
       ]);
     });
     test('No messages returns empty array', async () => {

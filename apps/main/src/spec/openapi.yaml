@@ -74,7 +74,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Challenge"
+                $ref: "#/components/schemas/Identity"
         default:
           description: unexpected error
           content:
@@ -409,6 +409,13 @@ components:
           format: byte
           minLength: 24
           maxLength: 24
+    Identity:
+      allOf:
+        - $ref: '#/components/schemas/Challenge'
+        - type: object
+          properties:
+            vault:
+              $ref: "#/components/schemas/VaultItem"
     User:
       type: object
       required:
@@ -479,6 +486,8 @@ components:
         token:
           type: string
           format: byte
+          minLength: 5552
+          maxLength: 5552
         iv:
           type: string
           format: byte

@@ -1,6 +1,6 @@
 const fs = require('fs');
 const crypto = require('crypto');
-const { Given } = require('@cucumber/cucumber');
+const { Given, Then } = require('@cucumber/cucumber');
 const Util = require('../support/utils');
 
 Given('I am a new invalidated user', async function () {
@@ -101,4 +101,22 @@ Given(/^I am authenticated user (.*)$/, async function (folder) {
   // set bearer token
   this.apickli.setAccessTokenFromResponseBodyPath('$.token');
   this.apickli.setBearerToken();
+});
+
+Given(/^I set my vault item (.*) with password (.*)$/, function (varName, passphrase) {
+  this.apickli.storeValueInScenarioScope('VAULT_PASS', passphrase);
+  const keys = `${this.apickli.scenarioVariables.ESK}\n----- SIGNATURE -----\n${this.apickli.scenarioVariables.SSK}`;
+  const vaultItem = Util.symmetricEncrypt(keys, passphrase);
+
+  this.apickli.storeValueInScenarioScope(varName, JSON.stringify(vaultItem));
+});
+
+Then(/^I open the vault (.*) with (.*)$/, function (vaultName, passphrase) {
+  const vault = this.apickli.scenarioVariables[vaultName];
+
+  const privateK = Util.symmetricDecrypt(vault, passphrase);
+
+  const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
+  this.apickli.storeValueInScenarioScope('ESK', eskFile);
+  this.apickli.storeValueInScenarioScope('SSK', sskFile);
 });
