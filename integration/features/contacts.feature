@@ -4,6 +4,8 @@ Feature: Contacts
     
 Scenario: update the contact list
     
+Scenario: Invalidated account cannot update the contact list
+    
 Scenario: The contact list should have a valid token
     
 Scenario: The contact list should have a valid iv

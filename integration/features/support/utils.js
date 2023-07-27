@@ -29,6 +29,7 @@ function formatPK(publicKey) {
 function formatSK(privateKey) {
   const pemHeader = '-----BEGIN PRIVATE KEY-----';
   const pemFooter = '-----END PRIVATE KEY-----';
+
   const trimmedPK = privateKey.replace(/\n/g, '');
   const pemContents = trimmedPK.substring(pemHeader.length, trimmedPK.length - pemFooter.length);
 
@@ -36,7 +37,6 @@ function formatSK(privateKey) {
 }
 
 const ALGORITHM = 'aes-256-gcm';
-const PASS_SIZE = 32;
 const IV_SIZE = 16;
 class Util {
   static async generateKeyPair() {

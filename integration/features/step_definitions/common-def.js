@@ -1,4 +1,5 @@
 const fs = require('fs');
+const crypto = require('crypto');
 const assert = require('assert');
 const { Given, Then } = require('@cucumber/cucumber');
 const Util = require('../support/utils');
@@ -30,6 +31,54 @@ Given(/^I set var (.*) to a (.*) characters long (.*)string$/, function (varName
   this.apickli.storeValueInScenarioScope(varName, str);
 });
 
+Given('I generate a false encryption key', function () {
+  const file = fs.readFileSync('./data/users/user1/public.pem').toString();
+  const [publicK] = file.split('\n----- HASH -----\n');
+  const [_, spkFile] = publicK.split('\n----- SIGNATURE -----\n');
+  const pair = Util.generateFalseKeyPair();
+  const epk = pair.public.encrypt;
+
+  const privateK = fs.readFileSync('./data/users/user1/private.pem').toString();
+  const [ignore, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
+
+  const hash = crypto.createHash('sha256');
+  hash.update(`${epk}\n${spkFile}`);
+  const pkHash = hash.digest();
+
+  const signedHash = Util.sign(sskFile, pkHash);
+
+  this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(epk));
+  this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(spkFile));
+  this.apickli.storeValueInScenarioScope('NEW_SHA', signedHash);
+  const username = Util.getRandomString(25);
+  this.apickli.storeValueInScenarioScope('MY_AT', username);
+});
+
+Given('I generate a false signature key', function () {
+  const publicK = fs.readFileSync('./data/users/user1/public.pem').toString();
+  const [epkFile] = publicK.split('\n----- SIGNATURE -----\n');
+  const pair = Util.generateFalseKeyPair();
+  const spk = pair.public.signature;
+  this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(epkFile));
+  this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(spk));
+  this.apickli.storeValueInScenarioScope('NEW_SHA', pair.public.signedHash);
+  const username = Util.getRandomString(25);
+  this.apickli.storeValueInScenarioScope('MY_AT', username);
+});
+
+Given(/^I hash and sign (.*) and (.*) into (.*) with (.*)$/, async function (pkVarName, skVarName, varName, sskVarName) {
+  const epk = this.apickli.scenarioVariables[pkVarName];
+  const spk = this.apickli.scenarioVariables[skVarName];
+  const ssk = this.apickli.scenarioVariables[sskVarName];
+
+  const hash = crypto.createHash('sha256');
+  hash.update(`${JSON.parse(epk)}\n${JSON.parse(spk)}`);
+  const pkHash = hash.digest();
+
+  const signedHash = Util.sign(ssk, pkHash);
+  this.apickli.storeValueInScenarioScope(varName, signedHash);
+});
+
 Given('I set signature header', function () {
   const {
     token, contacts, ...restAuth
@@ -48,6 +97,26 @@ Given('I set signature header', function () {
 Given('I set false signature header', function () {
   const falseSig = Util.getRandomString(129, true);
   this.apickli.addRequestHeader('x-msm-sig', falseSig);
+});
+
+Given(/^I set my vault item (.*) with password (.*)$/, function (varName, passphrase) {
+  this.apickli.storeValueInScenarioScope('VAULT_PASS', passphrase);
+  const eskVal = this.apickli.scenarioVariables.ESK || this.apickli.scenarioVariables.NEW_ESK;
+  const sskVal = this.apickli.scenarioVariables.SSK || this.apickli.scenarioVariables.NEW_SSK;
+  const keys = `${eskVal}\n----- SIGNATURE -----\n${sskVal}`;
+  const vaultItem = Util.symmetricEncrypt(keys, passphrase);
+
+  this.apickli.storeValueInScenarioScope(varName, JSON.stringify(vaultItem));
+});
+
+Then(/^I open the vault (.*) with (.*)$/, function (vaultName, passphrase) {
+  const vault = this.apickli.scenarioVariables[vaultName];
+
+  const privateK = Util.symmetricDecrypt(vault, passphrase);
+
+  const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
+  this.apickli.storeValueInScenarioScope('ESK', eskFile);
+  this.apickli.storeValueInScenarioScope('SSK', sskFile);
 });
 
 Then('response body match a challenge', async function () {

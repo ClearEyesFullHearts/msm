@@ -21,3 +21,5 @@ Scenario: Message should have a valid content
 Scenario: Inactive user cannot write a message
     
 Scenario: Inactive user cannot receive a message
+    
+Scenario: Message sent to an unknown user throws

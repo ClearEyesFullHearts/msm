@@ -16,10 +16,10 @@ Scenario: Search query is case insensitive
     
 Scenario: Get one account information
     
-Scenario: Account at should be at least 3 characters long
+Scenario: Account username should be at least 3 characters long
     
-Scenario: Account at Username should be less than 125 characters long
+Scenario: Account username should be less than 125 characters long
     
-Scenario: Account at should not contain any special character
+Scenario: Account username should not contain any special character
     
 Scenario: Unknown account name should throw
