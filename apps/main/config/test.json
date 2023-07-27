@@ -2,7 +2,9 @@
   "timer": {
     "removal": {
       "message": 200,
-      "user": 200
+      "user": 200,
+      "inactivity": 2592000000000,
+      "frozen": 7776000000000
     }
   }
 }

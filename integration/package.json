@@ -10,11 +10,13 @@
     "author": "MFT",
     "license": "MIT",
     "dependencies": {
+        "@cucumber/cucumber": "^9.2.0",
         "apickli": "^3.0.2",
         "config": "3.3.9",
-        "@cucumber/cucumber": "^9.2.0",
         "cucumber-html-reporter": "^7.1.0",
         "jsonwebtoken": "^9.0.0",
-        "mongodb-backup-4x": "3.2.1"
+        "mongodb-backup-4x": "3.2.1",
+        "mongodb-restore": "^1.6.2",
+        "mongoose": "^7.4.1"
     }
 }

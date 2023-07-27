@@ -26,6 +26,14 @@ function formatPK(publicKey) {
 
   return `${pemHeader}\n${pemContents}\n${pemFooter}`;
 }
+function formatSK(privateKey) {
+  const pemHeader = '-----BEGIN PRIVATE KEY-----';
+  const pemFooter = '-----END PRIVATE KEY-----';
+  const trimmedPK = privateKey.replace(/\n/g, '');
+  const pemContents = trimmedPK.substring(pemHeader.length, trimmedPK.length - pemFooter.length);
+
+  return `${pemHeader}\n${pemContents}\n${pemFooter}`;
+}
 
 const ALGORITHM = 'aes-256-gcm';
 const PASS_SIZE = 32;
@@ -57,8 +65,8 @@ class Util {
         signedHash,
       },
       private: {
-        encrypt: privateKey,
-        signature: sigSK,
+        encrypt: formatSK(privateKey),
+        signature: formatSK(sigSK),
       },
     };
   }

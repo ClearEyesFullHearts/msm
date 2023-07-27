@@ -75,3 +75,46 @@ Scenario: Set up vaultUser vault
     And I set signature header
     When I PUT /vault
     Then response code should be 200
+
+Scenario: Create users
+    Given I create random user with length 5
+    And I create random user with length 6
+    And I create random user with length 7
+    And I create random user with length 8
+    And I create random user with length 9
+    And I create random user with length 10
+    And I create random user with length 11
+    And I create random user with length 12
+    And I create random user with length 13
+    And I create random user with length 14
+    And I create random user with length 15
+    And I create random user with length 16
+    And I create random user with length 17
+    And I create random user with length 6
+    And I create random user with length 7
+    And I create random user with length 8
+    And I create random user with length 9
+    And I create random user with length 10
+    And I create random user with length 11
+    And I create random user with length 12
+    
+Scenario: Put baby in the freezer
+    Given I load up user1 public keys
+    And I load up user1 private keys
+    And I set body to { "at": "baby", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`" }
+    When I POST to /users
+    Then response code should be 201
+    And I GET /identity/baby
+    And response body match a challenge
+    And I store the value of body path $ as AUTH in scenario scope
+    And I store the value of body path $.user.id as MY_ID in scenario scope
+    And I store the value of body path $.token as access token
+    And I set bearer token
+    And I GET /inbox
+    And response body path $.0.id should be ^[0-9]\d*$
+    And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
+    When I GET /message/`FIRST_MSG_ID`
+    Then response code should be 200
+    And I set signature header
+    When I DELETE /user/`MY_ID`
+    Then response code should be 200
