@@ -1,5 +1,5 @@
 import {
-  Layout, Profile, Contacts,
+  Layout, Profile, Contacts, Vault,
 } from '@/views/profile';
 
 export default {
@@ -8,5 +8,6 @@ export default {
   children: [
     { path: '', component: Profile },
     { path: 'contacts', component: Contacts },
+    { path: 'vault', component: Vault },
   ],
 };

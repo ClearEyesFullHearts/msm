@@ -212,9 +212,15 @@ class CryptoHelper {
     return decripted;
   }
 
-  async symmetricEncrypt(txt) {
+  async symmetricEncrypt(txt, password = false) {
     const iv = window.crypto.getRandomValues(new Uint8Array(16));
-    const arrPass = window.crypto.getRandomValues(new Uint8Array(32));
+    let arrPass;
+    if (password) {
+      const base64Hash = await this.hash(password);
+      arrPass = this.base64ToArBuff(base64Hash);
+    } else {
+      arrPass = window.crypto.getRandomValues(new Uint8Array(32));
+    }
     const arrTxt = this.clearTextToArBuff(txt);
     const key = await window.crypto.subtle.importKey(
       'raw',

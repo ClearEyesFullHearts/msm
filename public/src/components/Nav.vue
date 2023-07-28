@@ -166,16 +166,22 @@ async function incinerate() {
             </div>
             <div class="dropdown-divider" />
             <router-link
+              to="/profile/contacts"
+              class="dropdown-item"
+            >
+              Contacts
+            </router-link>
+            <router-link
               to="/profile"
               class="dropdown-item"
             >
               Profile
             </router-link>
             <router-link
-              to="/profile/contacts"
+              to="/profile/vault"
               class="dropdown-item"
             >
-              Contacts
+              The Vault
             </router-link>
           </div>
         </li>

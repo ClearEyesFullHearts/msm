@@ -5,7 +5,7 @@ import { router } from '@/router';
 import { useAlertStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 
-const baseUrl = `${import.meta.env.VITE_API_URL}/identity`;
+const baseUrl = `${import.meta.env.VITE_API_URL}`;
 const mycrypto = new CryptoHelper();
 let interval;
 let myVault;
@@ -24,7 +24,7 @@ export const useAuthStore = defineStore({
   }),
   actions: {
     async getIdentity(username) {
-      const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/${username}`);
+      const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${username}`);
       myChallenge = challenge;
       if (vault) {
         this.hasVault = true;
@@ -95,6 +95,19 @@ export const useAuthStore = defineStore({
         const alertStore = useAlertStore();
         alertStore.error(error);
       }
+    },
+    async setVault(passphrase) {
+      const itemValue = `${this.pem}${CryptoHelper.SEPARATOR}${this.signing}`;
+      const { token, iv } = await mycrypto.symmetricEncrypt(itemValue, passphrase);
+
+      await fetchWrapper.put(`${baseUrl}/vault`, { token, iv });
+
+      this.hasVault = true;
+    },
+    async emptyVault() {
+      await fetchWrapper.delete(`${baseUrl}/vault`);
+
+      this.hasVault = false;
     },
     logout() {
       const pinia = getActivePinia();
