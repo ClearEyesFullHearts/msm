@@ -8,6 +8,8 @@ import CryptoHelper from '@/lib/cryptoHelper';
 const baseUrl = `${import.meta.env.VITE_API_URL}/identity`;
 const mycrypto = new CryptoHelper();
 let interval;
+let myVault;
+let myChallenge;
 
 export const useAuthStore = defineStore({
   id: 'auth',
@@ -16,14 +18,40 @@ export const useAuthStore = defineStore({
     pem: null,
     signing: null,
     publicHash: null,
+    hasVault: false,
     returnUrl: null,
     countDownMsg: null,
   }),
   actions: {
-    async login(username, key, signKey) {
+    async getIdentity(username) {
+      const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/${username}`);
+      myChallenge = challenge;
+      if (vault) {
+        this.hasVault = true;
+        myVault = vault;
+      } else {
+        this.hasVault = false;
+        myVault = undefined;
+      }
+    },
+    async openVault(passphrase) {
+      if (!myVault || !myVault.iv || myVault.token) {
+        const alertStore = useAlertStore();
+        alertStore.error('No vault recorded');
+      }
+      const {
+        iv,
+        token,
+      } = myVault;
+      const hashPass = await mycrypto.hash(passphrase);
+      const decryptedVault = await mycrypto.symmetricDecrypt(hashPass, iv, token);
+      
+      const dec = new TextDecoder();
+      return dec.decode(decryptedVault);
+    },
+    async login(key, signKey) {
       try {
-        const challenge = await fetchWrapper.get(`${baseUrl}/${username}`);
-        const userStr = await mycrypto.resolve(key, challenge);
+        const userStr = await mycrypto.resolve(key, myChallenge);
 
         const user = JSON.parse(userStr);
         this.pem = key;
@@ -37,6 +65,9 @@ export const useAuthStore = defineStore({
         // update pinia state
         this.user = user;
         const countDownDate = user.connection + user.config.sessionTime;
+
+        myVault = undefined;
+        myChallenge = undefined;
 
         interval = setInterval(() => {
           // Get today's date and time
@@ -67,7 +98,7 @@ export const useAuthStore = defineStore({
     },
     logout() {
       const pinia = getActivePinia();
-      pinia._s.forEach((store) => store.$reset())
+      pinia._s.forEach((store) => store.$reset());
       router.push('/account/login');
       document.title = 'ySyPyA';
       clearInterval(interval);

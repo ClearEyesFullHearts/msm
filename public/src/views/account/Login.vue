@@ -4,8 +4,12 @@ import { ref, onMounted } from 'vue';
 import { useUsersStore, useAuthStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 
+const authStore = useAuthStore();
+
 const loginInput = ref(null);
 const fileInput = ref(null);
+const passphraseInput = ref(null);
+const hasVault = ref(false);
 
 onMounted(() => {
   const usersStore = useUsersStore();
@@ -28,26 +32,40 @@ async function loadTextFromFile(ev) {
 }
 
 async function onSubmit(values) {
-  const authStore = useAuthStore();
-  const { username, secret } = values;
+  const { secret } = values;
   const keys = await loadTextFromFile(secret);
   const [key, signKey] = keys.split(CryptoHelper.SEPARATOR);
 
-  await authStore.login(username, key, signKey);
+  await authStore.login(key, signKey);
 }
 
 async function onFilePicked(evt) {
   const { files } = evt.target;
   const secret = files;
-  const username = loginInput.value.value;
 
-  await onSubmit({ username, secret });
+  await onSubmit({ secret });
+}
+async function onKeyFileNeeded() {
+  fileInput.value.click();
 }
 async function onLog() {
   if (!loginInput.value.value.length || loginInput.value.value.length < 3) {
     return;
   }
-  fileInput.value.click();
+  await authStore.getIdentity(loginInput.value.value);
+  hasVault.value = authStore.hasVault;
+  if (!authStore.hasVault) {
+    onKeyFileNeeded();
+  }
+}
+async function openVault() {
+  try {
+    const keyFile = await authStore.openVault(passphraseInput.value.value);
+    const [key, signKey] = keyFile.split(CryptoHelper.SEPARATOR);
+    await authStore.login(key, signKey);
+  } catch (err) {
+    onKeyFileNeeded();
+  }
 }
 </script>
 
@@ -103,7 +121,7 @@ async function onLog() {
         </div>
         <div class="form-group" />
       </form>
-      <div>
+      <div v-show="!hasVault">
         <button
           class="btn btn-primary"
           @click="onLog()"
@@ -117,14 +135,53 @@ async function onLog() {
           Register
         </router-link>
       </div>
-      <input
-        ref="fileInput"
-        hidden
-        type="file"
-        style="opacity: none;"
-        @change="onFilePicked"
-      >
+      <div v-show="hasVault">
+        <span>Enter your vault's password</span>
+        <form>
+          <div class="form-group">
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
+                <input
+                  id="passphrase"
+                  ref="passphraseInput"
+                  type="password"
+                  class="form-control"
+                  autocomplete="off"
+                >
+              </div>
+            </div>
+          </div>
+        </form>
+        <button
+          class="btn btn-success mr-1"
+          @click="openVault()"
+        >
+          Validate
+        </button>
+        <button
+          class="btn btn-primary ml-1"
+          @click="hasVault = !hasVault"
+        >
+          Cancel
+        </button>
+        <p>
+          <a
+            href="#"
+            role="button"
+            @click="onKeyFileNeeded()"
+          >
+            Forgot my password
+          </a>
+        </p>
+      </div>
     </div>
+    <input
+      ref="fileInput"
+      hidden
+      type="file"
+      style="opacity: none;"
+      @change="onFilePicked"
+    >
   </div>
 
   <div class="card m-3">

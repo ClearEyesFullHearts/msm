@@ -33,7 +33,7 @@ async function authHeader(url, method, body) {
     const isLoggedIn = !!user?.token;
     const isApiUrl = url.startsWith(import.meta.env.VITE_API_URL);
     if (isLoggedIn && isApiUrl) {
-        const { token, ...restUser } = user;
+        const { token, contacts, ...restUser } = user;
         const headers = {
             Authorization: `Bearer ${token}`
         }
