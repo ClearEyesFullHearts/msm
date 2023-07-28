@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 
 import { useUsersStore, useAuthStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
+import FileHelper from '@/lib/fileHelper';
 
 const authStore = useAuthStore();
 
@@ -19,31 +20,14 @@ onMounted(() => {
   }
 });
 
-async function loadTextFromFile(ev) {
-  return new Promise((resolve) => {
-    const file = ev[0];
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      resolve(e.target.result);
-    };
-    reader.readAsText(file);
-  });
-}
-
-async function onSubmit(values) {
-  const { secret } = values;
-  const keys = await loadTextFromFile(secret);
+async function onSubmit(keys) {
   const [key, signKey] = keys.split(CryptoHelper.SEPARATOR);
 
   await authStore.login(key, signKey);
 }
 
 async function onFilePicked(evt) {
-  const { files } = evt.target;
-  const secret = files;
-
-  await onSubmit({ secret });
+  FileHelper.onFilePicked(evt, onSubmit);
 }
 async function onKeyFileNeeded() {
   fileInput.value.click();
@@ -136,22 +120,16 @@ async function openVault() {
         </router-link>
       </div>
       <div v-show="hasVault">
-        <span>Enter your vault's password</span>
-        <form>
-          <div class="form-group">
-            <div class="input-group mb-3">
-              <div class="input-group-prepend">
-                <input
-                  id="passphrase"
-                  ref="passphraseInput"
-                  type="password"
-                  class="form-control"
-                  autocomplete="off"
-                >
-              </div>
-            </div>
-          </div>
-        </form>
+        <p>Enter your vault's password</p>
+        <p>
+          <input
+            id="passphrase"
+            ref="passphraseInput"
+            type="password"
+            class="form-control"
+            autocomplete="off"
+          >
+        </p>
         <button
           class="btn btn-success mr-1"
           @click="openVault()"
@@ -196,7 +174,11 @@ async function openVault() {
         for that username. The response is encrypted with that user's Public Key.
       </p>
       <p>
-        The file you pick is your Secret Key and is used to decrypt the server's response.
+        If you set up your private keys in your vault, you will be asked to enter your password.
+        If not, you will be prompted to pick your secret key file.
+      </p>
+      <p>
+        Either way your Secret Key is used to decrypt the server's response.
         Once decrypted we use the JWT from the connection information to identify with the
         server.
       </p>

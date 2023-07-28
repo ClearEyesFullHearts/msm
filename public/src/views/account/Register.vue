@@ -6,6 +6,10 @@ import * as Yup from 'yup';
 import { useUsersStore, useAlertStore } from '@/stores';
 import { router } from '@/router';
 import CryptoHelper from '@/lib/cryptoHelper';
+import FileHelper from '@/lib/fileHelper';
+
+const usersStore = useUsersStore();
+const alertStore = useAlertStore();
 
 const gotKey = ref(false);
 const fileInput = ref(null);
@@ -18,28 +22,7 @@ const schema = Yup.object().shape({
     .max(125, 'Your @ should not be longer than 125 characters'),
 });
 
-async function loadTextFromFile(ev) {
-  return new Promise((resolve) => {
-    const file = ev[0];
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      resolve(e.target.result);
-    };
-    reader.readAsText(file);
-  });
-}
-
-async function onSubmit(values) {
-  const usersStore = useUsersStore();
-  const alertStore = useAlertStore();
-
-  if (gotKey.value && values.publicKey && values.sigPublicKey) {
-    valueStore = values;
-    fileInput.value.click();
-    return;
-  }
-
+async function register(values) {
   try {
     await usersStore.register(values);
     await router.push('/account/login');
@@ -49,16 +32,25 @@ async function onSubmit(values) {
   }
 }
 
-async function onFilePicked(evt) {
-  const { files } = evt.target;
-  const secret = files;
+async function onSubmit(values) {
+  if (gotKey.value && values.publicKey && values.sigPublicKey) {
+    valueStore = values;
+    fileInput.value.click();
+    return;
+  }
 
-  const keys = await loadTextFromFile(secret);
+  await register(values);
+}
+
+async function onSKRead(keys) {
   const [key, signKey] = keys.split(CryptoHelper.SEPARATOR);
   valueStore.sigSk = signKey || key;
-
   gotKey.value = false;
-  await onSubmit(valueStore);
+  await register(valueStore);
+}
+
+async function onFilePicked(evt) {
+  FileHelper.onFilePicked(evt, onSKRead);
 }
 
 </script>

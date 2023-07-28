@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import { useMemoryStore, useMessagesStore } from '@/stores';
+import FileHelper from '@/lib/fileHelper';
 
 const router = useRouter();
 const memoryStore = useMemoryStore();
@@ -13,21 +14,12 @@ const fileInput = ref(null);
 function uploadFiles() {
   fileInput.value.click();
 }
-async function loadTextFromFile(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
 
-    reader.onload = (e) => {
-      resolve(e.target.result);
-    };
-    reader.readAsText(file);
-  });
-}
 async function onFilePicked(evt) {
   const { files } = evt.target;
   const promises = [];
   for (let i = 0; i < files.length; i += 1) {
-    promises.push(loadTextFromFile(files[i]));
+    promises.push(FileHelper.loadTextFromFile([files[i]]));
   }
   const results = await Promise.all(promises);
   const loaded = results.map((result) => JSON.parse(result));

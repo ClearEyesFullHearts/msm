@@ -1,23 +1,12 @@
 import { defineStore } from 'pinia';
 
 import CryptoHelper from '@/lib/cryptoHelper';
+import FileHelper from '@/lib/fileHelper';
 import { fetchWrapper } from '@/helpers';
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 const mycrypto = new CryptoHelper();
 
-function downloadKey(at, text) {
-  const a = window.document.createElement('a');
-  a.href = window.URL.createObjectURL(new Blob([text]));
-  a.download = `@${at}.pem`;
-
-  // Append anchor to body.
-  document.body.appendChild(a);
-  a.click();
-
-  // Remove anchor from body
-  document.body.removeChild(a);
-}
 function formatPK(publicKey, size) {
   const pemHeader = '-----BEGIN PUBLIC KEY-----';
   const pemFooter = '-----END PUBLIC KEY-----';
@@ -68,7 +57,7 @@ export const useUsersStore = defineStore({
         };
         await fetchWrapper.post(`${baseUrl}/users`, send);
         const skFileContent = `${SK}${CryptoHelper.SEPARATOR}${signSK}`;
-        downloadKey(user.username, skFileContent);
+        FileHelper.download(`@${user.username}.pem`, skFileContent);
       } else {
         const PK = formatPK(publicKey, 788);
         const signPK = formatPK(sigPublicKey, 268);

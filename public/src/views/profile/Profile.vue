@@ -1,22 +1,10 @@
 <script setup>
 import { useAuthStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
+import FileHelper from '@/lib/fileHelper';
 
 const authStore = useAuthStore();
 const mycrypto = new CryptoHelper();
-
-function downloadFile(at, text) {
-  const a = window.document.createElement('a');
-  a.href = window.URL.createObjectURL(new Blob([text]));
-  a.download = `@${at}.signature.ysypya`;
-
-  // Append anchor to body.
-  document.body.appendChild(a);
-  a.click();
-
-  // Remove anchor from body
-  document.body.removeChild(a);
-}
 
 async function signHash() {
   const { id, username: at } = authStore.user.user;
@@ -27,7 +15,7 @@ async function signHash() {
     hash: authStore.publicHash,
     signature,
   };
-  downloadFile(at, JSON.stringify(obj));
+  FileHelper.download(`@${at}.signature.ysypya`, JSON.stringify(obj));
 }
 
 </script>

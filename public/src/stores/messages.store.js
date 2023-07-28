@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 
 import CryptoHelper from '@/lib/cryptoHelper';
+import FileHelper from '@/lib/fileHelper';
 import { fetchWrapper } from '@/helpers';
 import { useAuthStore, useAlertStore } from '@/stores';
 
@@ -104,7 +105,6 @@ export const useMessagesStore = defineStore({
       await fetchWrapper.post(`${baseUrl}/message`, reqBody);
     },
     async downloadMessage() {
-      const a = window.document.createElement('a');
       const {
         id,
         title: clearTitle,
@@ -121,15 +121,7 @@ export const useMessagesStore = defineStore({
         ...restMsg
       }));
 
-      a.href = window.URL.createObjectURL(new Blob([JSON.stringify(challenge)]));
-      a.download = `${id}.ysypya`;
-
-      // Append anchor to body.
-      document.body.appendChild(a);
-      a.click();
-
-      // Remove anchor from body
-      document.body.removeChild(a);
+      FileHelper.download(`${id}.ysypya`, JSON.stringify(challenge));
     },
     async deleteMessage(msgId) {
       const alertStore = useAlertStore();

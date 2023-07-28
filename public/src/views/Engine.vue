@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import CryptoHelper from '@/lib/cryptoHelper';
+import FileHelper from '@/lib/fileHelper';
 
 const mycrypto = new CryptoHelper();
 
@@ -34,45 +35,21 @@ function encodeText(str) {
 function decodeText(str) {
   return decodeURIComponent(str);
 }
-async function loadTextFromFile(ev) {
-  return new Promise((resolve) => {
-    const file = ev[0];
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      resolve(e.target.result);
-    };
-    reader.readAsText(file);
-  });
-}
-
-function downloadFile(name, text) {
-  const a = window.document.createElement('a');
-  a.href = window.URL.createObjectURL(new Blob([text]));
-  a.download = name;
-
-  // Append anchor to body.
-  document.body.appendChild(a);
-  a.click();
-
-  // Remove anchor from body
-  document.body.removeChild(a);
-}
 
 async function onGenerateKey() {
   const { PK, SK } = await mycrypto.generateKeyPair();
   const { PK: signPK, SK: signSK } = await mycrypto.generateSignatureKeyPair();
   const skFileContent = `${SK}${CryptoHelper.SEPARATOR}${signSK}`;
   const pkFileContent = `${PK}${CryptoHelper.SEPARATOR}${signPK}`;
-  downloadFile('private.pem', skFileContent);
-  downloadFile('public.pem', pkFileContent);
+  FileHelper.download('private.pem', skFileContent);
+  FileHelper.download('public.pem', pkFileContent);
 }
 async function onExtractKey() {
   extractKeyInput.value.click();
 }
 async function onExtractFilePicked(evt) {
   const { files } = evt.target;
-  const keys = await loadTextFromFile(files);
+  const keys = await FileHelper.loadTextFromFile(files);
   const [key, signKey] = keys.split(CryptoHelper.SEPARATOR);
   const pk = await mycrypto.getPublicKey(key);
   let pkFileContent = pk;
@@ -80,7 +57,7 @@ async function onExtractFilePicked(evt) {
     const signPk = await mycrypto.getSigningPublicKey(signKey);
     pkFileContent = `${pk}${CryptoHelper.SEPARATOR}${signPk}`;
   }
-  downloadFile('public.pem', pkFileContent);
+  FileHelper.download('public.pem', pkFileContent);
 }
 
 async function onWritingSubmit() {
@@ -100,14 +77,14 @@ async function onWritingSubmit() {
     message.signature = signature;
   }
 
-  downloadFile('message.ysypya', JSON.stringify(message));
+  FileHelper.download('message.ysypya', JSON.stringify(message));
 }
 async function onUploadPublic() {
   publicKeyInput.value.click();
 }
 async function onPublicFilePicked(evt) {
   const { files } = evt.target;
-  const keys = await loadTextFromFile(files);
+  const keys = await FileHelper.loadTextFromFile(files);
   const [key] = keys.split(CryptoHelper.SEPARATOR);
   publicKey = key;
   publicUploadBtn.value.disabled = true;
@@ -120,7 +97,7 @@ async function onUploadSignature() {
 }
 async function onSignatureFilePicked(evt) {
   const { files } = evt.target;
-  const keys = await loadTextFromFile(files);
+  const keys = await FileHelper.loadTextFromFile(files);
   const [_, signKey] = keys.split(CryptoHelper.SEPARATOR);
   signingKey = signKey;
   signatureUploadBtn.value.disabled = true;
@@ -156,7 +133,7 @@ async function onUploadSecret() {
 }
 async function onSecretFilePicked(evt) {
   const { files } = evt.target;
-  const keys = await loadTextFromFile(files);
+  const keys = await FileHelper.loadTextFromFile(files);
   const [key] = keys.split(CryptoHelper.SEPARATOR);
   secretKey = key;
   secretUploadBtn.value.disabled = true;
@@ -168,7 +145,7 @@ async function onUploadChallenge() {
 }
 async function onChallengeFilePicked(evt) {
   const { files } = evt.target;
-  challenge = await loadTextFromFile(files);
+  challenge = await FileHelper.loadTextFromFile(files);
   challengeUploadBtn.value.disabled = true;
   const [{ name }] = files;
   challengeUploadBtn.value.innerHTML = `${name} loaded!`;
@@ -178,7 +155,7 @@ async function onUploadVerify() {
 }
 async function onVerifyFilePicked(evt) {
   const { files } = evt.target;
-  const keys = await loadTextFromFile(files);
+  const keys = await FileHelper.loadTextFromFile(files);
   const [_, verifKey] = keys.split(CryptoHelper.SEPARATOR);
   verifyKey = verifKey;
   verifyUploadBtn.value.disabled = true;
