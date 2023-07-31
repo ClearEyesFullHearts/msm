@@ -3,6 +3,7 @@ const { Given, Then } = require('@cucumber/cucumber');
 const Util = require('../support/utils');
 
 Given('I am a new invalidated user', async function () {
+  this.apickli.removeRequestHeader('x-msm-sig');
   const keys = await Util.generateKeyPair();
   const epk = keys.public.encrypt;
   const spk = keys.public.signature;
@@ -25,6 +26,7 @@ Given('I am a new invalidated user', async function () {
 });
 
 Given('I am a new valid user', async function () {
+  this.apickli.removeRequestHeader('x-msm-sig');
   const keys = await Util.generateKeyPair();
   const epk = keys.public.encrypt;
   const spk = keys.public.signature;
@@ -64,6 +66,7 @@ Given('I am a new valid user', async function () {
 });
 
 Given(/^I am existing user (.*)$/, async function (username) {
+  this.apickli.removeRequestHeader('x-msm-sig');
   await this.get(`/identity/${username}`);
   const respBody = JSON.parse(this.apickli.httpResponse.body);
   const privateK = Util.symmetricDecrypt(respBody.vault, username);
@@ -83,6 +86,7 @@ Given(/^I am existing user (.*)$/, async function (username) {
 });
 
 Given(/^I am authenticated user (.*)$/, async function (folder) {
+  this.apickli.removeRequestHeader('x-msm-sig');
   // load keys
   const file = fs.readFileSync(`./data/users/${folder}/public.pem`).toString();
   const [publicK, hash] = file.split('\n----- HASH -----\n');

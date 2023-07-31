@@ -171,7 +171,7 @@ Then(/^resolved challenge path (.*) should match (.*)$/, function (path, express
   const regExpObject = new RegExp(regexp);
   const test = Util.getPathValue(obj, path);
   const success = regExpObject.test(test);
-  assert.ok(success);
+  assert.ok(success, `Error: expected: ${regexp}, got: ${test}`);
 });
 
 Then(/^I wait for (.*) seconds$/, async function (seconds) {

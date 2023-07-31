@@ -102,7 +102,7 @@ class Util {
       key: pem,
       oaepHash: 'sha256',
       padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-    }, Buffer.from(base64str, 'base64'));
+    }, Buffer.from(base64str, 'base64')).toString();
   }
 
   static resolve(pem, challenge) {
