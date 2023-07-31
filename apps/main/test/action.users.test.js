@@ -369,10 +369,18 @@ describe('User Action tests', () => {
           searchUsername: (search) => {
             expect(search.toUpperCase()).toBe(search);
             return Promise.resolve([
-              { username: 'user1', key: 'blablabla' },
-              { username: 'user2', key: 'blablabla' },
-              { username: 'user3', key: 'blablabla' },
-              { username: 'user4', key: 'blablabla' },
+              {
+                username: 'user1', key: 'blablabla', id: 1, signature: 'blablabla',
+              },
+              {
+                username: 'user2', key: 'blablabla', id: 2, signature: 'blablabla',
+              },
+              {
+                username: 'user3', key: 'blablabla', id: 3, signature: 'blablabla',
+              },
+              {
+                username: 'user4', key: 'blablabla', id: 4, signature: 'blablabla',
+              },
             ]);
           },
         },
@@ -380,10 +388,10 @@ describe('User Action tests', () => {
       const results = await Action.getUsers(mockDB, { search: 'use' });
       expect(results).toHaveLength(4);
       const [user1, user2, user3, user4] = results;
-      expect(user1.at).toBe('user1');
-      expect(user2.at).toBe('user2');
-      expect(user3.at).toBe('user3');
-      expect(user4.at).toBe('user4');
+      expect(user1).toEqual({ at: 'user1', id: 1 });
+      expect(user2).toEqual({ at: 'user2', id: 2 });
+      expect(user3).toEqual({ at: 'user3', id: 3 });
+      expect(user4).toEqual({ at: 'user4', id: 4 });
     });
     test('Search return no result', async () => {
       const mockDB = {
@@ -398,30 +406,33 @@ describe('User Action tests', () => {
       expect(results).toHaveLength(0);
     });
   });
-  describe('.getUserByName', () => {
+  describe('.getUserById', () => {
     test('Correct name returns user', async () => {
-      const at = 'myusername';
+      const userId = '1';
       const mockDB = {
         users: {
-          findByName: (name) => {
-            expect(name).toBe(at);
-            return Promise.resolve({ id: 1, username: name, key: 'blabla' });
+          findByID: (id) => {
+            expect(id).toBe(userId);
+            return Promise.resolve({
+              id: userId, username: 'bar', key: 'blabla', signature: 'blabla', vault: 'blabla',
+            });
           },
         },
       };
 
-      const result = await Action.getUserByName(mockDB, at);
-      expect(result.at).toBe('myusername');
-      expect(result.key).toBe('blabla');
+      const result = await Action.getUserById(mockDB, userId);
+      expect(result).toEqual({
+        id: userId, at: 'bar', key: 'blabla', signature: 'blabla',
+      });
     });
     test('Unknwon user throws', async () => {
       const mockDB = {
         users: {
-          findByName: () => Promise.resolve(null),
+          findByID: () => Promise.resolve(null),
         },
       };
 
-      expect(Action.getUserByName(mockDB, 'myusername')).rejects.toThrow('@ unknown');
+      expect(Action.getUserById(mockDB, 1)).rejects.toThrow('@ unknown');
     });
   });
   describe('.removeUser', () => {

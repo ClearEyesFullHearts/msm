@@ -82,7 +82,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /user/{at}:
+  /user/{id}:
     get:
       summary: Get one user informations
       operationId: getOneUser
@@ -90,14 +90,12 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: at
+        - name: id
           in: path
-          description: The full user name
           required: true
+          description: The ID of the user
           schema:
-            type: string
-            minLength: 3
-            maxLength: 125
+            type: integer
       responses:
         '200':
           description: One user
@@ -128,7 +126,7 @@ paths:
             format: byte
             minLength: 172
             maxLength: 172
-        - name: at
+        - name: id
           in: path
           required: true
           description: The ID of the user to delete
@@ -419,9 +417,13 @@ components:
     User:
       type: object
       required:
+        - id
         - at
         - key
+        - signature
       properties:
+        id:
+          type: integer
         at:
           type: string
           minLength: 3
@@ -430,10 +432,26 @@ components:
           type: string
           minLength: 788
           maxLength: 788
+        signature:
+          type: string
+          minLength: 268
+          maxLength: 268
+    ShortUser:
+      type: object
+      required:
+        - at
+        - id
+      properties:
+        id:
+          type: integer
+        at:
+          type: string
+          minLength: 3
+          maxLength: 125
     UsersList:
       type: array
       items:
-        $ref: "#/components/schemas/User"
+        $ref: "#/components/schemas/ShortUser"
     Inbox:
       type: array
       items:

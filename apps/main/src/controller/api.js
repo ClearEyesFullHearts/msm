@@ -61,7 +61,7 @@ module.exports = {
     (req, res, next) => {
       const {
         params: {
-          at,
+          id,
         },
         app: {
           locals: {
@@ -69,7 +69,7 @@ module.exports = {
           },
         },
       } = req;
-      User.getUserByName(db, at)
+      User.getUserById(db, Number(id))
         .then((user) => {
           res.json(user);
         })
@@ -84,7 +84,7 @@ module.exports = {
       const {
         auth,
         params: {
-          at,
+          id,
         },
         app: {
           locals: {
@@ -92,7 +92,7 @@ module.exports = {
           },
         },
       } = req;
-      User.removeUser(db, Number(at), auth)
+      User.removeUser(db, Number(id), auth)
         .then(() => {
           res.status(200).send();
         })
