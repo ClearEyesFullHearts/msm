@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia';
+import { reactive } from 'vue'
 
 import CryptoHelper from '@/lib/cryptoHelper';
 import FileHelper from '@/lib/fileHelper';
 import { fetchWrapper } from '@/helpers';
-import { useAuthStore, useAlertStore } from '@/stores';
+import { useAuthStore, useAlertStore, useContactsStore } from '@/stores';
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 const mycrypto = new CryptoHelper();
@@ -131,6 +132,23 @@ export const useMessagesStore = defineStore({
       } catch (error) {
         alertStore.error(`An error occured: ${error}`);
       }
+    },
+    async addTarget(user) {
+      const {
+        key,
+        signature
+      } = user;
+      const hash = await mycrypto.hash(`${key}\n${signature}`);
+      const checkingUser = reactive({
+        ...user,
+        security: {
+          hash,
+          verification: 0,
+        }
+      });
+      this.targetAt.push(checkingUser);
+      const contactsStore = useContactsStore();
+      contactsStore.checkUser(checkingUser)
     },
     encodeText(str) {
       return str.split('')

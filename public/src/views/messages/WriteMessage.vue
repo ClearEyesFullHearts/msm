@@ -81,7 +81,7 @@ function removeUser(user) {
   messageStore.targetAt.splice(i, 1);
 }
 function addUser(user) {
-  messageStore.targetAt.push(user);
+  messageStore.addTarget(user);
 }
 </script>
 
@@ -107,7 +107,15 @@ function addUser(user) {
           <div>
             <span
               v-for="user in targetAt"
-              class="badge badge-info mr-1 pointer"
+              :key="user.id"
+              class="badge mr-1 pointer"
+              :class="{
+                'badge-secondary': user.security.verification === 0,
+                'badge-success': user.security.verification === 1
+                  || user.security.verification === 2,
+                'badge-info': user.security.verification === 3,
+                'badge-danger': user.security.verification === 4
+              }"
               @click="removeUser(user)"
             >{{ `@${user.at}` }}</span>
           </div>
