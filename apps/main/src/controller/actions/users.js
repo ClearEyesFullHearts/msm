@@ -141,12 +141,32 @@ class User {
     const users = await db.users.searchUsername(search.toUpperCase());
 
     debug('found', users.length);
-    return users.map(({ username, id }) => ({ at: username, id }));
+    return users.map(({
+      username, id, key, signature,
+    }) => ({
+      id, at: username, key, signature,
+    }));
   }
 
   static async getUserById(db, userId) {
     debug('search for user with ID:', userId);
     const knownUser = await db.users.findByID(userId);
+    if (!knownUser) {
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, '@ unknown');
+    }
+
+    debug('found for id', knownUser.id);
+    const {
+      username: at, key, id, signature,
+    } = knownUser;
+    return {
+      id, at, key, signature,
+    };
+  }
+
+  static async getUserByName(db, name) {
+    debug('search for user with exact @ :', name);
+    const knownUser = await db.users.findByName(name);
     if (!knownUser) {
       throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, '@ unknown');
     }

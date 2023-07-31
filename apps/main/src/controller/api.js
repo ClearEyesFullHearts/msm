@@ -120,6 +120,28 @@ module.exports = {
         next(err);
       });
   },
+  getOneUserByName: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        params: {
+          at,
+        },
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      User.getUserByName(db, at)
+        .then((user) => {
+          res.json(user);
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
   setUserContactList: [
     AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
     (req, res, next) => {

@@ -83,7 +83,7 @@ export const useUsersStore = defineStore({
       }
     },
     async returnOne(at) {
-      const user = await fetchWrapper.get(`${baseUrl}/user/${at}`);
+      const user = await fetchWrapper.get(`${baseUrl}/username/${at}`);
       return user;
     },
     async destroy(userId) {

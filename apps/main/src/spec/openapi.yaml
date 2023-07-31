@@ -82,6 +82,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /username/{at}:
+    get:
+      summary: Get one user informations
+      operationId: getOneUserByName
+      x-eov-operation-handler: api
+      parameters:
+        - name: at
+          in: path
+          description: Start of users name
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 125
+      responses:
+        '200':
+          description: One user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /user/{id}:
     get:
       summary: Get one user informations
@@ -436,22 +464,10 @@ components:
           type: string
           minLength: 268
           maxLength: 268
-    ShortUser:
-      type: object
-      required:
-        - at
-        - id
-      properties:
-        id:
-          type: integer
-        at:
-          type: string
-          minLength: 3
-          maxLength: 125
     UsersList:
       type: array
       items:
-        $ref: "#/components/schemas/ShortUser"
+        $ref: "#/components/schemas/User"
     Inbox:
       type: array
       items:
