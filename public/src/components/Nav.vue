@@ -20,7 +20,7 @@ async function incinerate() {
     v-if="!authStore.user"
     class="navbar navbar-expand navbar-dark bg-dark"
   >
-    <div class="navbar-nav mr-auto">
+    <div class="navbar-nav me-auto">
       <router-link
         to="/"
         class="nav-item nav-link"
@@ -34,7 +34,7 @@ async function incinerate() {
         Engine
       </router-link>
     </div>
-    <div>
+    <div class="me-2">
       <router-link
         v-slot="{href, navigate}"
         to="/account/login"
@@ -69,8 +69,8 @@ async function incinerate() {
     <button
       class="navbar-toggler"
       type="button"
-      data-toggle="collapse"
-      data-target="#navbarSupportedContent"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarSupportedContent"
       aria-controls="navbarSupportedContent"
       aria-expanded="false"
       aria-label="Toggle navigation"
@@ -81,7 +81,7 @@ async function incinerate() {
       id="navbarSupportedContent"
       class="collapse navbar-collapse"
     >
-      <ul class="navbar-nav mr-auto">
+      <ul class="navbar-nav me-auto">
         <li class="nav-item active">
           <router-link
             to="/home"
@@ -96,7 +96,7 @@ async function incinerate() {
             class="nav-link dropdown-toggle"
             href="#"
             role="button"
-            data-toggle="dropdown"
+            data-bs-toggle="dropdown"
             aria-haspopup="true"
             aria-expanded="false"
           >
@@ -128,7 +128,7 @@ async function incinerate() {
           </div>
         </li>
       </ul>
-      <div class="navbar-nav m-1 mr-auto">
+      <div class="navbar-nav m-1 me-auto">
         <button
           class="btn btn-outline-danger"
           @click="incinerate()"
@@ -151,14 +151,14 @@ async function incinerate() {
             class="nav-link dropdown-toggle"
             href="#"
             role="button"
-            data-toggle="dropdown"
+            data-bs-toggle="dropdown"
             aria-haspopup="true"
             aria-expanded="false"
           >
             @{{ authStore?.user?.user?.username }}
           </a>
           <div
-            class="dropdown-menu dropdown-menu-dark dropdown-menu-right"
+            class="dropdown-menu dropdown-menu-dark dropdown-menu-end"
             aria-labelledby="navbarDropdown"
           >
             <div class="dropdown-item">

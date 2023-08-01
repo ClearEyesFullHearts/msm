@@ -30,7 +30,8 @@ const schema = Yup.object().shape({
 if (messageStore.targetMessage.at) {
   userStore.returnOne(messageStore.targetMessage.at)
     .then((target) => {
-      messageStore.targetAt.push(target);
+      // messageStore.targetAt.push(target);
+      messageStore.addTarget(target);
     })
     .catch((err) => {
       alertStore.error(`${err}`);
@@ -86,95 +87,103 @@ function addUser(user) {
 </script>
 
 <template>
-  <h1>{{ title }}</h1>
-  <template v-if="true">
-    <Form
-      v-slot="{ errors, isSubmitting }"
-      :validation-schema="schema"
-      :initial-values="targetMessage"
-      @submit="onSubmit"
-    >
-      <div class="form-row">
-        <div class="form-group col">
-          <Autocomplete @user-selected="addUser" />
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group col">
-          <div>
-            Send to:
-          </div>
-          <div>
-            <span
-              v-for="user in targetAt"
-              :key="user.id"
-              class="badge mr-1 pointer"
-              :class="{
-                'badge-secondary': user.security.verification === 0,
-                'badge-success': user.security.verification === 1
-                  || user.security.verification === 2,
-                'badge-info': user.security.verification === 3,
-                'badge-danger': user.security.verification === 4
-              }"
-              @click="removeUser(user)"
-            >{{ `@${user.at}` }}</span>
-          </div>
-        </div>
-        <div class="form-group col">
-          <label>Message Title</label>
-          <Field
-            name="title"
-            type="text"
-            class="form-control"
-            :class="{ 'is-invalid': errors.title }"
-          />
-          <div class="invalid-feedback">
-            {{ errors.title }}
-          </div>
-        </div>
-      </div>
-      <div v-if="targetMessage.quote">
-        <label>Reply to:</label>
-        <pre>{{ targetMessage.quote }}</pre>
-      </div>
-      <div class="form-row">
-        <div class="form-group col">
-          <label>Message text</label>
-          <Field
-            name="content"
-            as="textarea"
-            cols="30"
-            rows="10"
-            class="form-control"
-            :class="{ 'is-invalid': errors.content }"
-            @input="event => onInputText(event.target.value)"
-          />
-          <span class="limiter">{{ contentLength }} / 446</span>
-          <div class="invalid-feedback">
-            {{ errors.content }}
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <button
-          class="btn btn-primary"
-          :disabled="isSubmitting"
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <h1>{{ title }}</h1>
+      <template v-if="true">
+        <Form
+          v-slot="{ errors, isSubmitting }"
+          :validation-schema="schema"
+          :initial-values="targetMessage"
+          @submit="onSubmit"
         >
-          <span
-            v-show="isSubmitting"
-            class="spinner-border spinner-border-sm mr-1"
-          />
-          Send
-        </button>
-        <router-link
-          to="/messages"
-          class="btn btn-link"
-        >
-          Back to inbox
-        </router-link>
-      </div>
-    </Form>
-  </template>
+          <div class="form-row">
+            <div class="form-group col">
+              <Autocomplete @user-selected="addUser" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col">
+              <label class="form-label">
+                Send to:
+              </label>
+              <div>
+                <span
+                  v-for="user in targetAt"
+                  :key="user.id"
+                  class="badge me-1 mb-1"
+                  :class="{
+                    'bg-secondary': user.security.verification === 0,
+                    'bg-success': user.security.verification === 1
+                      || user.security.verification === 2,
+                    'bg-primary': user.security.verification === 3,
+                    'bg-danger': user.security.verification === 4
+                  }"
+                >{{ `@${user.at}` }}
+                  <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    aria-label="Remove recipient"
+                    title="Remove recipient"
+                    @click="removeUser(user)"
+                  /></span>
+              </div>
+            </div>
+            <div class="form-group col">
+              <label class="form-label">Message Title</label>
+              <Field
+                name="title"
+                type="text"
+                class="form-control"
+                :class="{ 'is-invalid': errors.title }"
+              />
+              <div class="invalid-feedback">
+                {{ errors.title }}
+              </div>
+            </div>
+          </div>
+          <div v-if="targetMessage.quote">
+            <label class="form-label">Reply to:</label>
+            <pre>{{ targetMessage.quote }}</pre>
+          </div>
+          <div>
+            <label class="form-label">Message text</label>
+            <Field
+              name="content"
+              as="textarea"
+              cols="30"
+              rows="10"
+              class="form-control"
+              :class="{ 'is-invalid': errors.content }"
+              @input="event => onInputText(event.target.value)"
+            />
+            <span>{{ contentLength }} / 446</span>
+            <div class="invalid-feedback">
+              {{ errors.content }}
+            </div>
+          </div>
+          <div class="form-group mt-2">
+            <button
+              class="btn btn-primary"
+              :disabled="isSubmitting"
+            >
+              <span
+                v-show="isSubmitting"
+                class="spinner-border spinner-border-sm me-1"
+              />
+              Send
+            </button>
+            <router-link
+              to="/messages"
+              class="btn btn-link"
+            >
+              Back to inbox
+            </router-link>
+          </div>
+        </Form>
+      </template>
+    </div>
+  </div>
 </template>
 
 <style>
@@ -185,8 +194,5 @@ pre {
     white-space: -pre-wrap;      /* Opera 4-6 */
     white-space: -o-pre-wrap;    /* Opera 7 */
     word-wrap: break-word;       /* Internet Explorer 5.5+ */
-}
-.pointer {
-    cursor: pointer;
 }
 </style>

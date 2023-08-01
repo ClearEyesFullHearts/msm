@@ -121,7 +121,7 @@ function onDownloadSK() {
           <div class="form-row form-group mt-2">
             <button
               type="submit"
-              class="btn btn-primary mr-1"
+              class="btn btn-primary me-1"
             >
               Set keys in the vault
             </button>

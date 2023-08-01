@@ -253,60 +253,46 @@ async function onVerifyFilePicked(evt) {
                 Encrypt message
               </h4>
               <div class="card-body">
-                <div class="form-group">
-                  <div>
-                    <div>
-                      <button
-                        ref="publicUploadBtn"
-                        class="btn btn-primary btn-block"
-                        @click="onUploadPublic()"
-                      >
-                        Upload Target Public Key
-                      </button>
-                      <input
-                        ref="publicKeyInput"
-                        hidden
-                        type="file"
-                        style="opacity: none;"
-                        @change="onPublicFilePicked"
-                      >
-                    </div>
-                  </div>
+                <div class="d-grid gap-2 mb-2">
+                  <button
+                    ref="publicUploadBtn"
+                    class="btn btn-primary"
+                    @click="onUploadPublic()"
+                  >
+                    Upload Target Public Key
+                  </button>
+                  <input
+                    ref="publicKeyInput"
+                    hidden
+                    type="file"
+                    style="opacity: none;"
+                    @change="onPublicFilePicked"
+                  >
                 </div>
-                <div class="form-group">
-                  <div>
-                    <div>
-                      <textarea
-                        ref="contentText"
-                        autocomplete="off"
-                        cols="30"
-                        rows="10"
-                        class="form-control"
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <textarea
+                    ref="contentText"
+                    autocomplete="off"
+                    cols="30"
+                    rows="10"
+                    class="form-control"
+                  />
                 </div>
-                <div class="form-group">
-                  <div>
-                    <div>
-                      <button
-                        ref="signatureUploadBtn"
-                        class="btn btn-primary btn-block"
-                        @click="onUploadSignature()"
-                      >
-                        (optional) Upload your Secret Key to sign
-                      </button>
-                      <input
-                        ref="signatureKeyInput"
-                        hidden
-                        type="file"
-                        style="opacity: none;"
-                        @change="onSignatureFilePicked"
-                      >
-                    </div>
-                  </div>
-                </div>
-                <div class="form-group">
+                <div class="d-grid gap-2 mt-2">
+                  <button
+                    ref="signatureUploadBtn"
+                    class="btn btn-primary"
+                    @click="onUploadSignature()"
+                  >
+                    (optional) Upload your Secret Key to sign
+                  </button>
+                  <input
+                    ref="signatureKeyInput"
+                    hidden
+                    type="file"
+                    style="opacity: none;"
+                    @change="onSignatureFilePicked"
+                  >
                   <button
                     class="btn btn-success"
                     @click="onWritingSubmit()"
@@ -360,59 +346,51 @@ async function onVerifyFilePicked(evt) {
                 Decrypt message
               </h4>
               <div class="card-body">
-                <div class="form-group">
-                  <div>
-                    <div>
-                      <button
-                        ref="secretUploadBtn"
-                        class="btn btn-primary btn-block"
-                        @click="onUploadSecret()"
-                      >
-                        Upload your Secret Key
-                      </button>
-                      <input
-                        ref="secretKeyInput"
-                        hidden
-                        type="file"
-                        style="opacity: none;"
-                        @change="onSecretFilePicked"
-                      >
-                    </div>
-                    <div>
-                      <button
-                        ref="challengeUploadBtn"
-                        class="btn btn-primary mt-2 btn-block"
-                        @click="onUploadChallenge()"
-                      >
-                        Upload Message File
-                      </button>
-                      <input
-                        ref="challengeKeyInput"
-                        hidden
-                        type="file"
-                        style="opacity: none;"
-                        @change="onChallengeFilePicked"
-                      >
-                    </div>
-                    <div>
-                      <button
-                        ref="verifyUploadBtn"
-                        class="btn btn-primary mt-2 btn-block"
-                        @click="onUploadVerify()"
-                      >
-                        (optional) Upload the sender's Public Key
-                      </button>
-                      <input
-                        ref="verifyKeyInput"
-                        hidden
-                        type="file"
-                        style="opacity: none;"
-                        @change="onVerifyFilePicked"
-                      >
-                    </div>
-                  </div>
+                <div class="d-grid gap-2">
+                  <button
+                    ref="secretUploadBtn"
+                    class="btn btn-primary"
+                    @click="onUploadSecret()"
+                  >
+                    Upload your Secret Key
+                  </button>
+                  <input
+                    ref="secretKeyInput"
+                    hidden
+                    type="file"
+                    style="opacity: none;"
+                    @change="onSecretFilePicked"
+                  >
+                  <button
+                    ref="challengeUploadBtn"
+                    class="btn btn-primary mt-2"
+                    @click="onUploadChallenge()"
+                  >
+                    Upload Message File
+                  </button>
+                  <input
+                    ref="challengeKeyInput"
+                    hidden
+                    type="file"
+                    style="opacity: none;"
+                    @change="onChallengeFilePicked"
+                  >
+                  <button
+                    ref="verifyUploadBtn"
+                    class="btn btn-primary mt-2"
+                    @click="onUploadVerify()"
+                  >
+                    (optional) Upload the sender's Public Key
+                  </button>
+                  <input
+                    ref="verifyKeyInput"
+                    hidden
+                    type="file"
+                    style="opacity: none;"
+                    @change="onVerifyFilePicked"
+                  >
                 </div>
-                <div class="form-group">
+                <div class="d-grid gap-2">
                   <p>
                     <pre ref="targetText" />
                   </p>

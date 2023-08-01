@@ -18,11 +18,9 @@ const { alert } = storeToRefs(alertStore);
         :class="alert.type"
       >
         <button
-          class="btn btn-link close"
+          class="btn btn-close float-end"
           @click="alertStore.clear()"
-        >
-          &times;
-        </button>
+        />
         <pre>{{ alert.message }}</pre>
       </div>
     </div>

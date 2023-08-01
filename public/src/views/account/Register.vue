@@ -130,14 +130,14 @@ async function onFilePicked(evt) {
             </div>
           </div>
         </div>
-        <div class="form-group">
+        <div class="form-group mt-2">
           <button
             class="btn btn-primary"
             :disabled="isSubmitting"
           >
             <span
               v-show="isSubmitting"
-              class="spinner-border spinner-border-sm mr-1"
+              class="spinner-border spinner-border-sm me-1"
             />
             Register
           </button>

@@ -11,7 +11,6 @@ export const useContactsStore = defineStore({
   }),
   actions: {
     async checkUser(user) {
-      console.log(user);
       // check if user is verified in contact list
       const [knownUser] = this.list.filter((u) => u.id === user.id);
       if (knownUser && knownUser.verified) {
@@ -29,6 +28,12 @@ export const useContactsStore = defineStore({
       }
       // check if user is verified in ether blockchain
       // if the hash checks out => user.security.verification = 3;
+      // setInterval(() => {
+      //   user.security.verification++;
+      //   if (user.security.verification > 4) {
+      //     user.security.verification = 0;
+      //   }
+      // }, 2000);
     },
   },
 });

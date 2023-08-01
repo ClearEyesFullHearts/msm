@@ -44,7 +44,7 @@ async function replyTo(from, reTitle) {
 <template>
   <h1>MemoryBox</h1>
   <button
-    class="btn btn-sm btn-secondary"
+    class="btn mb-2 btn-secondary"
     @click="uploadFiles()"
   >
     <span>Upload</span>
@@ -58,7 +58,7 @@ async function replyTo(from, reTitle) {
     @change="onFilePicked"
   >
   <button
-    class="btn btn-sm btn-success mb-2 float-right"
+    class="btn btn-success mb-2 float-end"
     @click="clear()"
   >
     <span>Clear All</span>
@@ -96,7 +96,7 @@ async function replyTo(from, reTitle) {
           <td>{{ new Date(msg.sentAt).toLocaleString() }}</td>
           <td style="white-space: nowrap">
             <button
-              class="btn btn-sm btn-primary mr-1"
+              class="btn btn-sm btn-primary me-1"
               @click="clearMessage(index)"
             >
               <span>Clear</span>

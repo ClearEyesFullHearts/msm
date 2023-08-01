@@ -33,22 +33,22 @@ async function forceDelete() {
 </script>
 
 <template>
-  <router-link
-    to="/messages"
-    class="btn btn-link"
-  >
-    Back to inbox
-  </router-link>
   <main
     role="main"
-    class="container pt-4 pb-4"
+    class="container-sm"
   >
-    <div class="row">
+    <div class="row justify-content-center">
       <div class="col-md-8 blog-main">
+        <router-link
+          to="/messages"
+          class="btn btn-link p-0"
+        >
+          Back to inbox
+        </router-link>
         <h3 class="pb-3 mb-4 font-italic border-bottom">
           {{ message.title }}
           <button
-            class="btn btn-sm btn-danger float-right"
+            class="btn btn-danger float-end"
             @click="forceDelete()"
           >
             Delete
@@ -66,11 +66,12 @@ async function forceDelete() {
 
         <div class="form-group">
           <a
+            class="btn btn-link p-0"
             href="#"
             @click="replyTo(message.from, message.title, message.content)"
           >Reply</a>
           <a
-            class="float-right"
+            class="btn btn-link p-0 float-end"
             href="#"
             @click="download()"
           >Download</a>

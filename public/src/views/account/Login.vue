@@ -131,13 +131,13 @@ async function openVault() {
           >
         </p>
         <button
-          class="btn btn-success mr-1"
+          class="btn btn-success me-1"
           @click="openVault()"
         >
           Validate
         </button>
         <button
-          class="btn btn-primary ml-1"
+          class="btn btn-primary ms-1"
           @click="hasVault = !hasVault"
         >
           Cancel

@@ -156,9 +156,11 @@ export const useMessagesStore = defineStore({
           const charCode = char.charCodeAt(0);
           return charCode > 127 ? encodeURIComponent(char) : char;
         })
-        .join('');
+        .join('')
+        .replace(/%/g,'%25');
     },
     decodeText(str) {
+      console.log('objStr', str)
       return decodeURIComponent(str);
     },
   },

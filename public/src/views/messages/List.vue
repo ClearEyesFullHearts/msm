@@ -36,7 +36,7 @@ async function replyTo(from, reTitle) {
 <template>
   <h1>InBox</h1>
   <button
-    class="btn btn-sm btn-secondary"
+    class="btn btn-secondary mb-2"
     :disabled="headers.loading"
     @click="messagesStore.getHeaders()"
   >
@@ -48,7 +48,7 @@ async function replyTo(from, reTitle) {
   </button>
   <router-link
     to="/messages/write"
-    class="btn btn-sm btn-success mb-2 float-right"
+    class="btn btn-success mb-2 float-end"
   >
     Write a message
   </router-link>
@@ -84,7 +84,7 @@ async function replyTo(from, reTitle) {
           <td style="white-space: nowrap">
             <router-link
               :to="`/messages/show/${msg.id}`"
-              class="btn btn-sm btn-primary mr-1"
+              class="btn btn-sm btn-primary"
             >
               Decrypt
             </router-link>
