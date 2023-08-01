@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { reactive } from 'vue'
+import { reactive } from 'vue';
 
 import CryptoHelper from '@/lib/cryptoHelper';
 import FileHelper from '@/lib/fileHelper';

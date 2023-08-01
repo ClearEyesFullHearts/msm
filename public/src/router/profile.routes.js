@@ -3,10 +3,10 @@ import {
 } from '@/views/profile';
 
 export default {
-  path: '/profile',
+  path: '/',
   component: Layout,
   children: [
-    { path: '', component: Profile },
+    { path: 'profile', component: Profile },
     { path: 'contacts', component: Contacts },
     { path: 'vault', component: Vault },
   ],

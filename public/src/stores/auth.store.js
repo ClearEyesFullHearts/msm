@@ -2,7 +2,7 @@ import { defineStore, getActivePinia } from 'pinia';
 
 import { fetchWrapper } from '@/helpers';
 import { router } from '@/router';
-import { useAlertStore } from '@/stores';
+import { useAlertStore, useContactsStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
@@ -88,6 +88,9 @@ export const useAuthStore = defineStore({
             this.countDownMsg = 'expired';
           }
         }, 1000);
+        
+        const contactsStore = useContactsStore();
+        contactsStore.setContactList(this.pem, user.contacts);
 
         // redirect to previous url or default to home page
         router.push(this.returnUrl || '/messages');
