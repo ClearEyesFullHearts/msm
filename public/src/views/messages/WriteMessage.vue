@@ -119,14 +119,13 @@ function addUser(user) {
                     'bg-primary': user.security.verification === 3,
                     'bg-danger': user.security.verification === 4
                   }"
-                >{{ `@${user.at}` }}
-                  <button
-                    type="button"
-                    class="btn-close btn-close-white"
-                    aria-label="Remove recipient"
+                >{{ `@${user.at}` }}&nbsp;
+                  <i
+                    class="bi bi-x-circle pointer"
                     title="Remove recipient"
                     @click="removeUser(user)"
-                  /></span>
+                  />
+                </span>
               </div>
             </div>
             <div class="form-group col">
@@ -194,5 +193,8 @@ pre {
     white-space: -pre-wrap;      /* Opera 4-6 */
     white-space: -o-pre-wrap;    /* Opera 7 */
     word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+.pointer {
+    cursor: pointer;
 }
 </style>
