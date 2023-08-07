@@ -119,7 +119,24 @@ function addUser(user) {
                     'bg-primary': user.security.verification === 3,
                     'bg-danger': user.security.verification === 4
                   }"
-                >{{ `@${user.at}` }}&nbsp;
+                >
+                  <i
+                    v-if="user.security.verification === 0"
+                    class="bi bi-shield-slash"
+                  />
+                  <i
+                    v-if="user.security.verification === 1"
+                    class="bi bi-fingerprint"
+                  />
+                  <i
+                    v-if="user.security.verification === 2"
+                    class="bi bi-people"
+                  />
+                  <i
+                    v-if="user.security.verification === 3"
+                    class="bi bi-shield-check"
+                  />
+                  {{ `@${user.at}` }}&nbsp;
                   <i
                     class="bi bi-x-circle pointer"
                     title="Remove recipient"

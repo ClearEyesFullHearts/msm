@@ -3,8 +3,10 @@ import { reactive } from 'vue';
 import { defineStore } from 'pinia';
 import { fetchWrapper } from '@/helpers';
 import CryptoHelper from '@/lib/cryptoHelper';
+import ChainHelper from '@/lib/ChainHelper';
 
 const mycrypto = new CryptoHelper();
+const myvalidator = new ChainHelper();
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useContactsStore = defineStore({
@@ -38,14 +40,14 @@ export const useContactsStore = defineStore({
           checkingUser.server.hash = hash;
           checkingUser.server.signingKey = signature;
           if (store.signature) {
-            try{
+            try {
               const result = await mycrypto.verify(signature, hash, store.signature, true);
               if (result) {
                 checkingUser.verified = true;
               } else {
                 checkingUser.alert = 'The stored signature failed to verify. This is very alarming.\nPlease report the problem to an admin.';
               }
-            }catch(exc){
+            } catch (exc) {
               checkingUser.alert = 'A problem happened while trying to validate this contact.\nIt may just be a temporary problem but you\'d be safer by not using this @';
             }
             return;
@@ -62,11 +64,14 @@ export const useContactsStore = defineStore({
         .catch((err) => {
           console.log(err);
           if (err === '@ unknown') {
-            const alertMsg = `This user does not exists anymore.\nPlease remove it from your list.`;
+            const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
             checkingUser.alert = alertMsg;
           }
+        })
+        .then(() => {
+          // check if user is verified in ether blockchain
+          return this.autoValidation(checkingUser);
         });
-      // check if user is verified in ether blockchain
     },
     async setContactList(pem, contacts) {
       if (!contacts) {
@@ -104,7 +109,7 @@ export const useContactsStore = defineStore({
         id,
         at,
         store,
-      })).sort((a, b) => a.at.localeCompare(b.at));;
+      })).sort((a, b) => a.at.localeCompare(b.at));
       const listChallenge = await mycrypto.challenge(pem, JSON.stringify(saveList));
       await fetchWrapper.put(`${baseUrl}/contacts`, listChallenge);
       this.dirty = false;
@@ -144,6 +149,7 @@ export const useContactsStore = defineStore({
       this.list.sort((a, b) => a.at.localeCompare(b.at));
       this.dirty = true;
       // check if user is verified in ether blockchain
+      await this.autoValidation(checkingUser);
     },
     async fileAdd({
       id, at, hash, signature,
@@ -182,16 +188,40 @@ export const useContactsStore = defineStore({
         if (knownUser.auto) {
           const result = await mycrypto.verify(user.signature, user.security.hash, knownUser.auto, true);
           user.security.verification = result ? 3 : 4;
+          return;
         }
       }
       // check if user is verified in ether blockchain
       // if the hash checks out => user.security.verification = 3;
-      // setInterval(() => {
-      //   user.security.verification++;
-      //   if (user.security.verification > 4) {
-      //     user.security.verification = 0;
-      //   }
-      // }, 2000);
+      try {
+        const isValidatedOnChain = await myvalidator.isValidated(user.id);
+        if (!isValidatedOnChain) return;
+
+        const { signature } = isValidatedOnChain;
+        const result = await mycrypto.verify(user.signature, user.security.hash, signature, true);
+        if (result) {
+          user.security.verification = 3;
+        } else {
+          user.security.verification = 4;
+        }
+      } catch (err) {
+        user.security.verification = 4;
+      }
+    },
+    async autoValidation(user) {
+      try {
+        const isValidatedOnChain = await myvalidator.isValidated(user.id);
+        if (!isValidatedOnChain) return;
+
+        const { signature } = isValidatedOnChain;
+        const result = await mycrypto.verify(user.server.signingKey, user.server.hash, signature, true);
+        if (!result) {
+          throw new Error('Signature mismatch on chain');
+        }
+        user.auto = signature;
+      } catch (err) {
+        user.alert = `${err.message || err}, do not trust this user.\nReport the problem to an admin ASAP!`;
+      }
     },
   },
 });

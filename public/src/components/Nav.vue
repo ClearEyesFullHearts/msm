@@ -1,10 +1,18 @@
 <script setup>
 import { storeToRefs } from 'pinia';
+import { onMounted } from 'vue';
+import { Tooltip } from 'bootstrap';
 import { useAuthStore, useUsersStore } from '@/stores';
 
 const authStore = useAuthStore();
 const usersStore = useUsersStore();
 const { countDownMsg } = storeToRefs(authStore);
+
+onMounted(() => {
+  new Tooltip(document.body, {
+    selector: "[data-bs-toggle='tooltip']",
+  });
+});
 
 async function incinerate() {
   if (window.confirm('Do you really want to burn this account?')) {
@@ -155,6 +163,20 @@ async function incinerate() {
             aria-haspopup="true"
             aria-expanded="false"
           >
+            <i
+              v-if="!authStore?.isValidatedOnChain"
+              class="bi bi-shield-slash-fill"
+              style="font-size: 1rem; color: grey"
+              data-bs-toggle="tooltip"
+              title="No on-chain validation yet"
+            />
+            <i
+              v-if="authStore?.isValidatedOnChain"
+              class="bi bi-shield-fill-check"
+              style="font-size: 1rem; color: green"
+              data-bs-toggle="tooltip"
+              title="On-chain validation confirmed"
+            />
             @{{ authStore?.user?.user?.username }}
           </a>
           <div

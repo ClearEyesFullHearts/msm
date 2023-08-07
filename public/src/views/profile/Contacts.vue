@@ -109,16 +109,21 @@ async function onVerifyFilePicked(evt) {
             </div>
             <div v-if="!contact.alert">
               <i
-                class="bi bi-server me-1"
+                class="bi me-1"
+                :class="contact.auto !== 0
+                  ? 'bi-shield-fill-check'
+                  : 'bi-shield-slash-fill'"
                 style="font-size: 1.8rem;"
-                :style="{ color: contact.auto === 1 ? 'green' : 'grey' }"
+                :style="{ color: contact.auto !== 0 ? '#0d6efd' : 'grey' }"
                 data-bs-toggle="tooltip"
-                :title="contact.auto === 1 ? 'Validated' : 'Waiting for validation'"
+                :title="contact.auto !== 0
+                  ? 'On-chain validation confirmed'
+                  : 'Waiting for on-chain validation'"
               />
               <i
                 v-if="contact.verified && contact.store.signature !== null"
                 class="bi bi-fingerprint me-1"
-                style="font-size: 1.8rem; color: green;"
+                style="font-size: 1.8rem; color: #198754;"
                 data-bs-toggle="tooltip"
                 title="Signed and Trusted"
               />
@@ -127,9 +132,9 @@ async function onVerifyFilePicked(evt) {
                   && contact.store.signature === null
                   && contact.store.hash !== null"
                 class="bi bi-people me-1"
-                style="font-size: 1.8rem; color: green;"
+                style="font-size: 1.8rem; color: #198754;"
                 data-bs-toggle="tooltip"
-                title="Trusted"
+                title="Manually trusted"
               />
               <i
                 v-if="!contact.verified"

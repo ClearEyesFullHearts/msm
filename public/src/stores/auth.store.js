@@ -21,6 +21,7 @@ export const useAuthStore = defineStore({
     hasVault: false,
     returnUrl: null,
     countDownMsg: null,
+    isValidatedOnChain: false,
   }),
   actions: {
     async getIdentity(username) {
@@ -66,6 +67,23 @@ export const useAuthStore = defineStore({
         this.user = user;
         const countDownDate = user.connection + user.config.sessionTime;
 
+        const alertStore = useAlertStore();
+        try{
+          const isValidatedOnChain = await myvalidator.isValidated(this.user.user.id);
+          if (isValidatedOnChain){
+            const { signature } = isValidatedOnChain;
+            const result = await mycrypto.verify(this.signing, this.publicHash, signature, true);
+            if(result) {
+              this.isValidatedOnChain = true;
+              alertStore.success('Your on-chain validation is confirmed');
+            }else{
+              throw new Error('Signature mismatch on chain');
+            }
+          }
+        }catch(err){
+          alertStore.error(`${err.message || err}.\nYour on chain validation is wrong, do not use this account.\nReport the problem to an admin ASAP!`);
+        }
+        
         myVault = undefined;
         myChallenge = undefined;
 
