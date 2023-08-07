@@ -5,6 +5,10 @@
     "auth": "KEY_AUTH_SIGN",
     "instance": {
       "reportTarget": "KEY_REPORT_AT"
+    },
+    "ether":{
+      "api": "KEY_ALCHEMY_API",
+      "key": "KEY_WALLET_SECRET"
     }
   }
   

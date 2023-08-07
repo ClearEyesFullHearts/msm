@@ -41,11 +41,20 @@ class UserData {
         type: vaultItemSchema,
         default: null,
       },
+      switch: {
+        type: vaultItemSchema,
+        default: null,
+      },
       contacts: {
         type: challengeSchema,
         default: null,
       },
       lastActivity: Number,
+      validation: {
+        type: String,
+        enum: ['NO_VALIDATION', 'IS_VALIDATING', 'VALIDATED'],
+        default: 'NO_VALIDATION',
+      },
     });
     this.userSchema.index({ searchTerms: -1 });
   }

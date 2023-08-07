@@ -12,6 +12,7 @@
   "license": "MIT",
   "dependencies": {
     "@shared/datalayer": "*",
+    "@shared/validator": "*",
     "config": "3.3.9",
     "debug": "4.3.4",
     "express": "^4.18.2",

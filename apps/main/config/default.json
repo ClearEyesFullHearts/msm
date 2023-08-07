@@ -29,5 +29,11 @@
       "clear": 86400000,
       "poll": 120000
     }
+  },
+  "ether": {
+    "network": "sepolia",
+    "api": "test",
+    "key": "test",
+    "contract": "0xD4faC062111f64f2b081137bC77592c7D3C3CE06"
   }
 }

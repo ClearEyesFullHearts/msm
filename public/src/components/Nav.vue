@@ -173,7 +173,7 @@ async function incinerate() {
             <i
               v-if="authStore?.isValidatedOnChain"
               class="bi bi-shield-fill-check"
-              style="font-size: 1rem; color: green"
+              style="font-size: 1rem; color: #198754"
               data-bs-toggle="tooltip"
               title="On-chain validation confirmed"
             />

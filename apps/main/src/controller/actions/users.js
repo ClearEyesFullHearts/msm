@@ -234,26 +234,6 @@ class User {
     asker.contacts = challenge;
     await asker.save();
   }
-
-  static async autoUserRemoval(db, userId) {
-    debug('Auto User Removal for user', userId);
-    const timeToWait = config.get('timer.removal.user');
-    await new Promise((resolve) => setTimeout(resolve, timeToWait));
-    debug(`remove user ${userId}`);
-    const user = await db.users.findByID(userId);
-    if (user) {
-      debug('user found');
-      if (user.lastActivity < 0) {
-        debug('inactive user, delete account');
-        await db.clearUserAccount({ userId: user.id, username: user.username }, false);
-        debug('user removed');
-        return;
-      }
-      debug('user is active, do not delete');
-      return;
-    }
-    debug('user do not exists, no action');
-  }
 }
 
 module.exports = User;

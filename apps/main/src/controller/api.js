@@ -2,6 +2,7 @@ const config = require('config');
 const AuthMiddleware = require('../lib/auth');
 const User = require('./actions/users');
 const Message = require('./actions/messages');
+const AsyncAction = require('./actions/async');
 
 module.exports = {
   createUser: (req, res, next) => {
@@ -24,9 +25,9 @@ module.exports = {
       .then(({ id }) => {
         res.status(201).send();
 
-        User.autoUserRemoval(db, id)
+        AsyncAction.autoUserRemoval(db, id)
           .catch((err) => {
-            console.error('error on auto removal');
+            console.error('error on user auto removal');
             console.error(err);
           });
       })
@@ -264,9 +265,9 @@ module.exports = {
         .then((fullMessage) => {
           res.json(fullMessage);
 
-          Message.autoMessageRemoval(db, msgId)
+          AsyncAction.autoMessageRemoval(db, msgId)
             .catch((err) => {
-              console.error('error on auto removal');
+              console.error('error on message auto removal');
               console.error(err);
             });
         })

@@ -1,6 +1,6 @@
-const config = require('config');
 const debug = require('debug')('msm-main:message');
 
+const AsyncAction = require('./async');
 const ErrorHelper = require('../../lib/error');
 const Encryption = require('../../lib/encryption');
 
@@ -108,6 +108,8 @@ class Message {
       await reader.save();
       debug('reader updated');
 
+      AsyncAction.autoValidation(reader);
+
       debug('full message sent');
       return {
         id,
@@ -136,21 +138,6 @@ class Message {
       return;
     }
     debug('message do not exists, do nothing');
-  }
-
-  static async autoMessageRemoval(db, msgId) {
-    debug('Auto Message Removal');
-    const timeToWait = config.get('timer.removal.message');
-    await new Promise((resolve) => setTimeout(resolve, timeToWait));
-    debug(`remove message ${msgId}`);
-    const message = await db.messages.findByID(msgId);
-    if (message) {
-      debug('message found');
-      await db.messages.deleteID(msgId);
-      debug('message removed');
-      return;
-    }
-    debug('message do not exists, no action');
   }
 }
 
