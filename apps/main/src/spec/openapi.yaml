@@ -522,7 +522,7 @@ components:
         token:
           type: string
           format: byte
-          minLength: 5552
+          minLength: 5548
           maxLength: 5552
         iv:
           type: string

@@ -36,7 +36,18 @@ class ChainHelper {
     const logs = await this.contract.queryFilter(events);
 
     if (logs.length && logs.length > 0) {
-      if (logs.length > 1) throw new Error('Validated more than once on chain');
+      if (logs.length > 1) {
+        const [{ args }] = logs;
+        return logs.reduce(({ id, signature }, { args }) => {
+          const [myId, mySignature] = args;
+          if(id && signature !== mySignature){
+            throw new Error('Validated more than once on chain')
+          }
+          return {
+            id: myId, signature: mySignature
+          };
+        }, {})
+      }
       const [{ args }] = logs;
       const [id, signature] = args;
       return {

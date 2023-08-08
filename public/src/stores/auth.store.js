@@ -1,12 +1,15 @@
+/* eslint-disable import/prefer-default-export */
 import { defineStore, getActivePinia } from 'pinia';
 
 import { fetchWrapper } from '@/helpers';
 import { router } from '@/router';
 import { useAlertStore, useContactsStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
+import ChainHelper from '@/lib/ChainHelper';
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 const mycrypto = new CryptoHelper();
+const myvalidator = new ChainHelper();
 let interval;
 let myVault;
 let myChallenge;
@@ -46,11 +49,12 @@ export const useAuthStore = defineStore({
       } = myVault;
       const hashPass = await mycrypto.hash(passphrase);
       const decryptedVault = await mycrypto.symmetricDecrypt(hashPass, iv, token);
-      
+
       const dec = new TextDecoder();
       return dec.decode(decryptedVault);
     },
     async login(key, signKey) {
+      const alertStore = useAlertStore();
       try {
         const userStr = await mycrypto.resolve(key, myChallenge);
 
@@ -67,23 +71,26 @@ export const useAuthStore = defineStore({
         this.user = user;
         const countDownDate = user.connection + user.config.sessionTime;
 
-        const alertStore = useAlertStore();
-        try{
+        // redirect to previous url or default to home page
+        router.push(this.returnUrl || '/messages');
+
+        try {
           const isValidatedOnChain = await myvalidator.isValidated(this.user.user.id);
-          if (isValidatedOnChain){
+          if (isValidatedOnChain) {
             const { signature } = isValidatedOnChain;
-            const result = await mycrypto.verify(this.signing, this.publicHash, signature, true);
-            if(result) {
+            const result = await mycrypto.verify(spk, this.publicHash, signature, true);
+            if (result) {
               this.isValidatedOnChain = true;
               alertStore.success('Your on-chain validation is confirmed');
-            }else{
+            } else {
               throw new Error('Signature mismatch on chain');
             }
           }
-        }catch(err){
+        } catch (err) {
+          console.log('error on validation', err);
           alertStore.error(`${err.message || err}.\nYour on chain validation is wrong, do not use this account.\nReport the problem to an admin ASAP!`);
         }
-        
+
         myVault = undefined;
         myChallenge = undefined;
 
@@ -106,20 +113,20 @@ export const useAuthStore = defineStore({
             this.countDownMsg = 'expired';
           }
         }, 1000);
-        
+
         const contactsStore = useContactsStore();
         contactsStore.setContactList(this.pem, user.contacts);
-
-        // redirect to previous url or default to home page
-        router.push(this.returnUrl || '/messages');
       } catch (error) {
-        const alertStore = useAlertStore();
         alertStore.error(error);
       }
     },
     async setVault(passphrase) {
       const itemValue = `${this.pem}${CryptoHelper.SEPARATOR}${this.signing}`;
       const { token, iv } = await mycrypto.symmetricEncrypt(itemValue, passphrase);
+
+      console.log('this.pem length', this.pem.length)
+      console.log('this.signing length', this.signing.length)
+      console.log('token length', token.length)
 
       await fetchWrapper.put(`${baseUrl}/vault`, { token, iv });
 

@@ -15,7 +15,7 @@ Scenario: Set the vault up
   And response body path $.vault.iv should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
     
 Scenario: Delete the vault
-  Given I am existing user PFmat3s9hs6tBTDxsrWj
+  Given I am existing user ygjBmat0SZH
   And I set signature header
   When I DELETE /vault
   Then response code should be 200

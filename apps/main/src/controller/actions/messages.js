@@ -108,7 +108,9 @@ class Message {
       await reader.save();
       debug('reader updated');
 
-      AsyncAction.autoValidation(reader);
+      if (reader.validation === 'NO_VALIDATION' && process.env.NODE_ENV !== 'test') {
+        await AsyncAction.autoValidation(db, reader.id);
+      }
 
       debug('full message sent');
       return {

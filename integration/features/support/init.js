@@ -8,6 +8,9 @@ const {
 } = require('@cucumber/cucumber');
 const config = require('config');
 
+// 2tMoQaqematKU => double validation OK
+// eSHmatFIR1eg => double validation KO
+
 BeforeAll((cb) => {
   // backup({
   //   uri: config.get('mongo.url'),

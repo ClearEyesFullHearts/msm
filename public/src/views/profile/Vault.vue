@@ -13,7 +13,7 @@ const hasVault = ref(false);
 
 const schema = Yup.object().shape({
   passphrase: Yup.string()
-    .min(16, 'Passphrase must be at least 16 characters')
+    // .min(16, 'Passphrase must be at least 16 characters')
     .required('Passphrase is required'),
   confirmPassphrase: Yup.string()
     .oneOf([Yup.ref('passphrase'), null], 'Passphrases must match')

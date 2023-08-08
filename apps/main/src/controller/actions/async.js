@@ -38,8 +38,10 @@ class Async {
     debug('message do not exists, no action');
   }
 
-  static async autoValidation(user) {
-    debug('Auto User Validation', user.validation);
+  static async autoValidation(db, userId) {
+    debug('Auto User Validation', userId);
+    const user = await db.users.findByID(userId);
+
     if (user.validation !== 'NO_VALIDATION') {
       debug('No need to validate');
       return;
@@ -60,21 +62,34 @@ class Async {
 
       debug('Connected to chain');
 
-      const isValid = await validator.validateUser({ userId: user.id, signature: user.hash });
-
-      if (isValid) {
-        user.validation = 'VALIDATED';
-        debug('User is validated');
-      } else {
-        user.validation = 'NO_VALIDATION';
-        debug('User is not validated');
-      }
+      validator.validateUser({ userId: user.id, signature: user.hash })
+        .then(async (isValid) => {
+          if (isValid) {
+            user.validation = 'VALIDATED';
+            debug('User is validated');
+          } else {
+            user.validation = 'NO_VALIDATION';
+            debug('User is not validated');
+          }
+          await user.save();
+        })
+        .catch(async (err) => {
+          debug('User is not validated, an async error happened', err);
+          try {
+            user.validation = 'NO_VALIDATION';
+            await user.save();
+          } catch (exc) {
+            console.error('impossible to save user', exc);
+          }
+        });
     } catch (err) {
       debug('User is not validated, an error happened', err);
-      user.validation = 'NO_VALIDATION';
-    } finally {
-      debug('Save new status', user.validation);
-      await user.save();
+      try {
+        user.validation = 'NO_VALIDATION';
+        await user.save();
+      } catch (exc) {
+        console.error('impossible to save user', exc);
+      }
     }
   }
 }

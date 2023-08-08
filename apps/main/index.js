@@ -1,3 +1,4 @@
+require('@shared/secrets');
 const MSMMain = require('./src/app');
 
 (async () => {

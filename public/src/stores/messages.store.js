@@ -160,7 +160,6 @@ export const useMessagesStore = defineStore({
         .replace(/%/g,'%25');
     },
     decodeText(str) {
-      console.log('objStr', str)
       return decodeURIComponent(str);
     },
   },
