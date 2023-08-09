@@ -74,6 +74,8 @@ module.exports = (id) => {
       token: vaultItem.token,
       iv: vaultItem.iv,
     },
+    switch: null,
+    validation: 'VALIDATED',
     contacts,
     size: 5,
     private: {

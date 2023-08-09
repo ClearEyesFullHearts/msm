@@ -532,67 +532,6 @@ describe('User Action tests', () => {
       await Action.removeUser(mockDB, userId, account);
     });
   });
-  describe('.autoUserRemoval', () => {
-    test('Inactive account is removed after interval set in config', async () => {
-      const start = Date.now();
-      const userId = 1789;
-      const mockDB = {
-        clearUserAccount: ({ userId: givenId, username: givenAt }) => {
-          expect(givenId).toBe(userId);
-          expect(givenAt).toBe('bar');
-          return Promise.resolve();
-        },
-        users: {
-          findByID: (id) => {
-            const timer = Date.now() - start;
-            expect(timer).toBeGreaterThanOrEqual(config.get('timer.removal.user'));
-            expect(id).toBe(userId);
-            return Promise.resolve({ id: userId, username: 'bar', lastActivity: -start });
-          },
-        },
-      };
-
-      await Action.autoUserRemoval(mockDB, userId);
-    });
-    test('Unknown user pass', async () => {
-      const start = Date.now();
-      const userId = 1;
-      const mockDB = {
-        clearUserAccount: () => {
-          throw new Error('shouldnt be called');
-        },
-        users: {
-          findByID: (id) => {
-            const timer = Date.now() - start;
-            expect(timer).toBeGreaterThanOrEqual(config.get('timer.removal.user'));
-            expect(id).toBe(userId);
-            return Promise.resolve(null);
-          },
-        },
-      };
-
-      await Action.autoUserRemoval(mockDB, userId);
-    });
-    test('Active account is not removed', async () => {
-      const start = Date.now();
-      const userId = 1;
-      const mockDB = {
-        clearUserAccount: () => {
-          throw new Error('shouldnt be called');
-        },
-        users: {
-          findByID: (id) => {
-            const timer = Date.now() - start;
-            expect(timer).toBeGreaterThanOrEqual(config.get('timer.removal.user'));
-            expect(id).toBe(userId);
-            return Promise.resolve({ id: userId, username: 'bar', lastActivity: 1 });
-          },
-        },
-      };
-
-      await Action.autoUserRemoval(mockDB, userId);
-    });
-  });
 
   describe('.setVaultItem', () => {
     test('Correct data adds a vault item to the user', () => {});

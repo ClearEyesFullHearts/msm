@@ -42,6 +42,11 @@ class Async {
     debug('Auto User Validation', userId);
     const user = await db.users.findByID(userId);
 
+    if (!user) {
+      debug('Unknown user, no validation');
+      return;
+    }
+
     if (user.validation !== 'NO_VALIDATION') {
       debug('No need to validate');
       return;
