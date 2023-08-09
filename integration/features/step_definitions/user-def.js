@@ -54,6 +54,7 @@ Given('I am a new valid user', async function () {
   const respBody = JSON.parse(this.apickli.httpResponse.body);
   const resolved = Util.resolve(keys.private.encrypt, respBody);
   this.apickli.storeValueInScenarioScope('AUTH', resolved);
+  this.apickli.storeValueInScenarioScope('MY_ID', resolved.user.id);
   this.apickli.httpResponse.body = JSON.stringify(resolved);
 
   this.apickli.setAccessTokenFromResponseBodyPath('$.token');
