@@ -196,9 +196,14 @@ class User {
   }
 
   static async removeVaultItem(db, userId) {
+    debug(`remove vault item for ${userId}`);
     const user = await db.users.findByID(userId);
+    if (user.lastActivity < 0) {
+      throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
+    }
     user.vault = null;
     await user.save();
+    debug('vault item removed');
   }
 
   static async setVaultItem(db, user, item) {
@@ -206,6 +211,7 @@ class User {
       token,
       iv,
     } = item;
+    debug(`set vault item for ${user.id}`);
 
     if (!Encryption.isBase64(token)
     || !Encryption.isBase64(iv)) {
@@ -213,8 +219,12 @@ class User {
     }
 
     const asker = await db.users.findByID(user.id);
+    if (asker.lastActivity < 0) {
+      throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
+    }
     asker.vault = item;
     await asker.save();
+    debug('vault item set');
   }
 
   static async setContacts(db, user, challenge) {
@@ -223,6 +233,7 @@ class User {
       passphrase,
       iv,
     } = challenge;
+    debug(`set contacts for ${user.id}`);
 
     if (!Encryption.isBase64(token)
     || !Encryption.isBase64(passphrase)
@@ -231,8 +242,12 @@ class User {
     }
 
     const asker = await db.users.findByID(user.id);
+    if (asker.lastActivity < 0) {
+      throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
+    }
     asker.contacts = challenge;
     await asker.save();
+    debug('contacts set');
   }
 }
 

@@ -75,6 +75,11 @@ Given(/^I am existing user (.*)$/, async function (username) {
   this.apickli.storeValueInScenarioScope('ESK', eskFile);
   this.apickli.storeValueInScenarioScope('SSK', sskFile);
 
+  const epk = Util.extractPublicKey(eskFile);
+  const spk = Util.extractPublicKey(sskFile);
+  this.apickli.storeValueInScenarioScope('EPK', epk);
+  this.apickli.storeValueInScenarioScope('SPK', spk);
+
   const resolved = Util.resolve(eskFile, respBody);
   this.apickli.storeValueInScenarioScope('AUTH', resolved);
   this.apickli.httpResponse.body = JSON.stringify(resolved);

@@ -11,6 +11,9 @@ const config = require('config');
 // 2tMoQaqematKU => double validation OK
 // eSHmatFIR1eg => double validation KO
 
+// lengths: ESK = 3222 SSK = 898
+// lengths: ESK = 3222 SSK = 902
+
 BeforeAll((cb) => {
   // backup({
   //   uri: config.get('mongo.url'),
