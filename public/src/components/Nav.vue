@@ -184,6 +184,24 @@ async function incinerate() {
             aria-labelledby="navbarDropdown"
           >
             <div class="dropdown-item">
+              <div class="form-check form-switch">
+                <input
+                  id="flexSwitchCheckDefault"
+                  v-model="authStore.autoConnect"
+                  class="form-check-input"
+                  type="checkbox"
+                >
+                <label
+                  class="form-check-label"
+                  for="flexSwitchCheckDefault"
+                >Auto re-connect</label>
+              </div>
+            </div>
+            <div
+              class="dropdown-item"
+              style="cursor: pointer"
+              @click="authStore.relog()"
+            >
               Session ends in {{ countDownMsg }}
             </div>
             <div class="dropdown-divider" />

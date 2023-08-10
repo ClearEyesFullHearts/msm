@@ -25,6 +25,7 @@ export const useAuthStore = defineStore({
     returnUrl: null,
     countDownMsg: null,
     isValidatedOnChain: false,
+    autoConnect: false,
   }),
   actions: {
     async getIdentity(username) {
@@ -56,20 +57,16 @@ export const useAuthStore = defineStore({
     async login(key, signKey) {
       const alertStore = useAlertStore();
       try {
-        const userStr = await mycrypto.resolve(key, myChallenge);
 
-        const user = JSON.parse(userStr);
-        this.pem = key;
-        this.signing = signKey;
+        await this.setIdentityUp(key, signKey, myChallenge);
 
         const epk = await mycrypto.getPublicKey(this.pem);
         const spk = await mycrypto.getSigningPublicKey(this.signing);
-
+  
         this.publicHash = await mycrypto.hash(`${epk}\n${spk}`);
 
-        // update pinia state
-        this.user = user;
-        const countDownDate = user.connection + user.config.sessionTime;
+        const contactsStore = useContactsStore();
+        contactsStore.setContactList(this.pem, this.user.contacts);
 
         // redirect to previous url or default to home page
         router.push(this.returnUrl || '/messages');
@@ -93,32 +90,49 @@ export const useAuthStore = defineStore({
 
         myVault = undefined;
         myChallenge = undefined;
-
-        interval = setInterval(() => {
-          // Get today's date and time
-          const now = new Date().getTime();
-
-          // Find the distance between now and the count down date
-          const distance = countDownDate - now;
-
-          // Time calculations for minutes and seconds
-          const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-          const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-          this.countDownMsg = `${minutes}m ${seconds}s`;
-
-          // If the count down is finished, write some text
-          if (distance < 0) {
-            clearInterval(interval);
-            this.countDownMsg = 'expired';
-          }
-        }, 1000);
-
-        const contactsStore = useContactsStore();
-        contactsStore.setContactList(this.pem, user.contacts);
       } catch (error) {
         alertStore.error(error);
       }
+    },
+    async relog(){
+      try {
+        clearInterval(interval);
+        const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${this.user.user.username}`);
+        await this.setIdentityUp(this.pem, this.signing, challenge);
+      }catch(err){
+        this.logout();
+      }
+    },
+    async setIdentityUp(key, signKey, challenge) {
+      const userStr = await mycrypto.resolve(key, challenge);
+
+      const user = JSON.parse(userStr);
+      this.pem = key;
+      this.signing = signKey;
+
+      // update pinia state
+      this.user = user;
+      const countDownDate = user.connection + user.config.sessionTime;
+
+      interval = setInterval(() => {
+        // Get today's date and time
+        const now = new Date().getTime();
+
+        // Find the distance between now and the count down date
+        const distance = countDownDate - now;
+
+        // Time calculations for minutes and seconds
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        this.countDownMsg = `${minutes}m ${seconds}s`;
+
+        // If the count down is finished, write some text
+        if (distance < 0) {
+          clearInterval(interval);
+          this.countDownMsg = 'expired';
+        }
+      }, 1000);
     },
     async setVault(passphrase) {
       const itemValue = `${this.pem}${CryptoHelper.SEPARATOR}${this.signing}`;
