@@ -233,6 +233,21 @@ class Util {
     }
     return str;
   }
+
+  static isPK(str, length) {
+    const PK_START = '-----BEGIN PUBLIC KEY-----';
+    const PK_END = '-----END PUBLIC KEY-----';
+
+    if (str.length !== length) return false;
+
+    if (str.substring(0, PK_START.length) !== PK_START) return false;
+    if (str.substring(str.length - PK_END.length) !== PK_END) return false;
+
+    const properKey = str.substring(PK_START.length + 1, str.length - PK_END.length - 1);
+    if (!Buffer.from(properKey, 'base64').toString('base64') === properKey) return false;
+
+    return true;
+  }
 }
 
 module.exports = Util;

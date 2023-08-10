@@ -174,6 +174,20 @@ Then(/^resolved challenge path (.*) should match (.*)$/, function (path, express
   assert.ok(success, `Error: expected: ${regexp}, got: ${test}`);
 });
 
+Then(/^response body path (.*) should match Encryption Public Key$/, async function (path) {
+  const mypath = this.apickli.replaceVariables(path);
+  const evalValue = Util.getPathValue(JSON.parse(this.apickli.httpResponse.body), mypath);
+  const success = Util.isPK(evalValue, 788);
+  assert.ok(success, `Error: expected: Encryption PK, got: ${evalValue}`);
+});
+
+Then(/^response body path (.*) should match Signature Public Key$/, async function (path) {
+  const mypath = this.apickli.replaceVariables(path);
+  const evalValue = Util.getPathValue(JSON.parse(this.apickli.httpResponse.body), mypath);
+  const success = Util.isPK(evalValue, 268);
+  assert.ok(success, `Error: expected: Signature PK, got: ${evalValue}`);
+});
+
 Then(/^I wait for (.*) seconds$/, async function (seconds) {
   const time = this.apickli.replaceVariables(seconds);
   await new Promise((resolve) => {

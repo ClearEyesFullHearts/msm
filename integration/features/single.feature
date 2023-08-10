@@ -1,11 +1,10 @@
 Feature: Single Test
 
-    For a single 
+    For a single
     
-Scenario: Only the owner can delete an account
-  Given I am authenticated user batmat
-  And I set body to {}
-  And I set signature header
-  When I DELETE /user/50066
-  Then response code should be 403
-  And response body path $.code should be FORBIDDEN
+Scenario: Unknown account name should throw
+  Given I am existing user uHzmatVg2hPx
+  When I GET /user/1
+  Then response code should be 404
+  When I GET /username/tamara
+  Then response code should be 404
