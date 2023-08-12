@@ -2,42 +2,54 @@ const dynamoose = require('dynamoose');
 
 class UnicityData {
   constructor() {
+    this.KeyEntity = null;
+    this.SigEntity = null;
+    this.UserEntity = null;
     this.keyUnicitySchema = new dynamoose.Schema({
-      keyHash: {
+      pk: {
         type: String,
         required: true,
         hashKey: true,
+        map: 'keyHash',
       },
-      confirm: {
+      sk: {
         type: String,
         required: true,
         rangeKey: true,
       },
     });
     this.signatureUnicitySchema = new dynamoose.Schema({
-      sigHash: {
+      pk: {
         type: String,
         required: true,
         hashKey: true,
+        map: 'sigHash',
       },
-      confirm: {
+      sk: {
         type: String,
         required: true,
         rangeKey: true,
       },
     });
     this.userIdUnicitySchema = new dynamoose.Schema({
-      userId: {
+      pk: {
         type: String,
         required: true,
         hashKey: true,
+        map: 'userId',
       },
-      confirm: {
+      sk: {
         type: String,
         required: true,
         rangeKey: true,
       },
     });
+  }
+
+  init(tableName) {
+    this.KeyEntity = dynamoose.model('KeyUnicity', this.keyUnicitySchema, { tableName });
+    this.SigEntity = dynamoose.model('SigUnicity', this.signatureUnicitySchema, { tableName });
+    this.UserEntity = dynamoose.model('UserUnicity', this.userIdUnicitySchema, { tableName });
   }
 }
 

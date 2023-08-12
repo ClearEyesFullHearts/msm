@@ -3,14 +3,15 @@ const dynamoose = require('dynamoose');
 class FreezerData {
   constructor() {
     this.freezerSchema = new dynamoose.Schema({
-      username: {
+      pk: {
         type: String,
         required: true,
         minLength: 3,
         maxLength: 125,
         hashKey: true,
+        map: 'username',
       },
-      confirm: {
+      sk: {
         type: String,
         required: true,
         minLength: 3,
@@ -25,6 +26,10 @@ class FreezerData {
         },
       },
     });
+  }
+
+  init(tableName) {
+    this.entity = dynamoose.model('Freezer', this.freezerSchema, { tableName });
   }
 }
 

@@ -1,5 +1,5 @@
 {
-  "name": "@shared/dynamolayer",
+  "name": "@shared/encryption",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,12 +8,6 @@
   },
   "author": "MFT",
   "license": "MIT",
-  "dependencies": {
-    "config": "3.3.9",
-    "debug": "4.3.4",
-    "dynamoose": "3.2.0",
-    "uuid": "9.0.0"
-  },
   "devDependencies": {
     "eslint": "^6.7.1",
     "eslint-config-airbnb-base": "^14.0.0",

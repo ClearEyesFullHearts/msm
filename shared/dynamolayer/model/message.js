@@ -4,36 +4,44 @@ const challengeSchema = require('./schemas/challenge');
 class MessageData {
   constructor() {
     this.messageSchema = new dynamoose.Schema({
-      username: {
+      pk: {
         type: String,
         required: true,
         minLength: 3,
         maxLength: 125,
         hashKey: true,
+        map: 'username',
       },
-      id: {
+      sk: {
         type: String,
         required: true,
         rangeKey: true,
+        map: 'msgId',
       },
       hasBeenRead: {
-        type: Boolean,
+        type: Number,
         required: true,
-        default: false,
+        default: 0,
         index: {
           name: 'ReadMessageIndex',
           type: 'local',
         },
       },
       header: {
-        type: challengeSchema,
+        type: Object,
+        schema: challengeSchema,
         required: true,
       },
       full: {
-        type: challengeSchema,
+        type: Object,
+        schema: challengeSchema,
         required: true,
       },
     });
+  }
+
+  init(tableName) {
+    this.entity = dynamoose.model('Message', this.messageSchema, { tableName });
   }
 }
 
