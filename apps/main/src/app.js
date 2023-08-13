@@ -7,7 +7,7 @@ const Data = require('@shared/datalayer');
 const helmet = require('helmet');
 const CORS = require('./lib/cors');
 const ErrorHelper = require('./lib/error');
-const Encryption = require('./lib/encryption');
+const Encryption = require('@shared/encryption');
 const MessageAction = require('./controller/actions/messages');
 
 const APP_ID = 'msm-main';

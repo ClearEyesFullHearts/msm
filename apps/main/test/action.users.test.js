@@ -5,7 +5,7 @@ const {
 const config = require('config');
 const userLoader = require('./data/loadUser');
 const Action = require('../src/controller/actions/users');
-const Encryption = require('../src/lib/encryption');
+const Encryption = require('@shared/encryption');
 
 describe('User Action tests', () => {
   describe('.createUser', () => {

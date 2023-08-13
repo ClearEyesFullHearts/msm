@@ -4,7 +4,7 @@ const debug = require('debug')('msm-main:user');
 
 const MessageAction = require('./messages');
 const ErrorHelper = require('../../lib/error');
-const Encryption = require('../../lib/encryption');
+const Encryption = require('@shared/encryption');
 
 function createSearchTerms(str) {
   const l = str.length;

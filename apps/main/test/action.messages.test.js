@@ -5,7 +5,7 @@ const {
 const config = require('config');
 const userLoader = require('./data/loadUser');
 const Action = require('../src/controller/actions/messages');
-const Encryption = require('../src/lib/encryption');
+const Encryption = require('@shared/encryption');
 
 describe('Message Action tests', () => {
   afterEach(() => {

@@ -2,7 +2,7 @@ const {
   describe, expect, test,
 } = require('@jest/globals');
 
-const Encryption = require('../src/lib/encryption');
+const Encryption = require('@shared/encryption');
 const userLoader = require('./data/loadUser');
 
 describe('Encryption helper test', () => {
