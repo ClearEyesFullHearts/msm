@@ -37,8 +37,19 @@ class MessageData {
     await this.Doc.init();
   }
 
-  getNew() {
-    return new this.Doc();
+  async create({
+    userId,
+    header,
+    full,
+  }) {
+    const newMsg = new this.Doc();
+    newMsg.userId = userId;
+    newMsg.hasBeenRead = false;
+    newMsg.header = header;
+    newMsg.full = full;
+
+    await newMsg.save();
+    return newMsg;
   }
 
   async findByID(msgId) {

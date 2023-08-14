@@ -65,8 +65,25 @@ class UserData {
     await this.Doc.init();
   }
 
-  getNew() {
-    return new this.Doc();
+  async create({
+    username,
+    key,
+    signature,
+    hash,
+    searchTerms,
+  }) {
+    const newUser = new this.Doc();
+    newUser.username = username;
+    newUser.size = username.length;
+    newUser.searchTerms = searchTerms;
+    newUser.key = key;
+    newUser.signature = signature;
+    newUser.hash = hash;
+    newUser.lastActivity = -(Date.now());
+
+    await newUser.save();
+
+    return newUser;
   }
 
   async findByID(userId) {

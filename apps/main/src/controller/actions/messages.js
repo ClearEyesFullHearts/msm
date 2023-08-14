@@ -1,8 +1,8 @@
 const debug = require('debug')('msm-main:message');
 
+const Encryption = require('@shared/encryption');
 const AsyncAction = require('./async');
 const ErrorHelper = require('../../lib/error');
-const Encryption = require('@shared/encryption');
 
 class Message {
   static async getInbox(db, user) {
@@ -49,7 +49,7 @@ class Message {
       debug('known active user');
     }
 
-    const { id: targetId, key } = targetUser;
+    const { username, id: targetId, key } = targetUser;
 
     const from = `@${user.username}`;
     const sentAt = Date.now();
@@ -68,13 +68,12 @@ class Message {
     };
     const fullChallenge = Encryption.hybrid(JSON.stringify(fullPlain), key);
 
-    const newMsg = db.messages.getNew();
-    newMsg.userId = targetId;
-    newMsg.hasBeenRead = false;
-    newMsg.header = headerChallenge;
-    newMsg.full = fullChallenge;
-
-    await newMsg.save();
+    await db.messages.create({
+      username,
+      userId: targetId,
+      header: headerChallenge,
+      full: fullChallenge,
+    });
     debug('message saved');
   }
 

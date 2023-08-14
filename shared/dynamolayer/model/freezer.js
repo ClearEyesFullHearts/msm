@@ -18,7 +18,7 @@ class FreezerData {
         maxLength: 125,
         rangeKey: true,
       },
-      lastActivity: {
+      frozen: {
         type: Number,
         index: {
           name: 'FrozenUserIndex',

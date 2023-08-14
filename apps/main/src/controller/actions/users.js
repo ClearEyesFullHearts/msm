@@ -2,9 +2,9 @@ const jwt = require('jsonwebtoken');
 const config = require('config');
 const debug = require('debug')('msm-main:user');
 
+const Encryption = require('@shared/encryption');
 const MessageAction = require('./messages');
 const ErrorHelper = require('../../lib/error');
-const Encryption = require('@shared/encryption');
 
 function createSearchTerms(str) {
   const l = str.length;
@@ -56,17 +56,15 @@ class User {
     }
 
     debug('create new user');
-    const newUser = db.users.getNew();
-    newUser.username = at;
-    newUser.size = at.length;
-    newUser.searchTerms = createSearchTerms(at);
-    newUser.key = key;
-    newUser.signature = signature;
-    newUser.hash = hash;
-    newUser.lastActivity = -(Date.now());
-    newUser.security = 'safe';
+    let newUser;
     try {
-      await newUser.save();
+      newUser = await db.users.create({
+        username: at,
+        key,
+        signature,
+        hash,
+        searchTerms: createSearchTerms(at),
+      });
     } catch (err) {
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, 'Key singularity');
     }

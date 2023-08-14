@@ -1,7 +1,6 @@
 const dynamoose = require('dynamoose');
 const { v4: uuidv4 } = require('uuid');
 const Encryption = require('@shared/encryption');
-const UnicityData = require('./unicity');
 const challengeSchema = require('./schemas/challenge');
 const vaultItemSchema = require('./schemas/vaultItem');
 
@@ -13,10 +12,7 @@ class UserData {
       pk: {
         type: String,
         required: true,
-        minLength: 3,
-        maxLength: 125,
         hashKey: true,
-        map: 'username',
       },
       sk: {
         type: String,
@@ -24,18 +20,11 @@ class UserData {
         minLength: 3,
         maxLength: 125,
         rangeKey: true,
+        map: 'username',
       },
       id: {
         type: String,
         required: true,
-      },
-      size: {
-        type: Number,
-        required: true,
-        index: {
-          name: 'SearchUserIndex',
-          type: 'local',
-        },
       },
       key: {
         type: String,
@@ -76,13 +65,20 @@ class UserData {
         enum: ['NO_VALIDATION', 'IS_VALIDATING', 'VALIDATED'],
         default: 'NO_VALIDATION',
       },
+      msgCount: {
+        type: Number,
+        default: 0,
+      },
     });
   }
 
-  init(tableName) {
+  init(tableName, {
+    unicity,
+    search,
+  }) {
     this.Entity = dynamoose.model('User', this.userSchema, { tableName });
-    this.unicity = new UnicityData();
-    this.unicity.init(tableName);
+    this.unicity = unicity;
+    this.search = search;
   }
 
   async create({
@@ -90,32 +86,48 @@ class UserData {
     key,
     signature,
     hash,
+    searchTerms,
   }) {
     const id = uuidv4();
     const keyHash = Encryption.hash(key).toString('base64');
     const sigHash = Encryption.hash(signature).toString('base64');
     const newUser = {
-      username,
+      pk: `U#${username}`,
       sk: username,
       id,
-      size: username.length,
       lastActivity: -Date.now(),
       key,
       signature,
       hash,
     };
+    const baseSearch = {
+      pk: `S#${username}`,
+      size: username.length,
+      at: username,
+    };
+    const transacts = searchTerms.map((term) => this.search.Entity.transaction.create({
+      ...baseSearch,
+      sk: term,
+    }));
     const result = await dynamoose.transaction([
       this.Entity.transaction.create(newUser),
       this.unicity.KeyEntity.transaction.create({ sk: keyHash, pk: keyHash }),
       this.unicity.SigEntity.transaction.create({ sk: sigHash, pk: sigHash }),
       this.unicity.UserEntity.transaction.create({ sk: id, pk: id }),
-    ], {return: 'items'});
+      ...transacts,
+    ]);
 
     return result;
   }
 
-  getNew(user) {
-    return new this.Entity(user);
+  async findByName(at) {
+    const user = await this.Entity.get({ pk: `U#${at}`, sk: at });
+    return user;
+  }
+
+  async searchUsername(search) {
+    const users = await this.search.Entity.query('sk').eq(search).using('SearchUserIndex').exec();
+    return users || [];
   }
 }
 
