@@ -2,6 +2,7 @@ const dynamoose = require('dynamoose');
 
 class FreezerData {
   constructor() {
+    this.Entity = null;
     this.freezerSchema = new dynamoose.Schema({
       pk: {
         type: String,
@@ -18,18 +19,12 @@ class FreezerData {
         maxLength: 125,
         rangeKey: true,
       },
-      frozen: {
-        type: Number,
-        index: {
-          name: 'FrozenUserIndex',
-          type: 'local',
-        },
-      },
+      expirationDate: Number,
     });
   }
 
   init(tableName) {
-    this.entity = dynamoose.model('Freezer', this.freezerSchema, { tableName });
+    this.Entity = dynamoose.model('Freezer', this.freezerSchema, { tableName });
   }
 }
 

@@ -1,23 +1,5 @@
 const dynamoose = require('dynamoose');
-const UserData = require('./model/user');
-const MessageData = require('./model/message');
-const FreezerData = require('./model/freezer');
-const UnicityData = require('./model/unicity');
-const SearchData = require('./model/search');
-
-const TABLE_NAME = 'MyLocalTable';
-
-function createSearchTerms(str) {
-  const l = str.length;
-  const terms = [];
-  for (let i = 0; i < l - 2; i += 1) {
-    for (let j = i + 3; j < l; j += 1) {
-      terms.push(str.substring(i, j).toUpperCase());
-    }
-    terms.push(str.substring(i).toUpperCase());
-  }
-  return terms;
-}
+const Data = require('./index');
 
 const getRandomString = (length, base64 = false) => {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
@@ -51,59 +33,64 @@ dynamoose.aws.ddb.set(ddb);
 dynamoose.aws.ddb.local();
 
 (async () => {
-  const unicityData = new UnicityData();
-  unicityData.init(TABLE_NAME);
-  const searchData = new SearchData();
-  searchData.init(TABLE_NAME);
+  // const unicityData = new UnicityDa
+  const db = new Data();
+  db.init();
+  // unicityData.init(TABLE_NAME);
+  // const searchData = new SearchData();
+  // searchData.init(TABLE_NAME);
 
-  const userData = new UserData();
-  userData.init(TABLE_NAME, {
-    unicity: unicityData,
-    search: searchData,
-  });
-  const messageData = new MessageData();
-  messageData.init(TABLE_NAME, { user: userData });
-  const freezerData = new FreezerData();
-  freezerData.init(TABLE_NAME);
+  // const userData = new UserData();
+  // userData.init(TABLE_NAME, {
+  //   unicity: unicityData,
+  //   search: searchData,
+  // });
+  // const messageData = new MessageData();
+  // messageData.init(TABLE_NAME, { user: userData });
+  // const freezerData = new FreezerData();
+  // freezerData.init(TABLE_NAME);
 
-  // await userData.create(
+  // await db.userData.create(
   //   {
   //     username: 'mathieu',
   //     key: getRandomString(788),
   //     signature: getRandomString(268),
   //     hash: getRandomString(172),
-  //     searchTerms: createSearchTerms('mathieu'),
   //   },
   // );
+  // await db.userData.confirmUser('mathieu');
 
-  // await userData.create(
+  // await db.userData.create(
   //   {
   //     username: 'mat',
   //     key: getRandomString(788),
   //     signature: getRandomString(268),
   //     hash: getRandomString(172),
-  //     searchTerms: createSearchTerms('mat'),
   //   },
   // );
+  // await db.userData.confirmUser('mat');
 
-  // await userData.create(
+  // await db.userData.create(
   //   {
   //     username: 'batmat',
   //     key: getRandomString(788),
   //     signature: getRandomString(268),
   //     hash: getRandomString(172),
-  //     searchTerms: createSearchTerms('batmat'),
   //   },
   // );
+  // await db.userData.confirmUser('batmat');
 
-  const users = await userData.searchUsername('MAT');
-  console.log('users', users);
+  // const users = await db.userData.searchUsername('MAT');
+  // console.log('users', users);
 
-
-  // for(let i = 0; i < 5; i+=1){
-  //   await messageData.create({ username: 'mat', header: getRandomChallenge(), full: getRandomChallenge() });
+  // for (let i = 0; i < 5; i += 1) {
+  //   await db.messageData.create({ username: 'mat', header: getRandomChallenge(), full: getRandomChallenge() });
   // }
-  
-  const matMessages = await messageData.getUserMessages('mat');
+
+  const matMessages = await db.messageData.getUserMessages('mat');
   console.log('matMessages', matMessages);
+
+  const mat = await db.userData.findByName('batmat');
+
+  await db.clearUserAccount(mat, true);
 })();

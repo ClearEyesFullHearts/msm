@@ -72,6 +72,18 @@ class UserData {
     });
   }
 
+  static createSearchTerms(str) {
+    const l = str.length;
+    const terms = [];
+    for (let i = 0; i < l - 2; i += 1) {
+      for (let j = i + 3; j < l; j += 1) {
+        terms.push(str.substring(i, j).toUpperCase());
+      }
+      terms.push(str.substring(i).toUpperCase());
+    }
+    return [...new Set(terms)];
+  }
+
   init(tableName, {
     unicity,
     search,
@@ -86,7 +98,6 @@ class UserData {
     key,
     signature,
     hash,
-    searchTerms,
   }) {
     const id = uuidv4();
     const keyHash = Encryption.hash(key).toString('base64');
@@ -100,6 +111,18 @@ class UserData {
       signature,
       hash,
     };
+    const result = await dynamoose.transaction([
+      this.Entity.transaction.create(newUser),
+      this.unicity.KeyEntity.transaction.create({ sk: keyHash, pk: keyHash }),
+      this.unicity.SigEntity.transaction.create({ sk: sigHash, pk: sigHash }),
+      this.unicity.UserEntity.transaction.create({ sk: id, pk: id }),
+    ]);
+
+    return result;
+  }
+
+  async confirmUser(username) {
+    const searchTerms = UserData.createSearchTerms(username);
     const baseSearch = {
       pk: `S#${username}`,
       size: username.length,
@@ -110,10 +133,12 @@ class UserData {
       sk: term,
     }));
     const result = await dynamoose.transaction([
-      this.Entity.transaction.create(newUser),
-      this.unicity.KeyEntity.transaction.create({ sk: keyHash, pk: keyHash }),
-      this.unicity.SigEntity.transaction.create({ sk: sigHash, pk: sigHash }),
-      this.unicity.UserEntity.transaction.create({ sk: id, pk: id }),
+      this.Entity.transaction.update(
+        { pk: `U#${username}`, sk: username },
+        {
+          $SET: { lastActivity: Date.now() },
+        },
+      ),
       ...transacts,
     ]);
 
