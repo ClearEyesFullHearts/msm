@@ -146,22 +146,6 @@ class User {
     }));
   }
 
-  static async getUserById(db, userId) {
-    debug('search for user with ID:', userId);
-    const knownUser = await db.users.findByID(userId);
-    if (!knownUser) {
-      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, '@ unknown');
-    }
-
-    debug('found for id', knownUser.id);
-    const {
-      username: at, key, id, signature,
-    } = knownUser;
-    return {
-      id, at, key, signature,
-    };
-  }
-
   static async getUserByName(db, name) {
     debug('search for user with exact @ :', name);
     const knownUser = await db.users.findByName(name);
@@ -178,24 +162,24 @@ class User {
     };
   }
 
-  static async removeUser(db, userId, askingUser) {
-    if (askingUser.id !== userId) {
+  static async removeUser(db, name, askingUser) {
+    if (askingUser.username !== name) {
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot access this account');
     }
-    debug(`remove user ${userId}`);
-    const user = await db.users.findByID(userId);
+    debug(`remove user ${name}`);
+    const user = await db.users.findByName(name);
     if (user) {
       debug('user found, delete account');
-      await db.clearUserAccount({ userId: user.id, username: user.username });
+      await db.clearUserAccount(user);
       debug('user removed');
       return;
     }
     debug('user do not exists, no action');
   }
 
-  static async removeVaultItem(db, userId) {
-    debug(`remove vault item for ${userId}`);
-    const user = await db.users.findByID(userId);
+  static async removeVaultItem(db, name) {
+    debug(`remove vault item for ${name}`);
+    const user = await db.users.findByName(name);
     if (user.lastActivity < 0) {
       throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
     }
@@ -209,14 +193,14 @@ class User {
       token,
       iv,
     } = item;
-    debug(`set vault item for ${user.id}`);
+    debug(`set vault item for ${user.username}`);
 
     if (!Encryption.isBase64(token)
     || !Encryption.isBase64(iv)) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong challenge format');
     }
 
-    const asker = await db.users.findByID(user.id);
+    const asker = await db.users.findByName(user.username);
     if (asker.lastActivity < 0) {
       throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
     }
@@ -239,7 +223,7 @@ class User {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong challenge format');
     }
 
-    const asker = await db.users.findByID(user.id);
+    const asker = await db.users.findByName(user.username);
     if (asker.lastActivity < 0) {
       throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
     }

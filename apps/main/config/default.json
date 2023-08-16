@@ -3,6 +3,14 @@
     "url": "mongodb://127.0.0.1:27017/msm",
     "ssl": false
   },
+  "dynamo": {
+    "credentials": {
+      "accessKeyId": "local",
+      "secretAccessKey": "local"
+    },
+    "region": "us-west-2",
+    "local": true
+  },
   "instance": {
     "port": 4000,
     "cors":{

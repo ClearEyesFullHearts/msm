@@ -3,7 +3,7 @@ const express = require('express');
 const config = require('config');
 const OpenApiValidator = require('express-openapi-validator');
 const debug = require('debug')('msm-main:server');
-const Data = require('@shared/datalayer');
+const Data = require('@shared/dynamolayer');
 const helmet = require('helmet');
 const CORS = require('./lib/cors');
 const ErrorHelper = require('./lib/error');
@@ -32,7 +32,10 @@ class MSMMain {
 
     const port = config.get('instance.port');
 
-    const data = new Data();
+    const data = new Data(config.get('dynamo'), {
+      frozen: config.get('timer.removal.frozen'),
+      inactivity: config.get('timer.removal.inactivity'),
+    });
     await data.init();
     this.app.locals.db = data;
 

@@ -11,7 +11,7 @@
   "author": "MFT",
   "license": "MIT",
   "dependencies": {
-    "@shared/datalayer": "*",
+    "@shared/dynamolayer": "*",
     "@shared/validator": "*",
     "@shared/secrets": "*",
     "@shared/encryption": "*",

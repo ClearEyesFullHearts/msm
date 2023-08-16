@@ -57,35 +57,13 @@ module.exports = {
         });
     },
   ],
-  getOneUser: [
-    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
-    (req, res, next) => {
-      const {
-        params: {
-          id,
-        },
-        app: {
-          locals: {
-            db,
-          },
-        },
-      } = req;
-      User.getUserById(db, Number(id))
-        .then((user) => {
-          res.json(user);
-        })
-        .catch((err) => {
-          next(err);
-        });
-    },
-  ],
   incinerate: [
     AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
     (req, res, next) => {
       const {
         auth,
         params: {
-          id,
+          at,
         },
         app: {
           locals: {
@@ -93,7 +71,7 @@ module.exports = {
           },
         },
       } = req;
-      User.removeUser(db, Number(id), auth)
+      User.removeUser(db, at, auth)
         .then(() => {
           res.status(200).send();
         })
@@ -121,7 +99,7 @@ module.exports = {
         next(err);
       });
   },
-  getOneUserByName: [
+  getOneUser: [
     AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
     (req, res, next) => {
       const {
@@ -196,7 +174,7 @@ module.exports = {
           },
         },
       } = req;
-      User.removeVaultItem(db, auth.id)
+      User.removeVaultItem(db, auth.username)
         .then(() => {
           res.status(200).send();
         })

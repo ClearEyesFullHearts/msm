@@ -82,35 +82,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /username/{at}:
-    get:
-      summary: Get one user informations
-      operationId: getOneUserByName
-      x-eov-operation-handler: api
-      parameters:
-        - name: at
-          in: path
-          description: Start of users name
-          required: true
-          schema:
-            type: string
-            minLength: 3
-            maxLength: 125
-      responses:
-        '200':
-          description: One user
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /user/{id}:
+  /user/{at}:
     get:
       summary: Get one user informations
       operationId: getOneUser
@@ -118,12 +90,14 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
+        - name: at
           in: path
+          description: Username
           required: true
-          description: The ID of the user
           schema:
-            type: integer
+            type: string
+            minLength: 3
+            maxLength: 125
       responses:
         '200':
           description: One user
@@ -154,12 +128,14 @@ paths:
             format: byte
             minLength: 172
             maxLength: 172
-        - name: id
+        - name: at
           in: path
+          description: Username
           required: true
-          description: The ID of the user to delete
           schema:
-            type: integer
+            type: string
+            minLength: 3
+            maxLength: 125
 
       responses:
         '200':
@@ -451,7 +427,7 @@ components:
         - signature
       properties:
         id:
-          type: integer
+          type: string
         at:
           type: string
           minLength: 3
@@ -467,7 +443,10 @@ components:
     UsersList:
       type: array
       items:
-        $ref: "#/components/schemas/User"
+        type: string
+        minLength: 3
+        maxLength: 125
+        
     Inbox:
       type: array
       items:
@@ -479,7 +458,7 @@ components:
         - challenge
       properties:
         id:
-          type: integer
+          type: string
         challenge:
           $ref: "#/components/schemas/Challenge"
     Message:
@@ -489,7 +468,7 @@ components:
         - challenge
       properties:
         id:
-          type: integer
+          type: string
         challenge:
           $ref: "#/components/schemas/Challenge"
     Post:

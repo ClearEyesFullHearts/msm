@@ -49,7 +49,7 @@ class Message {
       debug('known active user');
     }
 
-    const { username, id: targetId, key } = targetUser;
+    const { username, key } = targetUser;
 
     const from = `@${user.username}`;
     const sentAt = Date.now();
@@ -70,7 +70,6 @@ class Message {
 
     await db.messages.create({
       username,
-      userId: targetId,
       header: headerChallenge,
       full: fullChallenge,
     });
@@ -78,19 +77,19 @@ class Message {
   }
 
   static async getMessage(db, msgId, user) {
-    debug(`get user ${user.id}`);
-    const reader = await db.users.findByID(user.id);
+    debug(`get user ${user.username}`);
+    const reader = await db.users.findByName(user.username);
     if (!reader) {
       throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'User not found');
     }
 
     debug(`get message ${msgId}`);
-    const message = await db.messages.findByID(msgId);
+    const message = await db.messages.findByID(user.username, msgId);
     if (message) {
       debug('message found');
-      if (message.userId !== user.id) {
-        throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot access this message');
-      }
+      // if (message.userId !== user.id) {
+      //   throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot access this message');
+      // }
       message.hasBeenRead = true;
       await message.save();
       debug('message marked as read');
@@ -128,13 +127,13 @@ class Message {
 
   static async removeMessage(db, msgId, user) {
     debug(`remove message ${msgId}`);
-    const message = await db.messages.findByID(msgId);
+    const message = await db.messages.findByID(user.username, msgId);
     if (message) {
       debug('message found');
-      if (message.userId !== user.id) {
-        throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot access this message');
-      }
-      await db.messages.deleteID(msgId);
+      // if (message.userId !== user.id) {
+      //   throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot access this message');
+      // }
+      await db.messages.deleteID(user.username, msgId);
       debug('message removed');
       return;
     }

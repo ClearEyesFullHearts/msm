@@ -48,9 +48,9 @@ class AuthMiddleware {
 
             const sig = req.headers['x-msm-sig'];
             const { iat, ...restPayload } = payload;
-            const { user: { id } } = restPayload;
+            const { user: { username } } = restPayload;
 
-            return db.users.findByID(id)
+            return db.users.findByName(username)
               .then((author) => {
                 if (!author) {
                   return next(ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'Unknown user'));
