@@ -59,11 +59,24 @@ class UserData {
         schema: challengeSchema,
         default: null,
       },
-      lastActivity: Number,
+      lastActivity: {
+        type: Number,
+        set: (val) => UserData.roundTimeToDays(val),
+        index: {
+          name: 'LastActivityIndex',
+          global: true,
+          rangeKey: 'sk',
+        },
+      },
       validation: {
         type: String,
         enum: ['NO_VALIDATION', 'IS_VALIDATING', 'VALIDATED'],
         default: 'NO_VALIDATION',
+        index: {
+          name: 'UserValidationIndex',
+          global: true,
+          project: false,
+        },
       },
       msgCount: {
         type: Number,
@@ -84,6 +97,12 @@ class UserData {
     return [...new Set(terms)];
   }
 
+  static roundTimeToDays(epoch, addDays = 0) {
+    const daysInMs = (24 * 60 * 60000);
+    const dayMs = Math.floor(epoch / daysInMs) * daysInMs;
+    return dayMs + (addDays * daysInMs);
+  }
+
   init(tableName, {
     unicity,
     search,
@@ -98,7 +117,7 @@ class UserData {
     key,
     signature,
     hash,
-  }) {
+  }, isRetry = false) {
     const id = uuidv4();
     const keyHash = Encryption.hash(key).toString('base64');
     const sigHash = Encryption.hash(signature).toString('base64');
@@ -111,14 +130,47 @@ class UserData {
       signature,
       hash,
     };
-    const result = await dynamoose.transaction([
-      this.Entity.transaction.create(newUser),
-      this.unicity.KeyEntity.transaction.create({ sk: keyHash, pk: keyHash }),
-      this.unicity.SigEntity.transaction.create({ sk: sigHash, pk: sigHash }),
-      this.unicity.UserEntity.transaction.create({ sk: id, pk: id }),
-    ]);
+    try {
+      const result = await dynamoose.transaction([
+        this.Entity.transaction.create(newUser),
+        this.unicity.KeyEntity.transaction.create({ sk: keyHash, pk: keyHash }),
+        this.unicity.SigEntity.transaction.create({ sk: sigHash, pk: sigHash }),
+        this.unicity.UserEntity.transaction.create({ sk: id, pk: id }),
+      ]);
 
-    return result;
+      return result;
+    } catch (exc) {
+      const { CancellationReasons } = exc;
+      if (!CancellationReasons) throw exc;
+
+      const [
+        { Code: userReason },
+        { Code: keyReason },
+        { Code: sigReason },
+        { Code: idReason },
+      ] = CancellationReasons;
+
+      let retryUser;
+      switch ('ConditionalCheckFailed') {
+        case userReason:
+          throw new Error('Username already exists');
+        case keyReason:
+          throw new Error('Encryption key already exists');
+        case sigReason:
+          throw new Error('Signing key already exists');
+        case idReason:
+          if (isRetry) throw new Error('Unique id already exists');
+          retryUser = await this.create({
+            username,
+            key,
+            signature,
+            hash,
+          }, true);
+          return retryUser;
+        default:
+          throw exc;
+      }
+    }
   }
 
   async confirmUser(username) {

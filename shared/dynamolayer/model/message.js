@@ -15,12 +15,17 @@ class MessageData {
         type: String,
         required: true,
         rangeKey: true,
-        map: 'msgId',
       },
       hasBeenRead: {
         type: Number,
         required: true,
         default: 0,
+        index: {
+          name: 'ReadMessagesIndex',
+          global: true,
+          rangeKey: 'sk',
+          project: ['pk'],
+        },
       },
       header: {
         type: Object,

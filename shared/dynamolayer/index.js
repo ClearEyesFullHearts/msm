@@ -1,5 +1,4 @@
 const dynamoose = require('dynamoose');
-const config = require('config');
 const debug = require('debug')('dynamolayer:data');
 const Encryption = require('@shared/encryption');
 const UserData = require('./model/user');
@@ -11,16 +10,26 @@ const FreezerData = require('./model/freezer');
 const TABLE_NAME = 'MyLocalTable';
 
 class Data {
-  constructor() {
+  constructor(config, options) {
     this.unicityData = new UnicityData();
     this.searchData = new SearchData();
     this.freezerData = new FreezerData();
     this.userData = new UserData();
     this.messageData = new MessageData();
+
+    const { local, ...connConfig } = config;
+    this.CONNECTION = connConfig;
+    this.IS_LOCAL = local;
+
+    const { frozen, inactivity } = options;
+    this.FROZEN_TIME = frozen;
+    this.INACTIVITY_TIME = inactivity;
   }
 
-  static batchDelete(keys, data) {
-    keys.reduce(async (prev, { pk, sk }, index) => {
+  static async batchDelete(keys, data) {
+    if (!keys.length) return;
+
+    await keys.reduce(async (prev, { pk, sk }, index) => {
       const arr = await prev;
       arr.push({ pk, sk });
       if (arr.length >= 24 || index >= keys.length - 1) {
@@ -33,17 +42,11 @@ class Data {
 
   init() {
     // Create new DynamoDB instance
-    const ddb = new dynamoose.aws.ddb.DynamoDB({
-      credentials: {
-        accessKeyId: 'local',
-        secretAccessKey: 'local',
-      },
-      region: 'us-west-2',
-    });
+    const ddb = new dynamoose.aws.ddb.DynamoDB(this.CONNECTION);
 
     // Set DynamoDB instance to the Dynamoose DDB instance
     dynamoose.aws.ddb.set(ddb);
-    dynamoose.aws.ddb.local();
+    if (this.IS_LOCAL) dynamoose.aws.ddb.local();
 
     this.unicityData.init(TABLE_NAME);
     this.searchData.init(TABLE_NAME);
@@ -74,10 +77,9 @@ class Data {
       const searchTerms = UserData.createSearchTerms(username);
       const keys = searchTerms.map((term) => ({ pk: `S#${username}`, sk: term }));
 
-      Data.batchDelete(keys, this.searchData);
+      await Data.batchDelete(keys, this.searchData);
 
-      const timer = 7776000000; // config.get('timer.removal.frozen');
-      const removalDate = Math.floor(Date.now() / 1000) + Math.floor(timer / 1000);
+      const removalDate = Math.floor(Date.now() / 1000) + Math.floor(this.FROZEN_TIME / 1000);
       await this.freezerData.Entity.update(
         { pk: `U#${username}`, sk: username },
         {
@@ -92,7 +94,70 @@ class Data {
       .attributes(['sk', 'pk'])
       .exec();
 
-    Data.batchDelete(messages, this.messageData);
+    await Data.batchDelete(messages, this.messageData);
+  }
+
+  async clearReadMessages() {
+    const messages = await this.messageData.Entity.query('hasBeenRead').eq(1).using('ReadMessagesIndex').exec();
+    await Data.batchDelete(messages, this.messageData);
+  }
+
+  async deactivateAccounts() {
+    const now = Date.now();
+    const inactiveLimit = UserData.roundTimeToDays(now - this.INACTIVITY_TIME);
+    const missedLimit = -UserData.roundTimeToDays(now, 2);
+
+    const inactiveUsers = await this.userData.Entity.query('lastActivity').eq(inactiveLimit).using('LastActivityIndex').exec();
+    const missedUsers = await this.userData.Entity.query('lastActivity').eq(missedLimit).using('LastActivityIndex').exec();
+
+    const IDs = inactiveUsers.map((iu) => ({
+      username: iu.username,
+      key: iu.key,
+      signature: iu.signature,
+      id: iu.id,
+      freeze: true,
+    }))
+      .concat(
+        missedUsers.map((iu) => ({
+          username: iu.username,
+          key: iu.key,
+          signature: iu.signature,
+          id: iu.id,
+          freeze: false,
+        })),
+      );
+
+    const l = IDs.length;
+    const promises = [];
+    for (let i = 0; i < l; i += 1) {
+      const {
+        freeze,
+        ...user
+      } = IDs[i];
+
+      debug('clear', user.username);
+      promises.push(this.clearUserAccount(user, freeze));
+    }
+
+    await Promise.all(promises);
+  }
+
+  async activityReport() {
+    const { count: notValidatedUsers } = await this.userData.Entity.query('validation').eq('NO_VALIDATION').using('UserValidationIndex').count()
+      .exec();
+    const { count: validatingUsers } = await this.userData.Entity.query('validation').eq('IS_VALIDATING').using('UserValidationIndex').count()
+      .exec();
+    const { count: validatedUsers } = await this.userData.Entity.query('validation').eq('VALIDATED').using('UserValidationIndex').count()
+      .exec();
+    const { count: waitingMessages } = await this.messageData.Entity.query('hasBeenRead').eq(0).using('ReadMessagesIndex').count()
+      .exec();
+
+    return {
+      notValidatedUsers,
+      validatingUsers,
+      validatedUsers,
+      waitingMessages,
+    };
   }
 }
 
