@@ -313,7 +313,7 @@ paths:
           required: true
           description: The ID of the message to fetch
           schema:
-            type: integer
+            type: string
       responses:
         '200':
           description: A complete message
@@ -349,7 +349,7 @@ paths:
           required: true
           description: The ID of the message to delete
           schema:
-            type: integer
+            type: string
       responses:
         '200':
           description: The message is removed

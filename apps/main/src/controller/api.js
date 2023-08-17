@@ -5,6 +5,7 @@ const Message = require('./actions/messages');
 const AsyncAction = require('./actions/async');
 
 module.exports = {
+  // Anonymous
   createUser: (req, res, next) => {
     const {
       body: {
@@ -35,51 +36,6 @@ module.exports = {
         next(err);
       });
   },
-  getUsers: [
-    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
-    (req, res, next) => {
-      const {
-        query: {
-          search,
-        },
-        app: {
-          locals: {
-            db,
-          },
-        },
-      } = req;
-      User.getUsers(db, { search })
-        .then((users) => {
-          res.json(users);
-        })
-        .catch((err) => {
-          next(err);
-        });
-    },
-  ],
-  incinerate: [
-    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
-    (req, res, next) => {
-      const {
-        auth,
-        params: {
-          at,
-        },
-        app: {
-          locals: {
-            db,
-          },
-        },
-      } = req;
-      User.removeUser(db, at, auth)
-        .then(() => {
-          res.status(200).send();
-        })
-        .catch((err) => {
-          next(err);
-        });
-    },
-  ],
   login: (req, res, next) => {
     const {
       params: {
@@ -99,10 +55,35 @@ module.exports = {
         next(err);
       });
   },
+  // Use only auth
+  getUsers: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        auth,
+        query: {
+          search,
+        },
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      User.getUsers({ db, auth }, { search })
+        .then((users) => {
+          res.json(users);
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
   getOneUser: [
     AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
     (req, res, next) => {
       const {
+        auth,
         params: {
           at,
         },
@@ -112,71 +93,9 @@ module.exports = {
           },
         },
       } = req;
-      User.getUserByName(db, at)
+      User.getUserByName({ db, auth }, at)
         .then((user) => {
           res.json(user);
-        })
-        .catch((err) => {
-          next(err);
-        });
-    },
-  ],
-  setUserContactList: [
-    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
-    (req, res, next) => {
-      const {
-        auth,
-        body,
-        app: {
-          locals: {
-            db,
-          },
-        },
-      } = req;
-      User.setContacts(db, auth, body)
-        .then(() => {
-          res.status(200).send();
-        })
-        .catch((err) => {
-          next(err);
-        });
-    },
-  ],
-  setUserVaultItem: [
-    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
-    (req, res, next) => {
-      const {
-        auth,
-        body,
-        app: {
-          locals: {
-            db,
-          },
-        },
-      } = req;
-      User.setVaultItem(db, auth, body)
-        .then(() => {
-          res.status(200).send();
-        })
-        .catch((err) => {
-          next(err);
-        });
-    },
-  ],
-  removeUserVaultItem: [
-    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
-    (req, res, next) => {
-      const {
-        auth,
-        app: {
-          locals: {
-            db,
-          },
-        },
-      } = req;
-      User.removeVaultItem(db, auth.username)
-        .then(() => {
-          res.status(200).send();
         })
         .catch((err) => {
           next(err);
@@ -194,31 +113,9 @@ module.exports = {
           },
         },
       } = req;
-      Message.getInbox(db, auth)
+      Message.getInbox({ db, auth })
         .then((inbox) => {
           res.json(inbox);
-        })
-        .catch((err) => {
-          next(err);
-        });
-    },
-  ],
-  writeMessage: [
-    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
-    (req, res, next) => {
-      const {
-        auth,
-        body,
-        app: {
-          locals: {
-            db,
-          },
-        },
-      } = req;
-
-      Message.writeMessage(db, body, auth)
-        .then(() => {
-          res.status(201).send();
         })
         .catch((err) => {
           next(err);
@@ -239,7 +136,7 @@ module.exports = {
           },
         },
       } = req;
-      Message.getMessage(db, msgId, auth)
+      Message.getMessage({ db, auth }, msgId)
         .then((fullMessage) => {
           res.json(fullMessage);
 
@@ -248,6 +145,114 @@ module.exports = {
               console.error('error on message auto removal');
               console.error(err);
             });
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
+  // User identified
+  incinerate: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        auth,
+        params: {
+          at,
+        },
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      User.removeUser({ db, user: auth }, at)
+        .then(() => {
+          res.status(200).send();
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
+  setUserContactList: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        auth,
+        body,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      User.setContacts({ db, user: auth }, body)
+        .then(() => {
+          res.status(200).send();
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
+  setUserVaultItem: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        auth,
+        body,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      User.setVaultItem({ db, user: auth }, body)
+        .then(() => {
+          res.status(200).send();
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
+  removeUserVaultItem: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        auth,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      User.removeVaultItem({ db, user: auth })
+        .then(() => {
+          res.status(200).send();
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
+  writeMessage: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        auth,
+        body,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+
+      Message.writeMessage({ db, user: auth }, body)
+        .then(() => {
+          res.status(201).send();
         })
         .catch((err) => {
           next(err);
@@ -268,7 +273,7 @@ module.exports = {
           },
         },
       } = req;
-      Message.removeMessage(db, Number(msgId), auth)
+      Message.removeMessage({ db, user: auth }, msgId)
         .then(() => {
           res.status(200).send();
         })

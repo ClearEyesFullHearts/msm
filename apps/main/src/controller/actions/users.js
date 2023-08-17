@@ -1,3 +1,4 @@
+/* eslint no-param-reassign: ["error", { "props": true, "ignorePropertyModificationsFor": ["user"] }] */
 const jwt = require('jsonwebtoken');
 const config = require('config');
 const debug = require('debug')('msm-main:user');
@@ -77,7 +78,7 @@ class User {
 
       const encrytedMsg = Encryption.encryptMessage(newUser, welcomeTitle, welcomeContent);
 
-      await MessageAction.writeMessage(db, encrytedMsg, { username: 'do not reply to this message' }, false);
+      await MessageAction.writeMessage({db, user: { username: 'do not reply to this message', lastActivity: 1 }}, encrytedMsg, , false);
       debug('welcoming message sent');
     } catch (err) {
       debug('Error on first message, user is removed');
@@ -134,7 +135,7 @@ class User {
     throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
   }
 
-  static async getUsers(db, { search }) {
+  static async getUsers({ db }, { search }) {
     debug('search for users with @ like:', search);
     const users = await db.users.searchUsername(search.toUpperCase());
 
@@ -146,7 +147,7 @@ class User {
     }));
   }
 
-  static async getUserByName(db, name) {
+  static async getUserByName({ db }, name) {
     debug('search for user with exact @ :', name);
     const knownUser = await db.users.findByName(name);
     if (!knownUser) {
@@ -162,24 +163,17 @@ class User {
     };
   }
 
-  static async removeUser(db, name, askingUser) {
-    if (askingUser.username !== name) {
+  static async removeUser({ db, user }, name) {
+    if (user.username !== name) {
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot access this account');
     }
     debug(`remove user ${name}`);
-    const user = await db.users.findByName(name);
-    if (user) {
-      debug('user found, delete account');
-      await db.clearUserAccount(user);
-      debug('user removed');
-      return;
-    }
-    debug('user do not exists, no action');
+    await db.clearUserAccount(user);
+    debug('user removed');
   }
 
-  static async removeVaultItem(db, name) {
-    debug(`remove vault item for ${name}`);
-    const user = await db.users.findByName(name);
+  static async removeVaultItem({ user }) {
+    debug(`remove vault item for ${user.username}`);
     if (user.lastActivity < 0) {
       throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
     }
@@ -188,7 +182,7 @@ class User {
     debug('vault item removed');
   }
 
-  static async setVaultItem(db, user, item) {
+  static async setVaultItem({ user }, item) {
     const {
       token,
       iv,
@@ -200,16 +194,15 @@ class User {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong challenge format');
     }
 
-    const asker = await db.users.findByName(user.username);
-    if (asker.lastActivity < 0) {
+    if (user.lastActivity < 0) {
       throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
     }
-    asker.vault = item;
-    await asker.save();
+    user.vault = item;
+    await user.save();
     debug('vault item set');
   }
 
-  static async setContacts(db, user, challenge) {
+  static async setContacts({ user }, challenge) {
     const {
       token,
       passphrase,
@@ -223,12 +216,11 @@ class User {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong challenge format');
     }
 
-    const asker = await db.users.findByName(user.username);
-    if (asker.lastActivity < 0) {
+    if (user.lastActivity < 0) {
       throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
     }
-    asker.contacts = challenge;
-    await asker.save();
+    user.contacts = challenge;
+    await user.save();
     debug('contacts set');
   }
 }

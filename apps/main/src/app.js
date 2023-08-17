@@ -5,9 +5,9 @@ const OpenApiValidator = require('express-openapi-validator');
 const debug = require('debug')('msm-main:server');
 const Data = require('@shared/dynamolayer');
 const helmet = require('helmet');
+const Encryption = require('@shared/encryption');
 const CORS = require('./lib/cors');
 const ErrorHelper = require('./lib/error');
-const Encryption = require('@shared/encryption');
 const MessageAction = require('./controller/actions/messages');
 
 const APP_ID = 'msm-main';
@@ -98,15 +98,20 @@ class MSMMain {
 
     if (target) {
       const {
-        activeUsers,
+        notValidatedUsers,
+        validatingUsers,
+        validatedUsers,
         waitingMessages,
       } = await db.activityReport();
 
       debug('send report message');
       const reportTitle = 'Here is today\'s activity report';
-      const reportContent = `We have ${activeUsers} active users\nWe have ${waitingMessages} unread messages\n`;
+      let reportContent = `We have ${validatedUsers} active and validated users`;
+      reportContent += `\nWe have ${validatingUsers} active users waiting for validation`;
+      reportContent += `\nWe have ${notValidatedUsers} not validated users`;
+      reportContent += `\nWe have ${waitingMessages} unread messages\n`;
       const encrytedMsg = Encryption.encryptMessage(target, reportTitle, reportContent);
-      await MessageAction.writeMessage(db, encrytedMsg, { username: 'Daily Report' });
+      await MessageAction.writeMessage({ db, user: { username: 'Daily Report', lastActivity: 1 } }, encrytedMsg);
       debug('report message sent');
     }
   }
