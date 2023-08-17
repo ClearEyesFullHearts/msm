@@ -3,17 +3,17 @@ const debug = require('debug')('msm-main:async');
 const Validator = require('@shared/validator');
 
 class Async {
-  static async autoUserRemoval(db, userId) {
-    debug('Auto User Removal for user', userId);
+  static async autoUserRemoval(db, username) {
+    debug('Auto User Removal for user', username);
     const timeToWait = config.get('timer.removal.user');
     await new Promise((resolve) => setTimeout(resolve, timeToWait));
-    debug(`remove user ${userId}`);
-    const user = await db.users.findByID(userId);
+    debug(`remove user ${username}`);
+    const user = await db.users.findByName(username);
     if (user) {
       debug('user found');
       if (user.lastActivity < 0) {
         debug('inactive user, delete account');
-        await db.clearUserAccount({ userId: user.id, username: user.username }, false);
+        await db.clearUserAccount(user, false);
         debug('user removed');
         return;
       }
@@ -23,15 +23,15 @@ class Async {
     debug('user do not exists, no action');
   }
 
-  static async autoMessageRemoval(db, msgId) {
+  static async autoMessageRemoval(db, username, msgId) {
     debug('Auto Message Removal');
     const timeToWait = config.get('timer.removal.message');
     await new Promise((resolve) => setTimeout(resolve, timeToWait));
     debug(`remove message ${msgId}`);
-    const message = await db.messages.findByID(msgId);
+    const message = await db.messages.findByID(username, `M#${msgId}`);
     if (message) {
       debug('message found');
-      await db.messages.deleteID(msgId);
+      await db.messages.deleteID(username, `M#${msgId}`);
       debug('message removed');
       return;
     }

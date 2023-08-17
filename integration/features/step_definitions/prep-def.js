@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { Given } = require('@cucumber/cucumber');
+const { Given, Then } = require('@cucumber/cucumber');
 const Util = require('../support/utils');
 
 Given(/^I create random user with length (.*)$/, async function (length) {
@@ -14,6 +14,10 @@ Given(/^I create random user with length (.*)$/, async function (length) {
   const rand = Util.getRandomString(length);
   const inject = Math.floor(length * Math.random());
   const username = `${rand.substring(0, inject)}mat${rand.substring(inject)}`;
+
+  if (!this.randomUsers) this.randomUsers = [];
+  this.randomUsers.push(username);
+  this.userCounter += 1;
 
   this.apickli.setRequestBody(JSON.stringify({
     at: username,
@@ -58,4 +62,8 @@ Given(/^I create random user with length (.*)$/, async function (length) {
   await this.put('/vault');
   this.apickli.removeRequestHeader('x-msm-sig');
   this.apickli.removeRequestHeader('Authorization');
+});
+
+Then('I save random users name', function () {
+  fs.writeFileSync(`${__dirname}/../../data/randoms.json`, JSON.stringify(this.randomUsers));
 });

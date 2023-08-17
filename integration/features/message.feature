@@ -4,11 +4,11 @@ Feature: Message
     
 Scenario: Write & read one message
   Given I am authenticated user mat
-  And I set message body to { "to": "uHzmatVg2hPx" , "title": "Write one message" , "content": "My message content" }
+  And I set message body to { "to": "`RANDOM_USER.7`" , "title": "Write one message" , "content": "My message content" }
   And I set signature header
   When I POST to /message
   Then response code should be 201
-  Given I am existing user uHzmatVg2hPx
+  Given I am existing `RANDOM_USER.7`
   And I GET /inbox
   And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
   When I GET /message/`FIRST_MSG_ID`
@@ -19,18 +19,18 @@ Scenario: Write & read one message
   And resolved challenge path $.content should match My message content
     
 Scenario: Only the target can read a message
-  Given mat write a message as { "to": "uHzmatVg2hPx" , "title": "Write one message" , "content": "My message content" }
-  And I am existing user uHzmatVg2hPx
+  Given mat write a message as { "to": "`RANDOM_USER.7`" , "title": "Write one message" , "content": "My message content" }
+  And I am existing `RANDOM_USER.7`
   And I GET /inbox
   And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
-  And I am existing user matha6t72itFS1R
+  And I am existing `RANDOM_USER.9`
   When I GET /message/`FIRST_MSG_ID`
-  Then response code should be 403
-  And response body path $.code should be FORBIDDEN
+  Then response code should be 404
+  And response body path $.code should be NOT_FOUND
 
 Scenario: Messages is deleted after reading
-  Given mat write a message as { "to": "uHzmatVg2hPx" , "title": "Write one message" , "content": "My message content" }
-  And I am existing user uHzmatVg2hPx
+  Given mat write a message as { "to": "`RANDOM_USER.7`" , "title": "Write one message" , "content": "My message content" }
+  And I am existing `RANDOM_USER.7`
   And I GET /inbox
   And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
   And I GET /message/`FIRST_MSG_ID`
@@ -39,8 +39,8 @@ Scenario: Messages is deleted after reading
   And response code should be 404
 
 Scenario: Delete one message
-  Given mat write a message as { "to": "uHzmatVg2hPx" , "title": "Write one message" , "content": "My message content" }
-  And I am existing user uHzmatVg2hPx
+  Given mat write a message as { "to": "`RANDOM_USER.7`" , "title": "Write one message" , "content": "My message content" }
+  And I am existing `RANDOM_USER.7`
   And I GET /inbox
   And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
   And I set signature header
@@ -50,15 +50,15 @@ Scenario: Delete one message
   And response code should be 404
 
 Scenario: Only the target can delete a message
-  Given mat write a message as { "to": "uHzmatVg2hPx" , "title": "Write one message" , "content": "My message content" }
-  And I am existing user uHzmatVg2hPx
+  Given mat write a message as { "to": "`RANDOM_USER.7`" , "title": "Write one message" , "content": "My message content" }
+  And I am existing `RANDOM_USER.7`
   And I GET /inbox
   And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
-  And I am existing user matha6t72itFS1R
+  And I am existing `RANDOM_USER.12`
   And I set signature header
   When I DELETE /message/`FIRST_MSG_ID`
-  Then response code should be 403
-  And response body path $.code should be FORBIDDEN
+  Then response code should be 404
+  And response body path $.code should be NOT_FOUND
     
 Scenario: Message should have a valid target
     
@@ -73,7 +73,7 @@ Scenario: Inactive user cannot write a message
   And I store the value of body path $ as AUTH in scenario scope
   And I store the value of body path $.token as access token
   And I set bearer token
-  And I set message body to { "to": "uHzmatVg2hPx" , "title": "Write one message" , "content": "My message content" }
+  And I set message body to { "to": "`RANDOM_USER.7`" , "title": "Write one message" , "content": "My message content" }
   And I set signature header
   When I POST to /message
   Then response code should be 501

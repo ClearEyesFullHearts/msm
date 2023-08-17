@@ -66,8 +66,9 @@ Given('I am a new valid user', async function () {
   await this.get(`/message/${id}`);
 });
 
-Given(/^I am existing user (.*)$/, async function (username) {
+Given(/^I am existing (.*)$/, async function (varName) {
   this.apickli.removeRequestHeader('x-msm-sig');
+  const username = this.apickli.replaceVariables(varName);
   await this.get(`/identity/${username}`);
   const respBody = JSON.parse(this.apickli.httpResponse.body);
   const privateK = Util.symmetricDecrypt(respBody.vault, username);

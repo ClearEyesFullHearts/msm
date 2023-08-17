@@ -45,54 +45,8 @@ const getRandomChallenge = () => ({
   { frozen: 7776000000, inactivity: 2592000000 });
   db.init();
 
-  await db.userData.create(
-    {
-      username: 'mathieu',
-      key: getRandomString(788),
-      signature: getRandomString(268),
-      hash: getRandomString(172),
-    },
-  );
-  await db.userData.confirmUser('mathieu');
-
-  await db.userData.create(
-    {
-      username: 'mat',
-      key: getRandomString(788),
-      signature: getRandomString(268),
-      hash: getRandomString(172),
-    },
-  );
-  // await db.userData.confirmUser('mat');
-
-  await db.userData.create(
-    {
-      username: 'batmat',
-      key: getRandomString(788),
-      signature: getRandomString(268),
-      hash: getRandomString(172),
-    },
-  );
-  await db.userData.confirmUser('batmat');
-
-  const users = await db.userData.searchUsername('MAT');
-  console.log('users', users);
-
-  for (let i = 0; i < 5; i += 1) {
-    await db.messageData.create({ username: 'mat', header: getRandomChallenge(), full: getRandomChallenge() });
-  }
-
-  const matMessages = await db.messageData.getUserMessages('mat');
-  console.log('matMessages', matMessages);
-
-  // const mat = await db.userData.findByName('mat');
-
-  // await db.clearUserAccount(mat, false);
-
-  // const batmat = await db.userData.findByName('batmat');
-
-  // await db.clearUserAccount(batmat);
-
-  const result = await db.activityReport();
-  console.log(result)
+  let arr = UserData.createSearchTerms('sM7zVVj24ykcoPuLdD7J4BdwXKZiUwoYwvVwIxKHea2OEUSPqDLky15CS0iCDRtDHgRFMY3EorBLMFOIIcDbqmatIi9CMa0O9hSM1tXoMCbZvb69w8LRte9wX2n');
+  console.log('length for 124', arr.length)
+  arr = UserData.createSearchTerms(getRandomString(30));
+  console.log('length for 50', arr.length)
 })();

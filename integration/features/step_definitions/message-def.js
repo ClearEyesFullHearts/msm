@@ -11,7 +11,7 @@ Given(/^I set message body to (.*)$/, async function (messageBody) {
     const [key] = publicK.split('\n----- SIGNATURE -----\n');
     epkFile = key;
   } else {
-    await this.get(`/username/${to}`);
+    await this.get(`/user/${to}`);
     const { key } = JSON.parse(this.apickli.httpResponse.body);
     epkFile = key;
   }
@@ -86,7 +86,7 @@ Given(/^(.*) write a message as (.*)$/, async function (from, messageBody) {
     const [key] = publicTargetK.split('\n----- SIGNATURE -----\n');
     targetEpkFile = key;
   } else {
-    await this.get(`/username/${to}`);
+    await this.get(`/user/${to}`);
     const { key } = JSON.parse(this.apickli.httpResponse.body);
     targetEpkFile = key;
   }

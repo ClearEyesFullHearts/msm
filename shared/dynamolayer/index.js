@@ -14,8 +14,8 @@ class Data {
     this.unicityData = new UnicityData();
     this.searchData = new SearchData();
     this.freezerData = new FreezerData();
-    this.userData = new UserData();
-    this.messageData = new MessageData();
+    this.users = new UserData();
+    this.messages = new MessageData();
 
     const { local, ...connConfig } = config;
     this.CONNECTION = connConfig;
@@ -52,11 +52,11 @@ class Data {
     this.searchData.init(TABLE_NAME);
     this.freezerData.init(TABLE_NAME);
 
-    this.userData.init(TABLE_NAME, {
+    this.users.init(TABLE_NAME, {
       unicity: this.unicityData,
       search: this.searchData,
     });
-    this.messageData.init(TABLE_NAME, { user: this.userData });
+    this.messages.init(TABLE_NAME, { user: this.users });
 
     debug('finished initialization');
   }
@@ -68,7 +68,7 @@ class Data {
       const keyHash = Encryption.hash(key).toString('base64');
       const sigHash = Encryption.hash(signature).toString('base64');
       await dynamoose.transaction([
-        this.userData.Entity.transaction.delete({ pk: `U#${username}`, sk: username }),
+        this.users.Entity.transaction.delete({ pk: `U#${username}`, sk: username }),
         this.unicityData.KeyEntity.transaction.delete({ sk: keyHash, pk: keyHash }),
         this.unicityData.SigEntity.transaction.delete({ sk: sigHash, pk: sigHash }),
         this.unicityData.UserEntity.transaction.delete({ sk: id, pk: id }),
@@ -88,18 +88,18 @@ class Data {
         },
       );
     }
-    const messages = await this.messageData.Entity
+    const messages = await this.messages.Entity
       .query('pk').eq(`U#${username}`)
       .filter('sk').beginsWith('M')
       .attributes(['sk', 'pk'])
       .exec();
 
-    await Data.batchDelete(messages, this.messageData);
+    await Data.batchDelete(messages, this.messages);
   }
 
   async clearReadMessages() {
-    const messages = await this.messageData.Entity.query('hasBeenRead').eq(1).using('ReadMessagesIndex').exec();
-    await Data.batchDelete(messages, this.messageData);
+    const messages = await this.messages.Entity.query('hasBeenRead').eq(1).using('ReadMessagesIndex').exec();
+    await Data.batchDelete(messages, this.messages);
   }
 
   async deactivateAccounts() {
@@ -107,8 +107,8 @@ class Data {
     const inactiveLimit = UserData.roundTimeToDays(now - this.INACTIVITY_TIME);
     const missedLimit = -UserData.roundTimeToDays(now, 2);
 
-    const inactiveUsers = await this.userData.Entity.query('lastActivity').eq(inactiveLimit).using('LastActivityIndex').exec();
-    const missedUsers = await this.userData.Entity.query('lastActivity').eq(missedLimit).using('LastActivityIndex').exec();
+    const inactiveUsers = await this.users.Entity.query('lastActivity').eq(inactiveLimit).using('LastActivityIndex').exec();
+    const missedUsers = await this.users.Entity.query('lastActivity').eq(missedLimit).using('LastActivityIndex').exec();
 
     const IDs = inactiveUsers.map((iu) => ({
       username: iu.username,
@@ -143,13 +143,13 @@ class Data {
   }
 
   async activityReport() {
-    const { count: notValidatedUsers } = await this.userData.Entity.query('validation').eq('NO_VALIDATION').using('UserValidationIndex').count()
+    const { count: notValidatedUsers } = await this.users.Entity.query('validation').eq('NO_VALIDATION').using('UserValidationIndex').count()
       .exec();
-    const { count: validatingUsers } = await this.userData.Entity.query('validation').eq('IS_VALIDATING').using('UserValidationIndex').count()
+    const { count: validatingUsers } = await this.users.Entity.query('validation').eq('IS_VALIDATING').using('UserValidationIndex').count()
       .exec();
-    const { count: validatedUsers } = await this.userData.Entity.query('validation').eq('VALIDATED').using('UserValidationIndex').count()
+    const { count: validatedUsers } = await this.users.Entity.query('validation').eq('VALIDATED').using('UserValidationIndex').count()
       .exec();
-    const { count: waitingMessages } = await this.messageData.Entity.query('hasBeenRead').eq(0).using('ReadMessagesIndex').count()
+    const { count: waitingMessages } = await this.messages.Entity.query('hasBeenRead').eq(0).using('ReadMessagesIndex').count()
       .exec();
 
     return {

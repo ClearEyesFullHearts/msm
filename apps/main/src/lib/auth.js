@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const debug = require('debug')('msm-main:auth');
 const ErrorHelper = require('./error');
-const Encryption = require('./encryption');
+const Encryption = require('@shared/encryption');
 
 class AuthMiddleware {
   static verify(secret, timeToWait) {
@@ -23,7 +23,7 @@ class AuthMiddleware {
             connection,
             user,
           } = payload;
-          if (!connection || !user || !Number.isInteger(user.id)) {
+          if (!connection || !user) {
             return next(ErrorHelper.getCustomError(401, ErrorHelper.CODE.MIS_AUTH_HEADER, 'Incorrect auth payload'));
           }
 

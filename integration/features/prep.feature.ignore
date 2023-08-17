@@ -78,6 +78,7 @@ Scenario: Set up vaultUser vault
 
 Scenario: Create users
     Given I create random user with length 5
+    And I create random user with length 31
     And I create random user with length 6
     And I create random user with length 7
     And I create random user with length 8
@@ -96,7 +97,7 @@ Scenario: Create users
     And I create random user with length 9
     And I create random user with length 10
     And I create random user with length 11
-    And I create random user with length 12
+    Then I save random users name
     
 Scenario: Put baby in the freezer
     Given I load up user1 public keys
@@ -116,5 +117,5 @@ Scenario: Put baby in the freezer
     When I GET /message/`FIRST_MSG_ID`
     Then response code should be 200
     And I set signature header
-    When I DELETE /user/`MY_ID`
+    When I DELETE /user/baby
     Then response code should be 200

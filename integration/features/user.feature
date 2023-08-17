@@ -22,8 +22,8 @@ Scenario: Username should not contain any special character
     Then response code should be 400
     And response body path $.code should be BAD_REQUEST_FORMAT
 
-Scenario: Username should be less than 125 characters long
-    Given I set var AT_TOO_LONG to a 126 characters long string
+Scenario: Username should be less than 35 characters long
+    Given I set var AT_TOO_LONG to a 36 characters long string
     And I load up user1 public keys
     And I set body to { "at": "`AT_TOO_LONG`", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`" }
     When I POST to /users
@@ -190,7 +190,7 @@ Scenario: A user can delete its account
     And I store the value of body path $.token as access token
     And I set bearer token
     And I set signature header
-    When I DELETE /user/`MY_ID`
+    When I DELETE /user/`MY_AT`
     Then response code should be 200
 
 Scenario: A frozen username cannot be used again

@@ -121,6 +121,7 @@ class UserData {
     const id = uuidv4();
     const keyHash = Encryption.hash(key).toString('base64');
     const sigHash = Encryption.hash(signature).toString('base64');
+    console.log('sig hash', sigHash)
     const newUser = {
       pk: `U#${username}`,
       sk: username,
@@ -131,12 +132,18 @@ class UserData {
       hash,
     };
     try {
-      const result = await dynamoose.transaction([
+      let result = await dynamoose.transaction([
         this.Entity.transaction.create(newUser),
         this.unicity.KeyEntity.transaction.create({ sk: keyHash, pk: keyHash }),
         this.unicity.SigEntity.transaction.create({ sk: sigHash, pk: sigHash }),
         this.unicity.UserEntity.transaction.create({ sk: id, pk: id }),
       ]);
+
+      if (!result) {
+        result = await this.findByName(username);
+      } else {
+        [result] = result;
+      }
 
       return result;
     } catch (exc) {
@@ -180,21 +187,27 @@ class UserData {
       size: username.length,
       at: username,
     };
-    const transacts = searchTerms.map((term) => this.search.Entity.transaction.create({
+    const allTransactions = searchTerms.map((term) => this.search.Entity.transaction.create({
       ...baseSearch,
       sk: term,
     }));
-    const result = await dynamoose.transaction([
-      this.Entity.transaction.update(
-        { pk: `U#${username}`, sk: username },
-        {
-          $SET: { lastActivity: Date.now() },
-        },
-      ),
-      ...transacts,
-    ]);
 
-    return result;
+    const size = 98; const arrayOfTransacts = [];
+    for (let i = 0; i < allTransactions.length; i += size) {
+      arrayOfTransacts.push(allTransactions.slice(i, i + size));
+    }
+
+    arrayOfTransacts.forEach(async (transacts) => {
+      await dynamoose.transaction([
+        this.Entity.transaction.update(
+          { pk: `U#${username}`, sk: username },
+          {
+            $SET: { lastActivity: Date.now() },
+          },
+        ),
+        ...transacts,
+      ]);
+    });
   }
 
   async findByName(at) {
@@ -203,7 +216,9 @@ class UserData {
   }
 
   async searchUsername(search) {
-    const users = await this.search.Entity.query('sk').eq(search).using('SearchUserIndex').exec();
+    const users = await this.search.Entity.query('sk').eq(search).limit(15).using('SearchUserIndex')
+      .exec();
+    console.log('users', users);
     return users || [];
   }
 }

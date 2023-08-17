@@ -5,6 +5,7 @@ const OpenApiValidator = require('express-openapi-validator');
 const debug = require('debug')('msm-main:server');
 const Data = require('@shared/dynamolayer');
 const helmet = require('helmet');
+const morgan = require('morgan');
 const Encryption = require('@shared/encryption');
 const CORS = require('./lib/cors');
 const ErrorHelper = require('./lib/error');
@@ -21,6 +22,7 @@ class MSMMain {
     this.app.options('/*', (req, res) => res.sendStatus(200));
     this.app.use(express.urlencoded({ extended: false }));
     this.app.use(express.json());
+    this.app.use(morgan('combined'));
 
     this.app.locals.appId = APP_ID;
 
@@ -43,8 +45,6 @@ class MSMMain {
     await data.clearReadMessages();
     debug('clear all inactive users');
     await data.deactivateAccounts();
-    debug('unfreeze usernames');
-    await data.unfreezeUsername();
 
     this.app.get('/health', (req, res) => {
       res.status(200).send();
@@ -56,8 +56,6 @@ class MSMMain {
       await data.clearReadMessages();
       debug('clear all inactive users');
       await data.deactivateAccounts();
-      debug('unfreeze usernames');
-      await data.unfreezeUsername();
       debug('send report');
       await this.sendActivityReport();
     }, config.get('timer.interval.clear'));

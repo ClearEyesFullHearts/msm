@@ -7,18 +7,6 @@ const Encryption = require('@shared/encryption');
 const MessageAction = require('./messages');
 const ErrorHelper = require('../../lib/error');
 
-function createSearchTerms(str) {
-  const l = str.length;
-  const terms = [];
-  for (let i = 0; i < l - 2; i += 1) {
-    for (let j = i + 3; j < l; j += 1) {
-      terms.push(str.substring(i, j).toUpperCase());
-    }
-    terms.push(str.substring(i).toUpperCase());
-  }
-  return terms;
-}
-
 class User {
   static async createUser(db, {
     at, key, signature, hash,
@@ -35,15 +23,6 @@ class User {
     }
     if (!Encryption.isBase64(hash)) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong hash format');
-    }
-
-    const knownUser = await db.users.findByName(at);
-    if (knownUser) {
-      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, '@ name already taken');
-    }
-    const frozenUser = await db.freezer.findByName(at);
-    if (frozenUser) {
-      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, '@ name already taken');
     }
 
     try {
@@ -64,9 +43,12 @@ class User {
         key,
         signature,
         hash,
-        searchTerms: createSearchTerms(at),
       });
     } catch (err) {
+      console.log(err);
+      if (err.message === 'Username already exists') {
+        throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, '@ name already taken');
+      }
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, 'Key singularity');
     }
     debug(`user ${at} created with ID = ${newUser.id}`);
@@ -78,11 +60,11 @@ class User {
 
       const encrytedMsg = Encryption.encryptMessage(newUser, welcomeTitle, welcomeContent);
 
-      await MessageAction.writeMessage({db, user: { username: 'do not reply to this message', lastActivity: 1 }}, encrytedMsg, , false);
+      await MessageAction.writeMessage({ db, user: { username: 'do not reply to this message', lastActivity: 1 } }, encrytedMsg, false);
       debug('welcoming message sent');
     } catch (err) {
       debug('Error on first message, user is removed');
-      await db.clearUserAccount({ userId: newUser.id, username: newUser.username }, false);
+      await db.clearUserAccount(newUser, false);
       throw ErrorHelper.getCustomError(500, ErrorHelper.CODE.SERVER_ERROR, 'Encryption issue');
     }
 
@@ -116,7 +98,7 @@ class User {
 
       const { key } = knownUser;
       const rawChallenge = Encryption.hybrid(JSON.stringify(auth), key);
-      if (knownUser.vault !== null) {
+      if (knownUser.vault) {
         const {
           iv,
           token,
@@ -141,10 +123,8 @@ class User {
 
     debug('found', users.length);
     return users.map(({
-      username, id, key, signature,
-    }) => ({
-      id, at: username, key, signature,
-    }));
+      at,
+    }) => (at));
   }
 
   static async getUserByName({ db }, name) {
@@ -177,7 +157,7 @@ class User {
     if (user.lastActivity < 0) {
       throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
     }
-    user.vault = null;
+    delete user.vault;
     await user.save();
     debug('vault item removed');
   }

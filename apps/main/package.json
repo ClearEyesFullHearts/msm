@@ -12,15 +12,16 @@
   "license": "MIT",
   "dependencies": {
     "@shared/dynamolayer": "*",
-    "@shared/validator": "*",
-    "@shared/secrets": "*",
     "@shared/encryption": "*",
+    "@shared/secrets": "*",
+    "@shared/validator": "*",
     "config": "3.3.9",
     "debug": "4.3.4",
     "express": "^4.18.2",
     "express-openapi-validator": "^5.0.4",
     "helmet": "^7.0.0",
-    "jsonwebtoken": "^9.0.0"
+    "jsonwebtoken": "^9.0.0",
+    "morgan": "^1.10.0"
   },
   "devDependencies": {
     "eslint": "^6.7.1",

@@ -4,7 +4,7 @@
     "description": "Integration tests for MSM",
     "main": "",
     "scripts": {
-        "test": "./node_modules/.bin/cucumber-js",
+        "test": "./node_modules/.bin/cucumber-js features/login.feature",
         "win-test": ".\\node_modules\\.bin\\cucumber-js"
     },
     "author": "MFT",

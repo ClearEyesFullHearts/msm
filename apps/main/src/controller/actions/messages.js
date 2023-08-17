@@ -12,12 +12,14 @@ class Message {
       return [];
     }
     debug(`found ${allMessages.length} messages in inbox`);
-    return allMessages.map(({ id, header }) => {
+    return allMessages.map(({ sk, header }) => {
       const {
         token,
         passphrase,
         iv,
       } = header;
+
+      const id = Number(sk.split('#')[1]);
 
       return {
         id,
@@ -84,28 +86,35 @@ class Message {
     }
 
     debug(`get message ${msgId}`);
-    const message = await db.messages.findByID(auth.username, msgId);
+    const message = await db.messages.findByID(reader.username, `M#${msgId}`);
     if (message) {
       debug('message found');
-      message.hasBeenRead = true;
+      message.hasBeenRead = 1;
       await message.save();
       debug('message marked as read');
 
       const {
-        id, full: {
+        sk, full: {
           token,
           passphrase,
           iv,
         },
       } = message;
 
-      reader.lastActivity = Math.floor(Date.now() / (15 * 60000)) * (15 * 60000);
-      await reader.save();
+      if (reader.lastActivity < 0) {
+        await db.users.confirmUser(reader.username);
+      } else {
+        reader.lastActivity = Date.now();
+        await reader.save();
+      }
+
       debug('reader updated');
 
       if (reader.validation === 'NO_VALIDATION' && process.env.NODE_ENV !== 'test') {
         await AsyncAction.autoValidation(db, reader.id);
       }
+
+      const id = Number(sk.split('#')[1]);
 
       debug('full message sent');
       return {
@@ -124,14 +133,15 @@ class Message {
 
   static async removeMessage({ db, user }, msgId) {
     debug(`remove message ${msgId}`);
-    const message = await db.messages.findByID(user.username, msgId);
+    const message = await db.messages.findByID(user.username, `M#${msgId}`);
     if (message) {
       debug('message found');
-      await db.messages.deleteID(user.username, msgId);
+      await db.messages.deleteID(user.username, `M#${msgId}`);
       debug('message removed');
       return;
     }
-    debug('message do not exists, do nothing');
+
+    throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'Message not found');
   }
 }
 

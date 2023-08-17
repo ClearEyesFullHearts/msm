@@ -3,7 +3,7 @@ Feature: Contacts
     update of the contact list
     
 Scenario: update the contact list
-  Given I am existing user G2WLYmatz6
+  Given I am existing `RANDOM_USER.5`
   And I set a random challenge to CONTACT
   And I set body to `CONTACT`
   And I set signature header

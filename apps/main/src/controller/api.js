@@ -23,10 +23,10 @@ module.exports = {
     User.createUser(db, {
       at, key, signature, hash,
     })
-      .then(({ id }) => {
+      .then(({ username }) => {
         res.status(201).send();
 
-        AsyncAction.autoUserRemoval(db, id)
+        AsyncAction.autoUserRemoval(db, username)
           .catch((err) => {
             console.error('error on user auto removal');
             console.error(err);
@@ -136,11 +136,11 @@ module.exports = {
           },
         },
       } = req;
-      Message.getMessage({ db, auth }, msgId)
+      Message.getMessage({ db, auth }, Number(msgId))
         .then((fullMessage) => {
           res.json(fullMessage);
 
-          AsyncAction.autoMessageRemoval(db, msgId)
+          AsyncAction.autoMessageRemoval(db, auth.username, Number(msgId))
             .catch((err) => {
               console.error('error on message auto removal');
               console.error(err);
@@ -273,7 +273,7 @@ module.exports = {
           },
         },
       } = req;
-      Message.removeMessage({ db, user: auth }, msgId)
+      Message.removeMessage({ db, user: auth }, Number(msgId))
         .then(() => {
           res.status(200).send();
         })
