@@ -1,8 +1,5 @@
 const fs = require('fs');
 const apickli = require('apickli');
-// const backup = require('mongodb-backup-4x');
-// const restore = require('mongodb-restore');
-// const mongoose = require('mongoose');
 const {
   Before, After, BeforeAll, AfterAll,
 } = require('@cucumber/cucumber');
@@ -12,33 +9,12 @@ const Util = require('./utils');
 // lengths: ESK = 3222 SSK = 898
 // lengths: ESK = 3222 SSK = 902
 
-// BeforeAll((cb) => {
-// backup({
-//   uri: config.get('mongo.url'),
-//   root: __dirname,
-//   callback: cb,
-// });
-
-//   mongoose.connect(config.get('mongo.url'), { useNewUrlParser: true, useUnifiedTopology: true })
-//     .then(
-//       () => {
-//         mongoose.connection.db.collections()
-//           .then((collections) => Promise.all(
-//             collections.map((collection) => collection.deleteMany({})),
-//           ))
-//           .then(
-//             () => {
-//               restore({
-//                 uri: config.get('mongo.url'),
-//                 root: `${__dirname}/msm`,
-//                 callback: cb,
-//               });
-//             },
-//             (err) => { cb(err); },
-//           );
-//       },
-//     ).catch((err) => { cb(err); });
-// });
+BeforeAll((cb) => {
+  // Util.backupTable().then(cb);
+  Util.emptyTable()
+    .then(() => Util.restoreTable())
+    .then(cb);
+});
 
 Before(function () {
   const host = config.get('base.instance.host');

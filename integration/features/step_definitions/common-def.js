@@ -80,6 +80,7 @@ Given(/^I hash and sign (.*) and (.*) into (.*) with (.*)$/, async function (pkV
 });
 
 Given('I set signature header', function () {
+  this.apickli.removeRequestHeader('x-msm-sig');
   const {
     token, contacts, ...restAuth
   } = this.apickli.scenarioVariables.AUTH;

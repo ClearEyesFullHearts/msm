@@ -1,4 +1,6 @@
 const crypto = require('crypto');
+const dynamoose = require('dynamoose');
+const fs = require('fs');
 
 async function asyncGenerateKeyPair(modulo) {
   return new Promise((resolve, reject) => {
@@ -247,6 +249,178 @@ class Util {
     if (!Buffer.from(properKey, 'base64').toString('base64') === properKey) return false;
 
     return true;
+  }
+
+  static getEverythingModel() {
+    const Everything = dynamoose.model('Everything', new dynamoose.Schema({
+      pk: {
+        type: String,
+        hashKey: true,
+      },
+      sk: {
+        type: String,
+        rangeKey: true,
+      },
+      id: {
+        type: String,
+      },
+      key: {
+        type: String,
+      },
+      signature: {
+        type: String,
+      },
+      hash: {
+        type: String,
+      },
+      vault: {
+        type: Object,
+        schema: {
+          token: {
+            type: String,
+          },
+          iv: {
+            type: String,
+          },
+        },
+      },
+      switch: {
+        type: Object,
+        schema: {
+          token: {
+            type: String,
+          },
+          iv: {
+            type: String,
+          },
+        },
+      },
+      contacts: {
+        type: Object,
+        schema: {
+          token: {
+            type: String,
+          },
+          passphrase: {
+            type: String,
+          },
+          iv: {
+            type: String,
+          },
+        },
+      },
+      lastActivity: {
+        type: Number,
+      },
+      validation: {
+        type: String,
+      },
+      msgCount: {
+        type: Number,
+      },
+      expirationDate: Number,
+      hasBeenRead: {
+        type: Number,
+      },
+      header: {
+        type: Object,
+        schema: {
+          token: {
+            type: String,
+          },
+          passphrase: {
+            type: String,
+          },
+          iv: {
+            type: String,
+          },
+        },
+      },
+      full: {
+        type: Object,
+        schema: {
+          token: {
+            type: String,
+          },
+          passphrase: {
+            type: String,
+          },
+          iv: {
+            type: String,
+          },
+        },
+      },
+      size: {
+        type: Number,
+      },
+      at: {
+        type: String,
+      },
+    }), { tableName: 'MyLocalTable', create: false });
+    const ddb = new dynamoose.aws.ddb.DynamoDB({
+      credentials: {
+        accessKeyId: 'local',
+        secretAccessKey: 'local',
+      },
+      region: 'us-west-2',
+    });
+
+    // Set DynamoDB instance to the Dynamoose DDB instance
+    dynamoose.aws.ddb.set(ddb);
+    dynamoose.aws.ddb.local();
+
+    return Everything;
+  }
+
+  static async backupTable() {
+    const Everything = Util.getEverythingModel();
+
+    const result = await Everything.scan().exec();
+
+    fs.writeFileSync('./data/msm/dynamodb.json', JSON.stringify(result));
+  }
+
+  static async emptyTable() {
+    const Keys = dynamoose.model('Everything', new dynamoose.Schema({
+      pk: {
+        type: String,
+        hashKey: true,
+      },
+      sk: {
+        type: String,
+        rangeKey: true,
+      },
+    }), { tableName: 'MyLocalTable', create: false });
+    const ddb = new dynamoose.aws.ddb.DynamoDB({
+      credentials: {
+        accessKeyId: 'local',
+        secretAccessKey: 'local',
+      },
+      region: 'us-west-2',
+    });
+
+    // Set DynamoDB instance to the Dynamoose DDB instance
+    dynamoose.aws.ddb.set(ddb);
+    dynamoose.aws.ddb.local();
+
+    const result = await Keys.scan().exec();
+
+    const size = 24;
+    for (let i = 0; i < result.length; i += size) {
+      const objects = result.slice(i, i + size);
+      await Keys.batchDelete(objects);
+    }
+  }
+
+  static async restoreTable() {
+    const dynamoTable = JSON.parse(fs.readFileSync('./data/msm/dynamodb.json'));
+    const Everything = Util.getEverythingModel();
+
+    const size = 24;
+    for (let i = 0; i < dynamoTable.length; i += size) {
+      const objects = dynamoTable.slice(i, i + size);
+      await Everything.batchPut(objects);
+    }
   }
 }
 

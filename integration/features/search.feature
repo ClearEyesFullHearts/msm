@@ -11,11 +11,12 @@ Scenario: Get search results
     
 Scenario: Search results are ordered by length
   Given I am existing `RANDOM_USER.7`
-  When I GET /users?search=matD
+  When I GET /users?search=mat
   Then response code should be 200
-  And response body path $ should be of type array with length 2
-  And response body path $.0 should be matdxEWjyZ1A6N
-  And response body path $.1 should be fvxmB0matdOwiyui
+  And response body path $ should be of type array with length 15
+  And response body path $.0 should be mat
+  And response body path $.1 should be batmat
+  And response body path $.2 should be `RANDOM_USER.0`
     
 Scenario: Search with no result should return an empty array
   Given I am existing `RANDOM_USER.7`
@@ -32,11 +33,12 @@ Scenario: Search query should not contain any special character
     
 Scenario: Search query is case insensitive
   Given I am existing `RANDOM_USER.7`
-  When I GET /users?search=MaTd
+  When I GET /users?search=MaT
   Then response code should be 200
-  And response body path $ should be of type array with length 2
-  And response body path $.0 should be matdxEWjyZ1A6N
-  And response body path $.1 should be fvxmB0matdOwiyui
+  And response body path $ should be of type array with length 15
+  And response body path $.0 should be mat
+  And response body path $.1 should be batmat
+  And response body path $.2 should be `RANDOM_USER.0`
     
 Scenario: Get one account information by username
   Given I am existing `RANDOM_USER.7`
@@ -45,15 +47,6 @@ Scenario: Get one account information by username
   And response body path $.at should be batmat
   And response body path $.key should match Encryption Public Key
   And response body path $.signature should match Signature Public Key
-    
-# Scenario: Get one account information by id
-#   Given I am existing `RANDOM_USER.7`
-#   When I GET /user/50052
-#   Then response code should be 200
-#   And response body path $.id should be 50052
-#   And response body path $.at should be batmat
-#   And response body path $.key should match Encryption Public Key
-#   And response body path $.signature should match Signature Public Key
     
 Scenario: Account username should be at least 3 characters long
     
