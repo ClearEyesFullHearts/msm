@@ -100,8 +100,8 @@ Scenario: Create users
     Then I save random users name
     
 Scenario: Put baby in the freezer
-    Given I load up user1 public keys
-    And I load up user1 private keys
+    Given I load up baby public keys
+    And I load up baby private keys
     And I set body to { "at": "baby", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`" }
     When I POST to /users
     Then response code should be 201

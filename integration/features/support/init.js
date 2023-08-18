@@ -7,9 +7,7 @@ const {
   Before, After, BeforeAll, AfterAll,
 } = require('@cucumber/cucumber');
 const config = require('config');
-
-// 2tMoQaqematKU => double validation OK
-// eSHmatFIR1eg => double validation KO
+const Util = require('./utils');
 
 // lengths: ESK = 3222 SSK = 898
 // lengths: ESK = 3222 SSK = 902

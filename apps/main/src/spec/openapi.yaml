@@ -501,7 +501,7 @@ components:
           type: string
           format: byte
           minLength: 5548
-          maxLength: 5552
+          maxLength: 5556
         iv:
           type: string
           format: byte

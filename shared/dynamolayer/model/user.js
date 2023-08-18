@@ -82,6 +82,7 @@ class UserData {
         type: Number,
         default: 0,
       },
+      expirationDate: Number,
     });
   }
 
@@ -121,7 +122,7 @@ class UserData {
     const id = uuidv4();
     const keyHash = Encryption.hash(key).toString('base64');
     const sigHash = Encryption.hash(signature).toString('base64');
-    console.log('sig hash', sigHash)
+
     const newUser = {
       pk: `U#${username}`,
       sk: username,
@@ -212,13 +213,13 @@ class UserData {
 
   async findByName(at) {
     const user = await this.Entity.get({ pk: `U#${at}`, sk: at });
+    if (user && user.expirationDate && user.expirationDate > 0) return undefined;
     return user;
   }
 
   async searchUsername(search) {
     const users = await this.search.Entity.query('sk').eq(search).limit(15).using('SearchUserIndex')
       .exec();
-    console.log('users', users);
     return users || [];
   }
 }

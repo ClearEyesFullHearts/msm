@@ -1,9 +1,8 @@
 Feature: Single Test
 
     For a single
-    
-Scenario: Register a new user
-    Given I load up user1 public keys
-    And I set body to { "at": "user1", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`" }
-    When I POST to /users
-    Then response code should be 201
+
+Scenario: Unknown username returns an error
+    When I GET /identity/Unknown
+    Then response code should be 404
+    And response body path $.code should be UNKNOWN_USER

@@ -75,9 +75,8 @@ Scenario: Authentication is mandatory to get a full message
 
 Scenario: Signature header is mandatory to delete one self
     Given I am authenticated user batmat
-    And I store the value of body path $.user.id as MY_ID in scenario scope
     And I set false signature header
-    When I DELETE /user/`MY_ID`
+    When I DELETE /user/`MY_AT`
     Then response code should be 403
     And response body path $.code should be FORBIDDEN
 
