@@ -1,7 +1,4 @@
 {
-  "mongo": {
-    "ssl": true
-  },
   "instance": {
     "cors":{
       "Access-Control-Allow-Origin": "https://alpha.ysypya.com"

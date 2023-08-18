@@ -15,7 +15,8 @@ services:
       - DEBUG=msm-main:*,datalayer:*
       - NODE_ENV=dock-dev
     
-  server-database:
-    image: mongo:4.2.24-rc2-bionic
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: server-database
     ports:
-      - 27017:27017
+      - "8000:8000"
