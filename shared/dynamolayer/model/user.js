@@ -188,18 +188,17 @@ class UserData {
       size: username.length,
       at: username,
     };
+
+    // create all transactions
     const allTransactions = searchTerms.map((term) => this.search.Entity.transaction.create({
       ...baseSearch,
       sk: term,
     }));
 
-    const size = 98; const arrayOfTransacts = [];
+    const size = 99; const arrayOfTransacts = [];
     for (let i = 0; i < allTransactions.length; i += size) {
-      arrayOfTransacts.push(allTransactions.slice(i, i + size));
-    }
-
-    arrayOfTransacts.forEach(async (transacts) => {
-      await dynamoose.transaction([
+      const transacts = allTransactions.slice(i, i + size);
+      arrayOfTransacts.push(dynamoose.transaction([
         this.Entity.transaction.update(
           { pk: `U#${username}`, sk: username },
           {
@@ -207,8 +206,10 @@ class UserData {
           },
         ),
         ...transacts,
-      ]);
-    });
+      ]));
+    }
+
+    await Promise.all(arrayOfTransacts);
   }
 
   async findByName(at) {

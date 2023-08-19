@@ -38,9 +38,9 @@ class Async {
     debug('message do not exists, no action');
   }
 
-  static async autoValidation(db, userId) {
-    debug('Auto User Validation', userId);
-    const user = await db.users.findByID(userId);
+  static async autoValidation(db, name) {
+    debug('Auto User Validation', name);
+    const user = await db.users.findByName(name);
 
     if (!user) {
       debug('Unknown user, no validation');
@@ -84,7 +84,7 @@ class Async {
             user.validation = 'NO_VALIDATION';
             await user.save();
           } catch (exc) {
-            console.error('impossible to save user', exc);
+            console.error('impossible to save user', name, exc);
           }
         });
     } catch (err) {
@@ -93,7 +93,7 @@ class Async {
         user.validation = 'NO_VALIDATION';
         await user.save();
       } catch (exc) {
-        console.error('impossible to save user', exc);
+        console.error('impossible to save user', name, exc);
       }
     }
   }

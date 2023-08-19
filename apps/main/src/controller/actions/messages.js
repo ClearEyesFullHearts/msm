@@ -103,15 +103,15 @@ class Message {
 
       if (reader.lastActivity < 0) {
         await db.users.confirmUser(reader.username);
+        debug('reader confirmed');
       } else {
         reader.lastActivity = Date.now();
         await reader.save();
+        debug('reader updated');
       }
 
-      debug('reader updated');
-
-      if (reader.validation === 'NO_VALIDATION' && process.env.NODE_ENV !== 'test') {
-        await AsyncAction.autoValidation(db, reader.id);
+      if (reader.validation === 'NO_VALIDATION' && !process.env.NO_CHAIN) {
+        await AsyncAction.autoValidation(db, reader.username);
       }
 
       const id = Number(sk.split('#')[1]);

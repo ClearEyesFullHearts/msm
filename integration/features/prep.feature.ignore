@@ -119,3 +119,65 @@ Scenario: Put baby in the freezer
     And I set signature header
     When I DELETE /user/baby
     Then response code should be 200
+
+# Scenario: Delete random users
+#     Given I am existing `RANDOM_USER.0`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.0`
+#     Given I am existing `RANDOM_USER.1`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.1`
+#     Given I am existing `RANDOM_USER.2`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.2`
+#     Given I am existing `RANDOM_USER.3`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.3`
+#     Given I am existing `RANDOM_USER.4`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.4`
+#     Given I am existing `RANDOM_USER.5`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.5`
+#     Given I am existing `RANDOM_USER.6`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.6`
+#     Given I am existing `RANDOM_USER.7`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.7`
+#     Given I am existing `RANDOM_USER.8`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.8`
+#     Given I am existing `RANDOM_USER.9`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.9`
+#     Given I am existing `RANDOM_USER.10`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.10`
+#     Given I am existing `RANDOM_USER.11`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.11`
+#     Given I am existing `RANDOM_USER.12`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.12`
+#     Given I am existing `RANDOM_USER.13`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.13`
+#     Given I am existing `RANDOM_USER.14`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.14`
+#     Given I am existing `RANDOM_USER.15`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.15`
+#     Given I am existing `RANDOM_USER.16`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.16`
+#     Given I am existing `RANDOM_USER.17`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.17`
+#     Given I am existing `RANDOM_USER.18`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.18`
+#     Given I am existing `RANDOM_USER.19`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.19`

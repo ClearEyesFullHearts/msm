@@ -7,8 +7,6 @@ const UnicityData = require('./model/unicity');
 const SearchData = require('./model/search');
 const FreezerData = require('./model/freezer');
 
-const TABLE_NAME = 'MyLocalTable';
-
 class Data {
   constructor(config, options) {
     this.unicityData = new UnicityData();
@@ -17,9 +15,18 @@ class Data {
     this.users = new UserData();
     this.messages = new MessageData();
 
-    const { local, ...connConfig } = config;
-    this.CONNECTION = connConfig;
+    const { local, tableName, ...connConfig } = config;
+    this.CONNECTION = {
+      ...connConfig,
+      expires: {
+        attribute: 'expirationDate',
+        items: {
+          returnExpired: false,
+        },
+      },
+    };
     this.IS_LOCAL = local;
+    this.TABLE_NAME = tableName;
 
     const { frozen, inactivity } = options;
     this.FROZEN_TIME = frozen;
@@ -29,15 +36,13 @@ class Data {
   static async batchDelete(keys, data) {
     if (!keys.length) return;
 
-    await keys.reduce(async (prev, { pk, sk }, index) => {
-      const arr = await prev;
-      arr.push({ pk, sk });
-      if (arr.length >= 24 || index >= keys.length - 1) {
-        await data.Entity.batchDelete(arr);
-        return [];
-      }
-      return arr;
-    }, Promise.resolve([]));
+    const size = 24; const arrayOfBatch = [];
+    for (let i = 0; i < keys.length; i += size) {
+      const batchKeys = keys.slice(i, i + size);
+      arrayOfBatch.push(data.Entity.batchDelete(batchKeys));
+    }
+
+    await Promise.all(arrayOfBatch);
   }
 
   init() {
@@ -46,17 +51,17 @@ class Data {
 
     // Set DynamoDB instance to the Dynamoose DDB instance
     dynamoose.aws.ddb.set(ddb);
-    if (this.IS_LOCAL) dynamoose.aws.ddb.local();
+    if (this.IS_LOCAL) dynamoose.aws.ddb.local(this.IS_LOCAL.url);
 
-    this.unicityData.init(TABLE_NAME);
-    this.searchData.init(TABLE_NAME);
-    this.freezerData.init(TABLE_NAME);
+    this.unicityData.init(this.TABLE_NAME);
+    this.searchData.init(this.TABLE_NAME);
+    this.freezerData.init(this.TABLE_NAME);
 
-    this.users.init(TABLE_NAME, {
+    this.users.init(this.TABLE_NAME, {
       unicity: this.unicityData,
       search: this.searchData,
     });
-    this.messages.init(TABLE_NAME, { user: this.users });
+    this.messages.init(this.TABLE_NAME, { user: this.users });
 
     debug('finished initialization');
   }

@@ -5,7 +5,10 @@
       "secretAccessKey": "local"
     },
     "region": "us-west-2",
-    "local": true
+    "local": {
+      "url": "http://localhost:8000"
+    },
+    "tableName": "MyLocalTable"
   },
   "instance": {
     "port": 4000,

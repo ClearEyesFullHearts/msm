@@ -45,7 +45,6 @@ class User {
         hash,
       });
     } catch (err) {
-      console.log(err);
       if (err.message === 'Username already exists') {
         throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, '@ name already taken');
       }

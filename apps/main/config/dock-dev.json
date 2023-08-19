@@ -1,8 +1,13 @@
 {
+  "dynamo": {
+    "local": {
+      "url": "http://dynamodb-local:8000"
+    }
+  },
   "timer": {
     "removal": {
-      "message": 200,
-      "user": 200
+      "message": 300,
+      "user": 300
     }
   }
 }

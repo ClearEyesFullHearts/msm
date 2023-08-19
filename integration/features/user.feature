@@ -142,7 +142,7 @@ Scenario: I cannot register 2 users with the same signature key
 
 Scenario: Inactivate user is removed after a time
     Given I am a new invalidated user
-    And I wait for 300 ms
+    And I wait for 400 ms
     And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`" }
     When I POST to /users
     Then response code should be 201
@@ -175,7 +175,7 @@ Scenario: A new user should validate its account by requesting the first message
     And response body path $.id should be ^[0-9]\d*$
     And response body path $ should match a challenge
     And resolved challenge path $.from should match @do not reply to this message
-    And I wait for 300 ms
+    And I wait for 400 ms
     And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`" }
     When I POST to /users
     Then response code should be 403

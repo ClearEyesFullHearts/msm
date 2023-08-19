@@ -34,7 +34,7 @@ Scenario: Messages is deleted after reading
   And I GET /inbox
   And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
   And I GET /message/`FIRST_MSG_ID`
-  When I wait for 300 ms
+  When I wait for 400 ms
   Then I GET /message/`FIRST_MSG_ID`
   And response code should be 404
 

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "win-launch": "set DEBUG=msm-main:*,datalayer:*,secrets:*&& node index.js",
-    "win-launch-test": "set NODE_ENV=test&& set DEBUG=msm-main:*,datalayer:*,secrets:*&& node index.js",
+    "win-launch-test": "set NO_CHAIN=true&&set NODE_ENV=test&& set DEBUG=msm-main:*,datalayer:*,secrets:*&& node index.js",
     "test": "jest"
   },
   "author": "MFT",
