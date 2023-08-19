@@ -133,7 +133,8 @@ export const useMessagesStore = defineStore({
         alertStore.error(`An error occured: ${error}`);
       }
     },
-    async addTarget(user) {
+    async addTarget(name) {
+      const user = await fetchWrapper.get(`${baseUrl}/user/${name}`);
       const {
         key,
         signature

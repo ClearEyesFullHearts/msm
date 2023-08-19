@@ -56,11 +56,11 @@ function selectUser(user) {
       >
         <li
           v-for="user in users"
-          :key="user.at"
+          :key="user"
           class="list-group-item pointer"
           @click="selectUser(user)"
         >
-          {{ user.at }}
+          {{ user }}
         </li>
       </ul>
     </div>

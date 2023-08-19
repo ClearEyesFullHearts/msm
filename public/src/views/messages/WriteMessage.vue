@@ -5,13 +5,12 @@ import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 
 import { Autocomplete } from '@/components';
-import { useMessagesStore, useAlertStore, useUsersStore } from '@/stores';
+import { useMessagesStore, useAlertStore } from '@/stores';
 
 const router = useRouter();
 
 const messageStore = useMessagesStore();
 const alertStore = useAlertStore();
-const userStore = useUsersStore();
 
 const title = 'Write a Message';
 const { targetMessage, contentLength, targetAt } = storeToRefs(messageStore);
@@ -28,14 +27,7 @@ const schema = Yup.object().shape({
 });
 
 if (messageStore.targetMessage.at) {
-  userStore.returnOne(messageStore.targetMessage.at)
-    .then((target) => {
-      // messageStore.targetAt.push(target);
-      messageStore.addTarget(target);
-    })
-    .catch((err) => {
-      alertStore.error(`${err}`);
-    });
+  messageStore.addTarget(messageStore.targetMessage.at);
 }
 
 async function onSubmit(values) {

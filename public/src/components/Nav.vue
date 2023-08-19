@@ -16,7 +16,7 @@ onMounted(() => {
 
 async function incinerate() {
   if (window.confirm('Do you really want to burn this account?')) {
-    await usersStore.destroy(authStore.user.user.id);
+    await usersStore.destroy(authStore.user.user.username);
     authStore.logout();
   }
 }

@@ -3,7 +3,7 @@ import { reactive } from 'vue';
 import { defineStore } from 'pinia';
 import { fetchWrapper } from '@/helpers';
 import CryptoHelper from '@/lib/cryptoHelper';
-import ChainHelper from '@/lib/ChainHelper';
+import ChainHelper from '@/lib/chainHelper';
 
 const mycrypto = new CryptoHelper();
 const myvalidator = new ChainHelper();
@@ -34,7 +34,7 @@ export const useContactsStore = defineStore({
         alert: null,
       });
       this.list.push(checkingUser);
-      return fetchWrapper.get(`${baseUrl}/user/${id}`)
+      return fetchWrapper.get(`${baseUrl}/user/${at}`)
         .then(async ({ key, signature }) => {
           const hash = await mycrypto.hash(`${key}\n${signature}`);
           checkingUser.server.hash = hash;
@@ -119,7 +119,8 @@ export const useContactsStore = defineStore({
       this.list.splice(index, 1);
       this.dirty = true;
     },
-    async manualAdd(user) {
+    async manualAdd(name) {
+      const user = await fetchWrapper.get(`${baseUrl}/user/${name}`);
       const {
         id,
         at,

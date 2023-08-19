@@ -13,7 +13,7 @@ const hasVault = ref(false);
 
 const schema = Yup.object().shape({
   passphrase: Yup.string()
-    // .min(16, 'Passphrase must be at least 16 characters')
+    .min(8, 'Passphrase must be at least 8 characters')
     .required('Passphrase is required'),
   confirmPassphrase: Yup.string()
     .oneOf([Yup.ref('passphrase'), null], 'Passphrases must match')
@@ -50,7 +50,7 @@ function onDownloadSK() {
         <div class="card-body">
           <ul>
             <li>
-              Enter a pass phrase (minimum 16 characters) to encrypt your secret key and send it to us.
+              Enter a pass phrase (minimum 8 characters) to encrypt your secret key and send it to us.
               You'll then be able to login with that pass phrase instead of your secret key file
             </li>
             <li>

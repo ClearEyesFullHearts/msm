@@ -19,14 +19,14 @@ const schema = Yup.object().shape({
   username: Yup.string()
     .required('User @ is required')
     .min(3, 'Your @ should be at least 3 characters long')
-    .max(125, 'Your @ should not be longer than 125 characters'),
+    .max(35, 'Your @ should not be longer than 35 characters'),
 });
 
 async function register(values) {
   try {
     await usersStore.register(values);
-    await router.push('/account/login');
-    alertStore.success('Registration successful');
+    router.push('/account/login');
+    // alertStore.success('Registration successful');
   } catch (error) {
     alertStore.error(error);
   }

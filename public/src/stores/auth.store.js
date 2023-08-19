@@ -5,7 +5,7 @@ import { fetchWrapper } from '@/helpers';
 import { router } from '@/router';
 import { useAlertStore, useContactsStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
-import ChainHelper from '@/lib/ChainHelper';
+import ChainHelper from '@/lib/chainHelper';
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 const mycrypto = new CryptoHelper();
