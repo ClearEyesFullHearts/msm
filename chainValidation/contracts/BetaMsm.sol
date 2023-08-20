@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract BetaMsm is Ownable {
 
-    event UserValidated(uint64 indexed userId, string signature);
+    event UserValidated(string indexed userId, string signature);
     
-    function userValidated(uint64 userId, string memory signature) public onlyOwner {
+    function userValidated(string memory userId, string memory signature) public onlyOwner {
       emit UserValidated(userId, signature);
    }
 }
