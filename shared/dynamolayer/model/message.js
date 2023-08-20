@@ -74,7 +74,7 @@ class MessageData {
   async getUserMessages(username) {
     const messages = await this.Entity
       .query('pk').eq(`U#${username}`)
-      .filter('sk').beginsWith('M')
+      .filter('sk').beginsWith('M#')
       .attributes(['sk', 'header'])
       .sort('descending')
       .exec();

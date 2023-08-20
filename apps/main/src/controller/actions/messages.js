@@ -6,7 +6,7 @@ const ErrorHelper = require('../../lib/error');
 
 class Message {
   static async getInbox({ db, auth }) {
-    debug(`get inbox for user ${auth.id}`);
+    debug(`get inbox for user ${auth.username}`);
     const allMessages = await db.messages.getUserMessages(auth.username);
     if (!allMessages) {
       return [];
