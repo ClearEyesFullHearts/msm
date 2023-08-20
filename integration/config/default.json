@@ -1,6 +1,8 @@
 {
-  "mongo": {
-    "url": "mongodb://127.0.0.1:27017/msm"
+  "dynamo": {
+    "accessKeyId": "local",
+    "secretAccessKey": "local",
+    "region": "us-west-2"
   },
   "base": {
     "instance": {

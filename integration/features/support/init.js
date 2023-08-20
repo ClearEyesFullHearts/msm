@@ -11,6 +11,9 @@ const Util = require('./utils');
 
 BeforeAll((cb) => {
   // Util.backupTable().then(cb);
+  process.env.AWS_REGION = config.get('dynamo.region');
+  process.env.AWS_ACCESS_KEY_ID = config.get('dynamo.accessKeyId');
+  process.env.AWS_SECRET_ACCESS_KEY = config.get('dynamo.secretAccessKey');
   Util.emptyTable()
     .then(() => Util.restoreTable())
     .then(cb);
