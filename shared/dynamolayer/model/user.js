@@ -223,6 +223,24 @@ class UserData {
       .exec();
     return users || [];
   }
+
+  async updateLastActivity(username) {
+    this.Entity.update(
+      { pk: `U#${username}`, sk: username },
+      {
+        $SET: { lastActivity: UserData.roundTimeToDays(Date.now()) },
+      },
+    );
+  }
+
+  async updateValidation(username, val) {
+    this.Entity.update(
+      { pk: `U#${username}`, sk: username },
+      {
+        $SET: { validation: val },
+      },
+    );
+  }
 }
 
 module.exports = UserData;

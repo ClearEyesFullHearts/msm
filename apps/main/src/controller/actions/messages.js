@@ -89,8 +89,7 @@ class Message {
     const message = await db.messages.findByID(reader.username, `M#${msgId}`);
     if (message) {
       debug('message found');
-      message.hasBeenRead = 1;
-      await message.save();
+      await db.messages.updateReadStatus(auth.username, `M#${msgId}`);
       debug('message marked as read');
 
       const {
@@ -105,8 +104,7 @@ class Message {
         await db.users.confirmUser(reader.username);
         debug('reader confirmed');
       } else {
-        reader.lastActivity = Date.now();
-        await reader.save();
+        await db.users.updateLastActivity(auth.username);
         debug('reader updated');
       }
 

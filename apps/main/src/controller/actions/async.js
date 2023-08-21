@@ -52,11 +52,10 @@ class Async {
       return;
     }
 
-    user.validation = 'IS_VALIDATING';
-    await user.save();
+    await db.users.updateValidation(user.username, 'IS_VALIDATING');
 
     try {
-      debug('Validating user', user.id);
+      debug('Validating user', name);
 
       const validator = new Validator({
         network: config.get('ether.network'),
@@ -70,28 +69,27 @@ class Async {
       validator.validateUser({ userId: user.id, signature: user.hash })
         .then(async (isValid) => {
           if (isValid) {
-            user.validation = 'VALIDATED';
-            debug('User is validated');
+            await db.users.updateValidation(user.username, 'VALIDATED');
+            debug(`User ${user.username} is validated`);
           } else {
-            user.validation = 'NO_VALIDATION';
-            debug('User is not validated');
+            await db.users.updateValidation(user.username, 'NO_VALIDATION');
+            debug(`User ${user.username} is not validated`);
           }
-          await user.save();
         })
         .catch(async (err) => {
-          debug('User is not validated, an async error happened', err);
+          debug(`User ${user.username} is not validated, an async error happened`, err);
           try {
-            user.validation = 'NO_VALIDATION';
-            await user.save();
+            await db.users.updateValidation(user.username, 'NO_VALIDATION');
+            debug(`User ${user.username} is not validated`);
           } catch (exc) {
             console.error('impossible to save user', name, exc);
           }
         });
     } catch (err) {
-      debug('User is not validated, an error happened', err);
+      debug(`User ${user.username} is not validated, an error happened`, err);
       try {
-        user.validation = 'NO_VALIDATION';
-        await user.save();
+        await db.users.updateValidation(user.username, 'NO_VALIDATION');
+        debug(`User ${user.username} is not validated`);
       } catch (exc) {
         console.error('impossible to save user', name, exc);
       }

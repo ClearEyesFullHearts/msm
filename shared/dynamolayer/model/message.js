@@ -86,6 +86,15 @@ class MessageData {
     const result = await this.Entity.delete({ pk: `U#${username}`, sk: msgId });
     return result;
   }
+
+  async updateReadStatus(username, msgId) {
+    this.Entity.update(
+      { pk: `U#${username}`, sk: msgId },
+      {
+        $SET: { hasBeenRead: 1 },
+      },
+    );
+  }
 }
 
 module.exports = MessageData;
