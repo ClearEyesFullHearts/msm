@@ -5,7 +5,7 @@
       "tableName": "BetaMSMTable",
       "create": false,
       "waitForActive": false,
-      "initialize": false
+      "update": false
     }
   },
   "instance": {
