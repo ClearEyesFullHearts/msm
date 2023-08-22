@@ -15,18 +15,9 @@ class Data {
     this.users = new UserData();
     this.messages = new MessageData();
 
-    const { local, tableName, ...connConfig } = config;
-    this.CONNECTION = {
-      ...connConfig,
-      expires: {
-        attribute: 'expirationDate',
-        items: {
-          returnExpired: false,
-        },
-      },
-    };
+    const { local, options: tableOptions } = config;
     this.IS_LOCAL = local;
-    this.TABLE_NAME = tableName;
+    this.TABLE_OPTIONS = tableOptions;
 
     const { frozen, inactivity } = options;
     this.FROZEN_TIME = frozen;
@@ -47,21 +38,21 @@ class Data {
 
   init() {
     // Create new DynamoDB instance
-    const ddb = new dynamoose.aws.ddb.DynamoDB(this.CONNECTION);
+    const ddb = new dynamoose.aws.ddb.DynamoDB();
 
     // Set DynamoDB instance to the Dynamoose DDB instance
     dynamoose.aws.ddb.set(ddb);
     if (this.IS_LOCAL) dynamoose.aws.ddb.local(this.IS_LOCAL.url);
 
-    this.unicityData.init(this.TABLE_NAME);
-    this.searchData.init(this.TABLE_NAME);
-    this.freezerData.init(this.TABLE_NAME);
+    this.unicityData.init(this.TABLE_OPTIONS);
+    this.searchData.init(this.TABLE_OPTIONS);
+    this.freezerData.init(this.TABLE_OPTIONS);
 
-    this.users.init(this.TABLE_NAME, {
+    this.users.init(this.TABLE_OPTIONS, {
       unicity: this.unicityData,
       search: this.searchData,
     });
-    this.messages.init(this.TABLE_NAME, { user: this.users });
+    this.messages.init(this.TABLE_OPTIONS, { user: this.users });
 
     debug('finished initialization');
   }

@@ -46,10 +46,10 @@ class UnicityData {
     });
   }
 
-  init(tableName) {
-    this.KeyEntity = dynamoose.model('KeyUnicity', this.keyUnicitySchema, { tableName });
-    this.SigEntity = dynamoose.model('SigUnicity', this.signatureUnicitySchema, { tableName });
-    this.UserEntity = dynamoose.model('UserUnicity', this.userIdUnicitySchema, { tableName });
+  init(options) {
+    this.KeyEntity = dynamoose.model('KeyUnicity', this.keyUnicitySchema, options);
+    this.SigEntity = dynamoose.model('SigUnicity', this.signatureUnicitySchema, options);
+    this.UserEntity = dynamoose.model('UserUnicity', this.userIdUnicitySchema, options);
   }
 }
 

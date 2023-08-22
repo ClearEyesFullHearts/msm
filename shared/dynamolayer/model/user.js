@@ -104,11 +104,11 @@ class UserData {
     return dayMs + (addDays * daysInMs);
   }
 
-  init(tableName, {
+  init(options, {
     unicity,
     search,
   }) {
-    this.Entity = dynamoose.model('User', this.userSchema, { tableName });
+    this.Entity = dynamoose.model('User', this.userSchema, options);
     this.unicity = unicity;
     this.search = search;
   }

@@ -1,14 +1,11 @@
 {
   "dynamo": {
-    "credentials": {
-      "accessKeyId": "local",
-      "secretAccessKey": "local"
-    },
-    "region": "us-west-2",
     "local": {
       "url": "http://localhost:8000"
     },
-    "tableName": "MyLocalTable"
+    "options": {
+      "tableName": "MyLocalTable"
+    }
   },
   "instance": {
     "port": 4000,

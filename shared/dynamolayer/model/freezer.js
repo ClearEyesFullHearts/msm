@@ -23,8 +23,8 @@ class FreezerData {
     });
   }
 
-  init(tableName) {
-    this.Entity = dynamoose.model('Freezer', this.freezerSchema, { tableName });
+  init(options) {
+    this.Entity = dynamoose.model('Freezer', this.freezerSchema, options);
   }
 }
 

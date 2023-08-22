@@ -1,11 +1,4 @@
 {
-  "dynamo": {
-    "credentials": {
-      "accessKeyId": "KEY_DYNAMO_ACCESS",
-      "secretAccessKey": "KEY_DYNAMO_SECRET"
-    },
-    "region": "KEY_DYNAMO_REGION"
-  },
   "auth": "KEY_AUTH_SIGN",
   "instance": {
     "reportTarget": "KEY_REPORT_AT"

@@ -30,8 +30,8 @@ class SearchData {
     });
   }
 
-  init(tableName) {
-    this.Entity = dynamoose.model('Search', this.searchSchema, { tableName });
+  init(options) {
+    this.Entity = dynamoose.model('Search', this.searchSchema, options);
   }
 }
 

@@ -40,10 +40,10 @@ class MessageData {
     });
   }
 
-  init(tableName, {
+  init(options, {
     user,
   }) {
-    this.Entity = dynamoose.model('Message', this.messageSchema, { tableName });
+    this.Entity = dynamoose.model('Message', this.messageSchema, options);
     this.user = user;
   }
 
