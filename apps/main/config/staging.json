@@ -3,10 +3,5 @@
     "local": false,
     "tableName": "BetaMSMTable",
     "createTable": false
-  },
-  "instance": {
-    "cors":{
-      "Access-Control-Allow-Origin": "https://alpha.ysypya.com"
-    }
   }
 }

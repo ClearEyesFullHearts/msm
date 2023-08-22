@@ -1,0 +1,114 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation template for creating a task definition"
+Resources:
+  BetaMSMTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      RequiresCompatibilities:
+        - "FARGATE"
+      ExecutionRoleArn: "arn:aws:iam::914445634489:role/ecsTaskExecutionRole"
+      TaskRoleArn: "arn:aws:iam::914445634489:role/EcsTaskRole"
+      Cpu: 256
+      Memory: 512
+      NetworkMode: "awsvpc"
+      ContainerDefinitions:
+        - Name: "msm-beta-restapi"
+          Image: "public.ecr.aws/q0f4v2r9/cantlose:mft-msm-restapi.beta.2"
+          MemoryReservation: 256
+          Memory: 512
+          PortMappings:
+            - ContainerPort: 4000
+              Protocol: tcp
+          Environment:
+            - Name: "NODE_ENV"
+              Value: "staging"
+            - Name: "KEY_REPORT_AT"
+              Value: "mat"
+            - Name: "SECRET_LOCATION"
+              Value: "BetaMSMSecret"
+            - Name: "DEBUG"
+              Value: "msm-main:*,dynamolayer:*,secrets:*,validator:"
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-create-group: true
+              awslogs-group: "/ecs/beta-msm"
+              awslogs-region: "eu-west-3"
+              awslogs-stream-prefix: "ecs"
+
+  BetaMSMCluster:
+    Type: 'AWS::ECS::Cluster'
+    Properties:
+      ClusterName: BetaMSMCluster
+  BetaMSMAlb:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Name: BetaMSMAlb
+      Subnets:
+        - subnet-0833870d0829c0639
+        - subnet-0de7e9e52a12314d3
+        - subnet-0dc7ddc636c6cf60f
+      Type: application
+      SecurityGroups:
+        - !GetAtt BetaMSMAlbSG.GroupId
+  BetaMSMTargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: BetaMSMTargetGroup
+      VpcId: vpc-03208d77b0c881a5e
+      Protocol: HTTP
+      Port: 4000
+      HealthCheckPath: /health/
+      TargetType: ip
+  Listener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref BetaMSMTargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref BetaMSMAlb
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: arn:aws:acm:eu-west-3:914445634489:certificate/a59a9300-8810-4c0f-a13b-e4e7501a97b9
+  BetaMSMAlbSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: SG for Beta Msm ALB
+      GroupName: BetaMSMAlbSG
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 443
+          ToPort: 443
+          IpProtocol: TCP
+          Description: 'Inbound rule for HTTPS traffic'
+        - CidrIp: 172.31.0.0/16
+          FromPort: 4000
+          ToPort: 4000
+          IpProtocol: TCP
+          Description: 'Inbound rule for container traffic'
+  BetaMSMService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - Listener
+    Properties:
+      LaunchType: FARGATE
+      Cluster:
+        Ref: "BetaMSMCluster"
+      DesiredCount: 1
+      TaskDefinition:
+        Ref: "BetaMSMTaskDefinition"
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !GetAtt BetaMSMAlbSG.GroupId
+          Subnets: ['subnet-0833870d0829c0639','subnet-0de7e9e52a12314d3','subnet-0dc7ddc636c6cf60f']
+      LoadBalancers:
+        - TargetGroupArn:
+            Ref: BetaMSMTargetGroup
+          ContainerPort: 4000
+          ContainerName: msm-beta-restapi
