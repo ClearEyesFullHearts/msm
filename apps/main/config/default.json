@@ -3,9 +3,8 @@
     "local": {
       "url": "http://localhost:8000"
     },
-    "options": {
-      "tableName": "MyLocalTable"
-    }
+    "tableName": "MyLocalTable",
+    "createTable": true
   },
   "instance": {
     "port": 4000,

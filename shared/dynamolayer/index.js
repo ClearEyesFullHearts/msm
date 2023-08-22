@@ -7,6 +7,11 @@ const UnicityData = require('./model/unicity');
 const SearchData = require('./model/search');
 const FreezerData = require('./model/freezer');
 
+const noTableCreationOptions = {
+  create: false,
+  waitForActive: false,
+  update: false,
+};
 class Data {
   constructor(config, options) {
     this.unicityData = new UnicityData();
@@ -15,7 +20,14 @@ class Data {
     this.users = new UserData();
     this.messages = new MessageData();
 
-    const { local, options: tableOptions } = config;
+    const { local, tableName, createTable } = config;
+    let tableOptions = { tableName };
+    if (!createTable) {
+      tableOptions = {
+        tableName,
+        ...noTableCreationOptions,
+      };
+    }
     this.IS_LOCAL = local;
     this.TABLE_OPTIONS = tableOptions;
 

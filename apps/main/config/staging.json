@@ -1,12 +1,8 @@
 {
   "dynamo": {
     "local": false,
-    "options": {
-      "tableName": "BetaMSMTable",
-      "create": false,
-      "waitForActive": false,
-      "update": false
-    }
+    "tableName": "BetaMSMTable",
+    "createTable": false
   },
   "instance": {
     "cors":{
