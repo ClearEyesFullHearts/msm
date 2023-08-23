@@ -62,10 +62,6 @@ const { user } = storeToRefs(authStore);
                 Everyone who has access to a copy of the SK shares the account.<br>
               </li>
               <li>
-                You will be asked to log to your account (re-upload the SK) every 15 minutes.<br>
-                The remaining time until you have to is diplayed in the top right corner.
-              </li>
-              <li>
                 Once a message content is read it is deleted from our side after 2 minutes.
               </li>
               <li>
@@ -75,11 +71,32 @@ const { user } = storeToRefs(authStore);
               </li>
               <li>
                 If your account hasn't been active (hasn't opened a message) for 30 days,
-                it will be incinerated
+                it will be deleted.
               </li>
               <li>
                 If you press the big red button up top (and confirm), your account will be
                 incinerated and nothing will remain on our side.
+              </li>
+              <li>
+                In the top right corner are all pages related to your account.<br>
+                There you'll find your own profile data to be verified by others,
+                your contact list to verify other accounts,
+                and your vault to upgrade to an official account.<br>
+                Start by visiting your profile, download your own security file,
+                go to your contact list and upload it to verify yourself.<br>
+              </li>
+              <li>
+                We've put in place an automatic verification system by leveraging
+                the Ethereum blockchain.<br>
+                By engraving a signed hash of your public keys on the blockchain
+                everyone can easily check that you are the only one that can read messages
+                sent to you using these keys.<br>
+                The small shield next to your @ in the top right corner will appear in green once
+                it is done.<br>
+                Don't panic if it is not green, this process can be long or fail.
+                As long as it is not successful, it will be retried each time you
+                open a message.<br>
+                If the shield is red, <b>do panic and contact an admin</b>.
               </li>
             </ul>
           </p>
@@ -103,6 +120,28 @@ const { user } = storeToRefs(authStore);
             and what you say, it is far easier to have physical surveillance or hack
             into your devices. To prevent that is your responsability. :)
           </p>
+          <h4>What's all this with verification?</h4>
+          <p>
+            The most obvious way we could be attacked is for someone to take control
+            of our system to then replace the public keys you receive from us
+            with their own, to be able to decrypt all messages.
+          </p>
+          <p>
+            The automatic verification system consist of engraving your public keys in something
+            immutable (the blockchain) so that each time you connect here,
+            you check that the public keys you receive from the server
+            are the same ones that were engraved and match yours.<br>
+            Same thing for all the other accounts.
+          </p>
+          <p>
+            Everyone checks its own keys, so that everyone can trust each other keys.
+          </p>
+          <p>
+            We've also added a manual verification system where you can share a security code
+            (directly or via a security file) with your contacts. If the security code that you send
+            match the security code in the contact list of the people you sent it to,
+            you can be sure that your conversation is secure.
+          </p>
           <h4>What is the MemoryBox?</h4>
           <p>
             We understand that the "burnt after reading" character of the messages can be annoying
@@ -116,7 +155,8 @@ const { user } = storeToRefs(authStore);
             Only your Secret Key can decrypt those files.
           </p>
           <p>
-            Obviously you shouldn't store those encrypted messages in the same place as your Secret Key.
+            Obviously you shouldn't store those encrypted messages
+            in the same place as your Secret Key.
           </p>
           <p>
             You can also decrypt those files from the ySyPyA public home page
@@ -124,11 +164,7 @@ const { user } = storeToRefs(authStore);
           </p>
           <h4>Why can't I write longer messages?</h4>
           <p>
-            Paedophiles, that's why.
-          </p>
-          <p>
-            We want to ensure that no paedo-pornographic material transit directly through our system
-            and the best way to do this is to limit the size of the messages.
+            It allows us a better control about what transit through our system.
           </p>
           <p>
             The maximum size itself (446 ASCII characters) comes from the number of Bytes
@@ -147,29 +183,15 @@ const { user } = storeToRefs(authStore);
           <h4>What kind of data do you keep?</h4>
           <p>
             Someone with full access to our database can only know your @,
-            the last time you read a message, your public key and the number of messages in your Inbox.
+            the last day you read a message, your public keys, the number of messages in your Inbox
+            and the number of messages you ever received.
             We keep no other information.
-          </p>
-          <p>
-            An attacker with access to our system could know whose @ is sending messages to whom
-            at the time it happens, since the sender information is added on our side before
-            the final message encryption.
-          </p>
-          <p>
-            An attacker with network surveillance capability could link your IP address
-            to your @ on login, maybe?
           </p>
           <h4>What next?</h4>
           <p>
             <ul>
               <li>
-                Lower the cost of hosting this thing.
-              </li>
-              <li>
-                Adding the official tier.
-              </li>
-              <li>
-                Enable donations through coinbase.
+                Password kill switch
               </li>
             </ul>
           </p>

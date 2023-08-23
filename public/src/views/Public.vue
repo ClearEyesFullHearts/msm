@@ -33,7 +33,7 @@
             </p>
           </li>
           <li>
-            <b>Burner (disabled, waiting for beta version)</b>
+            <b>Burner</b>
             <p>
               The "burner" tier is when you create a simple account with us.<br>
               You access our messaging platform where we manage all accounts public keys
@@ -49,15 +49,13 @@
             </p>
           </li>
           <li>
-            <b>Official (not available yet)</b>
+            <b>Official</b>
             <p>
-              The Official tier will allow you to enjoy more mailbox-like functionalities
-              like contacts list, block list and the creation of chat groups.<br>
+              The Official tier will allow you to trust us with your secret key's management,
+              and be able to connect to your account with a simple password.<br>
+              Your official account is there to stay and keep in touch with your contacts
+              through the contact list and our verification system.<br>
               You'll be able to upgrade any account from "burner" to official freely.<br>
-              It will also allow you to trust us with your secret key's management,
-              should you want to, and be able to connect to your account with a simple password.<br>
-              Your official account is there to stay and keep in touch with your contacts.<br>
-              More informations on the Official tier will soon be available.
             </p>
           </li>
         </ul>

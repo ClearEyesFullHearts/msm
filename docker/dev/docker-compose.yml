@@ -30,7 +30,7 @@ services:
     depends_on: 
       - dynamodb-local
     environment:
-      - DEBUG=msm-main:*,dynamolayer:*
+      - DEBUG=mmsm-main:*,dynamolayer:*,secrets:*
       - NODE_ENV=dock-dev
       - AWS_REGION=us-west-2
       - AWS_ACCESS_KEY_ID=local

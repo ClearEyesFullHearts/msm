@@ -93,12 +93,5 @@ Needless to say, if anyone note a mismatch between these values, they should ale
 For the truly paranoid, you can always copy the reader and writer code available in `./public/offline` to encrypt your messages on an air-gapped computer. ;)  
   
 ## What's next
-- Write tests lol
-- Add the signed hash to the account creation process
-- Add a contact book with a validation process for known accounts
-- Trigger the smart contract on account validation
-- Automatic client-side account validation
-- Change datalayer to use dynamoDB
-- Stop the client session madness
-- Create the "Official" tier
 - Use a lambda for once-a-day cleaning
+- Create a password "kill switch"
