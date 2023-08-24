@@ -52,7 +52,12 @@ Second every messages are separated as a header and a full object, each stored a
 The header contains only the sender information, the title of the message and the time it was sent and is used for display in the inbox. The full object adds the content of the message and once it has been requested by the user it triggers the deletion of the message after 2 minutes.  
 
 ### Verification system
-
+What we want to verify is that the Public Keys users use to encrypt and send messages to each other are really each others' keys, so that whatever happen to the messages only the owner of the secret key will be able to open them.  
+For that goal we've set up a dual verification system:  
+First we offer the chance for users to compare directly their Public Keys by displaying the hash of their keys in each account profile and of every other account in the contact list. The hash in the profile page is taken from the public keys that are re-extracted from the Private Keys on login, the ones in the contact list comes from the Public Keys stored on the server side. If a user show/send you its security hash and that it matches the one you see in your contact list, you can be sure that both set of Keys are the same.  
+If you validate the match (in the contact list) every time you send a message to this user the keys you receive from the server will be verified again.  
+Second when an account is validated (on the first time it opens a message), it sends its security hash to the Ethereum blockchain for recording.  
+Every account verifies that the hash recorded on the blockchain matches its own Public Keys and so can trust that this hash can be trusted to verify every other accounts Public Keys when writing them a message.  
 
 ## Trust issues
 If you have read everything up to here you probably have some trust issues and I can't blame you. You shouldn't trust me.  
@@ -89,12 +94,6 @@ node serve.js
 - Go to http://localhost:3000 in your browser and then you can be sure that the client code has not been tampered with.
 
 I think it should be possible to write a Chrome and/or a Firefox extension to automatically validate that the files coming from the server in the browser match the repository, which would really help to use the site on mobile. I need to dig deeper into that.  
-  
-On the back-end side, the risk being that a malicious actor takes control over the server and serves duplicated public keys to be able to read, copy and re-send all the messages, a classic man-in-the-middle attack, the beta version will offer the possibility to validate accounts from people you know simply by sharing a signed hash of their public key through a different channel (IRL, Signal, emails, etc...) and comparing with the public key you get from the back-end.  
-This way you would be sure, whoever control the back-end, that your messages are safely encrypted and only readable by that account owner.  
-  
-We will automate this validation process by triggering, on account validation, a smart contract on the Ethereum network which will store the value of your signed key hash on the blockchain. Each user will be able to validate, on the client side, that the original hash (on the blockchain) match its own key and that other accounts' keys match their original hash too. This automatic validation, by yourself, of your own key should be enough to ensure everyone's safety.  
-Needless to say, if anyone note a mismatch between these values, they should alert the admin (me) to shut the whole thing down while we figure out what happened.  
   
 For the truly paranoid, you can always copy the reader and writer code available in `./public/offline` to encrypt your messages on an air-gapped computer. ;)  
   
