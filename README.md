@@ -51,6 +51,9 @@ First the format of the title and the content of the message is highly controlle
 Second every messages are separated as a header and a full object, each stored as a challenge, ensuring that everything is encrypted at least once.  
 The header contains only the sender information, the title of the message and the time it was sent and is used for display in the inbox. The full object adds the content of the message and once it has been requested by the user it triggers the deletion of the message after 2 minutes.  
 
+### Verification system
+
+
 ## Trust issues
 If you have read everything up to here you probably have some trust issues and I can't blame you. You shouldn't trust me.  
 Like I said in the project description the heavy lifting is done on the client side, the Secret Key is never shared, never stored out of the memory and the messages are at no point sent in clear text, so I wrote a simple script for you to be able to use the client code directly from your machine:  
@@ -67,9 +70,12 @@ cd public/
 npm install
 touch .env.production
 ```
-- add the api url in the environment file
+- add the environment variables in the file
 ```
 VITE_API_URL=https://api.ysypya.com
+VITE_CHAIN_NETWORK=sepolia
+VITE_CHAIN_API_KEY=hZOfL11C3G4een-0wzE5lCsRn2o-EAN9
+VITE_CHAIN_CONTRACT=0xeCb67f9705110bf703a0E34CA04749e46823c3be
 ```
 - build the project with the script there
 ```
