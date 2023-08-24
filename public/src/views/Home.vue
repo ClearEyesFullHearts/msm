@@ -164,7 +164,7 @@ const { user } = storeToRefs(authStore);
           </p>
           <h4>Why can't I write longer messages?</h4>
           <p>
-            It allows us a better control about what transit through our system.
+            It gives us better control about what transit through our system.
           </p>
           <p>
             The maximum size itself (446 ASCII characters) comes from the number of Bytes

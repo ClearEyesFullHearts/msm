@@ -194,7 +194,7 @@ async function incinerate() {
                 <label
                   class="form-check-label"
                   for="flexSwitchCheckDefault"
-                >Auto re-connect</label>
+                >Stay connected</label>
               </div>
             </div>
             <div
