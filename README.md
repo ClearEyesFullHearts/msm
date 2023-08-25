@@ -74,6 +74,11 @@ If you validate the match (in the contact list) every time you send a message to
 Second when an account is validated (on the first time it opens a message), it sends its security hash to the Ethereum blockchain for recording.  
 Every account verifies that the hash recorded on the blockchain matches its own Public Keys and so can trust that this hash can be trusted to verify every other accounts Public Keys when writing them a message.  
 
+#### A personal note on the blockchain
+The blockchain technology is a developer wet dream offering algorithmic trust and ownership in an adversarial system where you can't trust anything and everyone is a thief.  
+The problem is that these problems have been resolved for centuries now through the rule of law in liberal systems of government and the power of coercion of the state by illiberal ones. The internet doesn't change that you own something because the law recognize you as the sole owner of that thing and not because a computer says so.  
+Hence the only use case for that technology is when you want to escape the power of the state or at least can't trust or rely on it, so mostly for criminal or political activities.  
+The crypto currency part of it is just stupid and only exists to scam and defraud people.  
 ## Trust issues
 If you have read everything up to here you probably have some trust issues and I can't blame you. You shouldn't trust me.  
 Like I said in the project description the heavy lifting is done on the client side, the Secret Key is never shared, never stored out of the memory and the messages are at no point sent in clear text, so I wrote a simple script for you to be able to use the client code directly from your machine:  
