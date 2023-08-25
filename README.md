@@ -1,12 +1,27 @@
 # Most Secured Mailbox
 In this age of mass surveillance this project aims to offer an easy way to communicate privately thanks to cryptography.  
+https://beta.ysypya.com/  
 
 ## Project
 The main component of the project is actually the (very ugly) client side (powered by Vue.js v3) thanks to the [SubtleCrypto API](https://developer.mozilla.org/fr/docs/Web/API/SubtleCrypto) present in all browsers, that allows us to create RSA key pairs and encrypt/decrypt data without sharing any information in clear text with the back-end as is demonstrated by the "Engine" part of the website.  
-The client side (very ugly) code is in the `./public` folder.  
+The client side code is in the `./public` folder.  
+  
+The front-end is hosted in a public AWS S3 bucket as a static website.  
+  
 The back-end (powered by Node.JS) mostly manage users and their public key as well as encrypted messages delivery and some specific behaviors.  
 The back-end code is in the `./apps/main` folder.  
-The datalayer uses MongoDB but will probably migrate to DynamoDB soon, the code is in the `./shared/datalayer` folder  
+The datalayer uses DynamoDB with [Dynamoose](https://www.npmjs.com/package/dynamoose), the code is in the `./shared/dynamolayer` folder.  
+The docker file for the back-end is in `./docker/files`.  
+  
+The back-end is hosted by AWS in ECS Fargate, deployed through the Cloud Formation template in `./aws`.  
+What is not created by the template are:
+- The dynamoDB Table
+- The secrets managed by AWS Secret Manager and used in `./shared/secrets`
+- The Docker Image in the public AWS container registry.
+- The Route 53 DNS "A" record to the Load Balancer (which I should add) 
+
+The smart contract (written in Solidity) used for automatic validation is in `./chainValidation`. It is still using the Sepolia testnet for the moment and not the Ethereum mainnet.  
+The user validation code used in the back-end is in `./shared/validator`.  
 
 ## Implementation
 ### Lexicon
