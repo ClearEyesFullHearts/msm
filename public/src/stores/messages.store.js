@@ -152,13 +152,14 @@ export const useMessagesStore = defineStore({
       contactsStore.checkUser(checkingUser)
     },
     encodeText(str) {
-      return str.split('')
+      return  str
+        .replace(/%/g,'%25')
+        .split('')
         .map((char) => {
           const charCode = char.charCodeAt(0);
           return charCode > 127 ? encodeURIComponent(char) : char;
         })
-        .join('')
-        .replace(/%/g,'%25');
+        .join('');
     },
     decodeText(str) {
       return decodeURIComponent(str);
