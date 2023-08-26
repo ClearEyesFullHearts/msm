@@ -6,8 +6,9 @@ import { router } from '@/router';
 import { useAlertStore, useContactsStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
+import Config from '@/lib/config';
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = Config.API_URL;
 const mycrypto = new CryptoHelper();
 const myvalidator = new ChainHelper();
 let interval;
@@ -40,9 +41,10 @@ export const useAuthStore = defineStore({
       }
     },
     async openVault(passphrase) {
-      if (!myVault || !myVault.iv || myVault.token) {
+      if (!myVault || !myVault.iv || !myVault.token) {
         const alertStore = useAlertStore();
         alertStore.error('No vault recorded');
+        return;
       }
       const {
         iv,
@@ -57,12 +59,11 @@ export const useAuthStore = defineStore({
     async login(key, signKey) {
       const alertStore = useAlertStore();
       try {
-
         await this.setIdentityUp(key, signKey, myChallenge);
 
         const epk = await mycrypto.getPublicKey(this.pem);
         const spk = await mycrypto.getSigningPublicKey(this.signing);
-  
+
         this.publicHash = await mycrypto.hash(`${epk}\n${spk}`);
 
         const contactsStore = useContactsStore();
@@ -94,12 +95,12 @@ export const useAuthStore = defineStore({
         alertStore.error(error);
       }
     },
-    async relog(){
+    async relog() {
       try {
         clearInterval(interval);
         const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${this.user.user.username}`);
         await this.setIdentityUp(this.pem, this.signing, challenge);
-      }catch(err){
+      } catch (err) {
         this.logout();
       }
     },
@@ -138,9 +139,9 @@ export const useAuthStore = defineStore({
       const itemValue = `${this.pem}${CryptoHelper.SEPARATOR}${this.signing}`;
       const { token, iv } = await mycrypto.symmetricEncrypt(itemValue, passphrase);
 
-      console.log('this.pem length', this.pem.length)
-      console.log('this.signing length', this.signing.length)
-      console.log('token length', token.length)
+      console.log('this.pem length', this.pem.length);
+      console.log('this.signing length', this.signing.length);
+      console.log('token length', token.length);
 
       await fetchWrapper.put(`${baseUrl}/vault`, { token, iv });
 

@@ -4,10 +4,12 @@ import { defineStore } from 'pinia';
 import { fetchWrapper } from '@/helpers';
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
+import Config from '@/lib/config';
 
 const mycrypto = new CryptoHelper();
 const myvalidator = new ChainHelper();
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+
+const baseUrl = Config.API_URL;
 
 export const useContactsStore = defineStore({
   id: 'contacts',
@@ -68,10 +70,9 @@ export const useContactsStore = defineStore({
             checkingUser.alert = alertMsg;
           }
         })
-        .then(() => {
+        .then(() =>
           // check if user is verified in ether blockchain
-          return this.autoValidation(checkingUser);
-        });
+          this.autoValidation(checkingUser));
     },
     async setContactList(pem, contacts) {
       if (!contacts) {

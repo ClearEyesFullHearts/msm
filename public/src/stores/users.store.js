@@ -1,10 +1,12 @@
+/* eslint-disable import/prefer-default-export */
 import { defineStore } from 'pinia';
 
 import CryptoHelper from '@/lib/cryptoHelper';
 import FileHelper from '@/lib/fileHelper';
 import { fetchWrapper } from '@/helpers';
+import Config from '@/lib/config';
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = Config.API_URL;
 const mycrypto = new CryptoHelper();
 
 function formatPK(publicKey, size) {

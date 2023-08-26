@@ -1,11 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 
-import { useUsersStore, useAuthStore } from '@/stores';
+import { useUsersStore, useAuthStore, useAlertStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import FileHelper from '@/lib/fileHelper';
 
 const authStore = useAuthStore();
+const alertStore = useAlertStore();
 
 const loginInput = ref(null);
 const fileInput = ref(null);
@@ -36,10 +37,14 @@ async function onLog() {
   if (!loginInput.value.value.length || loginInput.value.value.length < 3) {
     return;
   }
-  await authStore.getIdentity(loginInput.value.value);
-  hasVault.value = authStore.hasVault;
-  if (!authStore.hasVault) {
-    onKeyFileNeeded();
+  try {
+    await authStore.getIdentity(loginInput.value.value);
+    hasVault.value = authStore.hasVault;
+    if (!authStore.hasVault) {
+      onKeyFileNeeded();
+    }
+  } catch (error) {
+    alertStore.error(error);
   }
 }
 async function openVault() {

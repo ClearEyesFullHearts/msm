@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
+import Config from '@/lib/config'
 
 const mycrypto = new CryptoHelper();
 
@@ -44,7 +45,7 @@ async function authHeader(url, method, body) {
   const { user, signing } = useAuthStore();
 
   const isLoggedIn = !!user?.token;
-  const isApiUrl = url.startsWith(import.meta.env.VITE_API_URL);
+  const isApiUrl = url.startsWith(Config.API_URL);
   if (isLoggedIn && isApiUrl) {
     const { token, contacts, ...restUser } = user;
     const headers = {

@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import { defineStore } from 'pinia';
 import { reactive } from 'vue';
 
@@ -5,8 +6,9 @@ import CryptoHelper from '@/lib/cryptoHelper';
 import FileHelper from '@/lib/fileHelper';
 import { fetchWrapper } from '@/helpers';
 import { useAuthStore, useAlertStore, useContactsStore } from '@/stores';
+import Config from '@/lib/config';
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const baseUrl = Config.API_URL;
 const mycrypto = new CryptoHelper();
 
 export const useMessagesStore = defineStore({
@@ -119,7 +121,7 @@ export const useMessagesStore = defineStore({
       const challenge = await mycrypto.challenge(pem, JSON.stringify({
         title: this.encodeText(clearTitle),
         content: this.encodeText(clearText),
-        ...restMsg
+        ...restMsg,
       }));
 
       FileHelper.download(`${id}.ysypya`, JSON.stringify(challenge));
@@ -137,7 +139,7 @@ export const useMessagesStore = defineStore({
       const user = await fetchWrapper.get(`${baseUrl}/user/${name}`);
       const {
         key,
-        signature
+        signature,
       } = user;
       const hash = await mycrypto.hash(`${key}\n${signature}`);
       const checkingUser = reactive({
@@ -145,15 +147,15 @@ export const useMessagesStore = defineStore({
         security: {
           hash,
           verification: 0,
-        }
+        },
       });
       this.targetAt.push(checkingUser);
       const contactsStore = useContactsStore();
-      contactsStore.checkUser(checkingUser)
+      contactsStore.checkUser(checkingUser);
     },
     encodeText(str) {
-      return  str
-        .replace(/%/g,'%25')
+      return str
+        .replace(/%/g, '%25')
         .split('')
         .map((char) => {
           const charCode = char.charCodeAt(0);
