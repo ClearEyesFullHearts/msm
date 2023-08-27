@@ -107,16 +107,23 @@ class Data {
 
   async clearReadMessages() {
     const messages = await this.messages.Entity.query('hasBeenRead').eq(1).using('ReadMessagesIndex').exec();
+    const nb = messages.length;
     await Data.batchDelete(messages, this.messages);
+    return nb;
   }
 
   async deactivateAccounts() {
     const now = Date.now();
     const inactiveLimit = UserData.roundTimeToDays(now - this.INACTIVITY_TIME);
-    const missedLimit = -UserData.roundTimeToDays(now, 2);
+    const missedLimit = -UserData.roundTimeToDays(-now, 2);
 
     const inactiveUsers = await this.users.Entity.query('lastActivity').eq(inactiveLimit).using('LastActivityIndex').exec();
     const missedUsers = await this.users.Entity.query('lastActivity').eq(missedLimit).using('LastActivityIndex').exec();
+
+    const nb = {
+      inactive: inactiveUsers.length,
+      missed: missedUsers.length,
+    };
 
     const IDs = inactiveUsers.map((iu) => ({
       username: iu.username,
@@ -148,6 +155,7 @@ class Data {
     }
 
     await Promise.all(promises);
+    return nb;
   }
 
   async activityReport() {
