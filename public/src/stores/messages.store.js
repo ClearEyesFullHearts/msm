@@ -90,6 +90,7 @@ export const useMessagesStore = defineStore({
 
         const alertStore = useAlertStore();
         alertStore.success('Reminder: This message will disappear from the server 2 minutes from now');
+        authStore.onChainVerification();
       } catch (error) {
         const alertStore = useAlertStore();
         alertStore.error(`An error occured: ${error}`);

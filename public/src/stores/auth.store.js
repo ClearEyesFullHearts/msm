@@ -14,6 +14,7 @@ const myvalidator = new ChainHelper();
 let interval;
 let myVault;
 let myChallenge;
+let verificationTimeoutID;
 
 export const useAuthStore = defineStore({
   id: 'auth',
@@ -42,9 +43,7 @@ export const useAuthStore = defineStore({
     },
     async openVault(passphrase) {
       if (!myVault || !myVault.iv || !myVault.token) {
-        const alertStore = useAlertStore();
-        alertStore.error('No vault recorded');
-        return;
+        throw new Error('No vault recorded');
       }
       const {
         iv,
@@ -72,22 +71,7 @@ export const useAuthStore = defineStore({
         // redirect to previous url or default to home page
         router.push(this.returnUrl || '/messages');
 
-        try {
-          const isValidatedOnChain = await myvalidator.isValidated(this.user.user.id);
-          if (isValidatedOnChain) {
-            const { signature } = isValidatedOnChain;
-            const result = await mycrypto.verify(spk, this.publicHash, signature, true);
-            if (result) {
-              this.isValidatedOnChain = true;
-              alertStore.success('Your on-chain validation is confirmed');
-            } else {
-              throw new Error('Signature mismatch on chain');
-            }
-          }
-        } catch (err) {
-          console.log('error on validation', err);
-          alertStore.error(`${err.message || err}.\nYour on chain validation is wrong, do not use this account.\nReport the problem to an admin ASAP!`);
-        }
+        this.onChainVerification();
 
         myVault = undefined;
         myChallenge = undefined;
@@ -152,12 +136,43 @@ export const useAuthStore = defineStore({
 
       this.hasVault = false;
     },
+    async onChainVerification(timeout = 5000) {
+      clearTimeout(verificationTimeoutID);
+      if (this.isValidatedOnChain) {
+        return;
+      }
+      const alertStore = useAlertStore();
+      const spk = await mycrypto.getSigningPublicKey(this.signing);
+      try {
+        const isValidatedOnChain = await myvalidator.isValidated(this.user.user.id);
+        if (isValidatedOnChain) {
+          const { signature } = isValidatedOnChain;
+          const result = await mycrypto.verify(spk, this.publicHash, signature, true);
+          if (result) {
+            this.isValidatedOnChain = true;
+            alertStore.success('Your on-chain validation is confirmed');
+          } else {
+            throw new Error('Signature mismatch on chain');
+          }
+        }
+      } catch (err) {
+        console.log('error on validation', err);
+        alertStore.error(`${err.message || err}.\nYour on chain validation is wrong, do not use this account.\nReport the problem to an admin ASAP!`);
+      }
+
+      if (!this.isValidatedOnChain && timeout < 100000) {
+        verificationTimeoutID = setTimeout(() => {
+          this.onChainVerification(timeout * 2);
+        }, timeout);
+      }
+    },
     logout() {
+      clearTimeout(verificationTimeoutID);
+      clearInterval(interval);
       const pinia = getActivePinia();
       pinia._s.forEach((store) => store.$reset());
       router.push('/account/login');
       document.title = 'ySyPyA';
-      clearInterval(interval);
     },
   },
 });
