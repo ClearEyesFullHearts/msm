@@ -6,10 +6,8 @@ const debug = require('debug')('msm-main:server');
 const Data = require('@shared/dynamolayer');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const Encryption = require('@shared/encryption');
 const CORS = require('./lib/cors');
 const ErrorHelper = require('./lib/error');
-const MessageAction = require('./controller/actions/messages');
 
 const APP_ID = 'msm-main';
 
@@ -41,24 +39,9 @@ class MSMMain {
     await data.init();
     this.app.locals.db = data;
 
-    debug('clear all read messages');
-    await data.clearReadMessages();
-    debug('clear all inactive users');
-    await data.deactivateAccounts();
-
     this.app.get('/health', (req, res) => {
       res.status(200).send();
     });
-
-    // clear everything once a day
-    this.interval = setInterval(async () => {
-      debug('clear all read messages');
-      await data.clearReadMessages();
-      debug('clear all inactive users');
-      await data.deactivateAccounts();
-      debug('send report');
-      await this.sendActivityReport();
-    }, config.get('timer.interval.clear'));
 
     //  Install the OpenApiValidator on your express app
     this.app.use(
@@ -83,35 +66,6 @@ class MSMMain {
         resolve();
       });
     }));
-  }
-
-  async sendActivityReport() {
-    const {
-      locals: {
-        db,
-      },
-    } = this.app;
-
-    const target = await db.users.findByName(config.get('instance.reportTarget'));
-
-    if (target) {
-      const {
-        notValidatedUsers,
-        validatingUsers,
-        validatedUsers,
-        waitingMessages,
-      } = await db.activityReport();
-
-      debug('send report message');
-      const reportTitle = 'Here is today\'s activity report';
-      let reportContent = `We have ${validatedUsers} active and validated users`;
-      reportContent += `\nWe have ${validatingUsers} active users waiting for validation`;
-      reportContent += `\nWe have ${notValidatedUsers} not validated users`;
-      reportContent += `\nWe have ${waitingMessages} unread messages\n`;
-      const encrytedMsg = Encryption.encryptMessage(target, reportTitle, reportContent);
-      await MessageAction.writeMessage({ db, user: { username: 'Daily Report', lastActivity: 1 } }, encrytedMsg);
-      debug('report message sent');
-    }
   }
 }
 

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const apickli = require('apickli');
 const {
-  Before, After, BeforeAll, AfterAll,
+  Before, BeforeAll,
 } = require('@cucumber/cucumber');
 const config = require('config');
 const Util = require('./utils');
@@ -10,10 +10,10 @@ const Util = require('./utils');
 // lengths: ESK = 3222 SSK = 902
 
 BeforeAll((cb) => {
-  // Util.backupTable().then(cb);
   process.env.AWS_REGION = config.get('dynamo.region');
   process.env.AWS_ACCESS_KEY_ID = config.get('dynamo.accessKeyId');
   process.env.AWS_SECRET_ACCESS_KEY = config.get('dynamo.secretAccessKey');
+  // Util.backupTable().then(cb);
   Util.emptyTable()
     .then(() => Util.restoreTable())
     .then(cb);
@@ -68,11 +68,3 @@ Before(function () {
     this.apickli.setGlobalVariable(`RANDOM_USER.${i}`, arrUsers[i]);
   }
 });
-
-// After(async () => {
-
-// });
-
-// AfterAll((cb) => {
-//   mongoose.disconnect().then(() => { cb(); });
-// });

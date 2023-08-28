@@ -43,13 +43,17 @@ async function writeMessage(msg, targetUser) {
 
 exports.handler = async function lambdaHandler() {
   debug('clear all read messages');
-  await data.clearReadMessages();
+  const messagesCleared = await data.clearReadMessages();
   debug('clear all inactive users');
-  await data.deactivateAccounts();
+  const {
+    inactive,
+    missed,
+  } = await data.deactivateAccounts();
 
   debug('send report');
   const target = await data.users.findByName(config.get('instance.reportTarget'));
 
+  let reportNb = 0;
   if (target) {
     debug('target found');
     const {
@@ -61,12 +65,25 @@ exports.handler = async function lambdaHandler() {
 
     debug('send report message');
     const reportTitle = 'Here is today\'s activity report';
-    let reportContent = `We have ${validatedUsers} active and validated users`;
+    let reportContent = `We cleared ${messagesCleared} read messages`;
+    reportContent += `\nWe cleared ${missed} usernames`;
+    reportContent += `\nWe froze ${inactive} users\n`;
+    reportContent += `\nWe have ${validatedUsers} active and validated users`;
     reportContent += `\nWe have ${validatingUsers} active users waiting for validation`;
-    reportContent += `\nWe have ${notValidatedUsers} not validated users`;
+    reportContent += `\nWe have ${notValidatedUsers} active but not validated users`;
     reportContent += `\nWe have ${waitingMessages} unread messages\n`;
     const encrytedMsg = Encryption.encryptMessage(target, reportTitle, reportContent);
     await writeMessage(encrytedMsg, target);
     debug('report message sent');
+    reportNb = 1;
   }
+
+  return {
+    messagesCleared,
+    usersCleared: {
+      inactive,
+      missed,
+    },
+    reportSent: reportNb,
+  };
 };

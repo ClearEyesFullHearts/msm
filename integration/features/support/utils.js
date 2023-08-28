@@ -422,6 +422,22 @@ class Util {
       await Everything.batchPut(objects);
     }
   }
+
+  static async SetValueInDB(sk, pk, prop, val) {
+    const Everything = Util.getEverythingModel();
+    await Everything.update(
+      { pk, sk },
+      {
+        $SET: { [prop]: val },
+      },
+    );
+  }
+
+  static roundTimeToDays(epoch, addDays = 0) {
+    const daysInMs = (24 * 60 * 60000);
+    const dayMs = Math.floor(epoch / daysInMs) * daysInMs;
+    return dayMs + (addDays * daysInMs);
+  }
 }
 
 module.exports = Util;

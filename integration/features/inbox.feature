@@ -3,7 +3,7 @@ Feature: Inbox
     Get inbox content
 
 Scenario: Get empty inbox
-  Given I am authenticated user mat
+  Given I am existing `RANDOM_USER.0`
   When I GET /inbox
   Then response body path $ should be of type array with length 0
 
