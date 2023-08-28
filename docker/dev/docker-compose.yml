@@ -36,3 +36,18 @@ services:
       - AWS_ACCESS_KEY_ID=local
       - AWS_SECRET_ACCESS_KEY=local
       - NO_CHAIN=true
+
+  cleanup:
+    build:
+      context: ../../
+      dockerfile: docker/files/cleanup.dockerfile
+    container_name: cleanup
+    ports:
+      - 9000:8080
+    depends_on: 
+      - dynamodb-local
+    environment:
+      - DEBUG=msm-cleanup:*,dynamolayer:*
+      - AWS_REGION=us-west-2
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local

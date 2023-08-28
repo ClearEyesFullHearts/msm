@@ -51,6 +51,7 @@ exports.handler = async function lambdaHandler() {
   const target = await data.users.findByName(config.get('instance.reportTarget'));
 
   if (target) {
+    debug('target found');
     const {
       notValidatedUsers,
       validatingUsers,
@@ -65,7 +66,7 @@ exports.handler = async function lambdaHandler() {
     reportContent += `\nWe have ${notValidatedUsers} not validated users`;
     reportContent += `\nWe have ${waitingMessages} unread messages\n`;
     const encrytedMsg = Encryption.encryptMessage(target, reportTitle, reportContent);
-    await writeMessage(data, encrytedMsg, target);
+    await writeMessage(encrytedMsg, target);
     debug('report message sent');
   }
 };

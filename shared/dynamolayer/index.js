@@ -115,7 +115,7 @@ class Data {
   async deactivateAccounts() {
     const now = Date.now();
     const inactiveLimit = UserData.roundTimeToDays(now - this.INACTIVITY_TIME);
-    const missedLimit = -UserData.roundTimeToDays(-now, 2);
+    const missedLimit = -UserData.roundTimeToDays(now, 2);
 
     const inactiveUsers = await this.users.Entity.query('lastActivity').eq(inactiveLimit).using('LastActivityIndex').exec();
     const missedUsers = await this.users.Entity.query('lastActivity').eq(missedLimit).using('LastActivityIndex').exec();
