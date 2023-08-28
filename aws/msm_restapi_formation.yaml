@@ -1,6 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "CloudFormation template for creating a task definition"
+
 Resources:
+
   BetaMSMTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -27,7 +29,7 @@ Resources:
             - Name: "SECRET_LOCATION"
               Value: "BetaMSMSecret"
             - Name: "DEBUG"
-              Value: "msm-main:*,dynamolayer:*,secrets:*,validator:"
+              Value: "msm-main:*,dynamolayer:*,secrets:*,validator:*"
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
@@ -40,6 +42,7 @@ Resources:
     Type: 'AWS::ECS::Cluster'
     Properties:
       ClusterName: BetaMSMCluster
+
   BetaMSMAlb:
     Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
     Properties:
@@ -51,6 +54,7 @@ Resources:
       Type: application
       SecurityGroups:
         - !GetAtt BetaMSMAlbSG.GroupId
+
   BetaMSMTargetGroup:
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
     Properties:
@@ -60,6 +64,7 @@ Resources:
       Port: 4000
       HealthCheckPath: /health/
       TargetType: ip
+
   Listener:
     Type: 'AWS::ElasticLoadBalancingV2::Listener'
     Properties:
@@ -71,6 +76,7 @@ Resources:
       Protocol: HTTPS
       Certificates:
         - CertificateArn: arn:aws:acm:eu-west-3:914445634489:certificate/a59a9300-8810-4c0f-a13b-e4e7501a97b9
+
   BetaMSMAlbSG:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
@@ -87,6 +93,7 @@ Resources:
           ToPort: 4000
           IpProtocol: TCP
           Description: 'Inbound rule for container traffic'
+
   BetaMSMService:
     Type: AWS::ECS::Service
     DependsOn:
