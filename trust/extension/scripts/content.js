@@ -52,7 +52,6 @@ if (commitHash) {
 
   chrome.runtime.onMessage.addListener(
     (request, sender, sendResponse) => {
-      console.log('request', request);
       switch (request.action.type) {
         case 'START':
           badgeText.textContent = 'Reload the page to validate!';

@@ -19,7 +19,6 @@ function getHash(txt) {
 }
 
 function onClientReady(request) {
-  console.log('received message', resultMap);
   if (request.action.type === 'READY') {
     if (isAttached) {
       chrome.tabs.sendMessage(tabId, {
@@ -74,18 +73,14 @@ chrome.action.onClicked.addListener((tab) => {
 
 chrome.debugger.onDetach.addListener(
   () => {
-    console.log('detaching');
     isAttached = false;
     scriptReady = false;
     chrome.runtime.onMessage.removeListener(onClientReady);
-    console.log('removed');
   },
 );
 
 function responseResult(url, hash) {
-  console.log('a response is here');
   if (!map[url]) {
-    console.error('Unknown download:', url);
     if (scriptReady) {
       chrome.tabs.sendMessage(tabId, {
         action: {
@@ -101,7 +96,6 @@ function responseResult(url, hash) {
       });
     }
   } else if (map[url] === hash) {
-    console.log(`${url} is verified`);
     if (scriptReady) {
       chrome.tabs.sendMessage(tabId, {
         action: {
