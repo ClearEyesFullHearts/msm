@@ -2,9 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const https = require('https');
+const http = require('http');
+const url = require('url');
 
 // url of the public facing website
-const URL = 'https://alpha.ysypya.com';
+const BASE_URL = 'http://localhost:3000';
+// const PROD_URL = 'https://beta.ysypya.com';
+const PROD_URL = 'http://localhost:3000';
 
 function crawl(base) {
   const paths = [];
@@ -34,7 +38,7 @@ function download(filename) {
     const file = fs.createWriteStream(`./download${filename}`);
     // 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
     // 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    https.get(`${URL}${filename}`, (response) => {
+    http.get(`${BASE_URL}${filename}`, (response) => {
       response.pipe(file);
 
       // after download completed close filestream
@@ -66,16 +70,28 @@ function download(filename) {
   }
 
   // compare the files
-  let distTxt = '';
   let downTxt = '';
+  const map = {
+    COMMIT: process.env.BUILD_HASH,
+    BASE_URL: `${BASE_URL}/`,
+  };
   paths.forEach((p) => {
-    distTxt = fs.readFileSync(`./dist${p}`).toString('base64');
-    downTxt = fs.readFileSync(`./download${p}`).toString('base64');
+    downTxt = fs.readFileSync(`./dist${p}`).toString('base64');
+    const hash = crypto.createHash('sha256');
+    hash.update(downTxt);
+    const digest = hash.digest();
 
-    if (distTxt === downTxt) {
-      console.log(`You can trust ${p}`);
+    if (p !== `${path.sep}index.html`) {
+      map[url.format(`${PROD_URL}${p}`)] = digest.toString('base64');
     } else {
-      console.log(`No trust for ${p}`);
+      map[`${PROD_URL}/`] = digest.toString('base64');
     }
   });
+
+  fs.writeFileSync('./extension/config.js', `export default ${JSON.stringify(map, null, 2)};\n`);
+  const content = fs.readFileSync('./extension/scripts/content.js').toString();
+  const lines = content.split('\n');
+  lines[0] = `const COMMIT = '${process.env.BUILD_HASH}';`;
+  fs.writeFileSync('./extension/scripts/content.js', lines.join('\n'));
+  fs.rmdirSync('./download', { recursive: true, force: true });
 })();

@@ -1,9 +1,13 @@
 <script setup>
+import config from '@/lib/config';
 </script>
 
 <template>
   <div class="container pt-4 pb-4">
     <div class="row justify-content-center">
+      <div
+        id="validationText"
+      />
       <div class="col-md-10">
         <h1>Welcome to ySyPyA.</h1>
         <p>
@@ -62,4 +66,10 @@
       </div>
     </div>
   </div>
+  <p
+    id="commitHash"
+    class="text-center"
+  >
+    {{ config.COMMIT_HASH }}
+  </p>
 </template>

@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "ySyPyA verification tool",
+  "version": "1.0",
+  "description": "Verify that the online version of ySyPyA match the public code.",
+
+  "icons": {
+    "16": "images/icon-16.png",
+    "32": "images/icon-32.png",
+    "48": "images/icon-48.png",
+    "128": "images/icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "js": ["scripts/content.js"],
+      "matches": [
+        "http://localhost:3000/*",
+        "https://beta.ysypya.com/*"
+      ]
+    }
+  ],
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "action": {},
+  "permissions": ["debugger", "tabs"],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://beta.ysypya.com/*"
+  ]
+}
