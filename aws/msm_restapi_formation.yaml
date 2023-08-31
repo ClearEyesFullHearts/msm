@@ -3,13 +3,66 @@ Description: "CloudFormation template for creating a task definition"
 
 Resources:
 
+  BetaMSMMainManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: SecretManagerReadAccess
+            Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource:
+              - arn:aws:secretsmanager:eu-west-3:914445634489:secret:BetaMSMSecret-shRNxY
+          - Sid: DynamoDBIndexAndStreamAccess
+            Effect: Allow
+            Action:
+              - dynamodb:GetShardIterator
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:DescribeStream
+              - dynamodb:GetRecords
+            Resource:
+              - arn:aws:dynamodb:eu-west-3:914445634489:table/BetaMSMTable/index/*
+              - arn:aws:dynamodb:eu-west-3:914445634489:table/BetaMSMTable/stream/*
+          - Sid: DynamoDBTableAccess
+            Effect: Allow
+            Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:PutItem
+              - dynamodb:DescribeTable
+              - dynamodb:DeleteItem
+              - dynamodb:GetItem
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:UpdateItem
+            Resource: arn:aws:dynamodb:eu-west-3:914445634489:table/BetaMSMTable
+
+  BetaMSMMainRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref BetaMSMMainManagedPolicy
+
   BetaMSMTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
       RequiresCompatibilities:
         - "FARGATE"
       ExecutionRoleArn: "arn:aws:iam::914445634489:role/ecsTaskExecutionRole"
-      TaskRoleArn: "arn:aws:iam::914445634489:role/EcsTaskRole"
+      TaskRoleArn: !Sub ${BetaMSMMainRole.Arn}
       Cpu: 256
       Memory: 512
       NetworkMode: "awsvpc"

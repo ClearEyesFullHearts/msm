@@ -6,6 +6,46 @@ Description: >
 Resources:
 ####################################################################################
 
+  MSMCleanupManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: CloudwatchLogs
+            Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:CreateLogGroup
+              - logs:PutLogEvents
+            Resource:
+              - "*"
+          - Sid: DynamoDBIndexAndStreamAccess
+            Effect: Allow
+            Action:
+              - dynamodb:GetShardIterator
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:DescribeStream
+              - dynamodb:GetRecords
+            Resource:
+              - arn:aws:dynamodb:eu-west-3:914445634489:table/BetaMSMTable/index/*
+              - arn:aws:dynamodb:eu-west-3:914445634489:table/BetaMSMTable/stream/*
+          - Sid: DynamoDBTableAccess
+            Effect: Allow
+            Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:PutItem
+              - dynamodb:DescribeTable
+              - dynamodb:DeleteItem
+              - dynamodb:GetItem
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:UpdateItem
+            Resource: arn:aws:dynamodb:eu-west-3:914445634489:table/BetaMSMTable
+
   MSMCleanupRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -19,7 +59,7 @@ Resources:
             Action:
               - sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::914445634489:policy/MSMCleanupLambdaPolicy
+        - !Ref MSMCleanupManagedPolicy
 
   MSMCleanupSchedule:
     Type: "AWS::Events::Rule"
