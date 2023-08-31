@@ -9,19 +9,23 @@ The client side code is in the `./public` folder.
 The front-end is hosted in a public AWS S3 bucket as a static website.  
   
 The back-end (powered by Node.JS) mostly manage users and their public key as well as encrypted messages delivery and some specific behaviors.  
-The back-end code is in the `./apps/main` folder.  
+The back-end code is in the `./apps/` folder.  
+`./apps/main` contains the REST API as the main entry point.  
+`./apps/cleanup` contains cleanup code triggered once a day to removed dead data from the datalayer.  
 The datalayer uses DynamoDB with [Dynamoose](https://www.npmjs.com/package/dynamoose), the code is in the `./shared/dynamolayer` folder.  
-The docker file for the back-end is in `./docker/files`.  
+The docker files for the back-end are in `./docker/files`.  
   
-The back-end is hosted by AWS in ECS Fargate, deployed through the Cloud Formation template in `./aws`.  
-What is not created by the template are:
+The back-end is hosted by AWS in ECS Fargate and a Lambda function, deployed through the CloudFormation templates in `./aws`.  
+What is not created by the templates are:
 - The dynamoDB Table
 - The secrets managed by AWS Secret Manager and used in `./shared/secrets`
-- The Docker Image in the public AWS container registry.
+- The Docker Image in the public and private AWS container registry.
 - The Route 53 DNS "A" record to the Load Balancer (which I should add) 
 
-The smart contract (written in Solidity) used for automatic validation is in `./chainValidation`. It is still using the Sepolia testnet for the moment and not the Ethereum mainnet.  
+The smart contract (written in Solidity) used for automatic validation is in `./trust/chainValidation`. It is still using the Sepolia testnet for the moment and not the Ethereum mainnet.  
 The user validation code used in the back-end is in `./shared/validator`.  
+  
+The code of the Chrome extension to verify the public client integrity is in `./trust/extension`.  
 
 ## Implementation
 ### Lexicon
@@ -114,9 +118,10 @@ node serve.js
 - Go to http://localhost:3000 in your browser and then you can be sure that the client code has not been tampered with.
 
 I think it should be possible to write a Chrome and/or a Firefox extension to automatically validate that the files coming from the server in the browser match the repository, which would really help to use the site on mobile. I need to dig deeper into that.  
+(It's done, pending approval from the Chrome Extension store)  
   
 For the truly paranoid, you can always copy the reader and writer code available in `./public/offline` to encrypt your messages on an air-gapped computer. ;)  
   
 ## What's next
-- Use a lambda for once-a-day cleaning
+- Enable peer-to-peer chat with WebRTC
 - Create a password "kill switch"
