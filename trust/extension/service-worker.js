@@ -1,22 +1,12 @@
 import config from './config.js';
 
+let tabId;
+let scriptReady = false;
+let isAttached = false;
+let memory = {};
 const { COMMIT, BASE_URL, ...map } = config;
 let resultMap = [];
 
-function getHash(txt) {
-  const arrTxt = new ArrayBuffer(txt.length);
-  const bufView = new Uint8Array(arrTxt);
-  for (let i = 0, strLen = txt.length; i < strLen; i += 1) {
-    bufView[i] = txt.charCodeAt(i);
-  }
-  return crypto.subtle.digest({
-    name: 'SHA-256',
-  }, arrTxt)
-    .then((digest) => {
-      const str = String.fromCharCode.apply(null, new Uint8Array(digest));
-      return btoa(str);
-    });
-}
 
 function onClientReady(request) {
   if (request.action.type === 'READY') {
@@ -32,14 +22,28 @@ function onClientReady(request) {
     scriptReady = true;
   }
 }
+function onURLChange(id, changeInfo) {
+  const { url, status } = changeInfo;
+  if (isAttached && status === 'loading' && url && url !== BASE_URL) {
+    chrome.debugger.detach({ tabId: id }).then(() => {
+      onDetaching();
+    });
+  }
+}
+function onDetaching() {
+  isAttached = false;
+  scriptReady = false;
+  memory = {};
+  chrome.runtime.onMessage.removeListener(onClientReady);
+  chrome.tabs.onUpdated.removeListener(onURLChange);
+}
 
-let tabId;
-let scriptReady = false;
-let isAttached = false;
 chrome.action.onClicked.addListener((tab) => {
   if (tab.url === BASE_URL) {
     if (isAttached) {
-      chrome.debugger.detach({ tabId: tab.id });
+      chrome.debugger.detach({ tabId: tab.id }).then(() => {
+        onDetaching();
+      });
     } else {
       chrome.debugger.attach({ tabId: tab.id }, '1.2')
         .then(() => {
@@ -62,6 +66,7 @@ chrome.action.onClicked.addListener((tab) => {
                   console.log('Not ready yet');
                 });
                 chrome.runtime.onMessage.addListener(onClientReady);
+                chrome.tabs.onUpdated.addListener(onURLChange);
               }
             });
         });
@@ -73,9 +78,7 @@ chrome.action.onClicked.addListener((tab) => {
 
 chrome.debugger.onDetach.addListener(
   () => {
-    isAttached = false;
-    scriptReady = false;
-    chrome.runtime.onMessage.removeListener(onClientReady);
+    onDetaching();
   },
 );
 
@@ -126,7 +129,21 @@ function responseResult(url, hash) {
   }
 }
 
-const memory = {};
+function getHash(txt) {
+  const arrTxt = new ArrayBuffer(txt.length);
+  const bufView = new Uint8Array(arrTxt);
+  for (let i = 0, strLen = txt.length; i < strLen; i += 1) {
+    bufView[i] = txt.charCodeAt(i);
+  }
+  return crypto.subtle.digest({
+    name: 'SHA-256',
+  }, arrTxt)
+    .then((digest) => {
+      const str = String.fromCharCode.apply(null, new Uint8Array(digest));
+      return btoa(str);
+    });
+}
+
 chrome.debugger.onEvent.addListener((source, method, params) => {
   if (method === 'Network.responseReceived') {
     memory[params.requestId] = params.response.url;
@@ -147,6 +164,7 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
         return getHash(btoa(result.body));
       })
       .then((hash) => {
+        console.log('loadingFinished', memory[params.requestId]);
         responseResult(memory[params.requestId], hash);
       });
   }

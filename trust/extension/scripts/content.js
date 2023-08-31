@@ -1,4 +1,4 @@
-const COMMIT = 'a31f919d95cb2f728f20e65d68a81c0593096945';
+const COMMIT = 'bcd5be6052a291a3a309b2e22c134c2d1468e1fc';
 const commitHash = document.querySelector('#commitHash');
 
 if (commitHash) {
@@ -41,23 +41,30 @@ if (commitHash) {
       wholeResult.failure.push(url);
       validationFailure.textContent = `Number of mismatches: ${wholeResult.failure.length} files`;
     }
+    if (result === 'UNKNOWN_URL') {
+      wholeResult.failure.push(url);
+      validationFailure.textContent = `Number of mismatches: ${wholeResult.failure.length} files`;
+    }
     if (wholeResult.failure.length > 0) {
       badge.classList.remove('alert-primary', 'alert-warning');
       badge.classList.add('alert-danger');
+      validationSuccess.textContent = 'Failure!';
     } else if (wholeResult.success.length > 0) {
       badge.classList.remove('alert-primary', 'alert-warning');
       badge.classList.add('alert-success');
+      validationFailure.textContent = 'Success!';
     }
   };
 
   chrome.runtime.onMessage.addListener(
     (request, sender, sendResponse) => {
+      console.log('message', request.action.type);
       switch (request.action.type) {
         case 'START':
           badgeText.textContent = 'Reload the page to validate!';
           break;
         case 'VALIDATION':
-          badgeText.textContent = 'Validation ended!';
+          badgeText.textContent = 'Validation ended';
           onValidationResult(request.action.url, request.action.result);
           break;
         case 'RESULT':

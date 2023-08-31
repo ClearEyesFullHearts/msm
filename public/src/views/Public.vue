@@ -66,10 +66,11 @@ import config from '@/lib/config';
       </div>
     </div>
   </div>
-  <p
-    id="commitHash"
-    class="text-center"
-  >
-    {{ config.COMMIT_HASH }}
+  <p class="text-center">
+    Git commit: <span
+      id="commitHash"
+    >
+      {{ config.COMMIT_HASH }}
+    </span>
   </p>
 </template>

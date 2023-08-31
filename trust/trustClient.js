@@ -6,9 +6,11 @@ const http = require('http');
 const url = require('url');
 
 // url of the public facing website
+const API_URL = 'http://api.ysypya.com';
 const BASE_URL = 'http://localhost:3000';
-// const PROD_URL = 'https://beta.ysypya.com';
-const PROD_URL = 'http://localhost:3000';
+
+const PROD_URL = 'https://beta.ysypya.com';
+// const PROD_URL = 'http://localhost:3000';
 
 function crawl(base) {
   const paths = [];
@@ -73,7 +75,8 @@ function download(filename) {
   let downTxt = '';
   const map = {
     COMMIT: process.env.BUILD_HASH,
-    BASE_URL: `${BASE_URL}/`,
+    API_URL,
+    BASE_URL: `${PROD_URL}/`,
   };
   paths.forEach((p) => {
     downTxt = fs.readFileSync(`./dist${p}`).toString('base64');
