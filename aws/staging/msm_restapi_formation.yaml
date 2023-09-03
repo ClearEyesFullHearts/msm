@@ -14,7 +14,7 @@ Resources:
             Action:
               - secretsmanager:GetSecretValue
             Resource:
-              - arn:aws:secretsmanager:eu-west-3:914445634489:secret:BetaMSMSecret-shRNxY
+              - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:BetaMSMSecret-shRNxY'
           - Sid: DynamoDBIndexAndStreamAccess
             Effect: Allow
             Action:
@@ -24,8 +24,8 @@ Resources:
               - dynamodb:DescribeStream
               - dynamodb:GetRecords
             Resource:
-              - arn:aws:dynamodb:eu-west-3:914445634489:table/BetaMSMTable/index/*
-              - arn:aws:dynamodb:eu-west-3:914445634489:table/BetaMSMTable/stream/*
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/BetaMSMTable/index/*'
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/BetaMSMTable/stream/*'
           - Sid: DynamoDBTableAccess
             Effect: Allow
             Action:
@@ -39,7 +39,7 @@ Resources:
               - dynamodb:Scan
               - dynamodb:Query
               - dynamodb:UpdateItem
-            Resource: arn:aws:dynamodb:eu-west-3:914445634489:table/BetaMSMTable
+            Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/BetaMSMTable'
 
   BetaMSMMainRole:
     Type: "AWS::IAM::Role"
@@ -61,7 +61,7 @@ Resources:
     Properties:
       RequiresCompatibilities:
         - "FARGATE"
-      ExecutionRoleArn: "arn:aws:iam::914445634489:role/ecsTaskExecutionRole"
+      ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
       TaskRoleArn: !Sub ${BetaMSMMainRole.Arn}
       Cpu: 256
       Memory: 512
@@ -88,7 +88,7 @@ Resources:
             Options:
               awslogs-create-group: true
               awslogs-group: "/ecs/beta-msm"
-              awslogs-region: "eu-west-3"
+              awslogs-region: !Sub "${AWS::Region}"
               awslogs-stream-prefix: "ecs"
 
   BetaMSMCluster:
@@ -128,7 +128,7 @@ Resources:
       Port: 443
       Protocol: HTTPS
       Certificates:
-        - CertificateArn: arn:aws:acm:eu-west-3:914445634489:certificate/a59a9300-8810-4c0f-a13b-e4e7501a97b9
+        - CertificateArn: !Sub 'arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/a59a9300-8810-4c0f-a13b-e4e7501a97b9'
 
   BetaMSMAlbSG:
     Type: 'AWS::EC2::SecurityGroup'

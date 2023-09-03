@@ -29,8 +29,8 @@ Resources:
               - dynamodb:DescribeStream
               - dynamodb:GetRecords
             Resource:
-              - arn:aws:dynamodb:eu-west-3:914445634489:table/BetaMSMTable/index/*
-              - arn:aws:dynamodb:eu-west-3:914445634489:table/BetaMSMTable/stream/*
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/BetaMSMTable/index/*'
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/BetaMSMTable/stream/*'
           - Sid: DynamoDBTableAccess
             Effect: Allow
             Action:
@@ -44,7 +44,7 @@ Resources:
               - dynamodb:Scan
               - dynamodb:Query
               - dynamodb:UpdateItem
-            Resource: arn:aws:dynamodb:eu-west-3:914445634489:table/BetaMSMTable
+            Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/BetaMSMTable'
 
   MSMCleanupRole:
     Type: "AWS::IAM::Role"
@@ -85,7 +85,7 @@ Resources:
     Properties:
       PackageType: Image
       Code:
-        ImageUri: "914445634489.dkr.ecr.eu-west-3.amazonaws.com/cantlose:mft-msm-cleanup.beta.1"
+        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:mft-msm-cleanup.beta.1"
       MemorySize: 128
       Role: !Sub ${MSMCleanupRole.Arn}
       Environment:
