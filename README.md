@@ -93,20 +93,7 @@ Like I said in the project description the heavy lifting is done on the client s
 git checkout [commit hash]
 ```
 - Review the code in `./public` folder, be confident that it does what I say it does.
-- go to the `./public` folder and setup the project by creating a `.env.production` file
-```
-cd public/
-npm install
-touch .env.production
-```
-- add the environment variables in the file
-```
-VITE_API_URL=https://api.ysypya.com
-VITE_CHAIN_NETWORK=sepolia
-VITE_CHAIN_API_KEY=hZOfL11C3G4een-0wzE5lCsRn2o-EAN9
-VITE_CHAIN_CONTRACT=0xeCb67f9705110bf703a0E34CA04749e46823c3be
-```
-- build the project with the script there
+- go to the `./public` folder and build the project with the script there
 ```
 ./builder.sh
 ```
@@ -117,8 +104,9 @@ node serve.js
 ```
 - Go to http://localhost:3000 in your browser and then you can be sure that the client code has not been tampered with.
 
-I think it should be possible to write a Chrome and/or a Firefox extension to automatically validate that the files coming from the server in the browser match the repository, which would really help to use the site on mobile. I need to dig deeper into that.  
-(It's done, pending approval from the Chrome Extension store)  
+I also created a Chrome Extension validating that the files you use in your browser match exactly those that are produced during the build phase of the client.  
+You can find and download that extension by going to the [Chrome Web Store](https://chrome.google.com/webstore/category/extensions) and searching for ["ySyPyA Verification Tool"](https://chrome.google.com/webstore/detail/ysypya-verification-tool/deemknibjlkcilgadkmcmlbeingpgefe). Once it's installed you can go to the ySyPyA Home Page and follow the instructions.  
+Chrome on mobile doesn't let you install extensions so you'll need to use the [Kiwi Browser](https://play.google.com/store/apps/details?id=com.kiwibrowser.browser) that let's you do it.  
   
 For the truly paranoid, you can always copy the reader and writer code available in `./public/offline` to encrypt your messages on an air-gapped computer. ;)  
   
