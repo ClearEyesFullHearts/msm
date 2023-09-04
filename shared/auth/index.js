@@ -33,10 +33,10 @@ class VerifyAuth {
     });
   }
 
-  static async verifyIdentity(db, signature, payload, body) {
+  static async verifyIdentity(models, signature, payload, body) {
     const { iat, ...restPayload } = payload;
     const { user: { username } } = restPayload;
-    const author = await db.users.findByName(username);
+    const author = await models.findByName(username);
     if (!author) {
       throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'Unknown user');
     }

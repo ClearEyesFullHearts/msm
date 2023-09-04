@@ -18,7 +18,7 @@ class UserData {
         type: String,
         required: true,
         minLength: 3,
-        maxLength: 125,
+        maxLength: 35,
         rangeKey: true,
         map: 'username',
       },

@@ -29,7 +29,7 @@ class AuthMiddleware {
                   },
                 },
               } = req;
-              return Auth.verifyIdentity(db, signature, payload, body)
+              return Auth.verifyIdentity(db.users, signature, payload, body)
                 .then((author) => {
                   req.auth = author;
                   debug('signature is good, author is set');

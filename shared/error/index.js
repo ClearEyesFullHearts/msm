@@ -1,4 +1,4 @@
-const debug = require('debug')('msm-main:error');
+const debug = require('debug')('msm-error:index');
 
 class ErrorHelper {
   static get CODE() {
