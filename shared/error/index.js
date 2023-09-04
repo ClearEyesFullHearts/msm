@@ -28,7 +28,6 @@ class ErrorHelper {
       // If the object is not an Error, create a representation that appears to be
         error = {
           status: 500,
-          failedValidation: false,
           message: String(err), // Coerce to string
           code: 'SERVER_ERROR',
         };
@@ -54,7 +53,6 @@ class ErrorHelper {
   static getCustomError(status, code, message) {
     const err = new Error(message);
     err.status = status;
-    err.failedValidation = false;
     err.code = code;
 
     return err;

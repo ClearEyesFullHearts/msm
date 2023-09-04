@@ -6,8 +6,8 @@ const debug = require('debug')('msm-main:server');
 const Data = require('@shared/dynamolayer');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const ErrorHelper = require('@shared/error');
 const CORS = require('./lib/cors');
-const ErrorHelper = require('./lib/error');
 
 const APP_ID = 'msm-main';
 

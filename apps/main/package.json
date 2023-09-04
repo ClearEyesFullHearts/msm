@@ -15,12 +15,13 @@
     "@shared/encryption": "*",
     "@shared/secrets": "*",
     "@shared/validator": "*",
+    "@shared/error": "*",
+    "jsonwebtoken": "^9.0.0",
     "config": "3.3.9",
     "debug": "4.3.4",
     "express": "^4.18.2",
     "express-openapi-validator": "^5.0.4",
     "helmet": "^7.0.0",
-    "jsonwebtoken": "^9.0.0",
     "morgan": "^1.10.0"
   },
   "devDependencies": {

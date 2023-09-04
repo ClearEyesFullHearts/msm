@@ -1,7 +1,6 @@
-const jwt = require('jsonwebtoken');
 const debug = require('debug')('msm-main:auth');
-const ErrorHelper = require('./error');
-const Encryption = require('@shared/encryption');
+const ErrorHelper = require('@shared/error');
+const Auth = require('@shared/auth');
 
 class AuthMiddleware {
   static verify(secret, timeToWait) {
@@ -12,68 +11,41 @@ class AuthMiddleware {
         if (heads.length !== 2 || heads[0] !== 'Bearer') return next(ErrorHelper.getCustomError(401, ErrorHelper.CODE.MIS_AUTH_HEADER, 'Misformed authorization header'));
 
         const token = heads[1];
-        debug('verify token', token);
-        jwt.verify(token, secret, (err, payload) => {
-          if (err) {
-            debug('verify error', err);
-            return next(ErrorHelper.getCustomError(403, ErrorHelper.CODE.BAD_TOKEN, err.message));
-          }
-          debug('verify ok', payload);
-          const {
-            connection,
-            user,
-          } = payload;
-          if (!connection || !user) {
-            return next(ErrorHelper.getCustomError(401, ErrorHelper.CODE.MIS_AUTH_HEADER, 'Incorrect auth payload'));
-          }
+        debug('verify token');
+        return Auth.verifyToken(token, secret, timeToWait)
+          .then((payload) => {
+            const { user } = payload;
+            req.auth = user;
+            debug('token is good, user is set');
 
-          const elapsedTime = Date.now() - connection;
-          if (elapsedTime > timeToWait) {
-            debug('session expired');
-            return next(ErrorHelper.getCustomError(401, ErrorHelper.CODE.SESSION_EXPIRED, 'Session expired after 15 minutes'));
-          }
-
-          req.auth = user;
-
-          if (req.headers['x-msm-sig']) {
-            debug('verify signature');
-            const {
-              body,
-              app: {
-                locals: {
-                  db,
+            if (req.headers['x-msm-sig']) {
+              debug('verify identity');
+              const signature = req.headers['x-msm-sig'];
+              const {
+                body,
+                app: {
+                  locals: {
+                    db,
+                  },
                 },
-              },
-            } = req;
-
-            const sig = req.headers['x-msm-sig'];
-            const { iat, ...restPayload } = payload;
-            const { user: { username } } = restPayload;
-
-            return db.users.findByName(username)
-              .then((author) => {
-                if (!author) {
-                  return next(ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'Unknown user'));
-                }
-                const { signature: verifPK } = author;
-                const data = JSON.stringify({
-                  ...restPayload,
-                  ...body,
+              } = req;
+              return Auth.verifyIdentity(db, signature, payload, body)
+                .then((author) => {
+                  req.auth = author;
+                  debug('signature is good, author is set');
+                  next();
+                })
+                .catch((err) => {
+                  debug('Identity verfication error');
+                  next(err);
                 });
-                const result = Encryption.verifySignature(verifPK, data, sig);
-                if (!result) {
-                  return next(ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'Impersonation attempt'));
-                }
-                debug('signature checks out');
-                req.auth = author;
-                return next();
-              })
-              .catch(() => next(ErrorHelper.getCustomError(500, ErrorHelper.CODE.SERVER_ERROR, 'Server error')));
-          }
-          return next();
-        });
-
-        return undefined;
+            }
+            return next();
+          })
+          .catch((err) => {
+            debug('Token verfication error');
+            next(err);
+          });
       }
       return next(ErrorHelper.getCustomError(401, ErrorHelper.CODE.NO_AUTH_HEADER, 'Missing authorization header'));
     };

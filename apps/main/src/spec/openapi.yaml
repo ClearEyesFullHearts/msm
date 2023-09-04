@@ -513,8 +513,6 @@ components:
         status:
           type: integer
           format: int32
-        failedValidation:
-          type: boolean
         code:
           type: string
         message:

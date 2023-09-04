@@ -4,8 +4,8 @@ const config = require('config');
 const debug = require('debug')('msm-main:user');
 
 const Encryption = require('@shared/encryption');
+const ErrorHelper = require('@shared/error');
 const MessageAction = require('./messages');
-const ErrorHelper = require('../../lib/error');
 
 class User {
   static async createUser(db, {
