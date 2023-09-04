@@ -29,15 +29,13 @@ class ConnectionData {
         minLength: 268,
         maxLength: 268,
       },
-      validation: {
+      stage: {
         type: String,
-        enum: ['NO_VALIDATION', 'IS_VALIDATING', 'VALIDATED'],
-        default: 'NO_VALIDATION',
-        index: {
-          name: 'UserValidationIndex',
-          global: true,
-          project: false,
-        },
+        required: true,
+      },
+      domainName: {
+        type: String,
+        required: true,
       },
     });
   }
@@ -50,14 +48,16 @@ class ConnectionData {
     username,
     connectionId,
     signature,
-    validation,
+    stage,
+    domainName,
   }) {
     const newConnection = {
       pk: 'WSS',
       sk: username,
       id: connectionId,
       signature,
-      validation,
+      stage,
+      domainName,
     };
 
     const conn = await this.Entity.create(newConnection);

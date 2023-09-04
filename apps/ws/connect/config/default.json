@@ -1,0 +1,7 @@
+{
+  "timer": {
+    "removal": {
+      "session": 900000
+    }
+  }
+}
