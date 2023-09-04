@@ -68,7 +68,7 @@ Resources:
       NetworkMode: "awsvpc"
       ContainerDefinitions:
         - Name: "msm-beta-restapi"
-          Image: "public.ecr.aws/q0f4v2r9/cantlose:mft-msm-restapi.beta.2"
+          Image: "public.ecr.aws/q0f4v2r9/cantlose:mft-msm-restapi.beta.3"
           MemoryReservation: 256
           Memory: 512
           PortMappings:
@@ -82,7 +82,7 @@ Resources:
             - Name: "SECRET_LOCATION"
               Value: "BetaMSMSecret"
             - Name: "DEBUG"
-              Value: "msm-main:*,dynamolayer:*,secrets:*,validator:*"
+              Value: "msm-main:*,dynamolayer:*,secrets:*,validator:*,msm-error:*"
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
