@@ -64,6 +64,8 @@ Resources:
           const AWS = require('aws-sdk');
                 const ddb = new AWS.DynamoDB.DocumentClient();
                 exports.handler = async function (event, context) {
+                  console.log('connect event', event);
+                  console.log('connect context', context);
                   try {
                     await ddb
                       .put({
@@ -138,6 +140,8 @@ Resources:
                 const ddb = new AWS.DynamoDB.DocumentClient();
                 
                 exports.handler = async function (event, context) {
+                  console.log('disconnect event', event);
+                  console.log('disconnect context', context);
                   await ddb
                     .delete({
                       TableName: process.env.table,
@@ -209,6 +213,8 @@ Resources:
                 const ddb = new AWS.DynamoDB.DocumentClient();
                 
                 exports.handler = async function (event, context) {
+                  console.log('message event', event);
+                  console.log('message context', context);
                   let connections;
                   try {
                     connections = await ddb.scan({ TableName: process.env.table }).promise();
@@ -314,6 +320,8 @@ Resources:
           const AWS = require('aws-sdk');
 
                 exports.handler = async function (event, context) {
+                  console.log('default event', event);
+                  console.log('default context', context);
                   let connectionInfo;
                   let connectionId = event.requestContext.connectionId;
                 

@@ -61,7 +61,7 @@ class Data {
     this.unicityData.init(this.TABLE_OPTIONS);
     this.searchData.init(this.TABLE_OPTIONS);
     this.freezerData.init(this.TABLE_OPTIONS);
-    this.connectionData.init(this.TABLE_OPTIONS);
+    this.connections.init(this.TABLE_OPTIONS);
 
     this.users.init(this.TABLE_OPTIONS, {
       unicity: this.unicityData,

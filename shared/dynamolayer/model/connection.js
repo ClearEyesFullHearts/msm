@@ -69,6 +69,11 @@ class ConnectionData {
     return user;
   }
 
+  async allConnected() {
+    const connections = await this.Entity.query('pk').eq('WSS').exec();
+    return connections || [];
+  }
+
   async updateId(username, connectionId) {
     this.Entity.update(
       { pk: 'WSS', sk: username },

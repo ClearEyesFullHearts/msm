@@ -1,5 +1,5 @@
 {
-    "name": "@msm/cleanup",
+    "name": "@msm/connect",
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
@@ -13,6 +13,7 @@
       "@shared/auth": "*",
       "@shared/secrets": "*",
       "@shared/error": "*",
+      "@aws-sdk/client-apigatewaymanagementapi": "3.405.0",
       "config": "3.3.9",
       "debug": "4.3.4"
     },

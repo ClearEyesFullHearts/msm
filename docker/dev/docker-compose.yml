@@ -51,3 +51,20 @@ services:
       - AWS_REGION=us-west-2
       - AWS_ACCESS_KEY_ID=local
       - AWS_SECRET_ACCESS_KEY=local
+
+  connect-ws:
+    build:
+      context: ../../
+      dockerfile: docker/files/ws-connect.dockerfile
+    container_name: connect-ws
+    ports:
+      - 9001:8080
+    depends_on: 
+      - dynamodb-local
+    environment:
+      - DEBUG=dynamolayer:*,secrets:*,auth:*
+      - NODE_ENV=dock-dev
+      - AWS_REGION=us-west-2
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - KEY_AUTH_SIGN=supersecret

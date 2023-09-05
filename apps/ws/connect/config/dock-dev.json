@@ -1,0 +1,9 @@
+{
+  "dynamo": {
+      "local": {
+        "url": "http://dynamodb-local:8000"
+      },
+      "tableName": "MyLocalTable",
+      "createTable": true
+    }
+}

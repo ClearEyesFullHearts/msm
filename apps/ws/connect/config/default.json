@@ -1,7 +1,14 @@
 {
+  "dynamo": {
+    "local": false,
+    "tableName": "BetaMSMTable",
+    "createTable": false
+  },
   "timer": {
     "removal": {
-      "session": 900000
+      "session": 900000,
+      "inactivity": 2592000000,
+      "frozen": 7776000000
     }
   }
 }
