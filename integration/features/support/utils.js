@@ -38,6 +38,8 @@ function formatSK(privateKey) {
   return `${pemHeader}\n${pemContents}\n${pemFooter}`;
 }
 
+const TABLE_NAME = 'MyLocalTable';
+// const TABLE_NAME = 'TestIntegrMSM';
 const ALGORITHM = 'aes-256-gcm';
 const PASS_SIZE = 32;
 const IV_SIZE = 16;
@@ -356,14 +358,8 @@ class Util {
       at: {
         type: String,
       },
-    }), { tableName: 'MyLocalTable', create: false });
-    const ddb = new dynamoose.aws.ddb.DynamoDB({
-      credentials: {
-        accessKeyId: 'local',
-        secretAccessKey: 'local',
-      },
-      region: 'us-west-2',
-    });
+    }), { tableName: TABLE_NAME, create: false });
+    const ddb = new dynamoose.aws.ddb.DynamoDB({});
 
     // Set DynamoDB instance to the Dynamoose DDB instance
     dynamoose.aws.ddb.set(ddb);
@@ -381,7 +377,7 @@ class Util {
   }
 
   static async emptyTable() {
-    const Keys = dynamoose.model('Everything', new dynamoose.Schema({
+    const Keys = dynamoose.model('Keys', new dynamoose.Schema({
       pk: {
         type: String,
         hashKey: true,
@@ -390,14 +386,8 @@ class Util {
         type: String,
         rangeKey: true,
       },
-    }), { tableName: 'MyLocalTable', create: false });
-    const ddb = new dynamoose.aws.ddb.DynamoDB({
-      credentials: {
-        accessKeyId: 'local',
-        secretAccessKey: 'local',
-      },
-      region: 'us-west-2',
-    });
+    }), { tableName: TABLE_NAME, create: false });
+    const ddb = new dynamoose.aws.ddb.DynamoDB({});
 
     // Set DynamoDB instance to the Dynamoose DDB instance
     dynamoose.aws.ddb.set(ddb);

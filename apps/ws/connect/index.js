@@ -24,6 +24,7 @@ function toLowerCaseProperties(obj) {
 
 async function broadcast(sender) {
   const connections = await data.connections.allConnected();
+  debug('broadcast to connections', connections.length);
   if (connections.length < 2) return;
 
   const message = JSON.stringify({

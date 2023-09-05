@@ -1,7 +1,9 @@
 {
   "dynamo": {
-    "accessKeyId": "local",
-    "secretAccessKey": "local",
+    "credentials":{
+      "accessKeyId": "local",
+      "secretAccessKey": "local"
+    },
     "region": "us-west-2"
   },
   "base": {
