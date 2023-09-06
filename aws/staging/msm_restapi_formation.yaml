@@ -1,7 +1,21 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "CloudFormation template for creating a task definition"
 
+####################################################################################
+Parameters:
+####################################################################################
+
+  MSMTableName:
+    Type: String
+    Description: The name of the table to be created.
+
+  MSMSecretName:
+    Type: String
+    Description: The name of the secret to use.
+
+####################################################################################
 Resources:
+####################################################################################
 
   BetaMSMMainManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -24,8 +38,8 @@ Resources:
               - dynamodb:DescribeStream
               - dynamodb:GetRecords
             Resource:
-              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/BetaMSMTable/index/*'
-              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/BetaMSMTable/stream/*'
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}/index/*'
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}/stream/*'
           - Sid: DynamoDBTableAccess
             Effect: Allow
             Action:
@@ -39,7 +53,7 @@ Resources:
               - dynamodb:Scan
               - dynamodb:Query
               - dynamodb:UpdateItem
-            Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/BetaMSMTable'
+            Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}'
 
   BetaMSMMainRole:
     Type: "AWS::IAM::Role"
@@ -80,7 +94,7 @@ Resources:
             - Name: "KEY_REPORT_AT"
               Value: "mat"
             - Name: "SECRET_LOCATION"
-              Value: "BetaMSMSecret"
+              Value: !Ref MSMSecretName
             - Name: "DEBUG"
               Value: "msm-main:*,dynamolayer:*,secrets:*,validator:*,msm-error:*"
           LogConfiguration:

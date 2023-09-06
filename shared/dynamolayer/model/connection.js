@@ -10,6 +10,12 @@ class ConnectionData {
         hashKey: true,
         default: 'WSS',
         forceDefault: true,
+        index: {
+          name: 'ConnectionIDIndex',
+          global: false,
+          project: true,
+          rangeKey: 'id',
+        },
       },
       sk: {
         type: String,

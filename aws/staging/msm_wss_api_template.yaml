@@ -1,0 +1,380 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Resources needed to deploy a serverless chat app with a WebSocket API, Lambda and DynamoDB.
+
+####################################################################################
+Parameters:
+####################################################################################
+
+  StageName:
+    Type: String
+    Description: The name of the stage to be created, also used as NODE_ENV
+
+  MSMTableName:
+    Type: String
+    Description: The name of the table to be created.
+
+  ConnectHandlerImageName:
+    Type: String
+    Description: Tag of the image to deploy.
+
+  MSMSecretName:
+    Type: String
+    Description: The name of the secret to use.
+
+####################################################################################
+Resources:
+####################################################################################
+
+  WssLambdaMSMPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: SecretManagerReadAccess
+            Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource:
+              - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:BetaMSMSecret-shRNxY'
+          - Sid: DynamoDBTableAccess
+            Effect: Allow
+            Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:GetRecords
+              - dynamodb:GetShardIterator
+              - dynamodb:Query
+              - dynamodb:GetItem
+              - dynamodb:Scan
+              - dynamodb:ConditionCheckItem
+            Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}'
+
+  WssLambdaMSMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref WssLambdaMSMPolicy
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+
+  MSMConnectHandler:
+    Type: AWS::Lambda::Function
+    Properties:
+      PackageType: Image
+      Code:
+        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${ConnectHandlerImageName}'
+      MemorySize: 128
+      Role: !Sub ${WssLambdaMSMRole.Arn}
+      Environment:
+        Variables:
+          NODE_ENV: !Ref StageName
+          DEBUG: 'dynamolayer:*,secrets:*,auth:*,ws-connect:*'
+          SECRET_LOCATION: !Ref MSMSecretName
+    DependsOn:
+      - WssLambdaMSMPolicy
+      - WssLambdaMSMRole
+
+  BaseMessageHandler:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |-
+          const AWS = require('aws-sdk');
+                const ddb = new AWS.DynamoDB.DocumentClient();
+                
+                exports.handler = async function (event, context) {
+                  console.log('message event', event);
+                  console.log('message context', context);
+                  let connections;
+                  try {
+                    connections = await ddb.query({ 
+                      TableName: process.env.table,
+                      IndexName: "ConnectionIDIndex",
+                      KeyConditionExpression: "pk = :const",
+                      ExpressionAttributeValues: {
+                          ":const": "WSS"
+                      },
+                    }).promise();
+                  } catch (err) {
+                    return {
+                      statusCode: 500,
+                    };
+                  }
+                  const callbackAPI = new AWS.ApiGatewayManagementApi({
+                    apiVersion: '2018-11-29',
+                    endpoint:
+                      event.requestContext.domainName + '/' + event.requestContext.stage,
+                  });
+                
+                  const message = JSON.parse(event.body).message;
+                
+                  const sendMessages = connections.Items.map(async ({ connectionId }) => {
+                    if (connectionId !== event.requestContext.connectionId) {
+                      try {
+                        await callbackAPI
+                          .postToConnection({ ConnectionId: connectionId, Data: message })
+                          .promise();
+                      } catch (e) {
+                        console.log(e);
+                      }
+                    }
+                  });
+                
+                  try {
+                    await Promise.all(sendMessages);
+                  } catch (e) {
+                    console.log(e);
+                    return {
+                      statusCode: 500,
+                    };
+                  }
+                
+                  return { statusCode: 200 };
+                };
+      Role: !GetAtt WssLambdaMSMRole.Arn
+      Environment:
+        Variables:
+          table: !Ref MSMTableName
+      Handler: index.handler
+      Runtime: nodejs14.x
+    DependsOn:
+      - WssLambdaMSMPolicy
+      - WssLambdaMSMRole
+
+  BaseDisconnectHandler:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |-
+          const AWS = require('aws-sdk');
+                const ddb = new AWS.DynamoDB.DocumentClient();
+                
+                exports.handler = async function (event, context) {
+                  console.log('disconnect event', event);
+                  console.log('disconnect context', context);
+                  try {
+                    connection = await ddb.query({ 
+                      TableName: process.env.table,
+                      IndexName: "ConnectionIDIndex",
+                      KeyConditionExpression: "id = :connId and pk = :const",
+                      ExpressionAttributeValues: {
+                          ":connId": event.requestContext.connectionId,
+                          ":const": "WSS"
+                      },
+                    }).promise();
+
+                    const user = connection.Items[0];
+                    await ddb
+                      .delete({
+                        TableName: process.env.table,
+                        Key: {
+                          pk: 'WSS',
+                          sk: user.sk,
+                        },
+                      })
+                      .promise();
+                  } catch (err) {
+                    return {
+                      statusCode: 500,
+                    };
+                  }
+                  return {
+                    statusCode: 200,
+                  };
+                };
+      Role: !GetAtt WssLambdaMSMRole.Arn
+      Environment:
+        Variables:
+          table: !Ref MSMTableName
+      Handler: index.handler
+      Runtime: nodejs14.x
+    DependsOn:
+      - WssLambdaMSMPolicy
+      - WssLambdaMSMRole
+
+  BaseDefaultHandler:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |-
+            exports.handler = async function (event, context) {
+              console.log('default event', event);
+              console.log('default context', context);
+            
+              return {
+                statusCode: 404,
+              };
+            };
+      Role: !GetAtt WssLambdaMSMRole.Arn
+      Handler: index.handler
+      Runtime: nodejs14.x
+    DependsOn:
+      - WssLambdaMSMPolicy
+      - WssLambdaMSMRole
+
+  MsmWssApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: msm-wss
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: $request.body.action
+
+  MsmWssApiConnectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !GetAtt MSMConnectHandler.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/*/*$connect'
+
+  MsmWssApiConnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MsmWssApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Join 
+        - ''
+        - - 'arn:aws:apigateway:'
+          - !Ref 'AWS::Region'
+          - ':lambda:path/2015-03-31/functions/'
+          - !GetAtt 
+            - MSMConnectHandler
+            - Arn
+          - /invocations
+
+  MsmWssApiConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MsmWssApi
+      RouteKey: $connect
+      AuthorizationType: NONE
+      Target: !Sub 'integrations/${MsmWssApiConnectIntegration}'
+
+  MsmWssApiMessagePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !GetAtt BaseMessageHandler.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/*/*sendmessage'
+
+  MsmWssApiMessageIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MsmWssApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Join 
+        - ''
+        - - 'arn:aws:apigateway:'
+          - !Ref 'AWS::Region'
+          - ':lambda:path/2015-03-31/functions/'
+          - !GetAtt 
+            - BaseMessageHandler
+            - Arn
+          - /invocations
+
+  MsmWssApiMessageRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MsmWssApi
+      RouteKey: sendmessage
+      AuthorizationType: NONE
+      Target: !Sub 'integrations/${MsmWssApiMessageIntegration}'
+
+  MsmWssApiDisconnectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !GetAtt BaseDisconnectHandler.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/*/*$disconnect'
+
+  MsmWssApiDisconnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MsmWssApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Join 
+        - ''
+        - - 'arn:aws:apigateway:'
+          - !Ref 'AWS::Region'
+          - ':lambda:path/2015-03-31/functions/'
+          - !GetAtt 
+            - BaseDisconnectHandler
+            - Arn
+          - /invocations
+
+  MsmWssApiDisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MsmWssApi
+      RouteKey: $disconnect
+      AuthorizationType: NONE
+      Target: !Sub 'integrations/${MsmWssApiDisconnectIntegration}'
+
+  MsmWssApiDefaultPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !GetAtt BaseDefaultHandler.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/*/*$default'
+
+  MsmWssApiDefaultIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MsmWssApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Join 
+        - ''
+        - - 'arn:aws:apigateway:'
+          - !Ref 'AWS::Region'
+          - ':lambda:path/2015-03-31/functions/'
+          - !GetAtt 
+            - BaseDefaultHandler
+            - Arn
+          - /invocations
+
+  MsmWssApiDefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MsmWssApi
+      RouteKey: $default
+      AuthorizationType: NONE
+      Target: !Sub 'integrations/${MsmWssApiDefaultIntegration}'
+
+  MsmWssCurrentStage:
+    Type: 'AWS::ApiGatewayV2::Stage'
+    Properties:
+      ApiId: !Ref MsmWssApi
+      StageName: !Ref StageName
+      AutoDeploy: true
+
+  MsmWssManageConnectionsPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action: 'execute-api:ManageConnections'
+            Effect: Allow
+            Resource: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/dev/POST/@connections/*'
+        Version: 2012-10-17
+      PolicyName: MsmWssManageConnectionsPolicy
+      Roles:
+        - !Ref WssLambdaMSMRole
+
+
+Outputs:
+
+  WSSEndpoint:
+    Value: !Sub 'wss://${MsmWssApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}'
+    Description: Url of the web socket endpoint

@@ -3,6 +3,14 @@ Description: >
   Resources needed to deploy a scheduled lambda function.
 
 ####################################################################################
+Parameters:
+####################################################################################
+
+  MSMTableName:
+    Type: String
+    Description: The name of the table to be created.
+
+####################################################################################
 Resources:
 ####################################################################################
 
@@ -29,8 +37,8 @@ Resources:
               - dynamodb:DescribeStream
               - dynamodb:GetRecords
             Resource:
-              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/BetaMSMTable/index/*'
-              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/BetaMSMTable/stream/*'
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/{MSMTableName}/index/*'
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/{MSMTableName}/stream/*'
           - Sid: DynamoDBTableAccess
             Effect: Allow
             Action:
@@ -44,7 +52,7 @@ Resources:
               - dynamodb:Scan
               - dynamodb:Query
               - dynamodb:UpdateItem
-            Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/BetaMSMTable'
+            Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/{MSMTableName}'
 
   MSMCleanupRole:
     Type: "AWS::IAM::Role"

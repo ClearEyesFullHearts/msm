@@ -40,9 +40,7 @@ async function broadcast(sender) {
 
     if (id !== sender.id) {
       const client = new ApiGatewayManagementApiClient({
-        apiVersion: '2018-11-29',
-        endpoint:
-      `${domainName}/${stage}`,
+        endpoint: `${domainName}/${stage}`,
       });
       const input = { // PostToConnectionRequest
         Data: message, // required
@@ -89,7 +87,7 @@ exports.handler = async function lambdaHandler(event) {
         const [token, signature] = identifiers;
         if (!tokenSecret) {
           await getSecretValue();
-          tokenSecret = process.env.KEY_AUTH_SIGN;
+          tokenSecret = process.env.KEY_AUTH_SIGN || 'supersecret';
         }
         debug('secret is set');
 

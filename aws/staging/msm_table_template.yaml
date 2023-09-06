@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Creates the MSM DynamoDB table
+
+####################################################################################
+Parameters:
+####################################################################################
+
+  MSMTableName:
+    Type: String
+    Description: The name of the table to be created.
+
+####################################################################################
+Resources:
+####################################################################################
+
+  MSMTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: !Ref MSMTableName
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: size
+          AttributeType: N
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: lastActivity
+          AttributeType: N
+        - AttributeName: validation
+          AttributeType: S
+        - AttributeName: hasBeenRead
+          AttributeType: N
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: expirationDate
+        Enabled: true
+      LocalSecondaryIndexes:
+        - IndexName: ConnectionIDIndex
+          KeySchema:
+            - AttributeName: pk
+              KeyType: HASH
+            - AttributeName: id
+              KeyType: RANGE
+          Projection:
+            ProjectionType: KEYS_ONLY
+      GlobalSecondaryIndexes:
+        - IndexName: LastActivityIndex
+          KeySchema:
+            - AttributeName: lastActivity
+              KeyType: HASH
+            - AttributeName: sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: ReadMessagesIndex
+          KeySchema:
+            - AttributeName: hasBeenRead
+              KeyType: HASH
+            - AttributeName: sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: KEYS_ONLY
+        - IndexName: SearchUserIndex
+          KeySchema:
+            - AttributeName: sk
+              KeyType: HASH
+            - AttributeName: size
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: UserValidationIndex
+          KeySchema:
+            - AttributeName: validation
+              KeyType: HASH
+          Projection:
+            ProjectionType: KEYS_ONLY
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+
+Outputs:
+
+  TableName:
+    Value: !Ref 'MSMTable'
+    Description: Table name of the newly created DynamoDB table
+
+  TableARN:
+    Value: !GetAtt MSMTable.Arn
+    Description: Table name of the newly created DynamoDB table
