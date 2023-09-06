@@ -1,0 +1,11 @@
+{
+  "auth": "supersecret",
+  "timer": {
+    "removal": {
+      "session": 900000
+    },
+    "interval": {
+      "poll": 120000
+    }
+  }
+}

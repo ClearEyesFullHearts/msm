@@ -1,0 +1,21 @@
+{
+    "name": "test-wss-msm",
+    "version": "1.0.0",
+    "description": "Integration tests for MSM",
+    "main": "",
+    "scripts": {
+        "test": "./node_modules/.bin/cucumber-js",
+        "win-test": ".\\node_modules\\.bin\\cucumber-js"
+    },
+    "author": "MFT",
+    "license": "MIT",
+    "dependencies": {
+        "@cucumber/cucumber": "^9.2.0",
+        "apickli": "^3.0.2",
+        "config": "3.3.9",
+        "cucumber-html-reporter": "^7.1.0",
+        "jsonwebtoken": "^9.0.0",
+        "dynamoose": "3.2.0",
+        "ws": "8.13.0"
+    }
+}
