@@ -108,6 +108,7 @@ exports.handler = async function lambdaHandler(event) {
         } = author;
 
         const connection = await data.connections.findByName(username);
+        debug('connection retrieved', connection);
 
         if (connection) {
           await data.connections.updateId(username, connectionId);
@@ -131,9 +132,6 @@ exports.handler = async function lambdaHandler(event) {
 
         const response = {
           statusCode: 200,
-          headers: {
-            'Sec-WebSocket-Protocol': 'signature',
-          },
         };
         return response;
       }
@@ -141,6 +139,7 @@ exports.handler = async function lambdaHandler(event) {
 
     throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Missing header');
   } catch (err) {
+    debug('error', err);
     const { status, code, message } = err;
     if (code) {
       return {
