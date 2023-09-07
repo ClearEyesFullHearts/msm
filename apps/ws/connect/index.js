@@ -111,8 +111,11 @@ exports.handler = async function lambdaHandler(event) {
         debug('connection retrieved', connection);
 
         if (connection) {
-          await data.connections.updateId(username, connectionId);
-          debug('already connected, update the id');
+          connection.id = connectionId;
+          connection.stage = stage;
+          connection.domainName = domainName;
+          await connection.save();
+          debug('already connected, update the connection infos');
         } else {
           const sender = await data.connections.create({
             username,
