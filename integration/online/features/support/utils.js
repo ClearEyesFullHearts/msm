@@ -417,7 +417,7 @@ class Util {
     }
   }
 
-  static async SetValueInDB(sk, pk, prop, val) {
+  static async setValueInDB(sk, pk, prop, val) {
     const Everything = Util.getEverythingModel();
     await Everything.update(
       { pk, sk },
@@ -425,6 +425,12 @@ class Util {
         $SET: { [prop]: val },
       },
     );
+  }
+
+  static async getValueInDB({ sk, pk }) {
+    const Everything = Util.getEverythingModel();
+    const e = await Everything.get({ sk, pk });
+    return e;
   }
 
   static roundTimeToDays(epoch, addDays = 0) {

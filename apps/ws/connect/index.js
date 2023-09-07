@@ -1,6 +1,6 @@
 const debug = require('debug')('ws-connect:app');
 const config = require('config');
-const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
+const { ApiGatewayManagementApiClient, PostToConnectionCommand, DeleteConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
 const Data = require('@shared/dynamolayer');
 const Auth = require('@shared/auth');
 const ErrorHelper = require('@shared/error');
@@ -29,7 +29,7 @@ async function broadcast(sender) {
 
   const message = JSON.stringify({
     type: 'CONNECTION',
-    from: sender.username,
+    from: sender,
   });
   const sendMessages = connections.map(async (conn) => {
     const {
@@ -40,7 +40,7 @@ async function broadcast(sender) {
 
     if (id !== sender.id) {
       const client = new ApiGatewayManagementApiClient({
-        endpoint: `${domainName}/${stage}`,
+        endpoint: `https://${domainName}/${stage}`,
       });
       const input = { // PostToConnectionRequest
         Data: message, // required
@@ -57,6 +57,20 @@ async function broadcast(sender) {
   } catch (e) {
     console.log(e);
   }
+}
+
+function asyncCleanSocket({
+  id, stage, domainName,
+}) {
+  const client = new ApiGatewayManagementApiClient({
+    endpoint: `https://${domainName}/${stage}`,
+  });
+  const input = { // DeleteConnectionRequest
+    ConnectionId: id, // required
+  };
+  const command = new DeleteConnectionCommand(input);
+  // We do not care for the response
+  client.send(command).catch(console.log);
 }
 
 exports.handler = async function lambdaHandler(event) {
@@ -111,26 +125,25 @@ exports.handler = async function lambdaHandler(event) {
         debug('connection retrieved', connection);
 
         if (connection) {
-          connection.id = connectionId;
-          connection.stage = stage;
-          connection.domainName = domainName;
-          await connection.save();
-          debug('already connected, update the connection infos');
-        } else {
-          const sender = await data.connections.create({
-            username,
-            signature: sigKey,
-            connectionId,
-            stage,
-            domainName,
-          });
-          debug('connection created');
+          asyncCleanSocket(connection);
+          debug('socket is closing');
+          await data.connections.delete(connection.username);
+          debug('delete the previous connection data');
+        }
 
-          if (process.env.CONNECT_BROADCAST) {
-            debug('trying to broadcast new connection');
-            await broadcast(sender);
-            debug('broadcast done');
-          }
+        await data.connections.create({
+          username,
+          signature: sigKey,
+          connectionId,
+          stage,
+          domainName,
+        });
+        debug('connection created');
+
+        if (process.env.CONNECT_BROADCAST) {
+          debug('trying to broadcast new connection');
+          await broadcast(username);
+          debug('broadcast done');
         }
 
         const response = {

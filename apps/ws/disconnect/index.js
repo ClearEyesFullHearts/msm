@@ -13,9 +13,10 @@ exports.handler = async function lambdaHandler(event) {
     const {
       requestContext: {
         connectionId,
+        disconnectReason,
       },
     } = event;
-    debug('disconnect id', connectionId);
+    debug(`disconnect id ${connectionId} for ${disconnectReason}`);
 
     const connection = await data.connections.findById(connectionId);
     debug('connection retrieved', connection);
