@@ -14,13 +14,17 @@ Parameters:
     Type: String
     Description: The name of the table to be created.
 
+  MSMSecretName:
+    Type: String
+    Description: The name of the secret to use.
+
   ConnectHandlerImageName:
     Type: String
     Description: Tag of the image to deploy.
 
-  MSMSecretName:
+  DisonnectHandlerImageName:
     Type: String
-    Description: The name of the secret to use.
+    Description: Tag of the image to deploy.
 
 ####################################################################################
 Resources:
@@ -156,50 +160,15 @@ Resources:
   BaseDisconnectHandler:
     Type: AWS::Lambda::Function
     Properties:
+      PackageType: Image
       Code:
-        ZipFile: |-
-          const AWS = require('aws-sdk');
-                const ddb = new AWS.DynamoDB.DocumentClient();
-                
-                exports.handler = async function (event, context) {
-                  console.log('disconnect event', event);
-                  console.log('disconnect context', context);
-                  try {
-                    connection = await ddb.query({ 
-                      TableName: process.env.table,
-                      IndexName: "ConnectionIDIndex",
-                      KeyConditionExpression: "id = :connId and pk = :const",
-                      ExpressionAttributeValues: {
-                          ":connId": event.requestContext.connectionId,
-                          ":const": "WSS"
-                      },
-                    }).promise();
-
-                    const user = connection.Items[0];
-                    await ddb
-                      .delete({
-                        TableName: process.env.table,
-                        Key: {
-                          pk: 'WSS',
-                          sk: user.sk,
-                        },
-                      })
-                      .promise();
-                  } catch (err) {
-                    return {
-                      statusCode: 500,
-                    };
-                  }
-                  return {
-                    statusCode: 200,
-                  };
-                };
-      Role: !GetAtt WssLambdaMSMRole.Arn
+        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${DisconnectHandlerImageName}'
+      MemorySize: 128
+      Role: !Sub ${WssLambdaMSMRole.Arn}
       Environment:
         Variables:
-          table: !Ref MSMTableName
-      Handler: index.handler
-      Runtime: nodejs14.x
+          NODE_ENV: !Ref StageName
+          DEBUG: 'dynamolayer:*,ws-disconnect:*'
     DependsOn:
       - WssLambdaMSMPolicy
       - WssLambdaMSMRole

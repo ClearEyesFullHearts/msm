@@ -75,18 +75,21 @@ class ConnectionData {
     return user;
   }
 
+  async findById(connectionId) {
+    const user = await this.Entity.query('pk').eq('WSS')
+      .filter('id').eq(connectionId)
+      .using('ConnectionIDIndex')
+      .exec();
+    return user && user.length ? user[0] : undefined;
+  }
+
+  async delete(username) {
+    await this.Entity.delete({ pk: 'WSS', sk: username });
+  }
+
   async allConnected() {
     const connections = await this.Entity.query('pk').eq('WSS').exec();
     return connections || [];
-  }
-
-  async updateId(username, connectionId) {
-    this.Entity.update(
-      { pk: 'WSS', sk: username },
-      {
-        $SET: { id: connectionId },
-      },
-    );
   }
 }
 

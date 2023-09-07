@@ -62,9 +62,23 @@ services:
     depends_on: 
       - dynamodb-local
     environment:
-      - DEBUG=dynamolayer:*,secrets:*,auth:*
-      - NODE_ENV=dock-dev
+      - DEBUG=dynamolayer:*,secrets:*,auth:*,ws-connect:*
       - AWS_REGION=us-west-2
       - AWS_ACCESS_KEY_ID=local
       - AWS_SECRET_ACCESS_KEY=local
       - KEY_AUTH_SIGN=supersecret
+
+  disconnect-ws:
+    build:
+      context: ../../
+      dockerfile: docker/files/ws-disconnect.dockerfile
+    container_name: disconnect-ws
+    ports:
+      - 9002:8080
+    depends_on: 
+      - dynamodb-local
+    environment:
+      - DEBUG=dynamolayer:*,ws-disconnect:*
+      - AWS_REGION=us-west-2
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
