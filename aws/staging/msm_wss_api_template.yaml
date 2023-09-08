@@ -8,22 +8,32 @@ Parameters:
 
   StageName:
     Type: String
+    Default: test
     Description: The name of the stage to be created, also used as NODE_ENV
 
   MSMTableName:
     Type: String
+    Default: MyTestTable
     Description: The name of the table to be created.
 
   MSMSecretName:
     Type: String
+    Default: test
     Description: The name of the secret to use.
 
   ConnectHandlerImageName:
     Type: String
+    Default: mft-msm-ws-connect.test
     Description: Tag of the image to deploy.
 
   DisconnectHandlerImageName:
     Type: String
+    Default: mft-msm-ws-disconnect.test
+    Description: Tag of the image to deploy.
+
+  FallbackHandlerImageName:
+    Type: String
+    Default: mft-msm-ws-fallback.test
     Description: Tag of the image to deploy.
 
 ####################################################################################
@@ -89,6 +99,22 @@ Resources:
           DEBUG: 'dynamolayer:*,secrets:*,auth:*,ws-connect:*'
           SECRET_LOCATION: !Ref MSMSecretName
           CONNECT_BROADCAST: true
+    DependsOn:
+      - WssLambdaMSMPolicy
+      - WssLambdaMSMRole
+
+  MSMFallbackHandler:
+    Type: AWS::Lambda::Function
+    Properties:
+      PackageType: Image
+      Code:
+        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${FallbackHandlerImageName}'
+      MemorySize: 128
+      Role: !Sub ${WssLambdaMSMRole.Arn}
+      Environment:
+        Variables:
+          NODE_ENV: !Ref StageName
+          DEBUG: 'dynamolayer:*,ws-fallback:*'
     DependsOn:
       - WssLambdaMSMPolicy
       - WssLambdaMSMRole
@@ -234,6 +260,37 @@ Resources:
       AuthorizationType: NONE
       Target: !Sub 'integrations/${MsmWssApiConnectIntegration}'
 
+  MsmWssApiFallbackPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !GetAtt MSMFallbackHandler.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/*/*fallback'
+
+  MsmWssApiFallbackIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MsmWssApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Join 
+        - ''
+        - - 'arn:aws:apigateway:'
+          - !Ref 'AWS::Region'
+          - ':lambda:path/2015-03-31/functions/'
+          - !GetAtt 
+            - MSMFallbackHandler
+            - Arn
+          - /invocations
+
+  MsmWssApiFallbackRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MsmWssApi
+      RouteKey: fallback
+      AuthorizationType: NONE
+      Target: !Sub 'integrations/${MsmWssApiFallbackIntegration}'
+
   MsmWssApiMessagePermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -341,7 +398,7 @@ Resources:
         Statement:
           - Action: 'execute-api:ManageConnections'
             Effect: Allow
-            Resource: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/${StageName}/POST/@connections/*'
+            Resource: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/${StageName}/*/@connections/*'
         Version: 2012-10-17
       PolicyName: MsmWssManageConnectionsPolicy
       Roles:

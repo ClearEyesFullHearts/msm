@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { Given } = require('@cucumber/cucumber');
+const { Given, When } = require('@cucumber/cucumber');
 const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');
 const config = require('config');
@@ -82,21 +82,19 @@ Given(/^(.*) is connected$/, async function (name) {
       username,
     },
   };
-  const token = jwt.sign(payload, config.get('auth'));
+  const token = Buffer.from(jwt.sign(payload, config.get('auth'))).toString('hex');
 
   const data = JSON.stringify({
     ...payload,
     action: 'WSS',
   });
 
-  const signature = Util.sign(sskFile, data);
+  const signature = Buffer.from(Util.sign(sskFile, data)).toString('hex');
+  console.log('token', token);
+  console.log('signature', signature);
 
   await new Promise((resolve, reject) => {
-    const wss = new WebSocket(this.apickli.domain, {
-      headers: {
-        'Sec-WebSocket-Protocol': `${token}, ${signature}`,
-      },
-    });
+    const wss = new WebSocket(this.apickli.domain, [token, signature]);
     wss.on('error', (err) => {
       throw err;
     });
@@ -105,6 +103,8 @@ Given(/^(.*) is connected$/, async function (name) {
       Util.getValueInDB({ sk: username, pk: 'WSS' })
         .then((connection) => {
           if (connection) {
+            console.log(`${username} connected`);
+            this.apickli.storeValueInScenarioScope(`SOCKET.${username}`, wss);
             resolve();
           } else {
             reject(new Error('Connection not created in db'));
@@ -112,11 +112,18 @@ Given(/^(.*) is connected$/, async function (name) {
         })
         .catch(reject);
     });
-
-    wss.on('message', (msg) => {
-      console.log(`${username} received a message:${msg}`);
+    wss.on('message', (message) => {
+      console.log(`${username} received message ${message}`);
+      let allMsg = this.apickli.scenarioVariables[`MSG.${username}`];
+      if (!allMsg) {
+        allMsg = [];
+      }
+      allMsg.push(message);
+      this.apickli.storeValueInScenarioScope(`MSG.${username}`, allMsg);
     });
-    this.apickli.storeValueInScenarioScope(`SOCKET.${username}`, wss);
+    wss.on('close', () => {
+      console.log(`${username} closed socket`);
+    });
   });
 });
 
@@ -130,4 +137,55 @@ Given(/^(.*) disconnects$/, async function (name) {
     });
     wss.close();
   });
+});
+
+Given(/^(.*) is listening$/, function (name) {
+  const username = this.apickli.replaceVariables(name);
+  const wss = this.apickli.scenarioVariables[`SOCKET.${username}`];
+
+  wss.on('message', (message) => {
+    console.log(`${username} received message ${message}`);
+    let allMsg = this.apickli.scenarioVariables[`MSG.${username}`];
+    if (!allMsg) {
+      allMsg = [];
+    }
+    allMsg.push(message);
+    this.apickli.storeValueInScenarioScope(`MSG.${username}`, allMsg);
+  });
+});
+Given(/^(.*) stop listening$/, function (name) {
+  const username = this.apickli.replaceVariables(name);
+  const wss = this.apickli.scenarioVariables[`SOCKET.${username}`];
+
+  wss.removeAllListeners('message');
+  this.apickli.storeValueInScenarioScope(`MSG.${username}`, null);
+});
+
+Given(/^I prepare message (.*) for (.*)$/, function (txt, name) {
+  const username = this.apickli.replaceVariables(name);
+
+  const file = fs.readFileSync(`./data/users/${username}/public.pem`).toString();
+  const [epkFile] = file.split('\n----- SIGNATURE -----\n');
+
+  const encryptedTxt = Util.encrypt(epkFile, txt);
+
+  this.apickli.storeValueInScenarioScope(`NEXT.${username}`, encryptedTxt);
+});
+
+When(/^(.*) send next (.*) message to (.*)$/, async function (sender, route, target) {
+  const sendername = this.apickli.replaceVariables(sender);
+  const targetname = this.apickli.replaceVariables(target);
+
+  const wss = this.apickli.scenarioVariables[`SOCKET.${sendername}`];
+  const content = this.apickli.scenarioVariables[`NEXT.${targetname}`];
+
+  const message = {
+    action: route,
+    message: {
+      to: targetname,
+      content,
+    },
+  };
+
+  await wss.send(JSON.stringify(message));
 });

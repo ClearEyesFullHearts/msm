@@ -98,12 +98,15 @@ exports.handler = async function lambdaHandler(event) {
         }
         debug('both auth headers present');
 
-        const [token, signature] = identifiers;
+        const [protToken, protSignature] = identifiers;
         if (!tokenSecret) {
           await getSecretValue();
           tokenSecret = process.env.KEY_AUTH_SIGN || 'supersecret';
         }
         debug('secret is set');
+
+        const token = Buffer.from(protToken, 'hex').toString();
+        const signature = Buffer.from(protSignature.trimStart(), 'hex').toString();
 
         const payload = await Auth.verifyToken(token, tokenSecret, config.get('timer.removal.session'));
         debug('token is verified, we have payload');
@@ -148,6 +151,9 @@ exports.handler = async function lambdaHandler(event) {
 
         const response = {
           statusCode: 200,
+          headers: {
+            'Sec-WebSocket-Protocol': protToken,
+          },
         };
         return response;
       }

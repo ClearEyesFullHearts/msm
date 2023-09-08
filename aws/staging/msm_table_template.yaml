@@ -50,7 +50,7 @@ Resources:
             - AttributeName: id
               KeyType: RANGE
           Projection:
-            ProjectionType: KEYS_ONLY
+            ProjectionType: ALL
       GlobalSecondaryIndexes:
         - IndexName: LastActivityIndex
           KeySchema:
