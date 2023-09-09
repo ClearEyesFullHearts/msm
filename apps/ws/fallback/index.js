@@ -11,9 +11,9 @@ const {
 const Data = require('@shared/dynamolayer');
 
 const ACTIONS = {
-  DISCONNECTED: 'DISCONNECTED',
-  ERROR: 'ERROR',
-  FALLBACK: 'FALLBACKCHAT',
+  DISCONNECTED: 'disconnected',
+  ERROR: 'error',
+  FALLBACK: 'fallback',
 };
 
 const data = new Data(config.get('dynamo'), {

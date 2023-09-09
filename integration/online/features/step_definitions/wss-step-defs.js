@@ -1,5 +1,6 @@
 const fs = require('fs');
-const { Given, When } = require('@cucumber/cucumber');
+const assert = require('assert');
+const { Given, When, Then } = require('@cucumber/cucumber');
 const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');
 const config = require('config');
@@ -90,8 +91,8 @@ Given(/^(.*) is connected$/, async function (name) {
   });
 
   const signature = Buffer.from(Util.sign(sskFile, data)).toString('hex');
-  console.log('token', token);
-  console.log('signature', signature);
+  // console.log('token', token);
+  // console.log('signature', signature);
 
   await new Promise((resolve, reject) => {
     const wss = new WebSocket(this.apickli.domain, [token, signature]);
@@ -112,15 +113,6 @@ Given(/^(.*) is connected$/, async function (name) {
         })
         .catch(reject);
     });
-    wss.on('message', (message) => {
-      console.log(`${username} received message ${message}`);
-      let allMsg = this.apickli.scenarioVariables[`MSG.${username}`];
-      if (!allMsg) {
-        allMsg = [];
-      }
-      allMsg.push(message);
-      this.apickli.storeValueInScenarioScope(`MSG.${username}`, allMsg);
-    });
     wss.on('close', () => {
       console.log(`${username} closed socket`);
     });
@@ -139,28 +131,6 @@ Given(/^(.*) disconnects$/, async function (name) {
   });
 });
 
-Given(/^(.*) is listening$/, function (name) {
-  const username = this.apickli.replaceVariables(name);
-  const wss = this.apickli.scenarioVariables[`SOCKET.${username}`];
-
-  wss.on('message', (message) => {
-    console.log(`${username} received message ${message}`);
-    let allMsg = this.apickli.scenarioVariables[`MSG.${username}`];
-    if (!allMsg) {
-      allMsg = [];
-    }
-    allMsg.push(message);
-    this.apickli.storeValueInScenarioScope(`MSG.${username}`, allMsg);
-  });
-});
-Given(/^(.*) stop listening$/, function (name) {
-  const username = this.apickli.replaceVariables(name);
-  const wss = this.apickli.scenarioVariables[`SOCKET.${username}`];
-
-  wss.removeAllListeners('message');
-  this.apickli.storeValueInScenarioScope(`MSG.${username}`, null);
-});
-
 Given(/^I prepare message (.*) for (.*)$/, function (txt, name) {
   const username = this.apickli.replaceVariables(name);
 
@@ -172,9 +142,23 @@ Given(/^I prepare message (.*) for (.*)$/, function (txt, name) {
   this.apickli.storeValueInScenarioScope(`NEXT.${username}`, encryptedTxt);
 });
 
-When(/^(.*) send next (.*) message to (.*)$/, async function (sender, route, target) {
+When(/^(.*) send next (.*) message to (.*)$/, function (sender, route, target, cb) {
   const sendername = this.apickli.replaceVariables(sender);
   const targetname = this.apickli.replaceVariables(target);
+
+  const targetWss = this.apickli.scenarioVariables[`SOCKET.${targetname}`];
+
+  targetWss.on('message', (message) => {
+    console.log(`${targetname} received message`);
+    let allMsg = this.apickli.scenarioVariables[`MSG.${targetname}`];
+    if (!allMsg) {
+      allMsg = [];
+    }
+    allMsg.push(message.toString());
+    this.apickli.storeValueInScenarioScope(`MSG.${targetname}`, allMsg);
+    targetWss.removeAllListeners('message');
+    cb();
+  });
 
   const wss = this.apickli.scenarioVariables[`SOCKET.${sendername}`];
   const content = this.apickli.scenarioVariables[`NEXT.${targetname}`];
@@ -187,5 +171,23 @@ When(/^(.*) send next (.*) message to (.*)$/, async function (sender, route, tar
     },
   };
 
-  await wss.send(JSON.stringify(message));
+  wss.send(JSON.stringify(message));
+});
+
+Then(/^(.*) decrypt content of message (.*) from route (.*)$/, function (name, index, route) {
+  const username = this.apickli.replaceVariables(name);
+  const allMsg = this.apickli.scenarioVariables[`MSG.${username}`];
+  const msg = JSON.parse(allMsg[Number(index)]);
+
+  assert.ok(msg.action);
+  assert.ok(msg.message);
+  assert.ok(msg.message.content);
+  const { action, message: { content } } = msg;
+  assert.strictEqual(action, route);
+
+  const privateK = fs.readFileSync(`./data/users/${username}/private.pem`).toString();
+  const [eskFile] = privateK.split('\n----- SIGNATURE -----\n');
+
+  const body = Util.decrypt(eskFile, content);
+  this.apickli.httpResponse.body = JSON.stringify({ content: body });
 });

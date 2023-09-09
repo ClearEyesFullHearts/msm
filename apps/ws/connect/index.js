@@ -28,8 +28,10 @@ async function broadcast(sender) {
   if (connections.length < 2) return;
 
   const message = JSON.stringify({
-    type: 'CONNECTION',
-    from: sender,
+    action: 'connected',
+    message: {
+      from: sender,
+    },
   });
   const sendMessages = connections.map(async (conn) => {
     const {

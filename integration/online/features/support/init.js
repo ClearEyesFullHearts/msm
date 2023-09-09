@@ -15,7 +15,7 @@ const Util = require('./utils');
 //     .then(cb);
 // });
 
-const ENDPOINT = 'mq2td8ry00.execute-api.eu-west-3.amazonaws.com/test';
+const ENDPOINT = 'pztqj7kv8d.execute-api.eu-west-3.amazonaws.com/test';
 
 Before(function () {
   this.apickli = new apickli.Apickli('wss', ENDPOINT, 'data');
@@ -27,10 +27,10 @@ Before(function () {
   }
 });
 
-// After(function () {
-//   Object.keys(this.apickli.scenarioVariables).forEach((p) => {
-//     if (p.startsWith('SOCKET')) {
-//       this.apickli.scenarioVariables[p].close();
-//     }
-//   });
-// });
+After(function () {
+  Object.keys(this.apickli.scenarioVariables).forEach((p) => {
+    if (p.startsWith('SOCKET')) {
+      this.apickli.scenarioVariables[p].close();
+    }
+  });
+});

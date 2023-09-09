@@ -13,3 +13,5 @@ Then(/^I wait for (.*) ms$/, async function (seconds) {
     setTimeout(resolve, time);
   });
 });
+
+module.exports = require('apickli/apickli-gherkin');
