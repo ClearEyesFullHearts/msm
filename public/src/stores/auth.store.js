@@ -3,7 +3,7 @@ import { defineStore, getActivePinia } from 'pinia';
 
 import { fetchWrapper } from '@/helpers';
 import { router } from '@/router';
-import { useAlertStore, useContactsStore } from '@/stores';
+import { useAlertStore, useContactsStore, useMessagesStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
 import Config from '@/lib/config';
@@ -66,7 +66,15 @@ export const useAuthStore = defineStore({
         this.publicHash = await mycrypto.hash(`${epk}\n${spk}`);
 
         const contactsStore = useContactsStore();
-        contactsStore.setContactList(this.pem, this.user.contacts);
+        contactsStore.setContactList(this.pem, this.user.contacts)
+          .then(async () => {
+            const messageStore = useMessagesStore();
+            await messageStore.getHeaders();
+            await contactsStore.fillConversations(messageStore.headers);
+            if (contactsStore.dirty) {
+              await contactsStore.saveContactList(this.pem);
+            }
+          });
 
         // redirect to previous url or default to home page
         router.push(this.returnUrl || '/messages');

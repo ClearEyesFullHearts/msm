@@ -29,9 +29,10 @@ export const useMessagesStore = defineStore({
         const authStore = useAuthStore();
         const { pem } = authStore;
 
+        const copy = [];
         this.headers = [];
         document.title = 'ySyPyA';
-        for (let i = 0; i < challenges.length; i++) {
+        for (let i = 0; i < challenges.length; i += 1) {
           const { id, challenge } = challenges[i];
           const objStr = await mycrypto.resolve(pem, challenge);
 
@@ -45,16 +46,20 @@ export const useMessagesStore = defineStore({
           const dec = new TextDecoder();
           const title = dec.decode(titleBuff);
 
-          this.headers.push({
+          const header = {
             id,
             from,
             sentAt,
             title: this.decodeText(title),
-          });
+          };
+          this.headers.push(header);
+          copy.push(header);
           document.title = `ySyPyA (${this.headers.length})`;
         }
+        return copy;
       } catch (error) {
         this.headers = { error };
+        return [];
       }
     },
     async getMessage(msgId) {
