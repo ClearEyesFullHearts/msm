@@ -12,7 +12,6 @@ Scenario: mat connects and disconnect
 Scenario: mat and batmat are chatting
     Given batmat is connected
     And mat is connected
-    Then I wait for 3 seconds
     And I prepare fallback message "Hello boy" for mat
     When batmat send next fallback message to mat
     Then mat decrypt content of message 0 from route fallback
@@ -27,3 +26,11 @@ Scenario: Bad content send error
     And I prepare next message for mat as { "to": "mat", "content": "blablabla" }
     When mat send next fallback message to mat
     Then mat's last message action is error
+
+Scenario: Disconnected target send event
+    Given mat is connected
+    And mat is listening
+    And I prepare fallback message "Glad youre here" for batmat
+    When mat send next fallback message to batmat
+    Then I wait for 2 seconds
+    Then mat's last message action is disconnected

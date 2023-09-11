@@ -97,23 +97,31 @@ Given(/^I prepare next message for (.*) as (.*)$/, function (name, json) {
   this.apickli.storeValueInScenarioScope(`NEXT.${username}`, JSON.parse(json));
 });
 
-When(/^(.*) send next fallback message to (.*)$/, function (sender, target, cb) {
-  const sendername = this.apickli.replaceVariables(sender);
-  const targetname = this.apickli.replaceVariables(target);
+Given(/^(.*) is listening$/, function (name) {
+  const username = this.apickli.replaceVariables(name);
 
-  const targetWss = this.apickli.scenarioVariables[`SOCKET.${targetname}`];
-
-  targetWss.on('message', (message) => {
-    console.log(`${targetname} received message`, message.toString());
-    let allMsg = this.apickli.scenarioVariables[`MSG.${targetname}`];
+  const wss = this.apickli.scenarioVariables[`SOCKET.${username}`];
+  wss.on('message', (msg) => {
+    // console.log(`${username} received message`, msg.toString());
+    let allMsg = this.apickli.scenarioVariables[`MSG.${username}`];
     if (!allMsg) {
       allMsg = [];
     }
-    allMsg.push(message.toString());
-    this.apickli.storeValueInScenarioScope(`MSG.${targetname}`, allMsg);
-    targetWss.removeAllListeners('message');
-    cb();
+    allMsg.push(msg.toString());
+    this.apickli.storeValueInScenarioScope(`MSG.${username}`, allMsg);
   });
+});
+
+Then(/^(.*) stop listening$/, function (name) {
+  const username = this.apickli.replaceVariables(name);
+
+  const wss = this.apickli.scenarioVariables[`SOCKET.${username}`];
+  wss.removeAllListeners('message');
+});
+
+When(/^(.*) send next fallback message to (.*)$/, function (sender, target, cb) {
+  const sendername = this.apickli.replaceVariables(sender);
+  const targetname = this.apickli.replaceVariables(target);
 
   const wss = this.apickli.scenarioVariables[`SOCKET.${sendername}`];
   const message = this.apickli.scenarioVariables[`NEXT.${targetname}`];
@@ -123,7 +131,26 @@ When(/^(.*) send next fallback message to (.*)$/, function (sender, target, cb) 
     message,
   };
 
-  wss.send(JSON.stringify(body));
+  const targetWss = this.apickli.scenarioVariables[`SOCKET.${targetname}`];
+
+  if (targetWss) {
+    targetWss.on('message', (msg) => {
+      // console.log(`${targetname} received message`, msg.toString());
+      let allMsg = this.apickli.scenarioVariables[`MSG.${targetname}`];
+      if (!allMsg) {
+        allMsg = [];
+      }
+      allMsg.push(msg.toString());
+      this.apickli.storeValueInScenarioScope(`MSG.${targetname}`, allMsg);
+      targetWss.removeAllListeners('message');
+      cb();
+    });
+
+    wss.send(JSON.stringify(body));
+  } else {
+    wss.send(JSON.stringify(body));
+    cb();
+  }
 });
 
 Then(/^(.*) decrypt content of message (.*) from route (.*)$/, function (name, index, route) {
