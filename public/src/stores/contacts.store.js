@@ -2,6 +2,7 @@
 import { reactive } from 'vue';
 import { defineStore } from 'pinia';
 import { fetchWrapper } from '@/helpers';
+
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
 import Config from '@/lib/config';
@@ -34,6 +35,7 @@ export const useContactsStore = defineStore({
         },
         auto: 0,
         alert: null,
+        messages: [],
       });
       this.list.push(checkingUser);
       return fetchWrapper.get(`${baseUrl}/user/${at}`)
@@ -88,7 +90,7 @@ export const useContactsStore = defineStore({
 
       const listStr = await mycrypto.resolve(pem, { token, passphrase, iv });
       const myList = JSON.parse(listStr);
-      myList.sort((a, b) => a.at.localeCompare(b.at));
+
       myList.forEach(({
         id,
         at,
@@ -110,7 +112,7 @@ export const useContactsStore = defineStore({
         id,
         at,
         store,
-      })).sort((a, b) => a.at.localeCompare(b.at));
+      }));
       const listChallenge = await mycrypto.challenge(pem, JSON.stringify(saveList));
       await fetchWrapper.put(`${baseUrl}/contacts`, listChallenge);
       this.dirty = false;
@@ -146,9 +148,10 @@ export const useContactsStore = defineStore({
         },
         auto: 0,
         alert: null,
+        messages: [],
       });
-      this.list.push(checkingUser);
-      this.list.sort((a, b) => a.at.localeCompare(b.at));
+      this.list.unshift(checkingUser);
+
       this.dirty = true;
       // check if user is verified in ether blockchain
       await this.autoValidation(checkingUser);
@@ -158,7 +161,9 @@ export const useContactsStore = defineStore({
     }) {
       this.userToContact({
         id, at, store: { hash, signature },
-      }).then(() => this.list.sort((a, b) => a.at.localeCompare(b.at)));
+      }).then(() => {
+        this.list.unshift(this.list.pop());
+      });
       this.dirty = true;
     },
     verifyUser(id) {
@@ -225,5 +230,29 @@ export const useContactsStore = defineStore({
         user.alert = `${err.message || err}, do not trust this user.\nReport the problem to an admin ASAP!`;
       }
     },
+    async fillConversations(headers) {
+      this.list.forEach((c) => {
+        c.messages = [];
+      });
+
+      headers.map(async (header) => {
+        const from = header.from.substring(1);
+        const contact = this.list.find((c) => c.at === from);
+        if (contact) {
+          contact.messages.push(header);
+        } else {
+          await this.manualAdd(from);
+          const newContact = this.list.find((c) => c.at === from);
+          newContact.messages.push(header);
+        }
+        return true;
+      });
+
+      this.list.sort((a, b) => {
+        const s = b.messages.length - a.messages.length;
+        if (s !== 0) return s;
+        return a.at.localeCompare(b.at);
+      });
+    }
   },
 });
