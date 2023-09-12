@@ -28,6 +28,7 @@ export const useContactsStore = defineStore({
         id,
         at,
         store,
+        key: null,
         verified: false,
         server: {
           hash: null,
@@ -40,6 +41,7 @@ export const useContactsStore = defineStore({
       this.list.push(checkingUser);
       return fetchWrapper.get(`${baseUrl}/user/${at}`)
         .then(async ({ key, signature }) => {
+          checkingUser.key = key;
           const hash = await mycrypto.hash(`${key}\n${signature}`);
           checkingUser.server.hash = hash;
           checkingUser.server.signingKey = signature;
@@ -141,6 +143,7 @@ export const useContactsStore = defineStore({
           hash: null,
           signature: null,
         },
+        key,
         verified: false,
         server: {
           hash,
@@ -253,6 +256,6 @@ export const useContactsStore = defineStore({
         if (s !== 0) return s;
         return a.at.localeCompare(b.at);
       });
-    }
+    },
   },
 });

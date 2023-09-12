@@ -77,7 +77,7 @@ export const useAuthStore = defineStore({
           });
 
         // redirect to previous url or default to home page
-        router.push(this.returnUrl || '/messages');
+        router.push(this.returnUrl || '/conversations');
 
         this.onChainVerification();
 

@@ -8,6 +8,7 @@ import accountRoutes from './account.routes';
 import messagesRoutes from './messages.routes';
 import memoryRoutes from './memory.routes';
 import profileRoutes from './profile.routes';
+import convosRoutes from './conversations.routes';
 
 export const router = createRouter({
   history: createWebHistory(Config.BASE_URL),
@@ -16,6 +17,7 @@ export const router = createRouter({
     { path: '/', component: Public },
     { path: '/engine', component: Engine },
     { path: '/home', component: Home },
+    { ...convosRoutes },
     { ...accountRoutes },
     { ...messagesRoutes },
     { ...memoryRoutes },
