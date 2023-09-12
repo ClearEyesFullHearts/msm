@@ -17,8 +17,8 @@ Given('I send a connection event', async function () {
   const signature = Util.sign(ssk, data);
 
   const myEvent = { ...CONNECT_EVENT };
-  myEvent.headers['Sec-WebSocket-Protocol'] = `${token}, ${signature}`;
-  myEvent.multiValueHeaders['Sec-WebSocket-Protocol'] = [`${token}, ${signature}`];
+  myEvent.headers['Sec-WebSocket-Protocol'] = `${Buffer.from(token).toString('hex')}, ${Buffer.from(signature).toString('hex')}`;
+  myEvent.multiValueHeaders['Sec-WebSocket-Protocol'] = [`${Buffer.from(token).toString('hex')}, ${Buffer.from(signature).toString('hex')}`];
   myEvent.requestContext.connectionId = 'my_connection_id';
 
   const options = {};
