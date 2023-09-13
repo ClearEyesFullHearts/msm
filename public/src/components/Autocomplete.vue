@@ -30,9 +30,9 @@ function selectUser(user) {
 <template>
   <div class="bg-gray-50 min-w-screen min-h-screen flex justify-center items-center">
     <div class="max-w-xs relative space-y-3">
-      <label for="search">
+      <!-- <label for="search">
         search&nbsp;
-      </label>
+      </label> -->
       <div class="input-group mb-3">
         <div class="input-group-prepend">
           <span
@@ -46,7 +46,7 @@ function selectUser(user) {
           type="text"
           class="form-control"
           autocomplete="off"
-          placeholder="Username"
+          placeholder="Add a contact by searching its name"
           @input="event => onInputText(event.target.value)"
         >
       </div>

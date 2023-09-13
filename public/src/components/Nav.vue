@@ -2,11 +2,13 @@
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 import { Tooltip } from 'bootstrap';
-import { useAuthStore, useUsersStore } from '@/stores';
+import { useAuthStore, useUsersStore, useConnectionStore } from '@/stores';
 
 const authStore = useAuthStore();
 const usersStore = useUsersStore();
+const connectionStore = useConnectionStore();
 const { countDownMsg } = storeToRefs(authStore);
+const { isConnected } = storeToRefs(connectionStore);
 
 onMounted(() => {
   new Tooltip(document.body, {
@@ -138,20 +140,13 @@ async function incinerate() {
       </ul>
       <div class="navbar-nav m-1 me-auto">
         <button
-          class="btn btn-outline-danger"
-          @click="incinerate()"
-        >
-          Incinerate
-        </button>
-      </div>
-      <div class="navbar-nav m-1">
-        <button
           class="btn btn-outline-light"
           @click="authStore.logout()"
         >
           Logout
         </button>
       </div>
+      <div />
       <ul class="navbar-nav">
         <li class="nav-item dropdown">
           <a
@@ -163,6 +158,21 @@ async function incinerate() {
             aria-haspopup="true"
             aria-expanded="false"
           >
+
+            <i
+              v-if="!isConnected"
+              class="bi bi-wifi-off me-2"
+              style="font-size: 1rem; color: grey"
+              data-bs-toggle="tooltip"
+              title="Disconnected"
+            />
+            <i
+              v-if="isConnected"
+              class="bi bi-wifi me-2"
+              style="font-size: 1rem; color: #198754"
+              data-bs-toggle="tooltip"
+              title="Connected"
+            />
             <i
               v-if="!authStore?.isValidatedOnChain"
               class="bi bi-shield-slash-fill"
@@ -223,6 +233,12 @@ async function incinerate() {
             >
               The Vault
             </router-link>
+            <button
+              class="btn btn-outline-danger ms-3"
+              @click="incinerate()"
+            >
+              Incinerate
+            </button>
           </div>
         </li>
       </ul>

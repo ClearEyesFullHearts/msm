@@ -1,6 +1,6 @@
 <script setup>
 import {
-  ref, nextTick, defineProps, onMounted,
+  ref, nextTick, defineProps, onMounted, onUnmounted,
 } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useConversationStore } from '@/stores';
@@ -12,29 +12,44 @@ const props = defineProps({
   },
 });
 
-// const messages = ref([]);
 const conversationStore = useConversationStore();
 const { current } = storeToRefs(conversationStore);
 const chatArea = ref(null);
 const typingArea = ref(null);
 
+const canWrite = ref(false);
+
 onMounted(() => {
   conversationStore.loadConvo(props.at)
     .then(async () => {
+      canWrite.value = current.value.target.alert === null;
       await nextTick();
       chatArea.value.scrollTop = chatArea.value.scrollHeight;
     });
 });
 
+onUnmounted(() => {
+  conversationStore.current = {};
+});
+
 async function sendMessage() {
   const txt = typingArea.value.value;
   await conversationStore.sendMail(props.at, txt);
-//   current.value.messages.push({ content: txt, from: 'me' });
+  typingArea.value.value = '';
   await nextTick();
   chatArea.value.scrollTop = chatArea.value.scrollHeight;
 }
 </script>
 <template>
+  <h4 class="border-bottom">
+    <router-link :to="`/conversations`">
+      <i
+        class="bi bi-arrow-left-circle-fill me-1"
+        style="font-size: 1.4rem; color: grey;"
+      />
+    </router-link>
+    Conversation with {{ props.at }}
+  </h4>
   <div
     ref="chatArea"
     class="chat-area flex-grow-0 py-3 px-4"
@@ -57,9 +72,11 @@ async function sendMessage() {
         ref="typingArea"
         class="form-control"
         placeholder="Type your message"
+        :disabled="!canWrite"
       />
       <button
         class="btn btn-primary"
+        :disabled="!canWrite"
         @click="sendMessage()"
       >
         Send

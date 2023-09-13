@@ -3,7 +3,9 @@ import { defineStore, getActivePinia } from 'pinia';
 
 import { fetchWrapper } from '@/helpers';
 import { router } from '@/router';
-import { useAlertStore, useContactsStore, useMessagesStore } from '@/stores';
+import {
+  useAlertStore, useContactsStore, useMessagesStore, useConnectionStore,
+} from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
 import Config from '@/lib/config';
@@ -177,6 +179,9 @@ export const useAuthStore = defineStore({
     logout() {
       clearTimeout(verificationTimeoutID);
       clearInterval(interval);
+      if (useConnectionStore.isConnected) {
+        useConnectionStore.disconnect();
+      }
       const pinia = getActivePinia();
       pinia._s.forEach((store) => store.$reset());
       router.push('/account/login');

@@ -149,6 +149,7 @@ exports.handler = async function lambdaHandler(event) {
         await sendMessage(target, {
           action: ACTIONS.FALLBACK,
           message: {
+            from: sender.username,
             content,
           },
         });

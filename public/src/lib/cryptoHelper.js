@@ -18,6 +18,9 @@ class CryptoHelper {
       const str = String.fromCharCode.apply(null, new Uint8Array(arBuff));
       return window.btoa(str);
     };
+    this.clearTextToHEX = (txt) => txt.split('')
+      .map((c) => c.charCodeAt(0).toString(16).padStart(2, '0'))
+      .join('');
 
     this.importCryptoKey = async (pem, format, keyType, extractable = false) => {
       const usage = keyType === 'PUBLIC' ? ['encrypt'] : ['decrypt'];

@@ -19,7 +19,7 @@ export const useContactsStore = defineStore({
     dirty: false,
   }),
   actions: {
-    async userToContact({
+    userToContact({
       id,
       at,
       store,
@@ -30,6 +30,7 @@ export const useContactsStore = defineStore({
         store,
         key: null,
         verified: false,
+        connected: false,
         server: {
           hash: null,
           signingKey: null,
@@ -38,9 +39,9 @@ export const useContactsStore = defineStore({
         alert: null,
         messages: [],
       });
-      this.list.push(checkingUser);
-      return fetchWrapper.get(`${baseUrl}/user/${at}`)
-        .then(async ({ key, signature }) => {
+      fetchWrapper.get(`${baseUrl}/user/${at}`)
+        .then(async ({ id: userId, key, signature }) => {
+          if (!checkingUser.id) checkingUser.id = userId;
           checkingUser.key = key;
           const hash = await mycrypto.hash(`${key}\n${signature}`);
           checkingUser.server.hash = hash;
@@ -77,6 +78,8 @@ export const useContactsStore = defineStore({
         .then(() =>
           // check if user is verified in ether blockchain
           this.autoValidation(checkingUser));
+
+      return checkingUser;
     },
     async setContactList(pem, contacts) {
       if (!contacts) {
@@ -98,11 +101,12 @@ export const useContactsStore = defineStore({
         at,
         store,
       }) => {
-        this.userToContact({
+        const contact = this.userToContact({
           id,
           at,
           store,
         });
+        this.list.push(contact);
       });
     },
     async saveContactList(pem) {
@@ -125,48 +129,31 @@ export const useContactsStore = defineStore({
       this.dirty = true;
     },
     async manualAdd(name) {
-      const user = await fetchWrapper.get(`${baseUrl}/user/${name}`);
-      const {
-        id,
-        at,
-        key,
-        signature,
-      } = user;
-      const [knownUser] = this.list.filter((u) => u.id === id);
+      const [knownUser] = this.list.filter((u) => u.at === name);
       if (knownUser) return;
 
-      const hash = await mycrypto.hash(`${key}\n${signature}`);
-      const checkingUser = reactive({
-        id,
-        at,
+      const contact = this.userToContact({
+        id: false,
+        at: name,
         store: {
           hash: null,
           signature: null,
         },
-        key,
-        verified: false,
-        server: {
-          hash,
-          signingKey: signature,
-        },
-        auto: 0,
-        alert: null,
-        messages: [],
       });
-      this.list.unshift(checkingUser);
-
+      this.list.unshift(contact);
       this.dirty = true;
-      // check if user is verified in ether blockchain
-      await this.autoValidation(checkingUser);
     },
     async fileAdd({
       id, at, hash, signature,
     }) {
-      this.userToContact({
+      const knownUserIndex = this.list.findIndex((u) => u.at === at);
+      if (knownUserIndex >= 0) {
+        this.list.splice(knownUserIndex, 1);
+      }
+      const contact = this.userToContact({
         id, at, store: { hash, signature },
-      }).then(() => {
-        this.list.unshift(this.list.pop());
       });
+      this.list.unshift(contact);
       this.dirty = true;
     },
     verifyUser(id) {
@@ -234,11 +221,10 @@ export const useContactsStore = defineStore({
       }
     },
     async fillConversations(headers) {
-      this.list.forEach((c) => {
-        c.messages = [];
-      });
+      headers.sort((a, b) => a.sentAt - b.sentAt);
 
-      headers.map(async (header) => {
+      for (let i = 0; i < headers.length; i += 1) {
+        const header = headers[i];
         const from = header.from.substring(1);
         const contact = this.list.find((c) => c.at === from);
         if (contact) {
@@ -248,14 +234,22 @@ export const useContactsStore = defineStore({
           const newContact = this.list.find((c) => c.at === from);
           newContact.messages.push(header);
         }
-        return true;
-      });
+      }
 
       this.list.sort((a, b) => {
         const s = b.messages.length - a.messages.length;
         if (s !== 0) return s;
         return a.at.localeCompare(b.at);
       });
+    },
+    connection(at, state) {
+      const contactArr = this.list.filter((u) => u.at === at);
+      console.log('connection', contactArr);
+      if (contactArr.length > 0) {
+        const [contact] = contactArr;
+        contact.connected = state;
+        console.log('contact connected', contact.at);
+      }
     },
   },
 });

@@ -26,7 +26,10 @@ export const useConversationStore = defineStore({
       }
 
       this.current = this.conversations[at];
-      const promises = target.messages.map((m) => this.getMissedMessage(m.id));
+      const promises = target.messages.map((m) => {
+        if (m.id) return this.getMissedMessage(m.id);
+        return Promise.resolve(m);
+      });
 
       const allMissedMessages = await Promise.all(promises);
       this.current.messages.push(...allMissedMessages);
@@ -67,6 +70,13 @@ export const useConversationStore = defineStore({
         return null;
       }
     },
+    async getFallbackMessage(from, txt) {
+      if (this.current && this.current.target.at === from) {
+        this.current.messages.push(txt);
+        return true;
+      }
+      return false;
+    },
     async sendMail(at, text) {
       const message = {
         from: 'me',
@@ -75,7 +85,7 @@ export const useConversationStore = defineStore({
       };
       this.current.messages.push(message);
       const { key: targetPem } = this.current.target;
-      const b64Title = await mycrypto.publicEncrypt(targetPem, this.encodeText('Missed call'));
+      const b64Title = await mycrypto.publicEncrypt(targetPem, this.encodeText('Missed'));
       const b64Content = await mycrypto.publicEncrypt(targetPem, this.encodeText(text));
 
       const reqBody = {
