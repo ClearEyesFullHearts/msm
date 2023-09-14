@@ -4,6 +4,7 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');
 const config = require('config');
+const { v4: uuidv4 } = require('uuid');
 const Util = require('../support/utils');
 
 const IDS = {
@@ -86,6 +87,7 @@ Given(/^I prepare fallback message (.*) for (.*)$/, function (txt, name) {
 
   const message = {
     to: username,
+    requestId: uuidv4(),
     content: encryptedTxt,
   };
   this.apickli.storeValueInScenarioScope(`NEXT.${username}`, message);
@@ -126,6 +128,8 @@ When(/^(.*) send next fallback message to (.*)$/, function (sender, target, cb) 
   const wss = this.apickli.scenarioVariables[`SOCKET.${sendername}`];
   const message = this.apickli.scenarioVariables[`NEXT.${targetname}`];
 
+  this.apickli.storeValueInScenarioScope(`REQ.${sendername}`, message.requestId);
+
   const body = {
     action: 'fallback',
     message,
@@ -153,6 +157,41 @@ When(/^(.*) send next fallback message to (.*)$/, function (sender, target, cb) 
   }
 });
 
+Then(/^(.*) acknowledges reception to (.*)$/, function (target, sender, cb) {
+  const sendername = this.apickli.replaceVariables(sender);
+  const targetname = this.apickli.replaceVariables(target);
+
+  const wss = this.apickli.scenarioVariables[`SOCKET.${targetname}`];
+  const reqId = this.apickli.scenarioVariables[`REQ.${sendername}`];
+  const message = {
+    to: sendername,
+    requestId: reqId,
+    content: 'ack',
+  };
+
+  const body = {
+    action: 'fallback',
+    message,
+  };
+
+  const senderWss = this.apickli.scenarioVariables[`SOCKET.${sendername}`];
+
+  if (senderWss) {
+    senderWss.on('message', (event) => {
+      const { message: { requestId, content } } = JSON.parse(event.toString());
+      assert.strictEqual(content, 'ack');
+      assert.strictEqual(requestId, reqId);
+      senderWss.removeAllListeners('message');
+      cb();
+    });
+
+    wss.send(JSON.stringify(body));
+  } else {
+    wss.send(JSON.stringify(body));
+    cb();
+  }
+});
+
 Then(/^(.*) decrypt content of message (.*) from route (.*)$/, function (name, index, route) {
   const username = this.apickli.replaceVariables(name);
   const allMsg = this.apickli.scenarioVariables[`MSG.${username}`];
@@ -160,15 +199,17 @@ Then(/^(.*) decrypt content of message (.*) from route (.*)$/, function (name, i
 
   assert.ok(msg.action);
   assert.ok(msg.message);
+  assert.ok(msg.message.from);
+  assert.ok(msg.message.requestId);
   assert.ok(msg.message.content);
-  const { action, message: { content } } = msg;
+  const { action, message: { from, requestId, content } } = msg;
   assert.strictEqual(action, route);
 
   const privateK = fs.readFileSync(`./data/users/${username}/private.pem`).toString();
   const [eskFile] = privateK.split('\n----- SIGNATURE -----\n');
 
   const body = Util.decrypt(eskFile, content);
-  this.apickli.httpResponse.body = JSON.stringify({ content: body });
+  this.apickli.httpResponse.body = JSON.stringify({ from, requestId, content: body });
 });
 
 Then(/^(.*)'s last message action is (.*)$/, function (name, route) {

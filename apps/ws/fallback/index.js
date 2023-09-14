@@ -26,8 +26,13 @@ const schema = {
   type: 'object',
   properties: {
     to: { type: 'string', minLength: 3, maxLength: 35 },
+    requestId: { type: 'string', format: 'uuid' },
     content: {
-      type: 'string', minLength: 684, maxLength: 684, format: 'byte',
+      type: 'string',
+      anyOf: [
+        { minLength: 684, maxLength: 684, format: 'byte' },
+        { const: 'ack' },
+      ],
     },
   },
   required: ['to', 'content'],
@@ -69,20 +74,22 @@ async function sendMessage(target, message, doesThrow = true) {
   }
 }
 
-async function sendDisconnection(target, disconnected) {
+async function sendDisconnection(target, disconnected, requestId) {
   const message = {
     action: ACTIONS.DISCONNECTED,
     message: {
+      requestId,
       username: disconnected,
     },
   };
   await sendMessage(target, message, false);
 }
 
-async function sendError(target, error) {
+async function sendError(target, error, requestId) {
   const message = {
     action: ACTIONS.ERROR,
     message: {
+      requestId,
       action: ACTIONS.FALLBACK,
       error,
     },
@@ -132,12 +139,13 @@ exports.handler = async function lambdaHandler(event) {
 
       const {
         to,
+        requestId,
         content,
       } = message;
 
       const target = await data.connections.findByName(to);
       if (!target) {
-        await sendDisconnection(sender, to);
+        await sendDisconnection(sender, to, requestId);
         debug('target is disconnected');
         return {
           statusCode: 200,
@@ -149,6 +157,7 @@ exports.handler = async function lambdaHandler(event) {
         await sendMessage(target, {
           action: ACTIONS.FALLBACK,
           message: {
+            requestId,
             from: sender.username,
             content,
           },
@@ -157,7 +166,7 @@ exports.handler = async function lambdaHandler(event) {
         if (err instanceof GoneException) {
           debug('target is disconnected');
           await data.connections.delete(target.username);
-          await sendDisconnection(sender, to);
+          await sendDisconnection(sender, to, requestId);
           debug('data cleaned up');
           return {
             statusCode: 200,
@@ -184,7 +193,7 @@ exports.handler = async function lambdaHandler(event) {
       code: 'NOT_FOUND',
       message: 'You are unknown, please re-connect',
     };
-    await sendError(unknownUser, unknownSenderError);
+    await sendError(unknownUser, unknownSenderError, 'N/A');
     await cleanSocket(unknownUser).catch((err) => console.error(err));
 
     debug('unknown user disconnected');
