@@ -1,9 +1,9 @@
 <script setup>
 import {
-  ref, nextTick, defineProps, onMounted, onUnmounted,
+  ref, nextTick, defineProps, onMounted, onUnmounted, watch,
 } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useConversationStore } from '@/stores';
+import { useConversationStore, useConnectionStore } from '@/stores';
 
 const props = defineProps({
   at: {
@@ -13,31 +13,47 @@ const props = defineProps({
 });
 
 const conversationStore = useConversationStore();
+const connectionStore = useConnectionStore();
 const { current } = storeToRefs(conversationStore);
 const chatArea = ref(null);
 const typingArea = ref(null);
 
+const isSending = ref(false);
 const canWrite = ref(false);
 
+let stopWatch;
 onMounted(() => {
   conversationStore.loadConvo(props.at)
     .then(async () => {
       canWrite.value = current.value.target.alert === null;
-      await nextTick();
+      stopWatch = watch(current.value.messages, async () => {
+        await nextTick();
+        chatArea.value.scrollTop = chatArea.value.scrollHeight;
+      });
       chatArea.value.scrollTop = chatArea.value.scrollHeight;
     });
 });
 
 onUnmounted(() => {
+  stopWatch();
   conversationStore.current = {};
 });
 
 async function sendMessage() {
-  const txt = typingArea.value.value;
-  await conversationStore.sendMail(props.at, txt);
-  typingArea.value.value = '';
-  await nextTick();
-  chatArea.value.scrollTop = chatArea.value.scrollHeight;
+  if (typingArea.value.value.trim() === '') return;
+  if (connectionStore.isConnected && current.value.target.connected) {
+    isSending.value = true;
+    const txt = typingArea.value.value;
+    await conversationStore.sendFallbackMessage(props.at, txt).then(async () => {
+      isSending.value = false;
+    });
+    typingArea.value.value = '';
+  } else {
+    const txt = typingArea.value.value;
+    await conversationStore.sendMail(props.at, txt);
+
+    typingArea.value.value = '';
+  }
 }
 </script>
 <template>
@@ -72,14 +88,22 @@ async function sendMessage() {
         ref="typingArea"
         class="form-control"
         placeholder="Type your message"
-        :disabled="!canWrite"
+        :disabled="!canWrite && !isSending"
       />
       <button
         class="btn btn-primary"
-        :disabled="!canWrite"
+        :disabled="!canWrite && !isSending"
         @click="sendMessage()"
       >
-        Send
+        <span
+          v-show="isSending"
+          class="spinner-border spinner-border-sm mt-1"
+        />
+        <i
+          v-show="!isSending"
+          class="bi bi-send"
+          style="font-size: 1.1rem; color: white"
+        />
       </button>
     </div>
   </div>
@@ -88,7 +112,7 @@ async function sendMessage() {
 .chat-area {
   /* border: 1px solid #ccc; */
   /* background: white; */
-  height: 50vh;
+  height: 70vh;
   padding: 1em;
   overflow: auto;
   /* max-width: 60%;

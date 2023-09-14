@@ -18,6 +18,9 @@ export const useContactsStore = defineStore({
     list: [],
     dirty: false,
   }),
+  getters: {
+    messageCount: (state) => state.list.reduce((nb, contact) => nb + contact.messages.length, 0),
+  },
   actions: {
     userToContact({
       id,
@@ -241,6 +244,19 @@ export const useContactsStore = defineStore({
         if (s !== 0) return s;
         return a.at.localeCompare(b.at);
       });
+      document.title = `ySyPyA (${this.messageCount})`;
+    },
+    async addFallBackMessage(header) {
+      const from = header.from.substring(1);
+      let contact = this.list.find((c) => c.at === from);
+      if (!contact) {
+        await this.manualAdd(from);
+        contact = this.list.find((c) => c.at === from);
+      }
+
+      contact.messages.push(header);
+      contact.connected = true;
+      document.title = `ySyPyA (${this.messageCount})`;
     },
     connection(at, state) {
       const contactArr = this.list.filter((u) => u.at === at);

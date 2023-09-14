@@ -54,7 +54,6 @@ export const useMessagesStore = defineStore({
           };
           this.headers.push(header);
           copy.push(header);
-          document.title = `ySyPyA (${this.headers.length})`;
         }
         return copy;
       } catch (error) {

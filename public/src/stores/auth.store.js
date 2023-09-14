@@ -89,7 +89,18 @@ export const useAuthStore = defineStore({
         alertStore.error(error);
       }
     },
+    toggleAutoConnect() {
+      if (!this.autoConnect && this.countDownMsg === 'expired') {
+        this.logout();
+        return;
+      }
+      this.autoConnect = !this.autoConnect;
+    },
     async relog() {
+      if (this.countDownMsg === 'expired') {
+        this.logout();
+        return;
+      }
       try {
         clearInterval(interval);
         const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${this.user.user.username}`);

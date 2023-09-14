@@ -198,6 +198,7 @@ Resources:
         Variables:
           NODE_ENV: !Ref StageName
           DEBUG: 'dynamolayer:*,ws-disconnect:*'
+          CONNECT_BROADCAST: true
     DependsOn:
       - WssLambdaMSMPolicy
       - WssLambdaMSMRole

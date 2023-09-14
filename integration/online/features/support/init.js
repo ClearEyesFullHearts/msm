@@ -15,7 +15,7 @@ const Util = require('./utils');
 //     .then(cb);
 // });
 
-const ENDPOINT = 'ia7n3p2gr4.execute-api.eu-west-3.amazonaws.com/test';
+const ENDPOINT = '2a5l9180f8.execute-api.eu-west-3.amazonaws.com/test';
 
 Before(function () {
   this.apickli = new apickli.Apickli('wss', ENDPOINT, 'data');

@@ -72,10 +72,15 @@ async function onVerifyFilePicked(evt) {
           v-if="!isConnected"
           class="btn btn-success btn-sm"
           type="button"
-          :disabled="!isValidatedOnChain"
+          :disabled="!isValidatedOnChain || connectionStore.isConnecting"
           @click="connectionStore.connect()"
         >
+          <span
+            v-show="connectionStore.isConnecting"
+            class="spinner-border spinner-border-sm mt-1"
+          />
           <i
+            v-show="!connectionStore.isConnecting"
             class="bi bi-wifi"
             style="font-size: 1rem; color: white"
           />

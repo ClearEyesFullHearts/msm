@@ -326,6 +326,10 @@ class CryptoHelper {
 
     return this.ArBuffToBase64(digest);
   }
+
+  uuidV4() {
+    return window.crypto.randomUUID();
+  }
 }
 
 export default CryptoHelper;

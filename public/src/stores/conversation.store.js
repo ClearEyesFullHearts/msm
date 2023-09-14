@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import { defineStore } from 'pinia';
-import { useContactsStore, useAuthStore } from '@/stores';
+import { useContactsStore, useAuthStore, useConnectionStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import { fetchWrapper } from '@/helpers';
 import Config from '@/lib/config';
@@ -34,6 +34,8 @@ export const useConversationStore = defineStore({
       const allMissedMessages = await Promise.all(promises);
       this.current.messages.push(...allMissedMessages);
       target.messages = [];
+
+      document.title = `ySyPyA (${contactsStore.messageCount})`;
     },
     async getMissedMessage(msgId) {
       try {
@@ -71,15 +73,58 @@ export const useConversationStore = defineStore({
       }
     },
     async getFallbackMessage(from, txt) {
-      if (this.current && this.current.target.at === from) {
-        this.current.messages.push(txt);
+      if (this.current && this.current.target && this.current.target.at === from) {
+        if (!this.current.target.connected) this.current.target.connected = true;
+        this.current.messages.push({
+          from,
+          content: txt,
+        });
         return true;
       }
       return false;
     },
+    async sendFallbackMessage(at, text) {
+      return new Promise((resolve, reject) => {
+        const message = {
+          from: 'me',
+          sentAt: Date.now(),
+          content: text,
+        };
+        const { key: targetPem } = this.current.target;
+        mycrypto.publicEncrypt(targetPem, this.encodeText(text))
+          .then((b64Content) => {
+            const reqBody = {
+              to: at,
+              requestId: mycrypto.uuidV4(),
+              content: b64Content,
+            };
+            const connectionStore = useConnectionStore();
+
+            function onAcknowledgment(err, result) {
+              let error = err;
+              let response = result;
+              if (!result) {
+                response = err;
+                error = false;
+              }
+              if (error) {
+                reject(error);
+              }
+              if (response) {
+                this.current.messages.push(message);
+                resolve();
+              } else {
+                this.sendMail(at, text).then(() => resolve());
+              }
+            }
+            connectionStore.sendFallback(reqBody, onAcknowledgment.bind(this));
+          });
+      });
+    },
     async sendMail(at, text) {
       const message = {
         from: 'me',
+        title: 'Missed',
         sentAt: Date.now(),
         content: text,
       };
