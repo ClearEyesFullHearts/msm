@@ -2,6 +2,7 @@
 import { defineStore } from 'pinia';
 import { useContactsStore, useAuthStore, useConnectionStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
+import FileHelper from '@/lib/fileHelper';
 import { fetchWrapper } from '@/helpers';
 import Config from '@/lib/config';
 
@@ -60,6 +61,7 @@ export const useConversationStore = defineStore({
         dec = new TextDecoder();
         const content = dec.decode(contentBuff);
 
+        authStore.onChainVerification();
         return {
           id,
           from,
@@ -77,13 +79,13 @@ export const useConversationStore = defineStore({
         if (!this.current.target.connected) this.current.target.connected = true;
         this.current.messages.push({
           from,
-          content: txt,
+          content: this.decodeText(txt),
         });
         return true;
       }
       return false;
     },
-    async sendFallbackMessage(at, text) {
+    async sendFallbackMessage(at, text, requestId) {
       return new Promise((resolve, reject) => {
         const message = {
           from: 'me',
@@ -95,7 +97,7 @@ export const useConversationStore = defineStore({
           .then((b64Content) => {
             const reqBody = {
               to: at,
-              requestId: mycrypto.uuidV4(),
+              requestId,
               content: b64Content,
             };
             const connectionStore = useConnectionStore();
@@ -140,6 +142,24 @@ export const useConversationStore = defineStore({
       };
 
       await fetchWrapper.post(`${baseUrl}/message`, reqBody);
+    },
+    async downloadConversation() {
+      if (!this.current || this.current.messages.length < 1) return;
+
+      const {
+        target: { at },
+        messages,
+      } = this.current;
+      const body = {
+        at,
+        messages: messages.map((m) => ({ ...m })),
+      };
+      const authStore = useAuthStore();
+      const { pem } = authStore;
+
+      const challenge = await mycrypto.challenge(pem, JSON.stringify(body));
+
+      FileHelper.download(`${at}.ysypya`, JSON.stringify(challenge));
     },
     encodeText(str) {
       return str

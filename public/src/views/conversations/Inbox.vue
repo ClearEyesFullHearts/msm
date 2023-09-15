@@ -54,49 +54,40 @@ async function onVerifyFilePicked(evt) {
   >
     <div class="row">
       <div class="col">
-        <h1>Conversations</h1>
-      </div>
-      <div class="col text-end d-flex flex-column justify-content-center">
-        <span v-if="!isValidatedOnChain">
-          Connection status: waiting for the on-chain validation
-        </span>
-        <span v-if="isValidatedOnChain && !isConnected">
-          Connection status: disconnected
-        </span>
-        <span v-if="isValidatedOnChain && isConnected">
-          Connection status: connected
-        </span>
-      </div>
-      <div class="col-1 d-flex flex-column justify-content-center">
-        <button
-          v-if="!isConnected"
-          class="btn btn-success btn-sm"
-          type="button"
-          :disabled="!isValidatedOnChain || connectionStore.isConnecting"
-          @click="connectionStore.connect()"
-        >
-          <span
-            v-show="connectionStore.isConnecting"
-            class="spinner-border spinner-border-sm mt-1"
-          />
-          <i
-            v-show="!connectionStore.isConnecting"
-            class="bi bi-wifi"
-            style="font-size: 1rem; color: white"
-          />
-        </button>
-        <button
-          v-if="isConnected"
-          class="btn btn-danger btn-sm"
-          type="button"
-          :disabled="!isValidatedOnChain"
-          @click="connectionStore.disconnect()"
-        >
-          <i
-            class="bi bi-wifi-off"
-            style="font-size: 1rem; color: white"
-          />
-        </button>
+        <h1>
+          Conversations
+          <button
+            v-if="!isConnected"
+            class="btn btn-success btn-sm"
+            type="button"
+            :disabled="!isValidatedOnChain || connectionStore.isConnecting"
+            @click="connectionStore.connect()"
+          >
+            <span
+              v-show="connectionStore.isConnecting"
+              class="spinner-border spinner-border-sm mt-1"
+            />
+            <i
+              v-show="!connectionStore.isConnecting"
+              class="bi bi-wifi-off"
+              style="font-size: 1rem; color: white"
+            />
+            Connect
+          </button>
+          <button
+            v-if="isConnected"
+            class="btn btn-danger btn-sm"
+            type="button"
+            :disabled="!isValidatedOnChain"
+            @click="connectionStore.disconnect()"
+          >
+            <i
+              class="bi bi-wifi"
+              style="font-size: 1rem; color: white"
+            />
+            Online
+          </button>
+        </h1>
       </div>
     </div>
     <div class="row">
@@ -131,7 +122,7 @@ async function onVerifyFilePicked(evt) {
       :key="contact.id"
     >
       <div class="row">
-        <div class="col-6 mt-2">
+        <div class="col-6 col-lg-4 mt-2">
           <span
             class="badge me-1 mb-1"
             :class="contact.messages.length > 0
@@ -150,7 +141,7 @@ async function onVerifyFilePicked(evt) {
             </router-link>
           </span>
         </div>
-        <div class="col">
+        <div class="col-8 col-lg-4">
           <div
             v-if="contact.alert"
             class="alert alert-danger"
@@ -197,23 +188,20 @@ async function onVerifyFilePicked(evt) {
               match your contact's profile page's hash before trusting them"
             />
             <i
-              v-if="contact.connected"
-              class="bi bi-wifi me-1"
-              style="font-size: 1.8rem; color: #198754;"
+              class="bi me-1"
+              :class="contact.connected
+                ? 'bi-wifi'
+                : 'bi-wifi-off'"
+              style="font-size: 1.8rem;"
+              :style="{ color: contact.connected ? '#0d6efd' : 'grey' }"
               data-bs-toggle="tooltip"
-              title="Connected"
-            />
-            <i
-              v-if="!contact.connected"
-              class="bi bi-wifi-off me-1"
-              style="font-size: 1.8rem; color: grey"
-              data-bs-toggle="tooltip"
-              data-bs-html="true"
-              title="Not connected"
+              :title="contact.connected
+                ? 'online'
+                : 'offline'"
             />
           </span>
         </div>
-        <div class="col text-end">
+        <div class="col-4 col-lg-4 text-end">
           <button
             class="btn btn-primary btn-sm me-2"
             type="button"

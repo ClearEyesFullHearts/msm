@@ -97,7 +97,7 @@ export const useAuthStore = defineStore({
       this.autoConnect = !this.autoConnect;
     },
     async relog() {
-      if (this.countDownMsg === 'expired') {
+      if (this.countDownMsg === 'expired' && !this.autoConnect) {
         this.logout();
         return;
       }

@@ -1,9 +1,13 @@
 <script setup>
 import {
-  ref, nextTick, defineProps, onMounted, onUnmounted, watch,
+  ref, nextTick, defineProps, onMounted, onUnmounted, watch, computed,
 } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useConversationStore, useConnectionStore } from '@/stores';
+import { useConversationStore, useConnectionStore, useAuthStore } from '@/stores';
+import CryptoHelper from '@/lib/cryptoHelper';
+import FileHelper from '@/lib/fileHelper';
+
+const mycrypto = new CryptoHelper();
 
 const props = defineProps({
   at: {
@@ -13,12 +17,17 @@ const props = defineProps({
 });
 
 const conversationStore = useConversationStore();
+const authStore = useAuthStore();
 const connectionStore = useConnectionStore();
 const { current } = storeToRefs(conversationStore);
 const chatArea = ref(null);
 const typingArea = ref(null);
+const fileInput = ref(null);
+const waitingMessages = ref([]);
+const contentLength = ref(0);
 
-const isSending = ref(false);
+const connectionState = computed(() => (connectionStore.isConnected ? 0 : 2) + (current.value?.target?.connected ? 0 : 1));
+
 const canWrite = ref(false);
 
 let stopWatch;
@@ -42,22 +51,53 @@ onUnmounted(() => {
 async function sendMessage() {
   if (typingArea.value.value.trim() === '') return;
   if (connectionStore.isConnected && current.value.target.connected) {
-    isSending.value = true;
     const txt = typingArea.value.value;
-    await conversationStore.sendFallbackMessage(props.at, txt).then(async () => {
-      isSending.value = false;
+    const requestId = mycrypto.uuidV4();
+    waitingMessages.value.push({
+      requestId,
+      content: txt,
+      title: 'Sending...',
+    });
+    conversationStore.sendFallbackMessage(props.at, txt, requestId).then(async () => {
+      const i = waitingMessages.value.findIndex((m) => m.requestId === requestId);
+      waitingMessages.value.splice(i, 1);
     });
     typingArea.value.value = '';
+    contentLength.value = 0;
+    await nextTick();
+    chatArea.value.scrollTop = chatArea.value.scrollHeight;
   } else {
     const txt = typingArea.value.value;
     await conversationStore.sendMail(props.at, txt);
 
     typingArea.value.value = '';
+    contentLength.value = 0;
   }
+}
+function onInputText(str) {
+  contentLength.value = (new TextEncoder().encode(conversationStore.encodeText(str))).length;
+}
+async function onLoadConvo(challenge) {
+  const txt = await mycrypto.resolve(authStore.pem, JSON.parse(challenge));
+  const conversation = JSON.parse(txt);
+  if (conversation.at !== props.at) return;
+
+  current.value.messages = conversation.messages;
+  await nextTick();
+  chatArea.value.scrollTop = chatArea.value.scrollHeight;
+}
+async function downloadConversation() {
+  await conversationStore.downloadConversation();
+}
+async function uploadConversation() {
+  fileInput.value.click();
+}
+async function onFilePicked(evt) {
+  FileHelper.onFilePicked(evt, onLoadConvo);
 }
 </script>
 <template>
-  <h4 class="border-bottom">
+  <h4>
     <router-link :to="`/conversations`">
       <i
         class="bi bi-arrow-left-circle-fill me-1"
@@ -65,7 +105,36 @@ async function sendMessage() {
       />
     </router-link>
     Conversation with {{ props.at }}
+    <button
+      class="btn btn-secondary btn-sm float-end me-2"
+      type="button"
+      @click="downloadConversation()"
+    >
+      <i
+        class="bi bi-download"
+        style="font-size: 1rem; color: white"
+      />
+    </button>
+    <button
+      class="btn btn-success btn-sm float-end me-2"
+      type="button"
+      @click="uploadConversation()"
+    >
+      <i
+        class="i bi-file-earmark-arrow-up-fill"
+        style="font-size: 1rem; color: white"
+      />
+    </button>
+    <input
+      ref="fileInput"
+      hidden
+      multiple
+      type="file"
+      style="opacity: none;"
+      @change="onFilePicked"
+    >
   </h4>
+  <hr>
   <div
     ref="chatArea"
     class="chat-area flex-grow-0 py-3 px-4"
@@ -76,32 +145,51 @@ async function sendMessage() {
       class="message"
       :class="{ 'message-out': message.from === 'me', 'message-in': message.from !== 'me' }"
     >
-      <span v-if="message.title">
+      <span
+        v-if="message.title"
+        class="message-title"
+      >
         {{ message.title }} at {{ new Date(message.sentAt).toLocaleString() }}
       </span>
-      <pre>{{ message.content }}</pre>
+      <pre class="message-content">{{ message.content }}</pre>
+    </p>
+    <p
+      v-for="(waiting, index) in waitingMessages"
+      :key="index"
+      class="message message-out"
+    >
+      <span class="message-title">
+        {{ waiting.title }}
+      </span>
+      <pre class="message-content">{{ waiting.content }}</pre>
     </p>
   </div>
   <div class="flex-grow-0 py-3 px-4 border-top">
     <div class="input-group">
-      <textarea
-        ref="typingArea"
-        class="form-control"
-        placeholder="Type your message"
-        :disabled="!canWrite && !isSending"
-      />
+      <div
+        class="form-control p-0"
+        style="position: relative; border: none;"
+      >
+        <textarea
+          ref="typingArea"
+          class="form-control m-0"
+          :placeholder="connectionState === 0 ? 'Chat away' : 
+          connectionState === 1 ? `Type here, ${props.at} is not connected but you can still send them a message` : 'Type your message or connect to chat'"
+          :disabled="!canWrite"
+          @input="event => onInputText(event.target.value)"
+        />
+        <div style="position: absolute; bottom: 2%; right: 3%; color:#ccc">
+          <span style="font-size: 0.8em">{{ contentLength }} / 446</span>
+        </div>
+      </div>
       <button
         class="btn btn-primary"
-        :disabled="!canWrite && !isSending"
+        :disabled="!canWrite"
         @click="sendMessage()"
       >
-        <span
-          v-show="isSending"
-          class="spinner-border spinner-border-sm mt-1"
-        />
         <i
-          v-show="!isSending"
-          class="bi bi-send"
+          class="bi"
+          :class="connectionState === 0 ? 'bi-send' : 'bi-envelope'"
           style="font-size: 1.1rem; color: white"
         />
       </button>
@@ -112,7 +200,7 @@ async function sendMessage() {
 .chat-area {
   /* border: 1px solid #ccc; */
   /* background: white; */
-  height: 70vh;
+  height: 65vh;
   padding: 1em;
   overflow: auto;
   /* max-width: 60%;
@@ -122,16 +210,21 @@ async function sendMessage() {
   width: 45%;
   border-radius: 10px;
   padding: .5em;
-/*   margin-bottom: .5em; */
-  font-size: 1.0em;
 }
 .message-out {
-  background: #407FFF;
+  background: #198754;
   color: white;
   margin-left: 50%;
 }
 .message-in {
-  background: #F1F0F0;
-  color: black;
+  background: #0d6efd;
+  color: white;
+}
+.message-title {
+  font-size: 0.8em;
+}
+.message-content {
+  font-size: 1.2em;
+  margin-bottom: 0em;
 }
 </style>

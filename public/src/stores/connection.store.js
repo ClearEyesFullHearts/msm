@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia';
 import Config from '@/lib/config';
 import CryptoHelper from '@/lib/cryptoHelper';
-import { useAuthStore, useContactsStore, useConversationStore } from '@/stores';
+import { useAuthStore, useContactsStore, useConversationStore, useAlertStore } from '@/stores';
 
 const mycrypto = new CryptoHelper();
 const baseUrl = Config.WSS_URL;
@@ -25,6 +25,9 @@ export const useConnectionStore = defineStore({
     async connect() {
       this.isConnecting = true;
       const authStore = useAuthStore();
+      if (authStore.countDownMsg === 'expired') {
+        await authStore.relog();
+      }
       const { token, contacts, ...restUser } = authStore.user;
       const data = JSON.stringify({
         ...restUser,
@@ -41,12 +44,12 @@ export const useConnectionStore = defineStore({
         this.isConnected = true;
         if (!authStore.autoConnect) authStore.toggleAutoConnect();
       });
-      this.socket.addEventListener('error', (event) => {
-        console.log('socket error', event);
+      this.socket.addEventListener('error', () => {
+        const alertStore = useAlertStore();
+        alertStore.error('An error occured while connecting, retry later.');
         this.isConnecting = false;
       });
-      this.socket.addEventListener('close', (event) => {
-        console.log('socket close', event);
+      this.socket.addEventListener('close', () => {
         this.socket = null;
         this.isConnected = false;
         this.isConnecting = false;
@@ -135,7 +138,7 @@ export const useConnectionStore = defineStore({
           const contactsStore = useContactsStore();
           await contactsStore.addFallBackMessage({
             from: `@${from}`,
-            content: txt,
+            content: conversationStore.decodeText(txt),
             sentAt: Date.now(),
           });
           if (contactsStore.dirty) contactsStore.saveContactList(pem);
