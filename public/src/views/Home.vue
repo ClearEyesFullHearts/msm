@@ -14,7 +14,7 @@ const { user } = storeToRefs(authStore);
       <div class="col-md-10">
         <div v-if="user">
           <p>
-            <router-link to="/messages">
+            <router-link to="/conversations">
               Go to your inbox
             </router-link>
           </p>
@@ -193,7 +193,7 @@ const { user } = storeToRefs(authStore);
             </ul>
           </p>
           <p>
-            <router-link to="/messages">
+            <router-link to="/conversations">
               Go to your inbox
             </router-link>
           </p>

@@ -5,8 +5,6 @@ import { useAuthStore, useAlertStore } from '@/stores';
 import { Home, Engine, Public } from '@/views';
 import Config from '@/lib/config';
 import accountRoutes from './account.routes';
-import messagesRoutes from './messages.routes';
-import memoryRoutes from './memory.routes';
 import profileRoutes from './profile.routes';
 import convosRoutes from './conversations.routes';
 
@@ -19,8 +17,6 @@ export const router = createRouter({
     { path: '/home', component: Home },
     { ...convosRoutes },
     { ...accountRoutes },
-    { ...messagesRoutes },
-    { ...memoryRoutes },
     { ...profileRoutes },
     // catch all redirect to home page
     { path: '/:pathMatch(.*)*', redirect: '/' },

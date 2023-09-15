@@ -100,43 +100,6 @@ async function incinerate() {
             Home
           </router-link>
         </li>
-        <li class="nav-item dropdown">
-          <a
-            id="navbarDropdown"
-            class="nav-link dropdown-toggle"
-            href="#"
-            role="button"
-            data-bs-toggle="dropdown"
-            aria-haspopup="true"
-            aria-expanded="false"
-          >
-            Messages
-          </a>
-          <div
-            class="dropdown-menu dropdown-menu-dark"
-            aria-labelledby="navbarDropdown"
-          >
-            <router-link
-              to="/messages"
-              class="dropdown-item"
-            >
-              InBox
-            </router-link>
-            <router-link
-              to="/memory"
-              class="dropdown-item"
-            >
-              MemoryBox
-            </router-link>
-            <div class="dropdown-divider" />
-            <router-link
-              to="/messages/write"
-              class="dropdown-item"
-            >
-              New
-            </router-link>
-          </div>
-        </li>
       </ul>
       <div class="navbar-nav m-1 me-auto">
         <button
