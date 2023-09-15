@@ -2,6 +2,7 @@
 import { reactive } from 'vue';
 import { defineStore } from 'pinia';
 import { fetchWrapper } from '@/helpers';
+import { useAuthStore, useConversationStore } from '@/stores';
 
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
@@ -222,6 +223,43 @@ export const useContactsStore = defineStore({
       } catch (err) {
         user.alert = `${err.message || err}, do not trust this user.\nReport the problem to an admin ASAP!`;
       }
+    },
+    async getHeaders() {
+      const headers = [];
+      try {
+        const challenges = await fetchWrapper.get(`${baseUrl}/inbox`);
+
+        const authStore = useAuthStore();
+        const { pem } = authStore;
+
+        const copy = [];
+        for (let i = 0; i < challenges.length; i += 1) {
+          const { id, challenge } = challenges[i];
+          const objStr = await mycrypto.resolve(pem, challenge);
+
+          const {
+            from,
+            sentAt,
+            title: cryptedTitle,
+          } = JSON.parse(objStr);
+
+          const titleBuff = await mycrypto.privateDecrypt(pem, cryptedTitle);
+          const dec = new TextDecoder();
+          const title = dec.decode(titleBuff);
+
+          const conversationStore = useConversationStore();
+          const header = {
+            id,
+            from,
+            sentAt,
+            title: conversationStore.decodeText(title),
+          };
+          headers.push(header);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+      return headers;
     },
     async fillConversations(headers) {
       headers.sort((a, b) => a.sentAt - b.sentAt);

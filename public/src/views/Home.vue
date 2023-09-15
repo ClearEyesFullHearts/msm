@@ -1,12 +1,9 @@
 <script setup>
 import { storeToRefs } from 'pinia';
 
-import { useAuthStore, useMessagesStore } from '@/stores';
+import { useAuthStore } from '@/stores';
 
 const authStore = useAuthStore();
-const messagesStore = useMessagesStore();
-messagesStore.message = {};
-messagesStore.targetMessage = {};
 
 const { user } = storeToRefs(authStore);
 </script>

@@ -4,7 +4,7 @@ import { defineStore, getActivePinia } from 'pinia';
 import { fetchWrapper } from '@/helpers';
 import { router } from '@/router';
 import {
-  useAlertStore, useContactsStore, useMessagesStore, useConnectionStore,
+  useAlertStore, useContactsStore, useConnectionStore,
 } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
@@ -70,9 +70,8 @@ export const useAuthStore = defineStore({
         const contactsStore = useContactsStore();
         contactsStore.setContactList(this.pem, this.user.contacts)
           .then(async () => {
-            const messageStore = useMessagesStore();
-            await messageStore.getHeaders();
-            await contactsStore.fillConversations(messageStore.headers);
+            const headers = await contactsStore.getHeaders();
+            await contactsStore.fillConversations(headers);
             if (contactsStore.dirty) {
               await contactsStore.saveContactList(this.pem);
             }
