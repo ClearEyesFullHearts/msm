@@ -116,21 +116,20 @@ export const useConversationStore = defineStore({
                 this.current.messages.push(message);
                 resolve();
               } else {
-                this.sendMail(at, text).then(() => resolve());
+                this.sendMail(at, 'Missed', text).then(() => resolve());
               }
             }
             connectionStore.sendFallback(reqBody, onAcknowledgment.bind(this));
           });
       });
     },
-    async sendMail(at, text) {
+    async sendMail(at, title, text) {
       const message = {
         from: 'me',
-        title: 'Missed',
+        title,
         sentAt: Date.now(),
         content: text,
       };
-      this.current.messages.push(message);
       const { key: targetPem } = this.current.target;
       const b64Title = await mycrypto.publicEncrypt(targetPem, this.encodeText('Missed'));
       const b64Content = await mycrypto.publicEncrypt(targetPem, this.encodeText(text));
@@ -142,6 +141,7 @@ export const useConversationStore = defineStore({
       };
 
       await fetchWrapper.post(`${baseUrl}/message`, reqBody);
+      this.current.messages.push(message);
     },
     async downloadConversation() {
       if (!this.current || this.current.messages.length < 1) return;

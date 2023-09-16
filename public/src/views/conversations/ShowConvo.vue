@@ -50,7 +50,7 @@ onUnmounted(() => {
 
 async function sendMessage() {
   if (typingArea.value.value.trim() === '') return;
-  if (connectionStore.isConnected && current.value.target.connected) {
+  if (connectionStore.isConnected) {
     const txt = typingArea.value.value;
     const requestId = mycrypto.uuidV4();
     waitingMessages.value.push({
@@ -68,7 +68,7 @@ async function sendMessage() {
     chatArea.value.scrollTop = chatArea.value.scrollHeight;
   } else {
     const txt = typingArea.value.value;
-    await conversationStore.sendMail(props.at, txt);
+    await conversationStore.sendMail(props.at, 'Offline', txt);
 
     typingArea.value.value = '';
     contentLength.value = 0;
@@ -189,7 +189,7 @@ async function onFilePicked(evt) {
       >
         <i
           class="bi"
-          :class="connectionState === 0 ? 'bi-send' : 'bi-envelope'"
+          :class="connectionState < 2 ? 'bi-send' : 'bi-envelope'"
           style="font-size: 1.1rem; color: white"
         />
       </button>
