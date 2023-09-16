@@ -2,7 +2,9 @@
 import { defineStore } from 'pinia';
 import Config from '@/lib/config';
 import CryptoHelper from '@/lib/cryptoHelper';
-import { useAuthStore, useContactsStore, useConversationStore, useAlertStore } from '@/stores';
+import {
+  useAuthStore, useContactsStore, useConversationStore, useAlertStore,
+} from '@/stores';
 
 const mycrypto = new CryptoHelper();
 const baseUrl = Config.WSS_URL;
@@ -53,6 +55,8 @@ export const useConnectionStore = defineStore({
         this.socket = null;
         this.isConnected = false;
         this.isConnecting = false;
+        const contactsStore = useContactsStore();
+        contactsStore.disconnected();
       });
       this.socket.addEventListener('message', (event) => {
         const { action, message } = JSON.parse(event.data);

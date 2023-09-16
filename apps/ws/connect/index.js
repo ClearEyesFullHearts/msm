@@ -116,7 +116,7 @@ exports.handler = async function lambdaHandler(event) {
         const author = await Auth.verifyIdentity(data.users, signature, payload, { action: 'WSS' });
         debug('signature is verified, we have author');
 
-        if (author.validation !== 'VALIDATED') {
+        if (author.lastActivity < 0 || author.validation !== 'VALIDATED') {
           throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.UNAUTHORIZED, 'Only validated users can connect');
         }
         debug('author is validated, proceed');
@@ -144,6 +144,9 @@ exports.handler = async function lambdaHandler(event) {
           domainName,
         });
         debug('connection created');
+
+        await data.users.updateLastActivity(username);
+        debug('sender updated');
 
         if (process.env.CONNECT_BROADCAST) {
           debug('trying to broadcast new connection');

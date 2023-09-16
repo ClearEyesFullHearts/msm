@@ -69,12 +69,8 @@ export const useAuthStore = defineStore({
 
         const contactsStore = useContactsStore();
         contactsStore.setContactList(this.pem, this.user.contacts)
-          .then(async () => {
-            const headers = await contactsStore.getHeaders();
-            await contactsStore.fillConversations(headers);
-            if (contactsStore.dirty) {
-              await contactsStore.saveContactList(this.pem);
-            }
+          .then(() => {
+            contactsStore.updateMessages();
           });
 
         // redirect to previous url or default to home page
@@ -187,6 +183,8 @@ export const useAuthStore = defineStore({
       }
     },
     logout() {
+      const contactsStore = useContactsStore();
+      clearTimeout(contactsStore.timeout);
       clearTimeout(verificationTimeoutID);
       clearInterval(interval);
       if (useConnectionStore.isConnected) {

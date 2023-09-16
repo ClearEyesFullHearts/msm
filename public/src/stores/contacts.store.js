@@ -18,6 +18,7 @@ export const useContactsStore = defineStore({
   state: () => ({
     list: [],
     dirty: false,
+    timeout: null,
   }),
   getters: {
     messageCount: (state) => state.list.reduce((nb, contact) => nb + contact.messages.length, 0),
@@ -232,7 +233,6 @@ export const useContactsStore = defineStore({
         const authStore = useAuthStore();
         const { pem } = authStore;
 
-        const copy = [];
         for (let i = 0; i < challenges.length; i += 1) {
           const { id, challenge } = challenges[i];
           const objStr = await mycrypto.resolve(pem, challenge);
@@ -264,25 +264,45 @@ export const useContactsStore = defineStore({
     async fillConversations(headers) {
       headers.sort((a, b) => a.sentAt - b.sentAt);
 
+      const promises = [];
       for (let i = 0; i < headers.length; i += 1) {
-        const header = headers[i];
-        const from = header.from.substring(1);
-        const contact = this.list.find((c) => c.at === from);
-        if (contact) {
-          contact.messages.push(header);
-        } else {
-          await this.manualAdd(from);
-          const newContact = this.list.find((c) => c.at === from);
-          newContact.messages.push(header);
-        }
+        promises.push(this.addMissedMessage(headers[i]));
       }
+
+      await Promise.all(promises);
 
       this.list.sort((a, b) => {
         const s = b.messages.length - a.messages.length;
-        if (s !== 0) return s;
-        return a.at.localeCompare(b.at);
+        return s;
       });
       document.title = `ySyPyA (${this.messageCount})`;
+    },
+    async addMissedMessage(header) {
+      const from = header.from.substring(1);
+      const conversationStore = useConversationStore();
+      const { current, conversations } = conversationStore;
+
+      if (current.target && current.target.at === from) {
+        if (current.messages.find((m) => m.id === header.id)) return;
+        const msg = await conversationStore.getMissedMessage(header.id);
+        current.messages.push(msg);
+        return;
+      }
+
+      const contact = this.list.find((c) => c.at === from);
+      if (contact) {
+        const convo = conversations[contact.at];
+
+        if (convo && convo.messages.find((m) => m.id === header.id)) return;
+
+        if (contact.messages.find((m) => m.id === header.id)) return;
+
+        contact.messages.push(header);
+      } else {
+        await this.manualAdd(from);
+        const newContact = this.list.find((c) => c.at === from);
+        newContact.messages.push(header);
+      }
     },
     async addFallBackMessage(header) {
       const from = header.from.substring(1);
@@ -296,14 +316,34 @@ export const useContactsStore = defineStore({
       contact.connected = true;
       document.title = `ySyPyA (${this.messageCount})`;
     },
+    updateMessages() {
+      this.getHeaders().then((headers) => this.fillConversations(headers))
+        .then(() => {
+          if (this.dirty) {
+            return this.saveContactList(this.pem);
+          }
+          return true;
+        })
+        .then(() => {
+          const authStore = useAuthStore();
+          const { pollingTime } = authStore.user.config;
+
+          if (pollingTime && pollingTime > 0) {
+            this.timeout = setTimeout(() => {
+              this.updateMessages();
+            }, pollingTime);
+          }
+        });
+    },
     connection(at, state) {
       const contactArr = this.list.filter((u) => u.at === at);
-      console.log('connection', contactArr);
       if (contactArr.length > 0) {
         const [contact] = contactArr;
         contact.connected = state;
-        console.log('contact connected', contact.at);
       }
+    },
+    disconnected() {
+      this.list.forEach((c) => c.connected = false);
     },
   },
 });
