@@ -15,7 +15,7 @@ const { user } = storeToRefs(authStore);
         <div v-if="user">
           <p>
             <router-link to="/conversations">
-              Go to your inbox
+              Go to your conversations
             </router-link>
           </p>
           <h1>Hi @{{ user.user.username }}!</h1>
@@ -194,7 +194,7 @@ const { user } = storeToRefs(authStore);
           </p>
           <p>
             <router-link to="/conversations">
-              Go to your inbox
+              Go to your conversations
             </router-link>
           </p>
         </div>

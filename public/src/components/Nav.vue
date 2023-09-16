@@ -94,7 +94,7 @@ async function incinerate() {
       <ul class="navbar-nav me-auto">
         <li class="nav-item active">
           <router-link
-            to="/home"
+            to="/conversations"
             class="nav-item nav-link"
           >
             Home
@@ -179,12 +179,6 @@ async function incinerate() {
             </div>
             <div class="dropdown-divider" />
             <router-link
-              to="/contacts"
-              class="dropdown-item"
-            >
-              Contacts
-            </router-link>
-            <router-link
               to="/profile"
               class="dropdown-item"
             >
@@ -202,6 +196,13 @@ async function incinerate() {
             >
               Incinerate
             </button>
+            <div class="dropdown-divider" />
+            <router-link
+              to="/home"
+              class="dropdown-item"
+            >
+              About us
+            </router-link>
           </div>
         </li>
       </ul>
