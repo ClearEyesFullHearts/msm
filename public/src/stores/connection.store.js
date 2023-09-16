@@ -45,6 +45,8 @@ export const useConnectionStore = defineStore({
         this.isConnecting = false;
         this.isConnected = true;
         if (!authStore.autoConnect) authStore.toggleAutoConnect();
+        const contactsStore = useContactsStore();
+        contactsStore.checkConnections();
       });
       this.socket.addEventListener('error', () => {
         const alertStore = useAlertStore();
@@ -93,7 +95,11 @@ export const useConnectionStore = defineStore({
         cb: callback,
         timeout,
       };
-      this.socket.send(JSON.stringify(msg));
+      try {
+        this.socket.send(JSON.stringify(msg));
+      } catch (err) {
+        this.disconnect();
+      }
     },
     sendAck(to, requestId) {
       const msg = {
@@ -105,7 +111,11 @@ export const useConnectionStore = defineStore({
         },
       };
 
-      this.socket.send(JSON.stringify(msg));
+      try {
+        this.socket.send(JSON.stringify(msg));
+      } catch (err) {
+        this.disconnect();
+      }
     },
     onDisconnection(message) {
       const { username, requestId } = message;
@@ -163,8 +173,16 @@ export const useConnectionStore = defineStore({
       }
     },
     disconnect() {
-      this.socket.close();
-      this.isConnected = false;
+      try {
+        this.socket.close();
+        this.isConnected = false;
+      } catch (err) {
+        this.socket = null;
+        this.isConnected = false;
+        this.isConnecting = false;
+        const contactsStore = useContactsStore();
+        contactsStore.disconnected();
+      }
     },
   },
 });

@@ -54,6 +54,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /connections:
+    get:
+      summary: Get connected users from a list
+      description: takes a list of username as query parameters and respond with those that are connected
+      operationId: getConnections
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: list
+          in: query
+          description: list of usernames
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: A list of connected users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersList"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /identity/{at}:
     get:
       summary: Login

@@ -3,6 +3,7 @@ const AuthMiddleware = require('../lib/auth');
 const User = require('./actions/users');
 const Message = require('./actions/messages');
 const AsyncAction = require('./actions/async');
+const Connection = require('./actions/connection');
 
 module.exports = {
   // Anonymous
@@ -96,6 +97,30 @@ module.exports = {
       User.getUserByName({ db, auth }, at)
         .then((user) => {
           res.json(user);
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
+  getConnections: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        query: {
+          list,
+        },
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+
+      const users = list[0].split(',').map((u) => u.trim());
+      Connection.getConnectedUsers({ db }, { list: [...new Set(users)] })
+        .then((result) => {
+          res.json(result);
         })
         .catch((err) => {
           next(err);

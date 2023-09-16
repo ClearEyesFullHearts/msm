@@ -75,6 +75,13 @@ class ConnectionData {
     return user;
   }
 
+  async findAll(usernames) {
+    const keys = usernames.map((at) => ({ pk: 'WSS', sk: at }));
+
+    const connected = await this.Entity.batchGet(keys);
+    return connected;
+  }
+
   async findById(connectionId) {
     const user = await this.Entity.query('pk').eq('WSS')
       .filter('id').eq(connectionId)

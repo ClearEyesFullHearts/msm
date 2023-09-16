@@ -335,6 +335,15 @@ export const useContactsStore = defineStore({
           }
         });
     },
+    async checkConnections() {
+      const list = encodeURIComponent(this.list.map(({ at }) => (at)).join(','));
+      const connections = await fetchWrapper.get(`${baseUrl}/connections?list=${list}`);
+
+      connections.forEach((conn) => {
+        const contact = this.list.find((c) => c.at === conn);
+        if (contact) contact.connected = true;
+      });
+    },
     connection(at, state) {
       const contactArr = this.list.filter((u) => u.at === at);
       if (contactArr.length > 0) {
