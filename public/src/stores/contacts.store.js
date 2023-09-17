@@ -321,7 +321,7 @@ export const useContactsStore = defineStore({
       const toasterStore = useToasterStore();
       toasterStore.success({ text: `New message from @${from}` });
     },
-    updateMessages() {
+    updateMessages(loop = true) {
       const authStore = useAuthStore();
       this.getHeaders().then((headers) => this.fillConversations(headers))
         .then(() => {
@@ -331,6 +331,7 @@ export const useContactsStore = defineStore({
           return true;
         })
         .then(() => {
+          if (!loop) return;
           const { pollingTime } = authStore.user.config;
 
           if (pollingTime && pollingTime > 0) {

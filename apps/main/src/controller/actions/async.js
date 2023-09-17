@@ -1,4 +1,5 @@
 const config = require('config');
+const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
 const debug = require('debug')('msm-main:async');
 const Validator = require('@shared/validator');
 
@@ -93,6 +94,37 @@ class Async {
       } catch (exc) {
         console.error('impossible to save user', name, exc);
       }
+    }
+  }
+
+  static async notifyMessage(db, from, to) {
+    debug(`Notify ${to} that ${from} sent a message`);
+    const connection = await db.connections.findByName(to);
+    debug('target is connected', !!connection);
+    if (connection) {
+      const {
+        id,
+        stage,
+        domainName,
+      } = connection;
+
+      const message = {
+        action: 'mail',
+        message: {
+          from,
+        },
+      };
+
+      const client = new ApiGatewayManagementApiClient({
+        endpoint: `https://${domainName}/${stage}`,
+      });
+      const input = {
+        Data: JSON.stringify(message),
+        ConnectionId: id,
+      };
+      const command = new PostToConnectionCommand(input);
+      await client.send(command);
+      debug('notification sent');
     }
   }
 }

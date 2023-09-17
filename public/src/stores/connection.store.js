@@ -47,6 +47,7 @@ export const useConnectionStore = defineStore({
         if (!authStore.autoConnect) authStore.toggleAutoConnect();
         const contactsStore = useContactsStore();
         contactsStore.checkConnections();
+        clearTimeout(contactsStore.timeout);
       });
       this.socket.addEventListener('error', () => {
         const alertStore = useAlertStore();
@@ -76,7 +77,10 @@ export const useConnectionStore = defineStore({
           case 'error':
             this.onError(message);
             break;
-          default:
+          case 'mail':
+            this.onMail(message);
+            break;
+            default:
             console.log('default', event.data);
             break;
         }
@@ -172,15 +176,20 @@ export const useConnectionStore = defineStore({
         delete this.messagesSent[requestId];
       }
     },
+    onMail(message) {
+      const contactsStore = useContactsStore();
+      contactsStore.updateMessages(false);
+    },
     disconnect() {
+      const contactsStore = useContactsStore();
       try {
         this.socket.close();
         this.isConnected = false;
+        contactsStore.updateMessages();
       } catch (err) {
         this.socket = null;
         this.isConnected = false;
         this.isConnecting = false;
-        const contactsStore = useContactsStore();
         contactsStore.disconnected();
       }
     },
