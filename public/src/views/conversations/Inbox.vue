@@ -123,7 +123,7 @@ async function onVerifyFilePicked(evt) {
       :key="contact.id"
     >
       <div class="row">
-        <div class="col-6 col-lg-4 mt-2">
+        <div class="col-8 col-lg-4 mt-2">
           <span
             class="badge me-1 mb-1"
             :class="contact.messages.length > 0

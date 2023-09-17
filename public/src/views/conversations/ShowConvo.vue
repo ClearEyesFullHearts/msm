@@ -139,30 +139,38 @@ async function onFilePicked(evt) {
     ref="chatArea"
     class="chat-area flex-grow-0 py-3 px-4"
   >
-    <p
+    <div
       v-for="(message, index) in current.messages"
       :key="index"
-      class="message"
-      :class="{ 'message-out': message.from === 'me', 'message-in': message.from !== 'me' }"
+      class="row"
+      :class="{ 'justify-content-end': message.from === 'me', 'justify-content-start': message.from !== 'me' }"
     >
+      <div class="col-10 col-md-8 my-1 message"
+      :class="{ 'message-out': message.from === 'me', 'message-in': message.from !== 'me' }">
       <span
         v-if="message.title"
         class="message-title"
       >
         {{ message.title }} at {{ new Date(message.sentAt).toLocaleString() }}
       </span>
-      <pre class="message-content">{{ message.content }}</pre>
-    </p>
-    <p
+        <pre class="message-content">{{ message.content }}</pre>
+      </div>
+    </div>
+    <div
       v-for="(waiting, index) in waitingMessages"
       :key="index"
-      class="message message-out"
+      class="row justify-content-end"
     >
-      <span class="message-title">
-        {{ waiting.title }}
+      <div class="col-10 col-md-8 my-1 message message-out">
+      <span
+        v-if="waiting.title"
+        class="message-title"
+      >
+      {{ waiting.title }}
       </span>
-      <pre class="message-content">{{ waiting.content }}</pre>
-    </p>
+        <pre class="message-content">{{ waiting.content }}</pre>
+      </div>
+    </div>
   </div>
   <div class="flex-grow-0 py-3 px-4 border-top">
     <div class="input-group">
@@ -173,8 +181,8 @@ async function onFilePicked(evt) {
         <textarea
           ref="typingArea"
           class="form-control m-0"
-          :placeholder="connectionState === 0 ? 'Chat away' : 
-          connectionState === 1 ? `Type here, ${props.at} is not connected but you can still send them a message` : 'Type your message or connect to chat'"
+          :placeholder="connectionState === 0 ? 'Chat away' :
+            connectionState === 1 ? `Type here, ${props.at} is not connected but you can still send them a message` : 'Type your message or connect to chat'"
           :disabled="!canWrite"
           @input="event => onInputText(event.target.value)"
         />
@@ -207,14 +215,13 @@ async function onFilePicked(evt) {
   margin: 0 auto 2em auto; */
 }
 .message {
-  width: 45%;
+  /* width: 45%; */
   border-radius: 10px;
   padding: .5em;
 }
 .message-out {
   background: #198754;
   color: white;
-  margin-left: 50%;
 }
 .message-in {
   background: #0d6efd;
