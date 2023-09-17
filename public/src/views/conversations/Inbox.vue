@@ -47,6 +47,7 @@ async function onVerifyFilePicked(evt) {
       contactsStore.saveContactList(authStore.pem);
     });
 }
+
 </script>
 <template>
   <div

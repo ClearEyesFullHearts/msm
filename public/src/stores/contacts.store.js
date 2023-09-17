@@ -2,7 +2,7 @@
 import { reactive } from 'vue';
 import { defineStore } from 'pinia';
 import { fetchWrapper } from '@/helpers';
-import { useAuthStore, useConversationStore } from '@/stores';
+import { useAuthStore, useConversationStore, useToasterStore } from '@/stores';
 
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
@@ -303,6 +303,9 @@ export const useContactsStore = defineStore({
         const newContact = this.list.find((c) => c.at === from);
         newContact.messages.push(header);
       }
+      document.title = `ySyPyA (${this.messageCount})`;
+      const toasterStore = useToasterStore();
+      toasterStore.success({ text: `New message from @${from}` });
     },
     async addFallBackMessage(header) {
       const from = header.from.substring(1);
@@ -315,17 +318,19 @@ export const useContactsStore = defineStore({
       contact.messages.push(header);
       contact.connected = true;
       document.title = `ySyPyA (${this.messageCount})`;
+      const toasterStore = useToasterStore();
+      toasterStore.success({ text: `New message from @${from}` });
     },
     updateMessages() {
+      const authStore = useAuthStore();
       this.getHeaders().then((headers) => this.fillConversations(headers))
         .then(() => {
           if (this.dirty) {
-            return this.saveContactList(this.pem);
+            return this.saveContactList(authStore.pem);
           }
           return true;
         })
         .then(() => {
-          const authStore = useAuthStore();
           const { pollingTime } = authStore.user.config;
 
           if (pollingTime && pollingTime > 0) {
@@ -340,8 +345,7 @@ export const useContactsStore = defineStore({
       const connections = await fetchWrapper.get(`${baseUrl}/connections?list=${list}`);
 
       connections.forEach((conn) => {
-        const contact = this.list.find((c) => c.at === conn);
-        if (contact) contact.connected = true;
+        this.connection(conn, true);
       });
     },
     connection(at, state) {
@@ -349,6 +353,8 @@ export const useContactsStore = defineStore({
       if (contactArr.length > 0) {
         const [contact] = contactArr;
         contact.connected = state;
+        const toasterStore = useToasterStore();
+        toasterStore.success({ text: `${at} is ${state ? 'connected' : 'disconnected'}!` });
       }
     },
     disconnected() {

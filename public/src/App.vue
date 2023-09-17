@@ -1,5 +1,5 @@
 <script setup>
-import { Nav, Alert } from '@/components';
+import { Nav, Alert, Toaster } from '@/components';
 import { useAuthStore } from '@/stores';
 
 const authStore = useAuthStore();
@@ -12,6 +12,7 @@ const authStore = useAuthStore();
   >
     <Nav />
     <Alert />
+    <Toaster />
     <router-view />
   </div>
 </template>

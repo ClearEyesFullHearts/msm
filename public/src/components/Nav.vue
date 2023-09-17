@@ -190,12 +190,6 @@ async function incinerate() {
             >
               The Vault
             </router-link>
-            <button
-              class="btn btn-outline-danger ms-3"
-              @click="incinerate()"
-            >
-              Incinerate
-            </button>
             <div class="dropdown-divider" />
             <router-link
               to="/home"
@@ -203,6 +197,13 @@ async function incinerate() {
             >
               About us
             </router-link>
+            <div class="dropdown-divider" />
+            <button
+              class="btn btn-outline-danger ms-3"
+              @click="incinerate()"
+            >
+              Incinerate
+            </button>
           </div>
         </li>
       </ul>

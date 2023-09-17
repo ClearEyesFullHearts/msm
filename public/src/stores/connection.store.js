@@ -27,7 +27,7 @@ export const useConnectionStore = defineStore({
     async connect() {
       this.isConnecting = true;
       const authStore = useAuthStore();
-      if (authStore.countDownMsg === 'expired') {
+      if (authStore.autoConnect && authStore.countDownMsg === 'expired') {
         await authStore.relog();
       }
       const { token, contacts, ...restUser } = authStore.user;
