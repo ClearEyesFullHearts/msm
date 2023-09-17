@@ -80,7 +80,7 @@ export const useConnectionStore = defineStore({
           case 'mail':
             this.onMail(message);
             break;
-            default:
+          default:
             console.log('default', event.data);
             break;
         }
@@ -176,7 +176,7 @@ export const useConnectionStore = defineStore({
         delete this.messagesSent[requestId];
       }
     },
-    onMail(message) {
+    onMail() {
       const contactsStore = useContactsStore();
       contactsStore.updateMessages(false);
     },
