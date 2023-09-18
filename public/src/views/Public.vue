@@ -11,7 +11,7 @@ import config from '@/lib/config';
       <div class="col-md-10">
         <h1>Welcome to ySyPyA.</h1>
         <p>
-          ySyPyA is an ecrypted message box, letting you write and
+          ySyPyA is an ecrypted instant messaging app, letting you write and
           share messages that cannot be read by anyone except you and your recipients
           through cryptography.
         </p>

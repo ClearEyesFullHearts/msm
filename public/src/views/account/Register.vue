@@ -70,7 +70,7 @@ async function onFilePicked(evt) {
           won't even tell you you downloaded something but it should happen on all platform)
         </li>
         <li>Use that file when prompted on Login</li>
-        <li>You have 10 minutes to activate your account by opening the "Welcome" message</li>
+        <li>You have 10 minutes to activate your account by opening the "Welcome" conversation</li>
       </ul>
     </div>
   </div>

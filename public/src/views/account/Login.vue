@@ -78,8 +78,8 @@ async function openVault() {
         <li>You will be connected and redirected to your InBox</li>
         <li>
           If it's the first time you log in,
-          click on the "Decrypt" button to open the welcoming message
-          and activate your account
+          click on the "@do not reply to this message" conversation to open it and read
+          the welcoming message this will activate your account
         </li>
       </ul>
     </div>

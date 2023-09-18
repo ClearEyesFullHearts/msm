@@ -21,7 +21,8 @@ const { user } = storeToRefs(authStore);
           <h1>Hi @{{ user.user.username }}!</h1>
           <p>
             Welcome to ySyPyA.<br>
-            ySyPyA is a secured, private and anonymous mail box, nothing more, nothing less.
+            ySyPyA is a secured, private and anonymous instant messaging system,
+            nothing more, nothing less.
           </p>
           <p>
             As you can see we respect too much the work of
@@ -42,7 +43,7 @@ const { user } = storeToRefs(authStore);
           <p>
             Your security is your responsability.
           </p>
-          <h2>Principles</h2>
+          <h2>Features</h2>
           <p>
             If you're unfamiliar with encryption, you can read a very short introduction
             <a
@@ -50,6 +51,7 @@ const { user } = storeToRefs(authStore);
               target="_blank"
             >here</a>
           </p>
+          <h3>The obvious</h3>
           <p>
             <ul>
               <li>
@@ -59,28 +61,45 @@ const { user } = storeToRefs(authStore);
                 Everyone who has access to a copy of the SK shares the account.<br>
               </li>
               <li>
-                Once a message content is read it is deleted from our side after 2 minutes.
+                In the top right corner are all pages related to your account.<br>
+                There you'll find your own profile data to be verified by others
+                and your vault to upgrade to an official account.<br>
+                Start by visiting your profile, download your own security file,
+                go back to the home page and upload it to verify yourself.<br>
+                The Incinerate button deletes your account.
               </li>
               <li>
-                Every part of the messages is encrypted on your side
-                and re-encrypted on our side for storage.<br>
+                The "Connect" button on the home page allows you to receive
+                and send instant messages to other connected users.<br>
+                You need to be validated on-chain to be able to connect.<br>
+                If you are not connected you can only send or receive "mail" messages.
+              </li>
+              <li>
+                All conversations are temporary and are lost as soon as you log out.<br>
+                "Mail" messages are kept encrypted on our side until you read them after which
+                they are deleted (after 2 minutes), instant messages are never kept on our side.<br>
                 No message information is transported or stored in clear text.
               </li>
+            </ul>
+          </p>
+
+          <h3>The less obvious</h3>
+          <p>
+            <ul>
               <li>
                 If your account hasn't been active (hasn't opened a message) for 30 days,
                 it will be deleted.
               </li>
               <li>
-                If you press the big red button up top (and confirm), your account will be
-                incinerated and nothing will remain on our side.
+                You can download an entire conversation in an encrypted format by clicking
+                on the grey button in the top right of any conversation.<br>
+                You'll then be able to reload it by clicking on the green button next to it.
               </li>
               <li>
-                In the top right corner are all pages related to your account.<br>
-                There you'll find your own profile data to be verified by others,
-                your contact list to verify other accounts,
-                and your vault to upgrade to an official account.<br>
-                Start by visiting your profile, download your own security file,
-                go to your contact list and upload it to verify yourself.<br>
+                On log-in your credentials are only valid for 15 minutes after which you will be
+                logged out.<br>
+                You can reset the time by clicking on the countdown in the top right menu or
+                directly activate the auto-reconnection.
               </li>
               <li>
                 We've put in place an automatic verification system by leveraging
@@ -94,6 +113,17 @@ const { user } = storeToRefs(authStore);
                 As long as it is not successful, it will be retried each time you
                 open a message.<br>
                 If the shield is red, <b>do panic and contact an admin</b>.
+              </li>
+              <li>
+                Your contacts will have a blue shield once they are validated.
+              </li>
+              <li>
+                You can also validate the integrity of this website thanks to a Chrome Extension.
+                <br>
+                Got to https://chrome.google.com/webstore/category/extensions and search for
+                "ySyPyA Verification Tool". Once installed you'll be able to check that no one
+                interfered with the code you use.<br>
+                You'll need to install "Kiwi Browser" if you're on Android.
               </li>
             </ul>
           </p>
@@ -139,26 +169,6 @@ const { user } = storeToRefs(authStore);
             match the security code in the contact list of the people you sent it to,
             you can be sure that your conversation is secure.
           </p>
-          <h4>What is the MemoryBox?</h4>
-          <p>
-            We understand that the "burnt after reading" character of the messages can be annoying
-            and we cannot stop you from doing something dumb to circonvene it,
-            like taking picture of the screen or some other stuff like that, so we provide you with
-            a way to store messages as securely as possible should you want to.
-          </p>
-          <p>
-            When you read a message you can download it as an ecrypted file
-            that you can later upload in the memory box so that you can locally recreate your InBox.
-            Only your Secret Key can decrypt those files.
-          </p>
-          <p>
-            Obviously you shouldn't store those encrypted messages
-            in the same place as your Secret Key.
-          </p>
-          <p>
-            You can also decrypt those files from the ySyPyA public home page
-            and create fake ones if you need to for whatever reasons.
-          </p>
           <h4>Why can't I write longer messages?</h4>
           <p>
             It gives us better control about what transit through our system.
@@ -167,26 +177,19 @@ const { user } = storeToRefs(authStore);
             The maximum size itself (446 ASCII characters) comes from the number of Bytes
             you can encrypt with a 4096 RSA public key.
           </p>
-          <h4>Why can't I see the messages I sent?</h4>
-          <p>
-            Because we don't keep track of that information.
-            The sender data that you see in the messages you receive is added and encrypted
-            just like the rest of the message's informations.
-          </p>
-          <p>
-            You will soon be able to download a draft version before you send it and
-            load it in the MemoryBox or load it up and send it from the regular place.
-          </p>
           <h4>What kind of data do you keep?</h4>
           <p>
             Someone with full access to our database can only know your @,
-            the last day you read a message, your public keys, the number of messages in your Inbox
-            and the number of messages you ever received.
+            the last day you read a message, your public keys, the number of messages in your Inbox,
+            the number of "mail" messages you ever received and if you're online.
             We keep no other information.
           </p>
           <h4>What next?</h4>
           <p>
             <ul>
+              <li>
+                Peer to peer chat
+              </li>
               <li>
                 Password kill switch
               </li>
