@@ -29,8 +29,9 @@ async function broadcast(sender) {
     } = conn;
 
     if (id !== sender.id) {
+      const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
       const client = new ApiGatewayManagementApiClient({
-        endpoint: `https://${domainName}/${stage}`,
+        endpoint,
       });
       const input = { // PostToConnectionRequest
         Data: message, // required

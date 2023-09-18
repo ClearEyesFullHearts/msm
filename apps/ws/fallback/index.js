@@ -58,8 +58,10 @@ async function sendMessage(target, message, doesThrow = true) {
     domainName,
   } = target;
 
+  const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
+
   const client = new ApiGatewayManagementApiClient({
-    endpoint: `https://${domainName}/${stage}`,
+    endpoint,
   });
   const input = {
     Data: JSON.stringify(message),
@@ -100,8 +102,10 @@ async function sendError(target, error, requestId) {
 async function cleanSocket({
   id, stage, domainName,
 }) {
+  const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
+
   const client = new ApiGatewayManagementApiClient({
-    endpoint: `https://${domainName}/${stage}`,
+    endpoint,
   });
   const input = {
     ConnectionId: id,

@@ -115,8 +115,9 @@ class Async {
         },
       };
 
+      const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
       const client = new ApiGatewayManagementApiClient({
-        endpoint: `https://${domainName}/${stage}`,
+        endpoint,
       });
       const input = {
         Data: JSON.stringify(message),

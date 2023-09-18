@@ -15,6 +15,11 @@ Parameters:
     Type: String
     Description: The name of the table to be created.
 
+  CleanupImageName:
+    Type: String
+    Default: mft-msm-cleanup.latest
+    Description: Tag of the image to deploy.
+
 ####################################################################################
 Resources:
 ####################################################################################
@@ -98,7 +103,7 @@ Resources:
     Properties:
       PackageType: Image
       Code:
-        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:mft-msm-cleanup.beta.1"
+        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${CleanupImageName}"
       MemorySize: 128
       Role: !Sub ${MSMCleanupRole.Arn}
       Environment:

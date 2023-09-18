@@ -6,6 +6,9 @@
     "tableName": "MyLocalTable",
     "createTable": true
   },
+  "wss" : {
+    "withStage": true
+  },
   "timer": {
     "removal": {
       "session": 900000,

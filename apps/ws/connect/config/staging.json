@@ -3,5 +3,8 @@
     "local": false,
     "tableName": "MSMBetaTable",
     "createTable": false
+  },
+  "wss" : {
+    "withStage": false
   }
 }

@@ -16,12 +16,16 @@ Parameters:
 
   MSMTaskImageName:
     Type: String
-    Default: mft-msm-ws-connect.test
+    Default: mft-msm-restapi.latest
     Description: Tag of the image to deploy.
 
   MSMSecretName:
     Type: String
     Description: The name of the secret to use.
+
+  MSMAPIId:
+    Type: String
+    Description: The id of the WS API Getaway.
 
 ####################################################################################
 Resources:
@@ -38,7 +42,7 @@ Resources:
             Action: 
               - execute-api:ManageConnections
             Resource: 
-              - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/${MSMStageName}/*/@connections/*'
+              - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MSMAPIId}/${MSMStageName}/*/@connections/*'
           - Sid: SecretManagerReadAccess
             Effect: Allow
             Action:

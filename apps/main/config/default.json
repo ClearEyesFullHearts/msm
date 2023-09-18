@@ -17,7 +17,7 @@
   },
   "welcome": {
     "title": "Welcome to ySyPyA",
-    "content": "Welcome,\n\nySyPyA stands for \"your Security your Privacy your Anonymity\"\nYour account is now activated.\n\nIf it's the first time you create an account, please visit the Home page.\n\nThe ySyPyA team."
+    "content": "Welcome,\n\nySyPyA stands for \"your Security your Privacy your Anonymity\"\nYour account is now activated.\n\nIf it's the first time you create an account, we urge you to visit the About page in the menu in the top right corner.\n\nThe ySyPyA team."
   },
   "auth": "supersecret",
   "timer": {
@@ -38,5 +38,8 @@
     "api": "hZOfL11C3G4een-0wzE5lCsRn2o-EAN9",
     "key": "test",
     "contract": "0xeCb67f9705110bf703a0E34CA04749e46823c3be"
+  },
+  "wss" : {
+    "withStage": true
   }
 }
