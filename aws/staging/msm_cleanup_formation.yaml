@@ -6,6 +6,11 @@ Description: >
 Parameters:
 ####################################################################################
 
+  MSMStageName:
+    Type: String
+    Default: test
+    Description: The name of the stage to be created, also used as NODE_ENV
+
   MSMTableName:
     Type: String
     Description: The name of the table to be created.
@@ -98,6 +103,6 @@ Resources:
       Role: !Sub ${MSMCleanupRole.Arn}
       Environment:
         Variables:
-          NODE_ENV: "staging"
+          NODE_ENV: !Ref MSMStageName
           KEY_REPORT_AT: "mat"
           DEBUG: "msm-cleanup:*,dynamolayer:*"

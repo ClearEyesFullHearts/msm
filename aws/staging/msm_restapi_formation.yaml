@@ -5,9 +5,19 @@ Description: "CloudFormation template for creating a task definition"
 Parameters:
 ####################################################################################
 
+  MSMStageName:
+    Type: String
+    Default: test
+    Description: The name of the stage to be created, also used as NODE_ENV
+
   MSMTableName:
     Type: String
     Description: The name of the table to be created.
+
+  MSMTaskImageName:
+    Type: String
+    Default: mft-msm-ws-connect.test
+    Description: Tag of the image to deploy.
 
   MSMSecretName:
     Type: String
@@ -23,6 +33,12 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
+          - Sid: WssAPIWriteAccess
+            Effect: Allow
+            Action: 
+              - execute-api:ManageConnections
+            Resource: 
+              - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/${MSMStageName}/*/@connections/*'
           - Sid: SecretManagerReadAccess
             Effect: Allow
             Action:
@@ -82,7 +98,7 @@ Resources:
       NetworkMode: "awsvpc"
       ContainerDefinitions:
         - Name: "msm-beta-restapi"
-          Image: "public.ecr.aws/q0f4v2r9/cantlose:mft-msm-restapi.beta.3"
+          Image: !Sub "public.ecr.aws/q0f4v2r9/cantlose:${MSMTaskImageName}"
           MemoryReservation: 256
           Memory: 512
           PortMappings:
@@ -90,7 +106,7 @@ Resources:
               Protocol: tcp
           Environment:
             - Name: "NODE_ENV"
-              Value: "staging"
+              Value: !Ref MSMStageName
             - Name: "KEY_REPORT_AT"
               Value: "mat"
             - Name: "SECRET_LOCATION"

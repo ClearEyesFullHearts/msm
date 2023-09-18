@@ -1,0 +1,15 @@
+{
+  "dynamo": {
+    "local": false,
+    "tableName": "MyTestTable",
+    "createTable": false
+  },
+  "timer": {
+    "removal": {
+      "message": 30000
+    },
+    "interval": {
+      "poll": 30000
+    }
+  }
+}
