@@ -9,18 +9,18 @@ The client side code is in the `./public` folder.
 The front-end is hosted in a public AWS S3 bucket as a static website.  
   
 The back-end (powered by Node.JS) mostly manage users and their public key as well as encrypted messages delivery and some specific behaviors.  
-The back-end code is in the `./apps/` folder.  
+The back-end code is in the `./apps/` and `./shared/` folder.  
 `./apps/main` contains the REST API as the main entry point.  
 `./apps/cleanup` contains cleanup code triggered once a day to removed dead data from the datalayer.  
+`./apps/ws` contains the lambdas that manage the web socket server.  
 The datalayer uses DynamoDB with [Dynamoose](https://www.npmjs.com/package/dynamoose), the code is in the `./shared/dynamolayer` folder.  
 The docker files for the back-end are in `./docker/files`.  
   
-The back-end is hosted by AWS in ECS Fargate and a Lambda function, deployed through the CloudFormation templates in `./aws`.  
+The back-end is hosted by AWS in ECS Fargate and through an API Gateway for the web socket side, deployed through the CloudFormation templates in `./aws`.  
 What is not created by the templates are:
-- The dynamoDB Table
 - The secrets managed by AWS Secret Manager and used in `./shared/secrets`
 - The Docker Image in the public and private AWS container registry.
-- The Route 53 DNS "A" record to the Load Balancer (which I should add) 
+- The Route 53 DNS "A" record to the Load Balancer and the custom domain of the API Gateway (which I should add) 
 
 The smart contract (written in Solidity) used for automatic validation is in `./trust/chainValidation`. It is still using the Sepolia testnet for the moment and not the Ethereum mainnet.  
 The user validation code used in the back-end is in `./shared/validator`.  
@@ -96,11 +96,6 @@ git checkout [commit hash]
 - go to the `./public` folder and build the project with the script there
 ```
 ./builder.sh
-```
-- go to the `./trust` folder and start the serve.js script
-```
-cd ../trust/
-node serve.js
 ```
 - Go to http://localhost:3000 in your browser and then you can be sure that the client code has not been tampered with.
 
