@@ -211,6 +211,7 @@ async function onFilePicked(evt) {
   height: 65vh;
   padding: 1em;
   overflow: auto;
+  width: 100%;
   /* max-width: 60%;
   margin: 0 auto 2em auto; */
 }
