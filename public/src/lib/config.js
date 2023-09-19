@@ -5,6 +5,7 @@ const API_URL = `${import.meta.env.VITE_API_URL}`;
 const BASE_URL = `${import.meta.env.BASE_URL}`;
 const COMMIT_HASH = `${import.meta.env.VITE_COMMIT_HASH}`;
 const WSS_URL = `${import.meta.env.VITE_WSS_URL}`;
+const VAPID_KEY = `${import.meta.env.VITE_PUBLIC_VAPID_KEY}`;
 
     
 export default {
@@ -15,4 +16,5 @@ export default {
     API_URL: API_URL,
     COMMIT_HASH: COMMIT_HASH,
     WSS_URL: WSS_URL,
+    VAPID_KEY: VAPID_KEY,
 }

@@ -7,6 +7,7 @@ const UnicityData = require('./model/unicity');
 const SearchData = require('./model/search');
 const FreezerData = require('./model/freezer');
 const ConnectionData = require('./model/connection');
+const SubscriptionData = require('./model/subscription');
 
 const noTableCreationOptions = {
   create: false,
@@ -21,6 +22,7 @@ class Data {
     this.users = new UserData();
     this.messages = new MessageData();
     this.connections = new ConnectionData();
+    this.subscriptions = new SubscriptionData();
 
     const { local, tableName, createTable } = config;
     let tableOptions = { tableName };
@@ -62,6 +64,7 @@ class Data {
     this.searchData.init(this.TABLE_OPTIONS);
     this.freezerData.init(this.TABLE_OPTIONS);
     this.connections.init(this.TABLE_OPTIONS);
+    this.subscriptions.init(this.TABLE_OPTIONS);
 
     this.users.init(this.TABLE_OPTIONS, {
       unicity: this.unicityData,

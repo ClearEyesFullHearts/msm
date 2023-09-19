@@ -2,11 +2,13 @@
 import { defineStore } from 'pinia';
 import Config from '@/lib/config';
 import CryptoHelper from '@/lib/cryptoHelper';
+import SubHelper from '@/lib/subscriptionHelper';
 import {
   useAuthStore, useContactsStore, useConversationStore, useAlertStore,
 } from '@/stores';
 
 const mycrypto = new CryptoHelper();
+const mysub = new SubHelper();
 const baseUrl = Config.WSS_URL;
 
 function onNewConnection(message) {
@@ -26,6 +28,7 @@ export const useConnectionStore = defineStore({
   actions: {
     async connect() {
       this.isConnecting = true;
+      await mysub.subscribe();
       const authStore = useAuthStore();
       if (authStore.autoConnect && authStore.countDownMsg === 'expired') {
         await authStore.relog();

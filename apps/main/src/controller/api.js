@@ -313,4 +313,25 @@ module.exports = {
         });
     },
   ],
+  subscribe: [
+    AuthMiddleware.verify(config.get('auth'), config.get('timer.removal.session')),
+    (req, res, next) => {
+      const {
+        auth,
+        body,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      User.addSubscription({ db, user: auth }, body)
+        .then(() => {
+          res.status(201).send();
+        })
+        .catch((err) => {
+          next(err);
+        });
+    },
+  ],
 };

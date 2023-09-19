@@ -30,7 +30,7 @@ services:
     depends_on: 
       - dynamodb-local
     environment:
-      - DEBUG=mmsm-main:*,dynamolayer:*,secrets:*
+      - DEBUG=msm-main:*,dynamolayer:*,secrets:*,msm-error:*
       - NODE_ENV=dock-dev
       - AWS_REGION=us-west-2
       - AWS_ACCESS_KEY_ID=local
@@ -79,6 +79,21 @@ services:
       - dynamodb-local
     environment:
       - DEBUG=dynamolayer:*,ws-disconnect:*
+      - AWS_REGION=us-west-2
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+
+  notification:
+    build:
+      context: ../../
+      dockerfile: docker/files/notification.dockerfile
+    container_name: notification
+    ports:
+      - 9003:8080
+    depends_on: 
+      - dynamodb-local
+    environment:
+      - DEBUG=dynamolayer:*,secrets:*,notification:*
       - AWS_REGION=us-west-2
       - AWS_ACCESS_KEY_ID=local
       - AWS_SECRET_ACCESS_KEY=local

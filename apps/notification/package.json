@@ -1,0 +1,26 @@
+{
+    "name": "@msm/notification",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "test": "jest"
+    },
+    "author": "MFT",
+    "license": "MIT",
+    "dependencies": {
+      "@shared/dynamolayer": "*",
+      "@shared/encryption": "*",
+      "@shared/secrets": "*",
+      "config": "3.3.9",
+      "debug": "4.3.4",
+      "web-push": "3.6.6"
+    },
+    "devDependencies": {
+      "eslint": "^6.7.1",
+      "eslint-config-airbnb-base": "^14.0.0",
+      "eslint-plugin-import": "^2.18.2",
+      "jest": "^29.4.3"
+    }
+  }
+  

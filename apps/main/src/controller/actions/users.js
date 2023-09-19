@@ -202,6 +202,20 @@ class User {
     await user.save();
     debug('contacts set');
   }
+
+  static async addSubscription({ db, user }, { endpoint, keys: { auth, p256dh } }) {
+    debug(`add a push subscription for ${user.username}`);
+    const sub = {
+      username: user.username,
+      id: user.id,
+      endpoint,
+      auth,
+      p256dh,
+    };
+
+    await db.subscriptions.create(sub);
+    debug('subscription added');
+  }
 }
 
 module.exports = User;

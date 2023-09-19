@@ -4,6 +4,7 @@
     "description": "Integration tests for MSM",
     "main": "",
     "scripts": {
+        "single": "./node_modules/.bin/cucumber-js features/single.feature",
         "test": "./node_modules/.bin/cucumber-js",
         "win-test": ".\\node_modules\\.bin\\cucumber-js"
     },
