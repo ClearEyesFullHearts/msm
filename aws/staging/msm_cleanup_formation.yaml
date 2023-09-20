@@ -47,8 +47,8 @@ Resources:
               - dynamodb:DescribeStream
               - dynamodb:GetRecords
             Resource:
-              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/{MSMTableName}/index/*'
-              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/{MSMTableName}/stream/*'
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}/index/*'
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}/stream/*'
           - Sid: DynamoDBTableAccess
             Effect: Allow
             Action:
@@ -62,7 +62,7 @@ Resources:
               - dynamodb:Scan
               - dynamodb:Query
               - dynamodb:UpdateItem
-            Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/{MSMTableName}'
+            Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}'
 
   MSMCleanupRole:
     Type: "AWS::IAM::Role"
