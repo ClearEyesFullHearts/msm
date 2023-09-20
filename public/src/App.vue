@@ -1,8 +1,11 @@
 <script setup>
 import { Nav, Alert, Toaster } from '@/components';
-import { useAuthStore } from '@/stores';
+import { useAuthStore, useWorkerStore } from '@/stores';
 
 const authStore = useAuthStore();
+const workerStore = useWorkerStore();
+
+workerStore.start().then(() => console.log('worker is started'));
 </script>
 
 <template>

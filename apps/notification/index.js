@@ -14,7 +14,7 @@ let secret;
 
 exports.handler = async (event) => {
   debug('event received', event);
-  const { to, from, type } = event.Records[0].Sns.Message;
+  const { to, from, action } = event.Records[0].Sns.Message;
   if (!secret) {
     await getSecretValue();
     secret = process.env.PRIVATE_VAPID_KEY;
@@ -22,6 +22,8 @@ exports.handler = async (event) => {
   const subs = await data.subscriptions.findAll(to);
   debug(`${subs.length} subscription for ${to}`);
   if (subs.length < 1) return;
+
+  const unread = await data.messages.getUserMessages(to);
 
   const promises = [];
   subs.forEach((sub) => {
@@ -39,7 +41,7 @@ exports.handler = async (event) => {
     };
     const result = webpush.sendNotification(
       subscription,
-      JSON.stringify({ type, from }),
+      JSON.stringify({ type: action, from, unread }),
       {
         topic: 'mail',
         vapidDetails: {
@@ -48,10 +50,12 @@ exports.handler = async (event) => {
           privateKey: secret,
         },
       },
-    );
-    // .catch((err) => {
-    //   console.log(err);
-    // });
+    ).catch((err) => {
+      if (err.name === 'WebPushError' && err.statusCode === 410) {
+        return data.subscriptions.delete(to, endpoint);
+      }
+      throw err;
+    });
     promises.push(result);
   });
 

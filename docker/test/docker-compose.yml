@@ -1,0 +1,22 @@
+version: "3"
+
+networks:
+  dev_msm-network:
+    external: true
+
+services:
+
+  notification:
+    build:
+      context: ../../
+      dockerfile: docker/files/notification.dockerfile
+    container_name: notification
+    networks:
+      - dev_msm-network
+    ports:
+      - 9003:8080
+    environment:
+      - DEBUG=dynamolayer:*,secrets:*,notification:*
+      - AWS_REGION=us-west-2
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local

@@ -12,6 +12,7 @@ class SubscriptionData {
       sk: {
         type: String,
         required: true,
+        rangeKey: true,
       },
       id: {
         type: String,

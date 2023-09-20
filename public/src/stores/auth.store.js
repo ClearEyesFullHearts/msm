@@ -4,7 +4,7 @@ import { defineStore, getActivePinia } from 'pinia';
 import { fetchWrapper } from '@/helpers';
 import { router } from '@/router';
 import {
-  useAlertStore, useContactsStore, useConnectionStore,
+  useAlertStore, useContactsStore, useConnectionStore, useWorkerStore,
 } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
@@ -77,6 +77,9 @@ export const useAuthStore = defineStore({
         router.push(this.returnUrl || '/conversations');
 
         this.onChainVerification();
+
+        const workerStore = useWorkerStore();
+        workerStore.subscribe().then(() => console.log('worker is subscribed'));
 
         myVault = undefined;
         myChallenge = undefined;

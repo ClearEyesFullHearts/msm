@@ -1,10 +1,16 @@
 version: "3"
 
+networks:
+  msm-network:
+    driver: bridge
+
 services:
     
   dynamodb-local:
     image: amazon/dynamodb-local:latest
     container_name: dynamodb-local
+    networks:
+      - msm-network
     ports:
       - "8000:8000"
 
@@ -12,6 +18,8 @@ services:
     image: aaronshaf/dynamodb-admin
     ports:
       - "8001:8001"
+    networks:
+      - msm-network
     environment:
       DYNAMO_ENDPOINT: "http://dynamodb-local:8000"
       AWS_REGION: "us-west-2"
@@ -25,6 +33,8 @@ services:
       context: ../../
       dockerfile: docker/files/restapi.dockerfile
     container_name: restapi
+    networks:
+      - msm-network
     ports:
       - 4000:4000
     depends_on: 
@@ -37,63 +47,63 @@ services:
       - AWS_SECRET_ACCESS_KEY=local
       - NO_CHAIN=true
 
-  cleanup:
-    build:
-      context: ../../
-      dockerfile: docker/files/cleanup.dockerfile
-    container_name: cleanup
-    ports:
-      - 9000:8080
-    depends_on: 
-      - dynamodb-local
-    environment:
-      - DEBUG=msm-cleanup:*,dynamolayer:*
-      - AWS_REGION=us-west-2
-      - AWS_ACCESS_KEY_ID=local
-      - AWS_SECRET_ACCESS_KEY=local
+  # cleanup:
+  #   build:
+  #     context: ../../
+  #     dockerfile: docker/files/cleanup.dockerfile
+  #   container_name: cleanup
+  #   ports:
+  #     - 9000:8080
+  #   depends_on: 
+  #     - dynamodb-local
+  #   environment:
+  #     - DEBUG=msm-cleanup:*,dynamolayer:*
+  #     - AWS_REGION=us-west-2
+  #     - AWS_ACCESS_KEY_ID=local
+  #     - AWS_SECRET_ACCESS_KEY=local
 
-  connect-ws:
-    build:
-      context: ../../
-      dockerfile: docker/files/ws-connect.dockerfile
-    container_name: connect-ws
-    ports:
-      - 9001:8080
-    depends_on: 
-      - dynamodb-local
-    environment:
-      - DEBUG=dynamolayer:*,secrets:*,auth:*,ws-connect:*
-      - AWS_REGION=us-west-2
-      - AWS_ACCESS_KEY_ID=local
-      - AWS_SECRET_ACCESS_KEY=local
-      - KEY_AUTH_SIGN=supersecret
+  # connect-ws:
+  #   build:
+  #     context: ../../
+  #     dockerfile: docker/files/ws-connect.dockerfile
+  #   container_name: connect-ws
+  #   ports:
+  #     - 9001:8080
+  #   depends_on: 
+  #     - dynamodb-local
+  #   environment:
+  #     - DEBUG=dynamolayer:*,secrets:*,auth:*,ws-connect:*
+  #     - AWS_REGION=us-west-2
+  #     - AWS_ACCESS_KEY_ID=local
+  #     - AWS_SECRET_ACCESS_KEY=local
+  #     - KEY_AUTH_SIGN=supersecret
 
-  disconnect-ws:
-    build:
-      context: ../../
-      dockerfile: docker/files/ws-disconnect.dockerfile
-    container_name: disconnect-ws
-    ports:
-      - 9002:8080
-    depends_on: 
-      - dynamodb-local
-    environment:
-      - DEBUG=dynamolayer:*,ws-disconnect:*
-      - AWS_REGION=us-west-2
-      - AWS_ACCESS_KEY_ID=local
-      - AWS_SECRET_ACCESS_KEY=local
+  # disconnect-ws:
+  #   build:
+  #     context: ../../
+  #     dockerfile: docker/files/ws-disconnect.dockerfile
+  #   container_name: disconnect-ws
+  #   ports:
+  #     - 9002:8080
+  #   depends_on: 
+  #     - dynamodb-local
+  #   environment:
+  #     - DEBUG=dynamolayer:*,ws-disconnect:*
+  #     - AWS_REGION=us-west-2
+  #     - AWS_ACCESS_KEY_ID=local
+  #     - AWS_SECRET_ACCESS_KEY=local
 
-  notification:
-    build:
-      context: ../../
-      dockerfile: docker/files/notification.dockerfile
-    container_name: notification
-    ports:
-      - 9003:8080
-    depends_on: 
-      - dynamodb-local
-    environment:
-      - DEBUG=dynamolayer:*,secrets:*,notification:*
-      - AWS_REGION=us-west-2
-      - AWS_ACCESS_KEY_ID=local
-      - AWS_SECRET_ACCESS_KEY=local
+  # notification:
+  #   build:
+  #     context: ../../
+  #     dockerfile: docker/files/notification.dockerfile
+  #   container_name: notification
+  #   ports:
+  #     - 9003:8080
+  #   depends_on: 
+  #     - dynamodb-local
+  #   environment:
+  #     - DEBUG=dynamolayer:*,secrets:*,notification:*
+  #     - AWS_REGION=us-west-2
+  #     - AWS_ACCESS_KEY_ID=local
+  #     - AWS_SECRET_ACCESS_KEY=local
