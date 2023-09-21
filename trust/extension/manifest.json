@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ySyPyA Verification Tool",
-  "version": "0.0.0.2",
+  "version": "0.0.0.3",
   "description": "Verify that the online version of ySyPyA match the public code.",
 
   "icons": {
