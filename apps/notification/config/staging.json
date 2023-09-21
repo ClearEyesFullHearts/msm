@@ -3,5 +3,11 @@
     "local": false,
     "tableName": "MSMBetaTable",
     "createTable": false
+  },
+  "wss" : {
+    "withStage": false
+  },
+  "vapid": {
+    "subject": "aysypya@gmail.com"
   }
 }

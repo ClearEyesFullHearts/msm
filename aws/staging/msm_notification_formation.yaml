@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Resources needed to deploy the notifications lambda function.
+
+####################################################################################
+Parameters:
+####################################################################################
+
+  MSMStageName:
+    Type: String
+    Default: test
+    Description: The name of the stage to be created, also used as NODE_ENV
+
+  MSMTableName:
+    Type: String
+    Description: The name of the table to be created.
+
+  MSMSecretName:
+    Type: String
+    Default: test
+    Description: The name of the secret to use.
+
+  NotificationImageName:
+    Type: String
+    Default: mft-msm-notification.latest
+    Description: Tag of the image to deploy.
+
+  MSMAPIId:
+    Type: String
+    Description: The id of the WS API Getaway.
+
+####################################################################################
+Resources:
+####################################################################################
+
+  NotifLambdaMSMPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: WssAPIWriteAccess
+            Effect: Allow
+            Action: 
+              - execute-api:ManageConnections
+            Resource: 
+              - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MSMAPIId}/${MSMStageName}/*/@connections/*'
+          - Sid: SecretManagerReadAccess
+            Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource:
+              - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:BetaMSMSecret-shRNxY'
+          - Sid: DynamoDBTableAccess
+            Effect: Allow
+            Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:PutItem
+              - dynamodb:DescribeTable
+              - dynamodb:DeleteItem
+              - dynamodb:GetItem
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:UpdateItem
+            Resource: 
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}'
+
+  NotifLambdaMSMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref NotifLambdaMSMPolicy
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+
+  MSMNotifyLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      PackageType: Image
+      Code:
+        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${NotificationImageName}"
+      MemorySize: 128
+      Role: !Sub ${NotifLambdaMSMRole.Arn}
+      Environment:
+        Variables:
+          NODE_ENV: !Ref MSMStageName
+          KEY_REPORT_AT: "mat"
+          SECRET_LOCATION: !Ref MSMSecretName
+          DEBUG: "notification:*,secrets:*,dynamolayer:*"
+
+  MSMSnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: 'MSMNotificationTopic'
+      TopicName: 'MSMNotificationTopic'
+      Subscription:
+        - Protocol: lambda
+          Endpoint: !GetAtt MSMNotifyLambdaFunction.Arn
+
+  PermissionSNStoLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref MSMNotifyLambdaFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref MSMSnsTopic
+
+Outputs:
+
+  TopicEndpoint:
+    Value: !Ref 'MSMSnsTopic'
+    Description: Topic to send notifications to

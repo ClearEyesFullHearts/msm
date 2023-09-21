@@ -1,6 +1,7 @@
 const webpush = require('web-push');
 const debug = require('debug')('notification:app');
 const config = require('config');
+const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
 const Data = require('@shared/dynamolayer');
 const getSecretValue = require('@shared/secrets');
 
@@ -12,9 +13,42 @@ data.init();
 
 let secret;
 
-exports.handler = async (event) => {
-  debug('event received', event);
-  const { to, from, action } = event.Records[0].Sns.Message;
+async function wssNotification({ to, from, action }) {
+  debug(`Notify ${to} that ${from} sent a message`);
+  const connection = await data.connections.findByName(to);
+  debug('target is connected', !!connection);
+  if (connection) {
+    const {
+      id,
+      stage,
+      domainName,
+    } = connection;
+
+    const message = {
+      action,
+      message: {
+        from,
+      },
+    };
+
+    const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
+    const client = new ApiGatewayManagementApiClient({
+      endpoint,
+    });
+    const input = {
+      Data: JSON.stringify(message),
+      ConnectionId: id,
+    };
+    const command = new PostToConnectionCommand(input);
+    await client.send(command);
+    debug('notification sent');
+    return true;
+  }
+
+  return false;
+}
+
+async function webPushNotification({ to, from, action }) {
   if (!secret) {
     await getSecretValue();
     secret = process.env.PRIVATE_VAPID_KEY;
@@ -23,7 +57,7 @@ exports.handler = async (event) => {
   debug(`${subs.length} subscription for ${to}`);
   if (subs.length < 1) return;
 
-  const unread = await data.messages.getUserMessages(to);
+  const waitingMessages = await data.messages.getUserMessages(to);
 
   const promises = [];
   subs.forEach((sub) => {
@@ -41,7 +75,9 @@ exports.handler = async (event) => {
     };
     const result = webpush.sendNotification(
       subscription,
-      JSON.stringify({ type: action, from, unread }),
+      JSON.stringify({
+        action, from, to, unread: waitingMessages.length,
+      }),
       {
         topic: 'mail',
         vapidDetails: {
@@ -62,4 +98,15 @@ exports.handler = async (event) => {
   debug('send notifications');
   await Promise.all(promises);
   debug('all sent');
+}
+
+exports.handler = async (event) => {
+  debug('event received');
+  const { to, from, action } = JSON.parse(event.Records[0].Sns.Message);
+
+  const isNotified = await wssNotification({ to, from, action });
+
+  if (!isNotified) {
+    await webPushNotification({ to, from, action });
+  }
 };

@@ -1,5 +1,5 @@
 const config = require('config');
-const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 const debug = require('debug')('msm-main:async');
 const Validator = require('@shared/validator');
 
@@ -97,36 +97,19 @@ class Async {
     }
   }
 
-  static async notifyMessage(db, from, to) {
+  static async notifyMessage(from, to) {
     debug(`Notify ${to} that ${from} sent a message`);
-    const connection = await db.connections.findByName(to);
-    debug('target is connected', !!connection);
-    if (connection) {
-      const {
-        id,
-        stage,
-        domainName,
-      } = connection;
-
-      const message = {
-        action: 'mail',
-        message: {
+    const snsClient = new SNSClient({});
+    await snsClient.send(
+      new PublishCommand({
+        Message: JSON.stringify({
+          to,
           from,
-        },
-      };
-
-      const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
-      const client = new ApiGatewayManagementApiClient({
-        endpoint,
-      });
-      const input = {
-        Data: JSON.stringify(message),
-        ConnectionId: id,
-      };
-      const command = new PostToConnectionCommand(input);
-      await client.send(command);
-      debug('notification sent');
-    }
+          action: 'mail',
+        }),
+        TopicArn: process.env.NOTIF_TOPIC,
+      }),
+    );
   }
 }
 

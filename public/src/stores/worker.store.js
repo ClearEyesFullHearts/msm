@@ -2,6 +2,7 @@
 import { defineStore } from 'pinia';
 import Config from '@/lib/config';
 import { fetchWrapper } from '@/helpers';
+import { useAuthStore, useContactsStore } from '@/stores';
 
 const {
   VAPID_KEY, API_URL,
@@ -28,7 +29,6 @@ export const useWorkerStore = defineStore({
     sw: null,
     permission: null,
     subscription: null,
-    channel: null,
   }),
   getters: {
     allowed: (state) => state.permission === 'granted',
@@ -42,9 +42,10 @@ export const useWorkerStore = defineStore({
       }
     },
     async subscribe(force = false) {
-      if (!this.sw) return;
+      if (!this.sw) return false;
       this.permission = Notification.permission;
-      if (Notification.permission !== 'granted' && !force) return;
+
+      if (Notification.permission !== 'granted' && !force) return false;
 
       this.subscription = await this.sw.pushManager.subscribe({
         userVisibleOnly: true,
@@ -63,17 +64,29 @@ export const useWorkerStore = defineStore({
       }
 
       this.permission = Notification.permission;
+      if (this.permission === 'granted') {
+        const authStore = useAuthStore();
+        const bc = new BroadcastChannel('new_mail');
+        bc.onmessage = (event) => {
+          const { data } = event;
+          if (data.to === authStore.user.user.username) {
+            const contactsStore = useContactsStore();
+            contactsStore.updateMessages(false);
+          }
+        };
+      }
+
+      return true;
     },
     updateBadge(unreadMessages) {
-      const messageChannel = new MessageChannel();
+      if (!this.sw) return;
 
-      // Send the service worker a message to clear the cache.
-      // We can't use a BroadcastChannel for this because the
-      // service worker may need to be woken up. MessageChannels do that.
-      navigator.serviceWorker.controller.postMessage({
-        action: 'updatebadge',
-        unread: unreadMessages,
-      }, [messageChannel.port2]);
+      if (this.sw.active) {
+        this.sw.active.postMessage({
+          action: 'updatebadge',
+          unread: unreadMessages,
+        });
+      }
     },
   },
 });

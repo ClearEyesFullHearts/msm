@@ -5,7 +5,7 @@ import { useAuthStore, useWorkerStore } from '@/stores';
 const authStore = useAuthStore();
 const workerStore = useWorkerStore();
 
-workerStore.start().then(() => console.log('worker is started'));
+workerStore.start();
 </script>
 
 <template>

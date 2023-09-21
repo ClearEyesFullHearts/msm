@@ -2,11 +2,19 @@ const TITLE = {
   mail: 'You\'ve got mail!',
 };
 
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting()); // Activate worker immediately
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim()); // Become available to all pages
+});
+
 self.addEventListener('push', (event) => {
-  const { type, ...msg } = event.data.json();
-  console.log('worker event', event.data.json());
+  const { action, ...msg } = event.data.json();
+
   const options = {
-    body: TITLE[type],
+    body: TITLE[action],
     icon: '/img/notification-icon.png',
     data: {},
     vibrate: [200, 100, 200],
@@ -15,7 +23,10 @@ self.addEventListener('push', (event) => {
   };
   self.registration.showNotification('ySyPyA', options);
 
-  if (type === 'mail') {
+  const bc = new BroadcastChannel('new_mail');
+  bc.postMessage(msg);
+
+  if (action === 'mail') {
     // Check for support first.
     if (navigator.setAppBadge) {
     // Display the number of unread messages.

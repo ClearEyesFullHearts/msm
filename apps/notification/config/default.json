@@ -15,6 +15,9 @@
     "vapid": {
       "subject": "test@example.com",
       "publicKey": "BKsOGQP66VNVwrjUhi3CZRUiGDxzSFJPaiCqcrN3tyaIVSySMkNRVoaIbX9VcuFrHfiHqxfwEbQ67kbNjCHAclk"
+    },
+    "wss" : {
+      "withStage": true
     }
   }
     

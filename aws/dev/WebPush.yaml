@@ -27,8 +27,10 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
+  
   snsTopic:
     Type: AWS::SNS::Topic
+  
   awsAppSyncServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -42,6 +44,7 @@ Resources:
           Action:
           - sts:AssumeRole
       Path: /
+  
   appSyncAccessPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -61,6 +64,7 @@ Resources:
             Ref: snsTopic
       Roles:
       - Ref: awsAppSyncServiceRole
+  
   sendPushNotificationsLambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -95,6 +99,7 @@ Resources:
           - Fn::GetAtt:
             - subscriptionsTable
             - Arn
+  
   subscriptionsTableDataSource:
     Type: AWS::AppSync::DataSource
     Properties:
@@ -114,12 +119,14 @@ Resources:
           Ref: subscriptionsTable
         AwsRegion:
           Ref: AWS::Region
+  
   graphQLApi:
     Type: AWS::AppSync::GraphQLApi
     Properties:
       Name:
         Fn::Sub: ${AWS::StackName}
       AuthenticationType: API_KEY
+  
   graphQLSchema:
     Type: AWS::AppSync::GraphQLSchema
     Properties:
@@ -129,6 +136,7 @@ Resources:
         - ApiId
       Definition: "type Query {\n  test: String\n}\ntype Mutation {\n  subscribe(topic:\
         \ String, subscription: String): String @aws_cognito_user_pools\n}\n"
+  
   subscribeResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -147,3 +155,26 @@ Resources:
         \ },\n        \"subscription\": $util.dynamodb.toDynamoDBJson($ctx.args.subscription)\n\
         \    }\n}\n"
       ResponseMappingTemplate: $util.toJson($ctx.result.subscription)
+
+
+  SNSPolicy:
+    Type: 'AWS::SNS::TopicPolicy'
+    Properties:
+      Topics:
+        - !Ref MSMSnsTopic
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: AWS: '*'
+            Action:
+              - 'SNS:GetTopicAttributes'
+              - 'SNS:SetTopicAttributes'
+              - 'SNS:AddPermission'
+              - 'SNS:RemovePermission'
+              - 'SNS:DeleteTopic'
+              - 'SNS:Subscribe'
+              - 'SNS:ListSubscriptionsByTopic'
+              - 'SNS:Publish'
+              - 'SNS:Receive'
+            Resource: !Ref MSMSnsTopic

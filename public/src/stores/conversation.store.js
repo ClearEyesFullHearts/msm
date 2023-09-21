@@ -1,6 +1,8 @@
 /* eslint-disable import/prefer-default-export */
 import { defineStore } from 'pinia';
-import { useContactsStore, useAuthStore, useConnectionStore } from '@/stores';
+import {
+  useContactsStore, useAuthStore, useConnectionStore, useWorkerStore,
+} from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import FileHelper from '@/lib/fileHelper';
 import { fetchWrapper } from '@/helpers';
@@ -37,6 +39,8 @@ export const useConversationStore = defineStore({
       target.messages = [];
 
       document.title = `ySyPyA (${contactsStore.messageCount})`;
+      const workerStore = useWorkerStore();
+      workerStore.updateBadge(contactsStore.messageCount);
     },
     async getMissedMessage(msgId) {
       try {

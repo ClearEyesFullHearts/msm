@@ -207,14 +207,20 @@ class User {
     debug(`add a push subscription for ${user.username}`);
     const sub = {
       username: user.username,
-      id: user.id,
       endpoint,
       auth,
       p256dh,
     };
 
-    await db.subscriptions.create(sub);
-    debug('subscription added');
+    try {
+      await db.subscriptions.create(sub);
+      debug('subscription added');
+    } catch (err) {
+      if (err.name !== 'ConditionalCheckFailedException') {
+        throw err;
+      }
+      debug('subscription already exists');
+    }
   }
 }
 

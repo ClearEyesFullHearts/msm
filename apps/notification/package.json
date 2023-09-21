@@ -12,6 +12,7 @@
       "@shared/dynamolayer": "*",
       "@shared/encryption": "*",
       "@shared/secrets": "*",
+      "@aws-sdk/client-apigatewaymanagementapi": "3.405.0",
       "config": "3.3.9",
       "debug": "4.3.4",
       "web-push": "3.6.6"

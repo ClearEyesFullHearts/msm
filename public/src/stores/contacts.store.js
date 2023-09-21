@@ -2,7 +2,9 @@
 import { reactive } from 'vue';
 import { defineStore } from 'pinia';
 import { fetchWrapper } from '@/helpers';
-import { useAuthStore, useConversationStore, useToasterStore } from '@/stores';
+import {
+  useAuthStore, useConversationStore, useToasterStore, useWorkerStore,
+} from '@/stores';
 
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
@@ -325,6 +327,9 @@ export const useContactsStore = defineStore({
       const authStore = useAuthStore();
       this.getHeaders().then((headers) => this.fillConversations(headers))
         .then(() => {
+          const workerStore = useWorkerStore();
+          workerStore.updateBadge(this.messageCount);
+
           if (this.dirty) {
             return this.saveContactList(authStore.pem);
           }

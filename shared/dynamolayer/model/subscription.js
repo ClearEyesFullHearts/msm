@@ -14,10 +14,6 @@ class SubscriptionData {
         required: true,
         rangeKey: true,
       },
-      id: {
-        type: String,
-        required: true,
-      },
       auth: {
         type: String,
         required: true,
@@ -35,7 +31,6 @@ class SubscriptionData {
 
   async create({
     username,
-    id,
     endpoint,
     auth,
     p256dh,
@@ -43,7 +38,6 @@ class SubscriptionData {
     const newSubscription = {
       pk: `P#${username}`,
       sk: endpoint,
-      id,
       auth,
       p256dh,
     };

@@ -70,16 +70,20 @@ export const useAuthStore = defineStore({
         const contactsStore = useContactsStore();
         contactsStore.setContactList(this.pem, this.user.contacts)
           .then(() => {
-            contactsStore.updateMessages();
+            const workerStore = useWorkerStore();
+            workerStore.subscribe().then((result) => {
+              if (!result) {
+                contactsStore.updateMessages();
+              } else {
+                contactsStore.updateMessages(false);
+              }
+            });
           });
 
         // redirect to previous url or default to home page
         router.push(this.returnUrl || '/conversations');
 
         this.onChainVerification();
-
-        const workerStore = useWorkerStore();
-        workerStore.subscribe().then(() => console.log('worker is subscribed'));
 
         myVault = undefined;
         myChallenge = undefined;

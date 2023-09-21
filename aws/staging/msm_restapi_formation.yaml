@@ -23,9 +23,9 @@ Parameters:
     Type: String
     Description: The name of the secret to use.
 
-  MSMAPIId:
+  MSMNotifTopicName:
     Type: String
-    Description: The id of the WS API Getaway.
+    Description: The name of the notification topic
 
 ####################################################################################
 Resources:
@@ -37,12 +37,12 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: WssAPIWriteAccess
+          - Sid: SnsPushNotification
             Effect: Allow
-            Action: 
-              - execute-api:ManageConnections
-            Resource: 
-              - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MSMAPIId}/${MSMStageName}/*/@connections/*'
+            Action:
+              - sns:Publish
+            Resource:
+              - !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMNotifTopicName}'
           - Sid: SecretManagerReadAccess
             Effect: Allow
             Action:
@@ -117,6 +117,8 @@ Resources:
               Value: !Ref MSMSecretName
             - Name: "DEBUG"
               Value: "msm-main:*,dynamolayer:*,secrets:*,validator:*,msm-error:*"
+            - Name: "NOTIF_TOPIC"
+              Value: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMNotifTopicName}'
           LogConfiguration:
             LogDriver: "awslogs"
             Options:

@@ -279,7 +279,7 @@ module.exports = {
         .then(() => {
           res.status(201).send();
 
-          AsyncAction.notifyMessage(db, auth.username, body.to)
+          AsyncAction.notifyMessage(auth.username, body.to)
             .catch((err) => {
               console.error('error on message notification');
               console.error(err);

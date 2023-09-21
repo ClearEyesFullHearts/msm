@@ -17,8 +17,6 @@ onMounted(() => {
   new Tooltip(document.body, {
     selector: "[data-bs-toggle='tooltip']",
   });
-
-  console.log('state', workerStore.allowed, workerStore.disabled);
 });
 
 async function incinerate() {
