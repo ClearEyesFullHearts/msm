@@ -119,73 +119,6 @@ Resources:
       - WssLambdaMSMPolicy
       - WssLambdaMSMRole
 
-  BaseMessageHandler:
-    Type: AWS::Lambda::Function
-    Properties:
-      Code:
-        ZipFile: |-
-          const AWS = require('aws-sdk');
-                const ddb = new AWS.DynamoDB.DocumentClient();
-                
-                exports.handler = async function (event, context) {
-                  console.log('message event', event);
-                  console.log('message context', context);
-                  let connections;
-                  try {
-                    connections = await ddb.query({ 
-                      TableName: process.env.table,
-                      IndexName: "ConnectionIDIndex",
-                      KeyConditionExpression: "pk = :const",
-                      ExpressionAttributeValues: {
-                          ":const": "WSS"
-                      },
-                    }).promise();
-                  } catch (err) {
-                    return {
-                      statusCode: 500,
-                    };
-                  }
-                  const callbackAPI = new AWS.ApiGatewayManagementApi({
-                    apiVersion: '2018-11-29',
-                    endpoint:
-                      event.requestContext.domainName + '/' + event.requestContext.stage,
-                  });
-                
-                  const message = JSON.parse(event.body).message;
-                
-                  const sendMessages = connections.Items.map(async ({ connectionId }) => {
-                    if (connectionId !== event.requestContext.connectionId) {
-                      try {
-                        await callbackAPI
-                          .postToConnection({ ConnectionId: connectionId, Data: message })
-                          .promise();
-                      } catch (e) {
-                        console.log(e);
-                      }
-                    }
-                  });
-                
-                  try {
-                    await Promise.all(sendMessages);
-                  } catch (e) {
-                    console.log(e);
-                    return {
-                      statusCode: 500,
-                    };
-                  }
-                
-                  return { statusCode: 200 };
-                };
-      Role: !GetAtt WssLambdaMSMRole.Arn
-      Environment:
-        Variables:
-          table: !Ref MSMTableName
-      Handler: index.handler
-      Runtime: nodejs14.x
-    DependsOn:
-      - WssLambdaMSMPolicy
-      - WssLambdaMSMRole
-
   MSMDisconnectHandler:
     Type: AWS::Lambda::Function
     Properties:
@@ -291,37 +224,6 @@ Resources:
       RouteKey: fallback
       AuthorizationType: NONE
       Target: !Sub 'integrations/${MsmWssApiFallbackIntegration}'
-
-  MsmWssApiMessagePermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: 'lambda:InvokeFunction'
-      FunctionName: !GetAtt BaseMessageHandler.Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/*/*sendmessage'
-
-  MsmWssApiMessageIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref MsmWssApi
-      IntegrationType: AWS_PROXY
-      IntegrationUri: !Join 
-        - ''
-        - - 'arn:aws:apigateway:'
-          - !Ref 'AWS::Region'
-          - ':lambda:path/2015-03-31/functions/'
-          - !GetAtt 
-            - BaseMessageHandler
-            - Arn
-          - /invocations
-
-  MsmWssApiMessageRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref MsmWssApi
-      RouteKey: sendmessage
-      AuthorizationType: NONE
-      Target: !Sub 'integrations/${MsmWssApiMessageIntegration}'
 
   MsmWssApiDisconnectPermission:
     Type: AWS::Lambda::Permission
