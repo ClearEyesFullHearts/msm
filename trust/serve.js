@@ -14,6 +14,8 @@ const MIME_TYPES = {
   gif: 'image/gif',
   ico: 'image/x-icon',
   svg: 'image/svg+xml',
+  woff: 'font/woff',
+  woff2: 'font/woff2',
 };
 
 const STATIC_PATH = path.join(process.cwd(), './dist');
@@ -21,6 +23,9 @@ const STATIC_PATH = path.join(process.cwd(), './dist');
 const toBool = [() => true, () => false];
 
 const prepareFile = async (url) => {
+  if(url.indexOf('?') > 0) {
+    url = url.substring(0, url.indexOf('?'));
+  }
   const paths = [STATIC_PATH, url];
   if (url.endsWith('/')) paths.push('index.html');
   const filePath = path.join(...paths);
