@@ -25,7 +25,7 @@ const schema = Yup.object().shape({
 async function register(values) {
   try {
     await usersStore.register(values);
-    router.push('/account/login');
+    router.push('/login');
     // alertStore.success('Registration successful');
   } catch (error) {
     alertStore.error(error);

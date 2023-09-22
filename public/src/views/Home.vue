@@ -1,11 +1,16 @@
 <script setup>
 import { storeToRefs } from 'pinia';
 
-import { useAuthStore } from '@/stores';
+import { useAuthStore, useWorkerStore } from '@/stores';
 
 const authStore = useAuthStore();
-
+const wokerStore = useWorkerStore();
 const { user } = storeToRefs(authStore);
+const { installable, installed } = storeToRefs(wokerStore);
+
+function installApp() {
+  wokerStore.install();
+}
 </script>
 
 <template>
@@ -51,6 +56,26 @@ const { user } = storeToRefs(authStore);
               target="_blank"
             >here</a>
           </p>
+          <h3>Installation</h3>
+          <p v-if="!installed && installable">
+            You can opt to install this service as an app if you like.
+            <button
+              class="btn btn-success ms-1"
+              @click="installApp()"
+            >
+              Install ySyPyA
+            </button>
+          </p>
+          <p v-if="!installed && !installable">
+            We can't determine if you can install this app on your device, it depends of your
+            combination of browser and OS. You will have to search on the internet if your
+            particular combination can install Progressive Web App and how to do it.<br>
+            It is possible you already did install this app on your device, in this case
+            congratulations and thank you!
+          </p>
+          <p v-if="installed">
+            Congratulations and thank you, this app is already installed on this device.
+          </p>
           <h3>The obvious</h3>
           <p>
             <ul>
@@ -73,6 +98,11 @@ const { user } = storeToRefs(authStore);
                 and send instant messages to other connected users.<br>
                 You need to be validated on-chain to be able to connect.<br>
                 If you are not connected you can only send or receive "mail" messages.
+              </li>
+              <li>
+                The "Accept Notifications" switch enables us to send you notifications even
+                if you're not connected or even logged in. When enabled it will prompt you
+                to block or allow notifications for this site, click "Allow".
               </li>
               <li>
                 All conversations are temporary and are lost as soon as you log out.<br>
@@ -176,6 +206,15 @@ const { user } = storeToRefs(authStore);
           <p>
             The maximum size itself (446 ASCII characters) comes from the number of Bytes
             you can encrypt with a 4096 RSA public key.
+          </p>
+          <h4>I've allowed/blocked notifications and I changed my mind?</h4>
+          <p>
+            On Chrome go to "Settings > Privacy & security > Site settings > Notifications",
+            find beta.ysypya.com and change the setting to what you want.
+          </p>
+          <p>
+            On Firefox go to "Settings > Privacy & security > Permissions:Notifications",
+            click on settings, find beta.ysypya.com and change the setting to what you want.
           </p>
           <h4>What kind of data do you keep?</h4>
           <p>

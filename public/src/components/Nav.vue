@@ -56,7 +56,7 @@ async function acceptNotification() {
     <div class="me-2">
       <router-link
         v-slot="{href, navigate}"
-        to="/account/login"
+        to="/login"
       >
         <button
           :href="href"
@@ -69,7 +69,7 @@ async function acceptNotification() {
       &nbsp;
       <router-link
         v-slot="{href, navigate}"
-        to="/account/register"
+        to="/register"
       >
         <button
           :href="href"

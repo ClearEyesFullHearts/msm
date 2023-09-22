@@ -199,7 +199,7 @@ export const useAuthStore = defineStore({
       }
       const pinia = getActivePinia();
       pinia._s.forEach((store) => store.$reset());
-      router.push('/account/login');
+      router.push('/login');
       document.title = 'ySyPyA';
     },
   },

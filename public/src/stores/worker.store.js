@@ -29,6 +29,9 @@ export const useWorkerStore = defineStore({
     sw: null,
     permission: null,
     subscription: null,
+    installable: false,
+    installed: false,
+    installPrompt: null,
   }),
   getters: {
     allowed: (state) => state.permission === 'granted',
@@ -37,6 +40,14 @@ export const useWorkerStore = defineStore({
   actions: {
     async start() {
       if ('serviceWorker' in navigator) {
+        window.addEventListener('beforeinstallprompt', (event) => {
+          event.preventDefault();
+          this.installPrompt = event;
+          this.installable = true;
+        });
+        window.addEventListener('appinstalled', () => {
+          this.installed = true;
+        });
         this.sw = await navigator.serviceWorker.register('/worker/sw.js');
         this.permission = Notification.permission;
       }
@@ -77,6 +88,16 @@ export const useWorkerStore = defineStore({
       }
 
       return true;
+    },
+    async install() {
+      if (!this.installPrompt) {
+        return;
+      }
+      const result = await this.installPrompt.prompt();
+
+      if (result.outcome === 'accepted') {
+        this.installed = true;
+      }
     },
     updateBadge(unreadMessages) {
       if (!this.sw) return;
