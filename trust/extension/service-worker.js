@@ -7,7 +7,6 @@ let memory = {};
 const { COMMIT, BASE_URL, ...map } = config;
 let resultMap = [];
 
-
 function onClientReady(request) {
   if (request.action.type === 'READY') {
     if (isAttached) {
@@ -144,6 +143,21 @@ function getHash(txt) {
     });
 }
 
+function ToBinary(txt) {
+  let result = '';
+
+  const str = encodeURIComponent(txt);
+
+  for (let i = 0; i < str.length; i += 1) {
+    if (str[i] === '%') {
+      result += String.fromCharCode(parseInt(str.substring(i + 1, i + 3), 16));
+      i += 2;
+    } else result += str[i];
+  }
+
+  return result;
+}
+
 chrome.debugger.onEvent.addListener((source, method, params) => {
   if (method === 'Network.responseReceived') {
     memory[params.requestId] = params.response.url;
@@ -161,7 +175,7 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
         if (result.base64Encoded) {
           return getHash(result.body);
         }
-        return getHash(btoa(result.body));
+        return getHash(btoa(ToBinary(result.body)));
       })
       .then((hash) => {
         console.log('loadingFinished', memory[params.requestId]);

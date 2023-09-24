@@ -310,6 +310,10 @@ Resources:
 
 Outputs:
 
+  APIId:
+    Value: !Ref MsmWssApi
+    Description: ID of the Web Socket API Getaway
+
   WSSEndpoint:
     Value: !Sub 'wss://${MsmWssApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}'
     Description: Url of the web socket endpoint
