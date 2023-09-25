@@ -49,6 +49,11 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
+          - Sid: CreateCleanupSchedule
+            Effect: Allow
+            Action:
+              - scheduler:CreateSchedule
+            Resource: '*'
           - Sid: AllowSchedulerToAssumeRole
             Effect: Allow
             Action:
