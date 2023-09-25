@@ -27,6 +27,18 @@ Parameters:
     Type: String
     Description: The name of the notification topic
 
+  MSMCleanAccountLambda:
+    Type: String
+    Description: The name of the account cleanup lambda
+
+  MSMCleanMessageLambda:
+    Type: String
+    Description: The name of the message cleanup lambda
+
+  MSMCleanupSchedulerRole:
+    Type: String
+    Description: The name of the role assumed by the scheduler
+
 ####################################################################################
 Resources:
 ####################################################################################
@@ -37,6 +49,13 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
+          - Sid: AllowSchedulerToAssumeRole
+            Effect: Allow
+            Action:
+              - iam:GetRole
+              - iam:PassRole
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${MSMCleanupSchedulerRole}'
           - Sid: SnsPushNotification
             Effect: Allow
             Action:
@@ -119,6 +138,12 @@ Resources:
               Value: "msm-main:*,dynamolayer:*,secrets:*,validator:*,msm-error:*"
             - Name: "NOTIF_TOPIC"
               Value: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMNotifTopicName}'
+            - Name: "CLEAN_ACCOUNT_TARGET"
+              Value: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanAccountLambda}'
+            - Name: "CLEAN_MESSAGE_TARGET"
+              Value: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanMessageLambda}'
+            - Name: "SCHEDULER_ROLE"
+              Value: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${MSMCleanupSchedulerRole}'
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
