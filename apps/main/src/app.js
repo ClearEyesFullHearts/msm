@@ -28,18 +28,21 @@ class MSMMain {
     this.doc = path.join(__dirname, 'spec/openapi.yaml');
   }
 
-  async start() {
-    debug('STARTED');
-
-    const port = config.get('instance.port');
-
+  async setup() {
+    debug('server setup');
     const data = new Data(config.get('dynamo'));
-    await data.init();
+    data.init();
     this.app.locals.db = data;
+    debug('data is added');
 
     const secret = new Secret(['KEY_AUTH_SIGN', 'KEY_WALLET_SECRET']);
     await secret.getSecretValue();
     this.app.locals.secret = secret;
+    debug('secret is added');
+  }
+
+  start() {
+    debug('start server');
 
     this.app.get('/health', (req, res) => {
       res.status(200).send();
@@ -61,6 +64,14 @@ class MSMMain {
     });
 
     this.app.use(ErrorHelper.catchMiddleware());
+    debug('all middlewares added');
+
+    return this.app;
+  }
+
+  async listen() {
+    debug('listen');
+    const port = config.get('instance.port');
 
     return new Promise(((resolve) => {
       this.app.listen(port, () => {

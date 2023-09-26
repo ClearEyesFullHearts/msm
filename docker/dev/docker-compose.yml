@@ -28,15 +28,34 @@ services:
     depends_on:
       - dynamodb-local
 
+  # restapi:
+  #   build:
+  #     context: ../../
+  #     dockerfile: docker/files/restapi.dockerfile
+  #   container_name: restapi
+  #   networks:
+  #     - msm-network
+  #   ports:
+  #     - 4000:4000
+  #   depends_on: 
+  #     - dynamodb-local
+  #   environment:
+  #     - DEBUG=msm-main:*,dynamolayer:*,secrets:*,msm-error:*
+  #     - NODE_ENV=dock-dev
+  #     - AWS_REGION=us-west-2
+  #     - AWS_ACCESS_KEY_ID=local
+  #     - AWS_SECRET_ACCESS_KEY=local
+  #     - NO_CHAIN=true
+
   restapi:
     build:
       context: ../../
-      dockerfile: docker/files/restapi.dockerfile
+      dockerfile: docker/files/main-api-lambda.dockerfile
     container_name: restapi
     networks:
       - msm-network
     ports:
-      - 4000:4000
+      - 9004:8080
     depends_on: 
       - dynamodb-local
     environment:

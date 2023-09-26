@@ -17,6 +17,7 @@
     "@shared/validator": "*",
     "@shared/error": "*",
     "@shared/auth": "*",
+    "@vendia/serverless-express": "4.10.4",
     "jsonwebtoken": "^9.0.0",
     "config": "3.3.9",
     "debug": "4.3.4",
