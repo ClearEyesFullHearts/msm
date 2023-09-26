@@ -78,7 +78,7 @@ class Message {
     debug('message saved');
   }
 
-  static async getMessage({ db, auth }, msgId) {
+  static async getMessage({ db, auth, secret }, msgId) {
     debug(`get user ${auth.username}`);
     const reader = await db.users.findByName(auth.username);
     if (!reader) {
@@ -109,7 +109,7 @@ class Message {
       }
 
       if (reader.validation === 'NO_VALIDATION' && !process.env.NO_CHAIN) {
-        await AsyncAction.autoValidation(db, reader.username);
+        await AsyncAction.autoValidation({ db, secret }, reader.username);
       }
 
       const id = Number(sk.split('#')[1]);

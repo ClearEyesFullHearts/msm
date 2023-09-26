@@ -3,7 +3,7 @@ const debug = require('debug')('notification:app');
 const config = require('config');
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
 const Data = require('@shared/dynamolayer');
-const getSecretValue = require('@shared/secrets');
+const Secret = require('@shared/secrets');
 
 const data = new Data(config.get('dynamo'), {
   frozen: config.get('timer.removal.frozen'),
@@ -11,7 +11,7 @@ const data = new Data(config.get('dynamo'), {
 });
 data.init();
 
-let secret;
+const secret = new Secret(['PRIVATE_VAPID_KEY']);
 
 async function wssNotification({ to, from, action }) {
   debug(`Notify ${to} that ${from} sent a message`);
@@ -49,9 +49,8 @@ async function wssNotification({ to, from, action }) {
 }
 
 async function webPushNotification({ to, from, action }) {
-  if (!secret) {
-    await getSecretValue();
-    secret = process.env.PRIVATE_VAPID_KEY;
+  if (!secret.loaded) {
+    await secret.getSecretValue();
   }
   const subs = await data.subscriptions.findAll(to);
   debug(`${subs.length} subscription for ${to}`);
@@ -83,7 +82,7 @@ async function webPushNotification({ to, from, action }) {
         vapidDetails: {
           subject: `mailto:${config.get('vapid.subject')}`,
           publicKey: config.get('vapid.publicKey'),
-          privateKey: secret,
+          privateKey: secret.PRIVATE_VAPID_KEY,
         },
       },
     ).catch((err) => {

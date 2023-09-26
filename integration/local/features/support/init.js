@@ -9,15 +9,15 @@ const Util = require('./utils');
 // lengths: ESK = 3222 SSK = 898
 // lengths: ESK = 3222 SSK = 902
 
-// BeforeAll((cb) => {
-//   process.env.AWS_REGION = config.get('dynamo.region');
-//   process.env.AWS_ACCESS_KEY_ID = config.get('dynamo.credentials.accessKeyId');
-//   process.env.AWS_SECRET_ACCESS_KEY = config.get('dynamo.credentials.secretAccessKey');
-//   // Util.backupTable().then(cb);
-//   Util.emptyTable()
-//     .then(() => Util.restoreTable())
-//     .then(cb);
-// });
+BeforeAll((cb) => {
+  process.env.AWS_REGION = config.get('dynamo.region');
+  process.env.AWS_ACCESS_KEY_ID = config.get('dynamo.credentials.accessKeyId');
+  process.env.AWS_SECRET_ACCESS_KEY = config.get('dynamo.credentials.secretAccessKey');
+  // Util.backupTable().then(cb);
+  Util.emptyTable()
+    .then(() => Util.restoreTable())
+    .then(cb);
+});
 
 Before(function () {
   const host = config.get('base.instance.host');

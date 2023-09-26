@@ -1,10 +1,6 @@
 {
-  "auth": "KEY_AUTH_SIGN",
   "instance": {
     "reportTarget": "KEY_REPORT_AT"
-  },
-  "ether":{
-    "key": "KEY_WALLET_SECRET"
   }
 }
   

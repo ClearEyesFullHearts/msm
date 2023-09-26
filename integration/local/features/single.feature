@@ -8,4 +8,4 @@ Feature: Single Test
 #     And response body path $.code should be UNKNOWN_USER
 
 Scenario: Notify
-    When I notify a message
+    When I invoke the cleanup lambda function

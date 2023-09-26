@@ -3,7 +3,7 @@ const ErrorHelper = require('@shared/error');
 const Auth = require('@shared/auth');
 
 class AuthMiddleware {
-  static verify(secret, timeToWait) {
+  static verify(timeToWait) {
     return function verifyMiddleware(req, res, next) {
       debug('Route is guarded');
       if (req.headers.authorization) {
@@ -12,7 +12,8 @@ class AuthMiddleware {
 
         const token = heads[1];
         debug('verify token');
-        return Auth.verifyToken(token, secret, timeToWait)
+        const { secret } = req.app.locals;
+        return Auth.verifyToken(token, secret.KEY_AUTH_SIGN, timeToWait)
           .then((payload) => {
             const { user } = payload;
             req.auth = user;

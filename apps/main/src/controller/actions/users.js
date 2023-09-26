@@ -70,7 +70,7 @@ class User {
     return newUser;
   }
 
-  static async getCredentials(db, { at }) {
+  static async getCredentials({ db, secret }, { at }) {
     debug('check for user with @:', at);
     if (at.length !== encodeURIComponent(at).length) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have any special character');
@@ -90,7 +90,7 @@ class User {
         },
       };
       const auth = {
-        token: jwt.sign(payload, config.get('auth')),
+        token: jwt.sign(payload, secret.KEY_AUTH_SIGN),
         contacts: knownUser.contacts,
         ...payload,
       };

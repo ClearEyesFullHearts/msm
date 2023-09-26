@@ -49,7 +49,7 @@ class Async {
     await client.send(command);
   }
 
-  static async autoValidation(db, name) {
+  static async autoValidation({ db, secret }, name) {
     debug('Auto User Validation', name);
     const user = await db.users.findByName(name);
 
@@ -71,7 +71,7 @@ class Async {
       const validator = new Validator({
         network: config.get('ether.network'),
         apiKey: config.get('ether.api'),
-        privateKey: config.get('ether.key'),
+        privateKey: secret.KEY_WALLET_SECRET,
         address: config.get('ether.contract'),
       });
 

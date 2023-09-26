@@ -4,7 +4,7 @@ const { ApiGatewayManagementApiClient, PostToConnectionCommand, DeleteConnection
 const Data = require('@shared/dynamolayer');
 const Auth = require('@shared/auth');
 const ErrorHelper = require('@shared/error');
-const getSecretValue = require('@shared/secrets');
+const Secret = require('@shared/secrets');
 
 const data = new Data(config.get('dynamo'), {
   frozen: config.get('timer.removal.frozen'),
@@ -12,7 +12,7 @@ const data = new Data(config.get('dynamo'), {
 });
 data.init();
 
-let tokenSecret;
+const tokenSecret = new Secret(['KEY_AUTH_SIGN']);
 
 function toLowerCaseProperties(obj) {
   const wrapper = {};
@@ -103,16 +103,15 @@ exports.handler = async function lambdaHandler(event) {
         debug('both auth headers present');
 
         const [protToken, protSignature] = identifiers;
-        if (!tokenSecret) {
-          await getSecretValue();
-          tokenSecret = process.env.KEY_AUTH_SIGN || 'supersecret';
+        if (!tokenSecret.loaded) {
+          await tokenSecret.getSecretValue();
         }
         debug('secret is set');
 
         const token = Buffer.from(protToken, 'hex').toString();
         const signature = Buffer.from(protSignature.trimStart(), 'hex').toString();
 
-        const payload = await Auth.verifyToken(token, tokenSecret, config.get('timer.removal.session'));
+        const payload = await Auth.verifyToken(token, tokenSecret.KEY_AUTH_SIGN, config.get('timer.removal.session'));
         debug('token is verified, we have payload');
 
         const author = await Auth.verifyIdentity(data.users, signature, payload, { action: 'WSS' });

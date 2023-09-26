@@ -4,6 +4,7 @@ const config = require('config');
 const OpenApiValidator = require('express-openapi-validator');
 const debug = require('debug')('msm-main:server');
 const Data = require('@shared/dynamolayer');
+const Secret = require('@shared/secrets');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const ErrorHelper = require('@shared/error');
@@ -38,6 +39,10 @@ class MSMMain {
     });
     await data.init();
     this.app.locals.db = data;
+
+    const secret = new Secret(['KEY_AUTH_SIGN', 'KEY_WALLET_SECRET']);
+    await secret.getSecretValue();
+    this.app.locals.secret = secret;
 
     this.app.get('/health', (req, res) => {
       res.status(200).send();

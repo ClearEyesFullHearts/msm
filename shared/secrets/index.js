@@ -1,38 +1,46 @@
-require('dotenv').config();
 const debug = require('debug')('secrets:starter');
 const {
   GetSecretValueCommand,
   SecretsManagerClient,
 } = require('@aws-sdk/client-secrets-manager');
 
-debug('.env is mounted');
-
-const getSecretValue = async () => {
-  let client;
-  let secrets;
-  try {
-    client = new SecretsManagerClient();
-  } catch (err) {
-    debug('No secret client');
-    return;
-  }
-  try {
-    const response = await client.send(
-      new GetSecretValueCommand({
-        SecretId: process.env.SECRET_LOCATION,
-      }),
-    );
-    const { SecretString } = response;
-    secrets = JSON.parse(SecretString);
-  } catch (err) {
-    debug('No secret value');
-    return;
+class Secret {
+  constructor(choice = ['*']) {
+    this.choice = choice;
+    try {
+      this.client = new SecretsManagerClient();
+    } catch (err) {
+      debug('No secret client');
+    }
+    this.KEY_AUTH_SIGN = 'supersecret';
+    this.PRIVATE_VAPID_KEY = 'N/A';
+    this.KEY_WALLET_SECRET = 'N/A';
+    this.loaded = false;
   }
 
-  Object.keys(secrets).forEach((k) => {
-    debug(`${k} key is added to the environment`);
-    process.env[k] = secrets[k];
-  });
-};
+  async getSecretValue() {
+    this.loaded = true;
+    let secrets;
+    try {
+      const response = await this.client.send(
+        new GetSecretValueCommand({
+          SecretId: process.env.SECRET_LOCATION,
+        }),
+      );
+      const { SecretString } = response;
+      secrets = JSON.parse(SecretString);
+    } catch (err) {
+      debug('No secret value');
+      return;
+    }
 
-module.exports = getSecretValue;
+    Object.keys(secrets).forEach((k) => {
+      if (this.choice[0] === '*' || this.choice.includes(k)) {
+        debug(`${k} key is added to the secret`);
+        this[k] = secrets[k];
+      }
+    });
+  }
+}
+
+module.exports = Secret;
