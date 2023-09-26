@@ -8,7 +8,6 @@
     },
     "timer": {
       "removal": {
-        "inactivity": 2592000000,
         "frozen": 7776000000
       }
     }

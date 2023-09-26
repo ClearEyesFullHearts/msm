@@ -6,10 +6,7 @@ const Auth = require('@shared/auth');
 const ErrorHelper = require('@shared/error');
 const Secret = require('@shared/secrets');
 
-const data = new Data(config.get('dynamo'), {
-  frozen: config.get('timer.removal.frozen'),
-  inactivity: config.get('timer.removal.inactivity'),
-});
+const data = new Data(config.get('dynamo'));
 data.init();
 
 const tokenSecret = new Secret(['KEY_AUTH_SIGN']);

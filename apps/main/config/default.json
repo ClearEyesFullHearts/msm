@@ -12,8 +12,7 @@
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,OPTION",
       "Access-Control-Allow-Headers": "Content-Type, Authorization, Content-Length, X-msm-Sig"
-    },
-    "reportTarget": "mat"
+    }
   },
   "welcome": {
     "title": "Welcome to ySyPyA",
@@ -21,14 +20,12 @@
   },
   "timer": {
     "removal": {
-      "message": 120000,
-      "user": 600000,
       "session": 900000,
-      "inactivity": 2592000000,
+      "user": 600000,
+      "message": 120000,
       "frozen": 7776000000
     },
     "interval": {
-      "clear": 86400000,
       "poll": 120000
     }
   },

@@ -59,7 +59,7 @@ services:
     depends_on: 
       - dynamodb-local
     environment:
-      - DEBUG=msm-clean-account:*,dynamolayer:*
+      - DEBUG=msm-cleanup:*,dynamolayer:*
       - AWS_REGION=us-west-2
       - AWS_ACCESS_KEY_ID=local
       - AWS_SECRET_ACCESS_KEY=local

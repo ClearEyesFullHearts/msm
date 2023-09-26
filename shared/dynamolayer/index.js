@@ -15,7 +15,7 @@ const noTableCreationOptions = {
   update: false,
 };
 class Data {
-  constructor(config, options) {
+  constructor(config) {
     this.unicityData = new UnicityData();
     this.searchData = new SearchData();
     this.freezerData = new FreezerData();
@@ -34,10 +34,6 @@ class Data {
     }
     this.IS_LOCAL = local;
     this.TABLE_OPTIONS = tableOptions;
-
-    const { frozen, inactivity } = options;
-    this.FROZEN_TIME = frozen;
-    this.INACTIVITY_TIME = inactivity;
   }
 
   static async batchDelete(keys, data) {
@@ -77,7 +73,7 @@ class Data {
 
   async clearUserAccount({
     username, key, signature, id,
-  }, freeze = true) {
+  }, frozenTime, freeze = true) {
     if (!freeze) {
       const keyHash = Encryption.hash(key).toString('base64');
       const sigHash = Encryption.hash(signature).toString('base64');
@@ -93,7 +89,7 @@ class Data {
 
       await Data.batchDelete(keys, this.searchData);
 
-      const removalDate = Math.floor(Date.now() / 1000) + Math.floor(this.FROZEN_TIME / 1000);
+      const removalDate = Math.floor(Date.now() / 1000) + Math.floor(frozenTime / 1000);
       await this.freezerData.Entity.update(
         { pk: `U#${username}`, sk: username },
         {
@@ -118,9 +114,9 @@ class Data {
     return nb;
   }
 
-  async deactivateAccounts() {
+  async deactivateAccounts(inactivityTime, frozenTime) {
     const now = Date.now();
-    const inactiveLimit = UserData.roundTimeToDays(now - this.INACTIVITY_TIME);
+    const inactiveLimit = UserData.roundTimeToDays(now - inactivityTime);
     const missedLimit = -UserData.roundTimeToDays(now);
 
     const inactiveUsers = await this.users.Entity.query('lastActivity').eq(inactiveLimit).using('LastActivityIndex').exec();
@@ -157,7 +153,7 @@ class Data {
       } = IDs[i];
 
       debug('clear', user.username);
-      promises.push(this.clearUserAccount(user, freeze));
+      promises.push(this.clearUserAccount(user, frozenTime, freeze));
     }
 
     await Promise.all(promises);

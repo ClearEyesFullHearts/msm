@@ -2,10 +2,7 @@ const Data = require('@shared/dynamolayer');
 const debug = require('debug')('msm-clean-message:app');
 const config = require('config');
 
-const data = new Data(config.get('dynamo'), {
-  frozen: config.get('timer.removal.frozen'),
-  inactivity: config.get('timer.removal.inactivity'),
-});
+const data = new Data(config.get('dynamo'));
 data.init();
 
 exports.handler = async function lambdaHandler({ username, messageId }) {

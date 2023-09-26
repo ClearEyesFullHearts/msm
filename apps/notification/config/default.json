@@ -6,12 +6,6 @@
       "tableName": "MyLocalTable",
       "createTable": true
     },
-    "timer": {
-      "removal": {
-        "inactivity": 2592000000,
-        "frozen": 7776000000
-      }
-    },
     "vapid": {
       "subject": "test@example.com",
       "publicKey": "BKsOGQP66VNVwrjUhi3CZRUiGDxzSFJPaiCqcrN3tyaIVSySMkNRVoaIbX9VcuFrHfiHqxfwEbQ67kbNjCHAclk"

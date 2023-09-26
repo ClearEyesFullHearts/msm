@@ -5,10 +5,7 @@ const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws
 const Data = require('@shared/dynamolayer');
 const Secret = require('@shared/secrets');
 
-const data = new Data(config.get('dynamo'), {
-  frozen: config.get('timer.removal.frozen'),
-  inactivity: config.get('timer.removal.inactivity'),
-});
+const data = new Data(config.get('dynamo'));
 data.init();
 
 const secret = new Secret(['PRIVATE_VAPID_KEY']);

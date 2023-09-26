@@ -3,10 +3,7 @@ const Encryption = require('@shared/encryption');
 const debug = require('debug')('msm-cleanup:app');
 const config = require('config');
 
-const data = new Data(config.get('dynamo'), {
-  frozen: config.get('timer.removal.frozen'),
-  inactivity: config.get('timer.removal.inactivity'),
-});
+const data = new Data(config.get('dynamo'));
 data.init();
 
 async function writeMessage(msg, targetUser) {
@@ -48,7 +45,7 @@ exports.handler = async function lambdaHandler() {
   const {
     inactive,
     missed,
-  } = await data.deactivateAccounts();
+  } = await data.deactivateAccounts(config.get('timer.removal.inactivity'), config.get('timer.removal.frozen'));
 
   debug('send report');
   const target = await data.users.findByName(config.get('instance.reportTarget'));

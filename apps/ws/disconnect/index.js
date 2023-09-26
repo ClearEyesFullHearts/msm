@@ -3,10 +3,7 @@ const config = require('config');
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
 const Data = require('@shared/dynamolayer');
 
-const data = new Data(config.get('dynamo'), {
-  frozen: config.get('timer.removal.frozen'),
-  inactivity: config.get('timer.removal.inactivity'),
-});
+const data = new Data(config.get('dynamo'));
 data.init();
 
 async function broadcast(sender) {

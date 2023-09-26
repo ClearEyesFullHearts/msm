@@ -11,9 +11,7 @@
   },
   "timer": {
     "removal": {
-      "session": 900000,
-      "inactivity": 2592000000,
-      "frozen": 7776000000
+      "session": 900000
     }
   }
 }

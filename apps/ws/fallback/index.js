@@ -16,10 +16,7 @@ const ACTIONS = {
   FALLBACK: 'fallback',
 };
 
-const data = new Data(config.get('dynamo'), {
-  frozen: config.get('timer.removal.frozen'),
-  inactivity: config.get('timer.removal.inactivity'),
-});
+const data = new Data(config.get('dynamo'));
 data.init();
 
 const schema = {

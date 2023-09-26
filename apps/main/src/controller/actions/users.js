@@ -63,7 +63,7 @@ class User {
       debug('welcoming message sent');
     } catch (err) {
       debug('Error on first message, user is removed');
-      await db.clearUserAccount(newUser, false);
+      await db.clearUserAccount(newUser, config.get('timer.removal.frozen'), false);
       throw ErrorHelper.getCustomError(500, ErrorHelper.CODE.SERVER_ERROR, 'Encryption issue');
     }
 
@@ -147,7 +147,7 @@ class User {
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot access this account');
     }
     debug(`remove user ${name}`);
-    await db.clearUserAccount(user);
+    await db.clearUserAccount(user, config.get('timer.removal.frozen'));
     debug('user removed');
   }
 
