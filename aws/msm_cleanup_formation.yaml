@@ -47,7 +47,7 @@ Resources:
               - logs:CreateLogGroup
               - logs:PutLogEvents
             Resource:
-              - "*"
+              - '*'
           - Sid: DynamoDBIndexAndStreamAccess
             Effect: Allow
             Action:
@@ -75,7 +75,7 @@ Resources:
             Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}'
 
   MSMCleanupRole:
-    Type: "AWS::IAM::Role"
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -90,18 +90,18 @@ Resources:
         - !Ref MSMCleanupManagedPolicy
 
   MSMCleanupSchedule:
-    Type: "AWS::Events::Rule"
+    Type: AWS::Events::Rule
     Properties:
       Description: >
         A schedule for the Lambda function..
-      ScheduleExpression: "rate(1 day)"
+      ScheduleExpression: 'rate(1 day)'
       State: ENABLED
       Targets:
         - Arn: !Sub ${MSMCleanupLambdaFunction.Arn}
           Id: MSMCleanupSchedule
 
   MSMCleanupSchedulePermission:
-    Type: "AWS::Lambda::Permission"
+    Type: AWS::Lambda::Permission
     Properties:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Sub ${MSMCleanupLambdaFunction.Arn}
@@ -109,44 +109,44 @@ Resources:
       SourceArn: !Sub ${MSMCleanupSchedule.Arn}
 
   MSMCleanupLambdaFunction:
-    Type: "AWS::Lambda::Function"
+    Type: AWS::Lambda::Function
     Properties:
       PackageType: Image
       Code:
-        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${CleanupImageName}"
+        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${CleanupImageName}'
       MemorySize: 128
       Role: !Sub ${MSMCleanupRole.Arn}
       Environment:
         Variables:
           NODE_ENV: !Ref MSMStageName
-          KEY_REPORT_AT: "mat"
-          DEBUG: "msm-cleanup:*,dynamolayer:*"
+          KEY_REPORT_AT: 'mat'
+          DEBUG: 'msm-cleanup:*,dynamolayer:*'
 
   MSMAccountCleanupLambdaFunction:
-    Type: "AWS::Lambda::Function"
+    Type: AWS::Lambda::Function
     Properties:
       PackageType: Image
       Code:
-        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${AccountCleanupImageName}"
+        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${AccountCleanupImageName}'
       MemorySize: 128
       Role: !Sub ${MSMCleanupRole.Arn}
       Environment:
         Variables:
           NODE_ENV: !Ref MSMStageName
-          DEBUG: "msm-clean-account:*,dynamolayer:*"
+          DEBUG: 'msm-clean-account:*,dynamolayer:*'
 
   MSMMessageCleanupLambdaFunction:
-    Type: "AWS::Lambda::Function"
+    Type: AWS::Lambda::Function
     Properties:
       PackageType: Image
       Code:
-        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${MessageCleanupImageName}"
+        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${MessageCleanupImageName}'
       MemorySize: 128
       Role: !Sub ${MSMCleanupRole.Arn}
       Environment:
         Variables:
           NODE_ENV: !Ref MSMStageName
-          DEBUG: "msm-clean-message:*,dynamolayer:*"
+          DEBUG: 'msm-clean-message:*,dynamolayer:*'
 
   MSMSchedulerManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -163,7 +163,7 @@ Resources:
               - !GetAtt MSMMessageCleanupLambdaFunction.Arn
 
   MSMSchedulerRole:
-    Type: "AWS::IAM::Role"
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: 2012-10-17

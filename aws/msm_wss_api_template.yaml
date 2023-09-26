@@ -288,14 +288,14 @@ Resources:
       Target: !Sub 'integrations/${MsmWssApiDefaultIntegration}'
 
   MsmWssCurrentStage:
-    Type: 'AWS::ApiGatewayV2::Stage'
+    Type: AWS::ApiGatewayV2::Stage
     Properties:
       ApiId: !Ref MsmWssApi
       StageName: !Ref StageName
       AutoDeploy: true
 
   MsmWssManageConnectionsPolicy:
-    Type: 'AWS::IAM::Policy'
+    Type: AWS::IAM::Policy
     Properties:
       PolicyDocument:
         Statement:

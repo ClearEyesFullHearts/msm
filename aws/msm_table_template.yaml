@@ -15,7 +15,7 @@ Resources:
 ####################################################################################
 
   MSMTable:
-    Type: 'AWS::DynamoDB::Table'
+    Type: AWS::DynamoDB::Table
     Properties:
       TableName: !Ref MSMTableName
       KeySchema:

@@ -88,15 +88,15 @@ Resources:
     Properties:
       PackageType: Image
       Code:
-        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${NotificationImageName}"
+        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${NotificationImageName}'
       MemorySize: 128
       Role: !Sub ${NotifLambdaMSMRole.Arn}
       Environment:
         Variables:
           NODE_ENV: !Ref MSMStageName
-          KEY_REPORT_AT: "mat"
+          KEY_REPORT_AT: 'mat'
           SECRET_LOCATION: !Ref MSMSecretName
-          DEBUG: "notification:*,secrets:*,dynamolayer:*"
+          DEBUG: 'notification:*,secrets:*,dynamolayer:*'
 
   MSMSnsTopic:
     Type: AWS::SNS::Topic

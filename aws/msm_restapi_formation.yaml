@@ -1,5 +1,5 @@
-AWSTemplateFormatVersion: "2010-09-09"
-Description: "CloudFormation template for creating a task definition"
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation template for creating a task definition
 
 ####################################################################################
 Parameters:
@@ -100,7 +100,7 @@ Resources:
             Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}'
 
   BetaMSMMainRole:
-    Type: "AWS::IAM::Role"
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -118,52 +118,52 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     Properties:
       RequiresCompatibilities:
-        - "FARGATE"
-      ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
+        - 'FARGATE'
+      ExecutionRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole'
       TaskRoleArn: !Sub ${BetaMSMMainRole.Arn}
       Cpu: 256
       Memory: 512
-      NetworkMode: "awsvpc"
+      NetworkMode: 'awsvpc'
       ContainerDefinitions:
-        - Name: "msm-beta-restapi"
-          Image: !Sub "public.ecr.aws/q0f4v2r9/cantlose:${MSMTaskImageName}"
+        - Name: 'msm-beta-restapi'
+          Image: !Sub 'public.ecr.aws/q0f4v2r9/cantlose:${MSMTaskImageName}'
           MemoryReservation: 256
           Memory: 512
           PortMappings:
             - ContainerPort: 4000
               Protocol: tcp
           Environment:
-            - Name: "NODE_ENV"
+            - Name: 'NODE_ENV'
               Value: !Ref MSMStageName
-            - Name: "KEY_REPORT_AT"
-              Value: "mat"
-            - Name: "SECRET_LOCATION"
+            - Name: 'KEY_REPORT_AT'
+              Value: 'mat'
+            - Name: 'SECRET_LOCATION'
               Value: !Ref MSMSecretName
-            - Name: "DEBUG"
-              Value: "msm-main:*,dynamolayer:*,secrets:*,validator:*,msm-error:*"
-            - Name: "NOTIF_TOPIC"
+            - Name: 'DEBUG'
+              Value: 'msm-main:*,dynamolayer:*,secrets:*,validator:*,msm-error:*'
+            - Name: 'NOTIF_TOPIC'
               Value: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMNotifTopicName}'
-            - Name: "CLEAN_ACCOUNT_TARGET"
+            - Name: 'CLEAN_ACCOUNT_TARGET'
               Value: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanAccountLambda}'
-            - Name: "CLEAN_MESSAGE_TARGET"
+            - Name: 'CLEAN_MESSAGE_TARGET'
               Value: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanMessageLambda}'
-            - Name: "SCHEDULER_ROLE"
+            - Name: 'SCHEDULER_ROLE'
               Value: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${MSMCleanupSchedulerRole}'
           LogConfiguration:
-            LogDriver: "awslogs"
+            LogDriver: 'awslogs'
             Options:
               awslogs-create-group: true
-              awslogs-group: "/ecs/beta-msm"
-              awslogs-region: !Sub "${AWS::Region}"
-              awslogs-stream-prefix: "ecs"
+              awslogs-group: '/ecs/beta-msm'
+              awslogs-region: !Sub '${AWS::Region}'
+              awslogs-stream-prefix: 'ecs'
 
   BetaMSMCluster:
-    Type: 'AWS::ECS::Cluster'
+    Type: AWS::ECS::Cluster
     Properties:
       ClusterName: BetaMSMCluster
 
   BetaMSMAlb:
-    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Name: BetaMSMAlb
       Subnets:
@@ -175,7 +175,7 @@ Resources:
         - !GetAtt BetaMSMAlbSG.GroupId
 
   BetaMSMTargetGroup:
-    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Name: BetaMSMTargetGroup
       VpcId: vpc-03208d77b0c881a5e
@@ -185,7 +185,7 @@ Resources:
       TargetType: ip
 
   Listener:
-    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
         - TargetGroupArn: !Ref BetaMSMTargetGroup
@@ -197,7 +197,7 @@ Resources:
         - CertificateArn: !Sub 'arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/a59a9300-8810-4c0f-a13b-e4e7501a97b9'
 
   BetaMSMAlbSG:
-    Type: 'AWS::EC2::SecurityGroup'
+    Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: SG for Beta Msm ALB
       GroupName: BetaMSMAlbSG
@@ -220,10 +220,10 @@ Resources:
     Properties:
       LaunchType: FARGATE
       Cluster:
-        Ref: "BetaMSMCluster"
+        Ref: 'BetaMSMCluster'
       DesiredCount: 1
       TaskDefinition:
-        Ref: "BetaMSMTaskDefinition"
+        Ref: 'BetaMSMTaskDefinition'
       DeploymentConfiguration:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
