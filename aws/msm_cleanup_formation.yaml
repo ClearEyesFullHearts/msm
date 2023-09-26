@@ -15,6 +15,11 @@ Parameters:
     Type: String
     Description: The name of the table to be created.
 
+  SchedulerGroupName:
+    Type: String
+    Default: MSMCleanupGroup
+    Description: Name of the scheduler group for cleanup.
+
   CleanupImageName:
     Type: String
     Default: mft-msm-cleanup.latest
@@ -40,14 +45,6 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: CloudwatchLogs
-            Effect: Allow
-            Action:
-              - logs:CreateLogStream
-              - logs:CreateLogGroup
-              - logs:PutLogEvents
-            Resource:
-              - '*'
           - Sid: DynamoDBIndexAndStreamAccess
             Effect: Allow
             Action:
@@ -88,6 +85,7 @@ Resources:
               - sts:AssumeRole
       ManagedPolicyArns:
         - !Ref MSMCleanupManagedPolicy
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
 
   MSMCleanupSchedule:
     Type: AWS::Events::Rule
@@ -147,6 +145,11 @@ Resources:
         Variables:
           NODE_ENV: !Ref MSMStageName
           DEBUG: 'msm-clean-message:*,dynamolayer:*'
+
+  MSMCleanupSchedulerGroup:
+    Type: AWS::Scheduler::ScheduleGroup
+    Properties:
+      Name: !Ref SchedulerGroupName
 
   MSMSchedulerManagedPolicy:
     Type: AWS::IAM::ManagedPolicy

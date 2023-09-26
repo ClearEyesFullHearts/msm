@@ -11,6 +11,7 @@ class Async {
     const client = new SchedulerClient();
     const input = {
       Name: `AutoUserRemovalSchedule-${username}`,
+      GroupName: process.env.SCHEDULER_GROUP,
       ScheduleExpression: `at(${scheduleAt.toISOString().substring(0, 19)})`,
       FlexibleTimeWindow: {
         Mode: 'OFF',
@@ -32,6 +33,7 @@ class Async {
     const client = new SchedulerClient();
     const input = {
       Name: `AutoMessageRemovalSchedule-${username}-${msgId}`,
+      GroupName: process.env.SCHEDULER_GROUP,
       ScheduleExpression: `at(${scheduleAt.toISOString().substring(0, 19)})`,
       FlexibleTimeWindow: {
         Mode: 'OFF',

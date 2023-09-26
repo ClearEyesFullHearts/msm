@@ -27,6 +27,11 @@ Parameters:
     Type: String
     Description: The name of the notification topic
 
+  MSMSchedulerGroupName:
+    Type: String
+    Default: MSMCleanupGroup
+    Description: Name of the scheduler group for cleanup.
+
   MSMCleanAccountLambda:
     Type: String
     Description: The name of the account cleanup lambda
@@ -53,7 +58,8 @@ Resources:
             Effect: Allow
             Action:
               - scheduler:CreateSchedule
-            Resource: '*'
+            Resource:
+              - !Sub 'arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/${MSMSchedulerGroupName}/*'
           - Sid: AllowSchedulerToAssumeRole
             Effect: Allow
             Action:
@@ -143,6 +149,8 @@ Resources:
               Value: 'msm-main:*,dynamolayer:*,secrets:*,validator:*,msm-error:*'
             - Name: 'NOTIF_TOPIC'
               Value: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMNotifTopicName}'
+            - Name: 'SCHEDULER_GROUP'
+              Value: !Ref MSMSchedulerGroupName
             - Name: 'CLEAN_ACCOUNT_TARGET'
               Value: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanAccountLambda}'
             - Name: 'CLEAN_MESSAGE_TARGET'
