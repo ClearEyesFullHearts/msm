@@ -25,6 +25,7 @@ Resources:
           Ref: DomainName
       SubjectAlternativeNames:
       - Ref: DomainName
+  
   MyApiDomainName:
     Type: AWS::ApiGateway::DomainName
     Condition: UseDomainName
@@ -33,6 +34,7 @@ Resources:
         Ref: MyApiCertificate
       DomainName:
         Ref: DomainName
+  
   MyApiBasePathMapping:
     Type: AWS::ApiGateway::BasePathMapping
     Condition: UseDomainName
@@ -43,12 +45,14 @@ Resources:
         Ref: MyApiDomainName
       BasePath: (none)
       Stage: prod
+  
   Route53HostedZone:
     Type: AWS::Route53::HostedZone
     Condition: UseDomainName
     Properties:
       Name:
         Ref: DomainName
+  
   MyApiRoute53RecordSetGroup:
     Type: AWS::Route53::RecordSetGroup
     Condition: UseDomainName
@@ -69,6 +73,7 @@ Resources:
             Fn::GetAtt:
             - MyApiDomainName
             - DistributionDomainName
+  
   ExpressLambdaFunction:
     Properties:
       Code:
@@ -86,6 +91,7 @@ Resources:
         Value: SAM
       Timeout: 30
     Type: AWS::Lambda::Function
+  
   ExpressLambdaFunctionRole:
     Properties:
       AssumeRolePolicyDocument:
@@ -103,6 +109,7 @@ Resources:
       - Key: lambda:createdBy
         Value: SAM
     Type: AWS::IAM::Role
+  
   ExpressLambdaFunctionProxyApiRootPermission:
     Properties:
       Action: lambda:InvokeFunction
@@ -116,7 +123,9 @@ Resources:
             Ref: ExpressApi
           __Stage__: '*'
     Type: AWS::Lambda::Permission
+  
   ExpressApi:
+    Type: AWS::ApiGatewayV2::Api
     Properties:
       Body:
         info:
@@ -137,10 +146,7 @@ s
               isDefaultRoute: true
               responses: {}
         openapi: 3.0.1
-        tags:
-        - name: httpapi:createdBy
-          x-amazon-apigateway-tag-value: SAM
-    Type: AWS::ApiGatewayV2::Api
+  
   ExpressApiApiGatewayDefaultStage:
     Properties:
       ApiId:
@@ -150,6 +156,19 @@ s
       Tags:
         httpapi:createdBy: SAM
     Type: AWS::ApiGatewayV2::Stage
+
+
+  MSMMainAPIIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MSMMainExpressAPI
+      PayloadFormatVersion: 2.0
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMMainAPILambdaFunction.Arn}/invocations
+      RequestParameters:
+        "overwrite:path": "$request.path"
+
+        
 Outputs:
   LambdaFunctionConsoleUrl:
     Description: Console URL for the Lambda Function.

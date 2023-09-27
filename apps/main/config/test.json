@@ -1,8 +1,7 @@
 {
-  "timer": {
-    "removal": {
-      "message": 300,
-      "user": 300
-    }
+  "dynamo": {
+    "local": false,
+    "tableName": "MyTestTable",
+    "createTable": false
   }
 }

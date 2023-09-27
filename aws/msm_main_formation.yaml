@@ -1,0 +1,221 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation template for creating the main REST API through a gateway
+
+####################################################################################
+Parameters:
+####################################################################################
+
+  MSMStageName:
+    Type: String
+    Default: test
+    Description: The name of the stage to be created, also used as NODE_ENV
+
+  MSMTableName:
+    Type: String
+    Default: MyTestTable
+    Description: The name of the table to be created.
+
+  MSMApiDomainName:
+    Type: String
+    Default: test.ysypya.com
+    Description: API Domain name
+
+  MSMApiCertificateID:
+    Type: String
+    Description: The ID of the certificate for the domain.
+
+  MSMHostedZoneID:
+    Type: String
+    Description: The ID of the hosted zone
+
+  MSMLambdaImageName:
+    Type: String
+    Default: mft-msm-main.test
+    Description: Tag of the image to deploy.
+
+  MSMSecretName:
+    Type: String
+    Default: test
+    Description: The name of the secret to use.
+
+  MSMNotifTopicName:
+    Type: String
+    Description: The name of the notification topic
+
+  MSMSchedulerGroupName:
+    Type: String
+    Default: MSMCleanupGroup
+    Description: Name of the scheduler group for cleanup.
+
+  MSMCleanAccountLambda:
+    Type: String
+    Description: The name of the account cleanup lambda
+
+  MSMCleanMessageLambda:
+    Type: String
+    Description: The name of the message cleanup lambda
+
+  MSMCleanupSchedulerRole:
+    Type: String
+    Description: The name of the role assumed by the scheduler
+
+####################################################################################
+Resources:
+####################################################################################
+
+  MSMMainAPIManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: CreateCleanupSchedule
+            Effect: Allow
+            Action:
+              - scheduler:CreateSchedule
+            Resource:
+              - !Sub 'arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/${MSMSchedulerGroupName}/*'
+          - Sid: AllowSchedulerToAssumeRole
+            Effect: Allow
+            Action:
+              - iam:GetRole
+              - iam:PassRole
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${MSMCleanupSchedulerRole}'
+          - Sid: SnsPushNotification
+            Effect: Allow
+            Action:
+              - sns:Publish
+            Resource:
+              - !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMNotifTopicName}'
+          - Sid: SecretManagerReadAccess
+            Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource:
+              - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:BetaMSMSecret-shRNxY'
+          - Sid: DynamoDBIndexAndStreamAccess
+            Effect: Allow
+            Action:
+              - dynamodb:GetShardIterator
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:DescribeStream
+              - dynamodb:GetRecords
+            Resource:
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}/index/*'
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}/stream/*'
+          - Sid: DynamoDBTableAccess
+            Effect: Allow
+            Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:PutItem
+              - dynamodb:DescribeTable
+              - dynamodb:DeleteItem
+              - dynamodb:GetItem
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:UpdateItem
+            Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}'
+
+  MSMMainAPIRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref MSMMainAPIManagedPolicy
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+
+  MSMMainAPILambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      PackageType: Image
+      Code:
+        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${MSMLambdaImageName}'
+      MemorySize: 1024
+      Timeout: 10
+      Role: !Sub ${MSMMainAPIRole.Arn}
+      Environment:
+        Variables:
+          NODE_ENV: !Ref MSMStageName
+          SECRET_LOCATION: !Ref MSMSecretName
+          DEBUG: 'msm-main:*,dynamolayer:*,secrets:*,validator:*,msm-error:*'
+          NOTIF_TOPIC: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMNotifTopicName}'
+          SCHEDULER_GROUP: !Ref MSMSchedulerGroupName
+          CLEAN_ACCOUNT_TARGET: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanAccountLambda}'
+          CLEAN_MESSAGE_TARGET: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanMessageLambda}'
+          SCHEDULER_ROLE: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${MSMCleanupSchedulerRole}'
+  
+  MSMMainExpressAPI:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Body:
+        info:
+          version: '1.0'
+          title: !Ref AWS::StackName
+        paths:
+          $default:
+            x-amazon-apigateway-any-method:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMMainAPILambdaFunction.Arn}/invocations
+                payloadFormatVersion: '2.0'
+                requestParameters:
+                  "overwrite:path": "$request.path"
+              isDefaultRoute: true
+              responses: {}
+        openapi: 3.0.1
+
+  MSMMainAPILambdaFunctionProxyApiRootPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref MSMMainAPILambdaFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MSMMainExpressAPI}/${MSMStageName}/*'
+
+  MSMMainExpressAPIStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref MSMMainExpressAPI
+      StageName: !Ref MSMStageName
+      AutoDeploy: true
+
+  MSMMainDomainName:
+    Type: AWS::ApiGatewayV2::DomainName
+    Properties:
+      DomainName: !Ref MSMApiDomainName
+      DomainNameConfigurations:
+        - EndpointType: REGIONAL
+          CertificateArn: !Sub 'arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${MSMApiCertificateID}'
+
+  MSMMainExpressAPIPathMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Properties:
+      ApiId: !Ref MSMMainExpressAPI
+      DomainName: !Ref MSMApiDomainName
+      Stage: !Ref MSMMainExpressAPIStage
+
+  MSMMainExpressAPIRoute53RecordSet:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneId: !Ref MSMHostedZoneID
+      RecordSets:
+      - Name: !Ref MSMApiDomainName
+        Type: A
+        AliasTarget:
+          EvaluateTargetHealth: false
+          HostedZoneId: !GetAtt MSMMainDomainName.RegionalHostedZoneId
+          DNSName: !GetAtt MSMMainDomainName.RegionalDomainName
+  

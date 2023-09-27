@@ -6,6 +6,7 @@ const Validator = require('@shared/validator');
 
 class Async {
   static async autoUserRemoval(db, username) {
+    debug('Schedule Auto User removal');
     const scheduleAt = new Date(Date.now() + config.get('timer.removal.user'));
 
     const client = new SchedulerClient();
@@ -25,9 +26,11 @@ class Async {
     };
     const command = new CreateScheduleCommand(input);
     await client.send(command);
+    debug('Auto User removal is scheduled');
   }
 
   static async autoMessageRemoval(db, username, msgId) {
+    debug('Schedule Auto Message removal');
     const scheduleAt = new Date(Date.now() + config.get('timer.removal.message'));
 
     const client = new SchedulerClient();
@@ -47,6 +50,7 @@ class Async {
     };
     const command = new CreateScheduleCommand(input);
     await client.send(command);
+    debug('Auto Message removal is scheduled');
   }
 
   static async autoValidation({ db, secret }, name) {
