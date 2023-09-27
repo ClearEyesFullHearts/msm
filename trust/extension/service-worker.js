@@ -93,13 +93,6 @@ function onClientReady(request) {
           data: resultMap,
         },
       });
-      fetch(`${BASE_URL}worker/sw.js`)
-        .then((response) => response.text())
-        .then((sw) => getHash(btoa(ToBinary(sw))))
-        .then((hash) => {
-          console.log('loadingFinished', `${BASE_URL}worker/sw.js`);
-          responseResult(`${BASE_URL}worker/sw.js`, hash);
-        });
       resultMap = [];
     }
     scriptReady = true;
