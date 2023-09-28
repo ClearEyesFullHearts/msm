@@ -82,6 +82,7 @@ Resources:
       ManagedPolicyArns:
         - !Ref NotifLambdaMSMPolicy
         - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess'
 
   MSMNotifyLambdaFunction:
     Type: AWS::Lambda::Function
@@ -91,6 +92,8 @@ Resources:
         ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${NotificationImageName}'
       MemorySize: 128
       Role: !Sub ${NotifLambdaMSMRole.Arn}
+      TracingConfig:
+        Mode: Active
       Environment:
         Variables:
           NODE_ENV: !Ref MSMStageName

@@ -2,6 +2,7 @@ const debug = require('debug')('ws-fallback:app');
 const config = require('config');
 const Ajv = require('ajv');
 const addFormats = require('ajv-formats');
+const AWSXRay = require('aws-xray-sdk');
 const {
   ApiGatewayManagementApiClient,
   PostToConnectionCommand,
@@ -57,9 +58,9 @@ async function sendMessage(target, message, doesThrow = true) {
 
   const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
 
-  const client = new ApiGatewayManagementApiClient({
+  const client = AWSXRay.captureAWSv3Client(new ApiGatewayManagementApiClient({
     endpoint,
-  });
+  }));
   const input = {
     Data: JSON.stringify(message),
     ConnectionId: id,
@@ -101,9 +102,9 @@ async function cleanSocket({
 }) {
   const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
 
-  const client = new ApiGatewayManagementApiClient({
+  const client = AWSXRay.captureAWSv3Client(new ApiGatewayManagementApiClient({
     endpoint,
-  });
+  }));
   const input = {
     ConnectionId: id,
   };

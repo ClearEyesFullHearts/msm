@@ -1,4 +1,5 @@
 const dynamoose = require('dynamoose');
+const AWSXRay = require('aws-xray-sdk');
 const debug = require('debug')('dynamolayer:data');
 const Encryption = require('@shared/encryption');
 const UserData = require('./model/user');
@@ -50,8 +51,8 @@ class Data {
 
   init() {
     // Create new DynamoDB instance
-    const ddb = new dynamoose.aws.ddb.DynamoDB();
-
+    // const ddb = new dynamoose.aws.ddb.DynamoDB();
+    const ddb = AWSXRay.captureAWSv3Client(new dynamoose.aws.ddb.DynamoDB());
     // Set DynamoDB instance to the Dynamoose DDB instance
     dynamoose.aws.ddb.set(ddb);
     if (this.IS_LOCAL) dynamoose.aws.ddb.local(this.IS_LOCAL.url);
@@ -69,6 +70,8 @@ class Data {
     this.messages.init(this.TABLE_OPTIONS, { user: this.users });
 
     debug('finished initialization');
+
+    return dynamoose.aws.ddb();
   }
 
   async clearUserAccount({

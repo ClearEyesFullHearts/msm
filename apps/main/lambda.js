@@ -1,20 +1,25 @@
-const serverlessExpress = require('@vendia/serverless-express');
+const serverless = require('serverless-http');
 const MSMMain = require('./src/app');
 
-let serverlessExpressInstance;
+let serverlessHandler;
 
 async function setup(event, context) {
   const server = new MSMMain();
   await server.setup();
   const app = server.start();
-  serverlessExpressInstance = serverlessExpress({ app });
-  return serverlessExpressInstance(event, context);
+  serverlessHandler = serverless(app);
+  const result = await serverlessHandler(event, context);
+  return result;
 }
 
-function handler(event, context) {
-  if (serverlessExpressInstance) return serverlessExpressInstance(event, context);
+async function handler(event, context) {
+  if (serverlessHandler) {
+    const result = await serverlessHandler(event, context);
+    return result;
+  }
 
-  return setup(event, context);
+  const result = await setup(event, context);
+  return result;
 }
 
 exports.handler = handler;

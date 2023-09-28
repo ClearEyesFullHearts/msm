@@ -1,5 +1,6 @@
 const debug = require('debug')('ws-connect:app');
 const config = require('config');
+const AWSXRay = require('aws-xray-sdk');
 const { ApiGatewayManagementApiClient, PostToConnectionCommand, DeleteConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
 const Data = require('@shared/dynamolayer');
 const Auth = require('@shared/auth');
@@ -39,9 +40,9 @@ async function broadcast(sender) {
 
     if (id !== sender.id) {
       const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
-      const client = new ApiGatewayManagementApiClient({
+      const client = AWSXRay.captureAWSv3Client(new ApiGatewayManagementApiClient({
         endpoint,
-      });
+      }));
       const input = { // PostToConnectionRequest
         Data: message, // required
         ConnectionId: id, // required
@@ -63,9 +64,9 @@ function asyncCleanSocket({
   id, stage, domainName,
 }) {
   const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
-  const client = new ApiGatewayManagementApiClient({
+  const client = AWSXRay.captureAWSv3Client(new ApiGatewayManagementApiClient({
     endpoint,
-  });
+  }));
   const input = { // DeleteConnectionRequest
     ConnectionId: id, // required
   };

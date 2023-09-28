@@ -1,4 +1,5 @@
 const debug = require('debug')('secrets:starter');
+const AWSXRay = require('aws-xray-sdk');
 const {
   GetSecretValueCommand,
   SecretsManagerClient,
@@ -8,7 +9,7 @@ class Secret {
   constructor(choice = ['*']) {
     this.choice = choice;
     try {
-      this.client = new SecretsManagerClient();
+      this.client = AWSXRay.captureAWSv3Client(new SecretsManagerClient());
     } catch (err) {
       debug('No secret client');
     }

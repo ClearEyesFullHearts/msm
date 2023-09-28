@@ -1,4 +1,5 @@
 const config = require('config');
+const AWSXRay = require('aws-xray-sdk');
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 const { SchedulerClient, CreateScheduleCommand } = require('@aws-sdk/client-scheduler');
 const debug = require('debug')('msm-main:async');
@@ -9,7 +10,7 @@ class Async {
     debug('Schedule Auto User removal');
     const scheduleAt = new Date(Date.now() + config.get('timer.removal.user'));
 
-    const client = new SchedulerClient();
+    const client = AWSXRay.captureAWSv3Client(new SchedulerClient());
     const input = {
       Name: `AutoUserRemovalSchedule-${username}`,
       GroupName: process.env.SCHEDULER_GROUP,
@@ -33,7 +34,7 @@ class Async {
     debug('Schedule Auto Message removal');
     const scheduleAt = new Date(Date.now() + config.get('timer.removal.message'));
 
-    const client = new SchedulerClient();
+    const client = AWSXRay.captureAWSv3Client(new SchedulerClient());
     const input = {
       Name: `AutoMessageRemovalSchedule-${username}-${msgId}`,
       GroupName: process.env.SCHEDULER_GROUP,
@@ -113,7 +114,7 @@ class Async {
 
   static async notifyMessage(from, to) {
     debug(`Notify ${to} that ${from} sent a message`);
-    const snsClient = new SNSClient({});
+    const snsClient = AWSXRay.captureAWSv3Client(new SNSClient({}));
     await snsClient.send(
       new PublishCommand({
         Message: JSON.stringify({

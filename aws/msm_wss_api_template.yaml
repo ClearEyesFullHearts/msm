@@ -84,6 +84,7 @@ Resources:
       ManagedPolicyArns:
         - !Ref WssLambdaMSMPolicy
         - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess'
 
   MSMConnectHandler:
     Type: AWS::Lambda::Function
@@ -93,6 +94,8 @@ Resources:
         ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${ConnectHandlerImageName}'
       MemorySize: 128
       Role: !Sub ${WssLambdaMSMRole.Arn}
+      TracingConfig:
+        Mode: Active
       Environment:
         Variables:
           NODE_ENV: !Ref StageName
@@ -111,6 +114,8 @@ Resources:
         ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${FallbackHandlerImageName}'
       MemorySize: 128
       Role: !Sub ${WssLambdaMSMRole.Arn}
+      TracingConfig:
+        Mode: Active
       Environment:
         Variables:
           NODE_ENV: !Ref StageName
@@ -127,6 +132,8 @@ Resources:
         ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${DisconnectHandlerImageName}'
       MemorySize: 128
       Role: !Sub ${WssLambdaMSMRole.Arn}
+      TracingConfig:
+        Mode: Active
       Environment:
         Variables:
           NODE_ENV: !Ref StageName
@@ -150,6 +157,8 @@ Resources:
               };
             };
       Role: !GetAtt WssLambdaMSMRole.Arn
+      TracingConfig:
+        Mode: Active
       Handler: index.handler
       Runtime: nodejs14.x
     DependsOn:

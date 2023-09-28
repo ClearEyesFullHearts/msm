@@ -86,6 +86,7 @@ Resources:
       ManagedPolicyArns:
         - !Ref MSMCleanupManagedPolicy
         - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess'
 
   MSMCleanupSchedule:
     Type: AWS::Events::Rule
@@ -114,6 +115,8 @@ Resources:
         ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${CleanupImageName}'
       MemorySize: 128
       Role: !Sub ${MSMCleanupRole.Arn}
+      TracingConfig:
+        Mode: Active
       Environment:
         Variables:
           NODE_ENV: !Ref MSMStageName
@@ -128,6 +131,8 @@ Resources:
         ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${AccountCleanupImageName}'
       MemorySize: 128
       Role: !Sub ${MSMCleanupRole.Arn}
+      TracingConfig:
+        Mode: Active
       Environment:
         Variables:
           NODE_ENV: !Ref MSMStageName
@@ -141,6 +146,8 @@ Resources:
         ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${MessageCleanupImageName}'
       MemorySize: 128
       Role: !Sub ${MSMCleanupRole.Arn}
+      TracingConfig:
+        Mode: Active
       Environment:
         Variables:
           NODE_ENV: !Ref MSMStageName

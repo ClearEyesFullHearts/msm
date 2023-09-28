@@ -7,6 +7,7 @@ const Data = require('@shared/dynamolayer');
 const Secret = require('@shared/secrets');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const AWSXRay = require('aws-xray-sdk');
 const ErrorHelper = require('@shared/error');
 const CORS = require('./lib/cors');
 
@@ -43,6 +44,7 @@ class MSMMain {
 
   start() {
     debug('start server');
+    this.app.use(AWSXRay.express.openSegment(APP_ID));
 
     this.app.get('/health', (req, res) => {
       res.status(200).send();
@@ -62,6 +64,8 @@ class MSMMain {
     this.app.use((req, res) => {
       res.status(404).send("Sorry can't find that!");
     });
+
+    this.app.use(AWSXRay.express.closeSegment());
 
     this.app.use(ErrorHelper.catchMiddleware());
     debug('all middlewares added');

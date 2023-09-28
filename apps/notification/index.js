@@ -1,6 +1,7 @@
 const webpush = require('web-push');
 const debug = require('debug')('notification:app');
 const config = require('config');
+const AWSXRay = require('aws-xray-sdk');
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
 const Data = require('@shared/dynamolayer');
 const Secret = require('@shared/secrets');
@@ -29,9 +30,9 @@ async function wssNotification({ to, from, action }) {
     };
 
     const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
-    const client = new ApiGatewayManagementApiClient({
+    const client = AWSXRay.captureAWSv3Client(new ApiGatewayManagementApiClient({
       endpoint,
-    });
+    }));
     const input = {
       Data: JSON.stringify(message),
       ConnectionId: id,

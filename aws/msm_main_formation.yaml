@@ -30,7 +30,7 @@ Parameters:
 
   MSMLambdaImageName:
     Type: String
-    Default: mft-msm-main.test
+    Default: mft-msm-main.test.1
     Description: Tag of the image to deploy.
 
   MSMSecretName:
@@ -135,6 +135,7 @@ Resources:
       ManagedPolicyArns:
         - !Ref MSMMainAPIManagedPolicy
         - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess'
 
   MSMMainAPILambdaFunction:
     Type: AWS::Lambda::Function
@@ -145,6 +146,8 @@ Resources:
       MemorySize: 1024
       Timeout: 10
       Role: !Sub ${MSMMainAPIRole.Arn}
+      TracingConfig:
+        Mode: Active
       Environment:
         Variables:
           NODE_ENV: !Ref MSMStageName
