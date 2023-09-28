@@ -25,12 +25,13 @@ module.exports = {
       at, key, signature, hash,
     })
       .then(({ username }) => {
-        res.status(201).send();
-
         AsyncAction.autoUserRemoval(db, username)
           .catch((err) => {
             console.error('error on user auto removal');
             console.error(err);
+          })
+          .finally(() => {
+            res.status(201).send();
           });
       })
       .catch((err) => {
@@ -165,12 +166,13 @@ module.exports = {
       } = req;
       Message.getMessage({ db, auth, secret }, Number(msgId))
         .then((fullMessage) => {
-          res.json(fullMessage);
-
           AsyncAction.autoMessageRemoval(db, auth.username, Number(msgId))
             .catch((err) => {
               console.error('error on message auto removal');
               console.error(err);
+            })
+            .finally(() => {
+              res.json(fullMessage);
             });
         })
         .catch((err) => {
@@ -279,12 +281,13 @@ module.exports = {
 
       Message.writeMessage({ db, user: auth }, body)
         .then(() => {
-          res.status(201).send();
-
           AsyncAction.notifyMessage(auth.username, body.to)
             .catch((err) => {
               console.error('error on message notification');
               console.error(err);
+            })
+            .finally(() => {
+              res.status(201).send();
             });
         })
         .catch((err) => {
