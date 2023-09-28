@@ -13,6 +13,7 @@ Parameters:
 
   MSMTableName:
     Type: String
+    Default: MyTestTable
     Description: The name of the table to be created.
 
   SchedulerGroupName:
@@ -189,6 +190,10 @@ Resources:
 
 
 Outputs:
+
+  GroupName:
+    Value: !Ref SchedulerGroupName
+    Description: Name of the scheduler group to use
 
   SchedulerRoleName:
     Value: !Ref MSMSchedulerRole

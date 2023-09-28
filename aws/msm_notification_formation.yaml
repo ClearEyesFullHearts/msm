@@ -13,7 +13,13 @@ Parameters:
 
   MSMTableName:
     Type: String
+    Default: MyTestTable
     Description: The name of the table to be created.
+
+  MSMNotificationTopicName:
+    Type: String
+    Default: TestNotifyTopic
+    Description: The name of the notification topic to use.
 
   MSMSecretName:
     Type: String
@@ -104,8 +110,8 @@ Resources:
   MSMSnsTopic:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: 'MSMNotificationTopic'
-      TopicName: 'MSMNotificationTopic'
+      DisplayName: !Ref MSMNotificationTopicName
+      TopicName: !Ref MSMNotificationTopicName
       Subscription:
         - Protocol: lambda
           Endpoint: !GetAtt MSMNotifyLambdaFunction.Arn
@@ -121,5 +127,5 @@ Resources:
 Outputs:
 
   TopicEndpoint:
-    Value: !Ref 'MSMSnsTopic'
-    Description: Topic to send notifications to
+    Value: !Ref MSMNotificationTopicName
+    Description: Name of the topic to send notifications to
