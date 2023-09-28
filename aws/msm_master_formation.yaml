@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the whole MSM stack
+
+####################################################################################
+Parameters:
+####################################################################################
+
+  MSMStageName:
+    Type: String
+    Default: test
+    Description: The name of the stage to be created, also used as NODE_ENV
+
+  MSMTableName:
+    Type: String
+    Default: MyTestTable
+    Description: The name of the table to be created.
+
+  MSMSecretName:
+    Type: String
+    Default: test
+    Description: The name of the secret to use.
+
+  MSMHttpApiDomainName:
+    Type: String
+    Default: test.ysypya.com
+    Description: API Domain name
+
+  MSMHttpApiCertificateID:
+    Type: String
+    Description: The ID of the certificate for the domain.
+
+  MSMHostedZoneID:
+    Type: String
+    Description: The ID of the hosted zone
+
+  MSMImageTag:
+    Type: String
+    Default: latest
+    Description: The ID of the hosted zone
+
+####################################################################################
+Resources:
+####################################################################################
+
+  MSMCleanupStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://msm-cloudformation-template.s3.eu-west-3.amazonaws.com/msm_cleanup_formation.yaml
+      Parameters:
+        MSMStageName: !Ref MSMStageName
+        MSMTableName: !Ref MSMTableName
+        DailyCleanupImageName: !Sub 'mft-msm-cleanup.${MSMStageName}.${MSMImageTag}'
+        AccountCleanupImageName: !Sub 'mft-msm-clean-account.${MSMStageName}.${MSMImageTag}'
+        MessageCleanupImageName: !Sub 'mft-msm-clean-message.${MSMStageName}.${MSMImageTag}'
+        SchedulerGroupName: !Sub '${MSMStageName}-MSM-SChedulerGroup'
+
+  MSMWssAPIStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://msm-cloudformation-template.s3.eu-west-3.amazonaws.com/msm_wss_api_template.yaml
+      Parameters:
+        MSMStageName: !Ref MSMStageName
+        MSMTableName: !Ref MSMTableName
+        MSMSecretName: !Ref MSMSecretName
+        ConnectHandlerImageName: !Sub 'mft-msm-ws-connect.${MSMStageName}.${MSMImageTag}'
+        DisconnectHandlerImageName: !Sub 'mft-msm-ws-disconnect.${MSMStageName}.${MSMImageTag}'
+        FallbackHandlerImageName: !Sub 'mft-msm-ws-fallback.${MSMStageName}.${MSMImageTag}'
+
+  MSMNotifiedStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://msm-cloudformation-template.s3.eu-west-3.amazonaws.com/msm_notification_formation.yaml
+      Parameters:
+        MSMStageName: !Ref MSMStageName
+        MSMTableName: !Ref MSMTableName
+        MSMSecretName: !Ref MSMSecretName
+        NotificationImageName: !Sub 'mft-msm-notification.${MSMStageName}.${MSMImageTag}'
+        MSMAPIId: !GetAtt MSMWssAPIStack.Outputs.APIId
+        MSMNotificationTopicName: !Sub '${MSMStageName}MsmNotifTopic'
+
+  MSMMainStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://msm-cloudformation-template.s3.eu-west-3.amazonaws.com/msm_main_formation.yaml
+      Parameters:
+        MSMStageName: !Ref MSMStageName
+        MSMTableName: !Ref MSMTableName
+        MSMSecretName: !Ref MSMSecretName
+        MSMApiDomainName: !Ref MSMHttpApiDomainName
+        MSMApiCertificateID: !Ref MSMHttpApiCertificateID
+        MSMHostedZoneID: !Ref MSMHostedZoneID
+        MSMLambdaImageName: !Sub 'mft-msm-main.${MSMStageName}.${MSMImageTag}'
+        MSMNotifTopicName: !GetAtt MSMNotifiedStack.Outputs.TopicEndpoint
+        MSMSchedulerGroupName: !GetAtt MSMCleanupStack.Outputs.GroupName
+        MSMCleanAccountLambda: !GetAtt MSMCleanupStack.Outputs.AccountCleanupName
+        MSMCleanMessageLambda: !GetAtt MSMCleanupStack.Outputs.MessageCleanupName
+        MSMCleanupSchedulerRole: !GetAtt MSMCleanupStack.Outputs.SchedulerRoleName

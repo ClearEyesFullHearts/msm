@@ -6,7 +6,7 @@ Description: >
 Parameters:
 ####################################################################################
 
-  StageName:
+  MSMStageName:
     Type: String
     Default: test
     Description: The name of the stage to be created, also used as NODE_ENV
@@ -98,7 +98,7 @@ Resources:
         Mode: Active
       Environment:
         Variables:
-          NODE_ENV: !Ref StageName
+          NODE_ENV: !Ref MSMStageName
           DEBUG: 'dynamolayer:*,secrets:*,auth:*,ws-connect:*'
           SECRET_LOCATION: !Ref MSMSecretName
           CONNECT_BROADCAST: true
@@ -118,7 +118,7 @@ Resources:
         Mode: Active
       Environment:
         Variables:
-          NODE_ENV: !Ref StageName
+          NODE_ENV: !Ref MSMStageName
           DEBUG: 'dynamolayer:*,ws-fallback:*'
     DependsOn:
       - WssLambdaMSMPolicy
@@ -136,7 +136,7 @@ Resources:
         Mode: Active
       Environment:
         Variables:
-          NODE_ENV: !Ref StageName
+          NODE_ENV: !Ref MSMStageName
           DEBUG: 'dynamolayer:*,ws-disconnect:*'
           CONNECT_BROADCAST: true
     DependsOn:
@@ -300,7 +300,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       ApiId: !Ref MsmWssApi
-      StageName: !Ref StageName
+      StageName: !Ref MSMStageName
       AutoDeploy: true
 
   MsmWssManageConnectionsPolicy:
@@ -310,7 +310,7 @@ Resources:
         Statement:
           - Action: 'execute-api:ManageConnections'
             Effect: Allow
-            Resource: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/${StageName}/*/@connections/*'
+            Resource: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/${MSMStageName}/*/@connections/*'
         Version: 2012-10-17
       PolicyName: MsmWssManageConnectionsPolicy
       Roles:
@@ -324,5 +324,5 @@ Outputs:
     Description: ID of the Web Socket API Getaway
 
   WSSEndpoint:
-    Value: !Sub 'wss://${MsmWssApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}'
+    Value: !Sub 'wss://${MsmWssApi}.execute-api.${AWS::Region}.amazonaws.com/${MSMStageName}'
     Description: Url of the web socket endpoint

@@ -21,7 +21,7 @@ Parameters:
     Default: MSMCleanupGroup
     Description: Name of the scheduler group for cleanup.
 
-  CleanupImageName:
+  DailyCleanupImageName:
     Type: String
     Default: mft-msm-cleanup.latest
     Description: Tag of the image to deploy.
@@ -113,7 +113,7 @@ Resources:
     Properties:
       PackageType: Image
       Code:
-        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${CleanupImageName}'
+        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${DailyCleanupImageName}'
       MemorySize: 128
       Role: !Sub ${MSMCleanupRole.Arn}
       TracingConfig:
