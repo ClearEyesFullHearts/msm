@@ -70,24 +70,36 @@ async function webPushNotification({ to, from, action }) {
         p256dh,
       },
     };
-    const result = webpush.sendNotification(
-      subscription,
-      JSON.stringify({
-        action, from, to, unread: waitingMessages.length,
-      }),
-      {
-        topic: 'mail',
-        vapidDetails: {
-          subject: `mailto:${config.get('vapid.subject')}`,
-          publicKey: config.get('vapid.publicKey'),
-          privateKey: secret.PRIVATE_VAPID_KEY,
-        },
-      },
-    ).catch((err) => {
-      if (err.name === 'WebPushError' && err.statusCode === 410) {
-        return data.subscriptions.delete(to, endpoint);
-      }
-      throw err;
+    const result = new Promise((resolve, reject) => {
+      AWSXRay.captureAsyncFunc('WebPush', (subsegment) => {
+        webpush.sendNotification(
+          subscription,
+          JSON.stringify({
+            action, from, to, unread: waitingMessages.length,
+          }),
+          {
+            topic: 'mail',
+            vapidDetails: {
+              subject: `mailto:${config.get('vapid.subject')}`,
+              publicKey: config.get('vapid.publicKey'),
+              privateKey: secret.PRIVATE_VAPID_KEY,
+            },
+          },
+        )
+          .then(() => {
+            resolve();
+          })
+          .catch((err) => {
+            if (err.name === 'WebPushError' && err.statusCode === 410) {
+              data.subscriptions.delete(to, endpoint);
+              return resolve();
+            }
+            return reject(err);
+          })
+          .finally(() => {
+            subsegment.close();
+          });
+      });
     });
     promises.push(result);
   });
@@ -99,11 +111,16 @@ async function webPushNotification({ to, from, action }) {
 
 exports.handler = async (event) => {
   debug('event received');
-  const { to, from, action } = JSON.parse(event.Records[0].Sns.Message);
+  try {
+    const { to, from, action } = JSON.parse(event.Records[0].Sns.Message);
 
-  const isNotified = await wssNotification({ to, from, action });
+    const isNotified = await wssNotification({ to, from, action });
 
-  if (!isNotified) {
-    await webPushNotification({ to, from, action });
+    if (!isNotified) {
+      await webPushNotification({ to, from, action });
+    }
+  } catch (err) {
+    console.log('handler error', err);
+    throw err;
   }
 };

@@ -151,6 +151,7 @@ Resources:
       Environment:
         Variables:
           NODE_ENV: !Ref MSMStageName
+          NO_CHAIN: true
           SECRET_LOCATION: !Ref MSMSecretName
           DEBUG: 'msm-main:*,dynamolayer:*,secrets:*,validator:*,msm-error:*'
           NOTIF_TOPIC: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMNotifTopicName}'
