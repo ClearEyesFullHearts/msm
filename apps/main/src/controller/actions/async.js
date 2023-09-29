@@ -3,7 +3,6 @@ const AWSXRay = require('aws-xray-sdk');
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 const { SchedulerClient, CreateScheduleCommand } = require('@aws-sdk/client-scheduler');
 const debug = require('debug')('msm-main:async');
-const Validator = require('@shared/validator');
 
 class Async {
   static async autoUserRemoval(db, username) {
@@ -54,62 +53,17 @@ class Async {
     debug('Auto Message removal is scheduled');
   }
 
-  static async autoValidation({ db, secret }, name) {
-    debug('Auto User Validation', name);
-    const user = await db.users.findByName(name);
-
-    if (!user) {
-      debug('Unknown user, no validation');
-      return;
-    }
-
-    if (user.validation !== 'NO_VALIDATION') {
-      debug('No need to validate');
-      return;
-    }
-
-    await db.users.updateValidation(user.username, 'IS_VALIDATING');
-
-    try {
-      debug('Validating user', name);
-
-      const validator = new Validator({
-        network: config.get('ether.network'),
-        apiKey: config.get('ether.api'),
-        privateKey: secret.KEY_WALLET_SECRET,
-        address: config.get('ether.contract'),
-      });
-
-      debug('Connected to chain');
-
-      validator.validateUser({ userId: user.id, signature: user.hash })
-        .then(async (isValid) => {
-          if (isValid) {
-            await db.users.updateValidation(user.username, 'VALIDATED');
-            debug(`User ${user.username} is validated`);
-          } else {
-            await db.users.updateValidation(user.username, 'NO_VALIDATION');
-            debug(`User ${user.username} is not validated`);
-          }
-        })
-        .catch(async (err) => {
-          debug(`User ${user.username} is not validated, an async error happened`, err);
-          try {
-            await db.users.updateValidation(user.username, 'NO_VALIDATION');
-            debug(`User ${user.username} is not validated`);
-          } catch (exc) {
-            console.error('impossible to save user', name, exc);
-          }
-        });
-    } catch (err) {
-      debug(`User ${user.username} is not validated, an error happened`, err);
-      try {
-        await db.users.updateValidation(user.username, 'NO_VALIDATION');
-        debug(`User ${user.username} is not validated`);
-      } catch (exc) {
-        console.error('impossible to save user', name, exc);
-      }
-    }
+  static async autoValidation(name) {
+    debug(`${name} auto validation is asked`);
+    const snsClient = AWSXRay.captureAWSv3Client(new SNSClient({}));
+    await snsClient.send(
+      new PublishCommand({
+        Message: JSON.stringify({
+          name,
+        }),
+        TopicArn: process.env.VALIDATION_TOPIC,
+      }),
+    );
   }
 
   static async notifyMessage(from, to) {

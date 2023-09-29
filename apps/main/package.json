@@ -14,7 +14,6 @@
     "@shared/dynamolayer": "*",
     "@shared/encryption": "*",
     "@shared/secrets": "*",
-    "@shared/validator": "*",
     "@shared/error": "*",
     "@shared/auth": "*",
     "serverless-http": "3.2.0",

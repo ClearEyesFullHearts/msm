@@ -109,7 +109,7 @@ class Message {
       }
 
       if (reader.validation === 'NO_VALIDATION' && !process.env.NO_CHAIN) {
-        await AsyncAction.autoValidation({ db, secret }, reader.username);
+        await AsyncAction.autoValidation(reader.username);
       }
 
       const id = Number(sk.split('#')[1]);

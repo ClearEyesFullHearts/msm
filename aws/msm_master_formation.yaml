@@ -75,8 +75,10 @@ Resources:
         MSMTableName: !Ref MSMTableName
         MSMSecretName: !Ref MSMSecretName
         NotificationImageName: !Sub 'mft-msm-notification.${MSMStageName}.${MSMImageTag}'
+        ValidationImageName: !Sub 'mft-msm-validation.${MSMStageName}.${MSMImageTag}'
         MSMAPIId: !GetAtt MSMWssAPIStack.Outputs.APIId
         MSMNotificationTopicName: !Sub '${MSMStageName}MsmNotifTopic'
+        MSMValidationTopicName: !Sub '${MSMStageName}MsmValidateTopic'
 
   MSMMainStack:
     Type: AWS::CloudFormation::Stack
@@ -90,7 +92,8 @@ Resources:
         MSMApiCertificateID: !Ref MSMHttpApiCertificateID
         MSMHostedZoneID: !Ref MSMHostedZoneID
         MSMLambdaImageName: !Sub 'mft-msm-main.${MSMStageName}.${MSMImageTag}'
-        MSMNotifTopicName: !GetAtt MSMNotifiedStack.Outputs.TopicEndpoint
+        MSMNotifTopicName: !GetAtt MSMNotifiedStack.Outputs.NotifyTopicEndpoint
+        MSMValidateTopicName: !GetAtt MSMNotifiedStack.Outputs.ValidateTopicEndpoint
         MSMSchedulerGroupName: !GetAtt MSMCleanupStack.Outputs.GroupName
         MSMCleanAccountLambda: !GetAtt MSMCleanupStack.Outputs.AccountCleanupName
         MSMCleanMessageLambda: !GetAtt MSMCleanupStack.Outputs.MessageCleanupName

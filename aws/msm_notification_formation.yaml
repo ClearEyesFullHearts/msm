@@ -21,6 +21,11 @@ Parameters:
     Default: TestNotifyTopic
     Description: The name of the notification topic to use.
 
+  MSMValidationTopicName:
+    Type: String
+    Default: TestValidateTopic
+    Description: The name of the validation topic to use.
+
   MSMSecretName:
     Type: String
     Default: test
@@ -29,6 +34,11 @@ Parameters:
   NotificationImageName:
     Type: String
     Default: mft-msm-notification.latest
+    Description: Tag of the image to deploy.
+
+  ValidationImageName:
+    Type: String
+    Default: mft-msm-validation.latest
     Description: Tag of the image to deploy.
 
   MSMAPIId:
@@ -90,6 +100,51 @@ Resources:
         - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
         - 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess'
 
+  ValidateLambdaMSMPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: SecretManagerReadAccess
+            Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource:
+              - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:BetaMSMSecret-shRNxY'
+          - Sid: DynamoDBTableAccess
+            Effect: Allow
+            Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:PutItem
+              - dynamodb:DescribeTable
+              - dynamodb:DeleteItem
+              - dynamodb:GetItem
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:UpdateItem
+            Resource: 
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}'
+
+  ValidateLambdaMSMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref ValidateLambdaMSMPolicy
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess'
+
   MSMNotifyLambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -124,8 +179,45 @@ Resources:
       Principal: sns.amazonaws.com
       SourceArn: !Ref MSMSnsTopic
 
+  MSMValidateLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      PackageType: Image
+      Code:
+        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${ValidationImageName}'
+      MemorySize: 128
+      Role: !Sub ${ValidateLambdaMSMRole.Arn}
+      TracingConfig:
+        Mode: Active
+      Environment:
+        Variables:
+          NODE_ENV: !Ref MSMStageName
+          SECRET_LOCATION: !Ref MSMSecretName
+          DEBUG: 'validation:*,secrets:*,dynamolayer:*'
+
+  MSMValidateSnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Ref MSMValidationTopicName
+      TopicName: !Ref MSMValidationTopicName
+      Subscription:
+        - Protocol: lambda
+          Endpoint: !GetAtt MSMValidateLambdaFunction.Arn
+
+  ValidatePermissionSNStoLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref MSMValidateLambdaFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref MSMValidateSnsTopic
+
 Outputs:
 
-  TopicEndpoint:
+  NotifyTopicEndpoint:
     Value: !Ref MSMNotificationTopicName
     Description: Name of the topic to send notifications to
+
+  ValidateTopicEndpoint:
+    Value: !Ref MSMValidationTopicName
+    Description: Name of the topic to send validation to

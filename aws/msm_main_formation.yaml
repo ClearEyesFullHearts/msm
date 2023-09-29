@@ -42,6 +42,10 @@ Parameters:
     Type: String
     Description: The name of the notification topic
 
+  MSMValidateTopicName:
+    Type: String
+    Description: The name of the validation topic
+
   MSMSchedulerGroupName:
     Type: String
     Default: MSMCleanupGroup
@@ -88,6 +92,7 @@ Resources:
               - sns:Publish
             Resource:
               - !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMNotifTopicName}'
+              - !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMValidateTopicName}'
           - Sid: SecretManagerReadAccess
             Effect: Allow
             Action:
@@ -151,10 +156,10 @@ Resources:
       Environment:
         Variables:
           NODE_ENV: !Ref MSMStageName
-          NO_CHAIN: true
           SECRET_LOCATION: !Ref MSMSecretName
           DEBUG: 'msm-main:*,dynamolayer:*,secrets:*,validator:*,msm-error:*'
           NOTIF_TOPIC: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMNotifTopicName}'
+          VALIDATION_TOPIC: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMValidateTopicName}'
           SCHEDULER_GROUP: !Ref MSMSchedulerGroupName
           CLEAN_ACCOUNT_TARGET: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanAccountLambda}'
           CLEAN_MESSAGE_TARGET: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanMessageLambda}'
