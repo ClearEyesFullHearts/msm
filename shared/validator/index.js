@@ -18,11 +18,13 @@ class ValidatorContract {
 
   async validateUser({ userId, signature }) {
     debug('updating user', userId);
-    const tx = await this.contract.userValidated(userId, signature);
-    const result = await tx.wait();
-    debug('user updated', result);
+    await this.contract.userValidated(userId, signature);
+    debug('request sent');
+    // const tx = await this.contract.userValidated(userId, signature);
+    // const result = await tx.wait();
+    // debug('user updated', result);
 
-    return result.status === 1;
+    // return result.status === 1;
   }
 
   async isValidated(userId) {

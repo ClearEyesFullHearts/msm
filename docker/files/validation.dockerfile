@@ -21,6 +21,6 @@ COPY ./shared/encryption/ ${LAMBDA_TASK_ROOT}/shared/encryption/
 COPY ./shared/secrets/ ${LAMBDA_TASK_ROOT}/shared/secrets/
 COPY ./shared/dynamolayer/ ${LAMBDA_TASK_ROOT}/shared/dynamolayer/
 COPY ./apps/validation/config ${LAMBDA_TASK_ROOT}/config
-COPY ./apps/validation/index.mjs ${LAMBDA_TASK_ROOT}/index.mjs
+COPY ./apps/validation/index.js ${LAMBDA_TASK_ROOT}/index.js
 
 CMD [ "index.handler" ]

@@ -185,7 +185,8 @@ Resources:
       PackageType: Image
       Code:
         ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${ValidationImageName}'
-      MemorySize: 128
+      MemorySize: 256
+      Timeout: 5
       Role: !Sub ${ValidateLambdaMSMRole.Arn}
       TracingConfig:
         Mode: Active
