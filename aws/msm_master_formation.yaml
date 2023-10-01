@@ -52,7 +52,7 @@ Resources:
         DailyCleanupImageName: !Sub 'mft-msm-cleanup.${MSMStageName}.${MSMImageTag}'
         AccountCleanupImageName: !Sub 'mft-msm-clean-account.${MSMStageName}.${MSMImageTag}'
         MessageCleanupImageName: !Sub 'mft-msm-clean-message.${MSMStageName}.${MSMImageTag}'
-        SchedulerGroupName: !Sub '${MSMStageName}-MSM-SChedulerGroup'
+        SchedulerGroupName: !Sub '${MSMStageName}-MSM-Cleanup-Group'
 
   MSMWssAPIStack:
     Type: AWS::CloudFormation::Stack
@@ -75,10 +75,20 @@ Resources:
         MSMTableName: !Ref MSMTableName
         MSMSecretName: !Ref MSMSecretName
         NotificationImageName: !Sub 'mft-msm-notification.${MSMStageName}.${MSMImageTag}'
-        ValidationImageName: !Sub 'mft-msm-validation.${MSMStageName}.${MSMImageTag}'
         MSMAPIId: !GetAtt MSMWssAPIStack.Outputs.APIId
         MSMNotificationTopicName: !Sub '${MSMStageName}MsmNotifTopic'
+
+  MSMValidateStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://msm-cloudformation-template.s3.eu-west-3.amazonaws.com/msm_validate_formation.yaml
+      Parameters:
+        MSMStageName: !Ref MSMStageName
+        MSMTableName: !Ref MSMTableName
+        MSMSecretName: !Ref MSMSecretName
+        ValidationImageName: !Sub 'mft-msm-validation.${MSMStageName}.${MSMImageTag}'
         MSMValidationTopicName: !Sub '${MSMStageName}MsmValidateTopic'
+        SchedulerGroupName: !Sub '${MSMStageName}-MSM-Confirmation-Group'
 
   MSMMainStack:
     Type: AWS::CloudFormation::Stack
@@ -93,7 +103,7 @@ Resources:
         MSMHostedZoneID: !Ref MSMHostedZoneID
         MSMLambdaImageName: !Sub 'mft-msm-main.${MSMStageName}.${MSMImageTag}'
         MSMNotifTopicName: !GetAtt MSMNotifiedStack.Outputs.NotifyTopicEndpoint
-        MSMValidateTopicName: !GetAtt MSMNotifiedStack.Outputs.ValidateTopicEndpoint
+        MSMValidateTopicName: !GetAtt MSMValidateStack.Outputs.ValidateTopicEndpoint
         MSMSchedulerGroupName: !GetAtt MSMCleanupStack.Outputs.GroupName
         MSMCleanAccountLambda: !GetAtt MSMCleanupStack.Outputs.AccountCleanupName
         MSMCleanMessageLambda: !GetAtt MSMCleanupStack.Outputs.MessageCleanupName

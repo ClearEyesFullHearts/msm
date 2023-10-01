@@ -15,7 +15,7 @@ const client = AWSXRay.captureAWSv3Client(new SchedulerClient());
 let validator;
 
 async function askConfirmation(username, tries, invokedFunctionArn) {
-  debug('Schedule Auto User removal');
+  debug('Schedule validation confirmation');
   const scheduleAt = new Date(Date.now() + config.get('retries.interval'));
 
   const input = {
@@ -34,13 +34,13 @@ async function askConfirmation(username, tries, invokedFunctionArn) {
   };
   const command = new CreateScheduleCommand(input);
   await client.send(command);
-  debug('Auto User removal is scheduled');
+  debug('Validation confirmation is scheduled');
 }
 
 async function initValidation(user, invokedFunctionArn) {
-  await data.users.updateValidation(user.username, 'IS_VALIDATING');
-
   debug('Validating user', user.username);
+
+  await data.users.updateValidation(user.username, 'IS_VALIDATING');
 
   try {
     await new Promise((resolve, reject) => {
@@ -56,7 +56,9 @@ async function initValidation(user, invokedFunctionArn) {
           });
       });
     });
-    await askConfirmation(user.username, 0, invokedFunctionArn);
+    debug('Validation sent');
+    await askConfirmation(user.username, 1, invokedFunctionArn);
+    debug('Confirmation asked');
   } catch (err) {
     debug(`User ${user.username} is not validated, an async error happened`, err);
     await data.users.updateValidation(user.username, 'NO_VALIDATION');
@@ -64,6 +66,8 @@ async function initValidation(user, invokedFunctionArn) {
 }
 
 async function confirmValidation(user, tries, invokedFunctionArn) {
+  debug(`Confirming user ${user.username}, time ${tries}`);
+
   const isValid = await new Promise((resolve, reject) => {
     AWSXRay.captureAsyncFunc('EtherConfirmation', (subsegment) => {
       validator.isValidated(user.id)
@@ -78,17 +82,19 @@ async function confirmValidation(user, tries, invokedFunctionArn) {
     });
   });
   if (isValid) {
+    debug('Validation confirmed');
     await data.users.updateValidation(user.username, 'VALIDATED');
   } else if (tries < config.get('retries.max')) {
+    debug('No confirmation, retries');
     await askConfirmation(user.username, tries + 1, invokedFunctionArn);
   } else {
+    debug('No confirmation, stop');
     await data.users.updateValidation(user.username, 'NO_VALIDATION');
   }
 }
 
 exports.handler = async (event, context) => {
-  const { name, tries } = JSON.parse(event.Records[0].Sns.Message);
-
+  console.log(event, context);
   if (!secret.loaded) {
     await secret.getSecretValue();
 
@@ -100,19 +106,32 @@ exports.handler = async (event, context) => {
     });
   }
 
-  debug('Auto User Validation', name);
-  const user = await data.users.findByName(name);
+  if (event.Records && event.Records.length > 0) {
+    const { name } = JSON.parse(event.Records[0].Sns.Message);
+    debug('Auto User Validation', name);
+    const user = await data.users.findByName(name);
 
-  if (!user) {
-    debug('Unknown user, no validation');
-    return;
+    if (!user) {
+      debug('Unknown user, no validation');
+      return;
+    }
+
+    if (user.validation === 'NO_VALIDATION') {
+      await initValidation(user, context.invokedFunctionArn);
+    }
   }
 
-  if (user.validation === 'IS_VALIDATING') {
-    await confirmValidation(user, tries, context.invokedFunctionArn);
-  }
+  const { username, tries } = event;
+  if (username && tries) {
+    debug('Auto User Confirmation', username);
+    const user = await data.users.findByName(username);
 
-  if (user.validation === 'NO_VALIDATION') {
-    await initValidation(user, context.invokedFunctionArn);
+    if (!user) {
+      debug('Unknown user, no confirmation');
+      return;
+    }
+    if (user.validation === 'IS_VALIDATING') {
+      await confirmValidation(user, tries, context.invokedFunctionArn);
+    }
   }
 };

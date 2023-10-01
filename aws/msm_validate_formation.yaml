@@ -1,0 +1,194 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Resources needed to deploy the validation lambda function.
+
+####################################################################################
+Parameters:
+####################################################################################
+
+  MSMStageName:
+    Type: String
+    Default: test
+    Description: The name of the stage to be created, also used as NODE_ENV
+
+  MSMTableName:
+    Type: String
+    Default: MyTestTable
+    Description: The name of the table to be created.
+
+  MSMValidationTopicName:
+    Type: String
+    Default: TestValidateTopic
+    Description: The name of the validation topic to use.
+
+  MSMSecretName:
+    Type: String
+    Default: test
+    Description: The name of the secret to use.
+
+  ValidationImageName:
+    Type: String
+    Default: mft-msm-validation.latest
+    Description: Tag of the image to deploy.
+
+  SchedulerGroupName:
+    Type: String
+    Default: MSMConfirmValidationGroup
+    Description: Name of the scheduler group for confirming validation.
+
+####################################################################################
+Resources:
+####################################################################################
+
+  ValidateLambdaMSMPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: CreateConfirmationSchedule
+            Effect: Allow
+            Action:
+              - scheduler:CreateSchedule
+            Resource:
+              - !Sub 'arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/${SchedulerGroupName}/*'
+          - Sid: SecretManagerReadAccess
+            Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource:
+              - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:BetaMSMSecret-shRNxY'
+          - Sid: DynamoDBTableAccess
+            Effect: Allow
+            Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:PutItem
+              - dynamodb:DescribeTable
+              - dynamodb:DeleteItem
+              - dynamodb:GetItem
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:UpdateItem
+            Resource: 
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}'
+
+  ValidateLambdaMSMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref ValidateLambdaMSMPolicy
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess'
+
+  MSMValidateLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      PackageType: Image
+      Code:
+        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${ValidationImageName}'
+      MemorySize: 256
+      Timeout: 5
+      Role: !Sub ${ValidateLambdaMSMRole.Arn}
+      TracingConfig:
+        Mode: Active
+      Environment:
+        Variables:
+          NODE_ENV: !Ref MSMStageName
+          SECRET_LOCATION: !Ref MSMSecretName
+          DEBUG: 'validation:*,secrets:*,dynamolayer:*'
+          SCHEDULER_GROUP: !Ref SchedulerGroupName
+          SCHEDULER_ROLE: !GetAtt MSMSchedulerRole.Arn
+
+  MSMValidateSnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Ref MSMValidationTopicName
+      TopicName: !Ref MSMValidationTopicName
+      Subscription:
+        - Protocol: lambda
+          Endpoint: !GetAtt MSMValidateLambdaFunction.Arn
+
+  ValidatePermissionSNStoLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref MSMValidateLambdaFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref MSMValidateSnsTopic
+
+  MSMConfirmationSchedulerGroup:
+    Type: AWS::Scheduler::ScheduleGroup
+    Properties:
+      Name: !Ref SchedulerGroupName
+
+  MSMSchedulerManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: InvokeConfirmationLambda
+            Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+            Resource:
+              - !GetAtt MSMValidateLambdaFunction.Arn
+
+  MSMSchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - scheduler.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+  AllowSchedulerToAssumeRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - iam:GetRole
+              - iam:PassRole
+            Effect: Allow
+            Resource: !GetAtt MSMSchedulerRole.Arn
+        Version: 2012-10-17
+      PolicyName: AllowSchedulerToAssumeRolePolicy
+      Roles:
+        - !Ref ValidateLambdaMSMRole
+
+  AllowSchedulerToInvokePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - lambda:InvokeFunction
+            Effect: Allow
+            Resource: !GetAtt MSMValidateLambdaFunction.Arn
+        Version: 2012-10-17
+      PolicyName: AllowSchedulerToAssumeRolePolicy
+      Roles:
+        - !Ref MSMSchedulerRole
+
+Outputs:
+
+  ValidateTopicEndpoint:
+    Value: !Ref MSMValidationTopicName
+    Description: Name of the topic to send validation to
