@@ -21,6 +21,19 @@ Parameters:
     Default: test
     Description: The name of the secret to use.
 
+  MSMApiDomainName:
+    Type: String
+    Default: socktest.ysypya.com
+    Description: API Domain name
+
+  MSMApiCertificateID:
+    Type: String
+    Description: The ID of the certificate for the domain.
+
+  MSMHostedZoneID:
+    Type: String
+    Description: The ID of the hosted zone
+
   ConnectHandlerImageName:
     Type: String
     Default: mft-msm-ws-connect.test
@@ -316,8 +329,36 @@ Resources:
       Roles:
         - !Ref WssLambdaMSMRole
 
+  MSMWssDomainName:
+    Type: AWS::ApiGatewayV2::DomainName
+    Properties:
+      DomainName: !Ref MSMApiDomainName
+      DomainNameConfigurations:
+        - EndpointType: REGIONAL
+          CertificateArn: !Sub 'arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${MSMApiCertificateID}'
 
+  MSMWssExpressAPIPathMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Properties:
+      ApiId: !Ref MsmWssApi
+      DomainName: !Ref MSMWssDomainName
+      Stage: !Ref MsmWssCurrentStage
+
+  MSMWssExpressAPIRoute53RecordSet:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneId: !Ref MSMHostedZoneID
+      RecordSets:
+      - Name: !Ref MSMWssDomainName
+        Type: A
+        AliasTarget:
+          EvaluateTargetHealth: false
+          HostedZoneId: !GetAtt MSMWssDomainName.RegionalHostedZoneId
+          DNSName: !GetAtt MSMWssDomainName.RegionalDomainName
+  
+####################################################################################
 Outputs:
+####################################################################################
 
   APIId:
     Value: !Ref MsmWssApi

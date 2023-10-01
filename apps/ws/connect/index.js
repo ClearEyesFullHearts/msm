@@ -1,7 +1,9 @@
 const debug = require('debug')('ws-connect:app');
 const config = require('config');
 const AWSXRay = require('aws-xray-sdk');
-const { ApiGatewayManagementApiClient, PostToConnectionCommand, DeleteConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
+const {
+  ApiGatewayManagementApiClient, PostToConnectionCommand, DeleteConnectionCommand, GoneException,
+} = require('@aws-sdk/client-apigatewaymanagementapi');
 const Data = require('@shared/dynamolayer');
 const Auth = require('@shared/auth');
 const ErrorHelper = require('@shared/error');
@@ -36,9 +38,10 @@ async function broadcast(sender) {
       id,
       stage,
       domainName,
+      username,
     } = conn;
 
-    if (id !== sender.id) {
+    if (username !== sender) {
       const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
       const client = AWSXRay.captureAWSv3Client(new ApiGatewayManagementApiClient({
         endpoint,
@@ -48,7 +51,13 @@ async function broadcast(sender) {
         ConnectionId: id, // required
       };
       const command = new PostToConnectionCommand(input);
-      return client.send(command).catch((err) => console.log(err));
+      return client.send(command).catch((err) => {
+        if (err instanceof GoneException) {
+          debug('target is disconnected', username);
+          return data.connections.delete(username);
+        }
+        throw err;
+      });
     }
     return Promise.resolve();
   });
