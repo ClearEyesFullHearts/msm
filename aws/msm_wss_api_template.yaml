@@ -181,7 +181,6 @@ Resources:
   MsmWssApi:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: msm-wss
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: $request.body.action
 
