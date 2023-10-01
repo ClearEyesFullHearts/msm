@@ -16,15 +16,19 @@ class ValidatorContract {
     this.contract = new Contract(this.contractAddress, contract.abi, this.signer);
   }
 
+  async validateUserAndWait({ userId, signature }) {
+    debug('updating user', userId);
+    const tx = await this.contract.userValidated(userId, signature);
+    const result = await tx.wait();
+    debug('user updated', result);
+
+    return result.status === 1;
+  }
+
   async validateUser({ userId, signature }) {
     debug('updating user', userId);
     await this.contract.userValidated(userId, signature);
     debug('request sent');
-    // const tx = await this.contract.userValidated(userId, signature);
-    // const result = await tx.wait();
-    // debug('user updated', result);
-
-    // return result.status === 1;
   }
 
   async isValidated(userId) {
@@ -33,7 +37,17 @@ class ValidatorContract {
     const logs = await this.contract.queryFilter(events);
 
     if (logs.length && logs.length > 0) {
-      if (logs.length > 1) throw new Error('Validated more than once');
+      if (logs.length > 1) {
+        return logs.reduce(({ id, signature }, { args }) => {
+          const [myId, mySignature] = args;
+          if (id && signature !== mySignature) {
+            throw new Error('Validated more than once on chain');
+          }
+          return {
+            id: myId, signature: mySignature,
+          };
+        }, {});
+      }
       const [{ args }] = logs;
       const [id, signature] = args;
       debug('User validated');
