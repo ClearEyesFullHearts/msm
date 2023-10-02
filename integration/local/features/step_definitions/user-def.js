@@ -14,6 +14,7 @@ Given('I am a new invalidated user', async function () {
   this.apickli.storeValueInScenarioScope('NEW_ESK', keys.private.encrypt);
   this.apickli.storeValueInScenarioScope('NEW_SSK', keys.private.signature);
   const username = Util.getRandomString(25);
+
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 
   this.apickli.setRequestBody(JSON.stringify({
@@ -75,15 +76,20 @@ Given(/^I am existing (.*)$/, async function (varName) {
 
   const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
   this.apickli.storeValueInScenarioScope('ESK', eskFile);
+  this.apickli.storeValueInScenarioScope(`ESK.${username}`, eskFile);
   this.apickli.storeValueInScenarioScope('SSK', sskFile);
+  this.apickli.storeValueInScenarioScope(`SSK.${username}`, sskFile);
 
   const epk = Util.extractPublicKey(eskFile);
   const spk = Util.extractPublicKey(sskFile);
   this.apickli.storeValueInScenarioScope('EPK', epk);
+  this.apickli.storeValueInScenarioScope(`EPK.${username}`, epk);
   this.apickli.storeValueInScenarioScope('SPK', spk);
+  this.apickli.storeValueInScenarioScope(`SPK.${username}`, spk);
 
   const resolved = Util.resolve(eskFile, respBody);
   this.apickli.storeValueInScenarioScope('AUTH', resolved);
+  this.apickli.storeValueInScenarioScope(`AUTH.${username}`, resolved);
   this.apickli.httpResponse.body = JSON.stringify(resolved);
 
   this.apickli.setAccessTokenFromResponseBodyPath('$.token');
@@ -122,4 +128,19 @@ Given(/^I am authenticated user (.*)$/, async function (folder) {
   // set bearer token
   this.apickli.setAccessTokenFromResponseBodyPath('$.token');
   this.apickli.setBearerToken();
+});
+
+Given(/^I save (.*)$/, async function (varName) {
+  const username = this.apickli.replaceVariables(varName);
+  const user = await Util.getValueInDB({ pk: `U#${username}`, sk: username });
+
+  this.apickli.storeValueInScenarioScope(`USER.${username}`, user);
+});
+
+Then(/^I record (.*)$/, async function (varName) {
+  const username = this.apickli.replaceVariables(varName);
+  const {
+    [`USER.${username}`]: user,
+  } = this.apickli.scenarioVariables;
+  await Util.recordInDB(user);
 });

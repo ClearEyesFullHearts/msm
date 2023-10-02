@@ -3,5 +3,11 @@
     "local": false,
     "tableName": "MyTestTable",
     "createTable": false
+  },
+  "timer": {
+    "removal": {
+      "user": 1000,
+      "message": 1000
+    }
   }
 }

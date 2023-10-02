@@ -8,18 +8,18 @@ Given(/^I invalidate (.*)$/, async (name) => {
 
   const yesterdayRounded = Util.roundTimeToDays(-yesterday);
 
-  await Util.SetValueInDB(name, `U#${name}`, 'lastActivity', yesterdayRounded);
+  await Util.setValueInDB(name, `U#${name}`, 'lastActivity', yesterdayRounded);
 });
 
 Given(/^I mark (.*) message with ID (.*) as read$/, async function (name, msgId) {
   const username = this.apickli.replaceVariables(name);
-  await Util.SetValueInDB(`M#${msgId}`, `U#${username}`, 'hasBeenRead', 1);
+  await Util.setValueInDB(`M#${msgId}`, `U#${username}`, 'hasBeenRead', 1);
 });
 
 Given(/^I mark (.*) as inactive$/, async function (name) {
   const username = this.apickli.replaceVariables(name);
   const lastActivity = Util.roundTimeToDays(Date.now() - 2592000000);
-  await Util.SetValueInDB(username, `U#${username}`, 'lastActivity', lastActivity);
+  await Util.setValueInDB(username, `U#${username}`, 'lastActivity', lastActivity);
 });
 
 When('I invoke the cleanup lambda function', async function () {

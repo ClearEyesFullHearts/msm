@@ -1,30 +1,24 @@
 const fs = require('fs');
 const apickli = require('apickli');
 const {
-  Before, BeforeAll,
+  Before, BeforeAll, After,
 } = require('@cucumber/cucumber');
-const config = require('config');
 const Util = require('./utils');
 
 // lengths: ESK = 3222 SSK = 898
 // lengths: ESK = 3222 SSK = 902
 
-BeforeAll((cb) => {
-  process.env.AWS_REGION = config.get('dynamo.region');
-  process.env.AWS_ACCESS_KEY_ID = config.get('dynamo.credentials.accessKeyId');
-  process.env.AWS_SECRET_ACCESS_KEY = config.get('dynamo.credentials.secretAccessKey');
-  // Util.backupTable().then(cb);
-  Util.emptyTable()
-    .then(() => Util.restoreTable())
-    .then(cb);
-});
+// BeforeAll((cb) => {
+//   Util.emptyTable()
+//     .then(() => Util.restoreTable())
+//     .then(cb);
+// });
 
 Before(function () {
-  const host = config.get('base.instance.host');
-  const port = config.get('base.instance.port');
-  const protocol = config.get('base.instance.protocol');
+  const host = 'test.ysypya.com';
+  const protocol = 'https';
 
-  this.apickli = new apickli.Apickli(protocol, `${host}:${port}`, 'data');
+  this.apickli = new apickli.Apickli(protocol, host, 'data');
   this.apickli.addRequestHeader('Cache-Control', 'no-cache');
   this.apickli.addRequestHeader('Content-Type', 'application/json');
 
@@ -67,4 +61,12 @@ Before(function () {
   for (let i = 0; i < arrUsers.length; i += 1) {
     this.apickli.setGlobalVariable(`RANDOM_USER.${i}`, arrUsers[i]);
   }
+});
+
+After(function () {
+  Object.keys(this.apickli.scenarioVariables).forEach((p) => {
+    if (p.startsWith('SOCKET')) {
+      this.apickli.scenarioVariables[p].close();
+    }
+  });
 });

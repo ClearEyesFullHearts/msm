@@ -195,16 +195,19 @@ class UserData {
       sk: term,
     }));
 
+    allTransactions.push(
+      this.Entity.transaction.update(
+        { pk: `U#${username}`, sk: username },
+        {
+          $SET: { lastActivity: Date.now() },
+        },
+      ),
+    );
+
     const size = 99; const arrayOfTransacts = [];
     for (let i = 0; i < allTransactions.length; i += size) {
       const transacts = allTransactions.slice(i, i + size);
       arrayOfTransacts.push(dynamoose.transaction([
-        this.Entity.transaction.update(
-          { pk: `U#${username}`, sk: username },
-          {
-            $SET: { lastActivity: Date.now() },
-          },
-        ),
         ...transacts,
       ]));
     }

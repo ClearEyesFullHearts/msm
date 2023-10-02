@@ -78,7 +78,7 @@ class Message {
     debug('message saved');
   }
 
-  static async getMessage({ db, auth, secret }, msgId) {
+  static async getMessage({ db, auth }, msgId) {
     debug(`get user ${auth.username}`);
     const reader = await db.users.findByName(auth.username);
     if (!reader) {

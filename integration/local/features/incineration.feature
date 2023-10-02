@@ -20,25 +20,27 @@ Scenario: Only the owner can delete an account
     
 Scenario: Delete one's account with messages
   Given I am authenticated user mat
-  And I set message body to { "to": "`RANDOM_USER.17`" , "title": "Write one message" , "content": "My message content" }
+  And I save `RANDOM_USER.13`
+  And I set message body to { "to": "`RANDOM_USER.13`" , "title": "Write one message" , "content": "My message content" }
   And I set signature header
   When I POST to /message
   Then response code should be 201
-  And I set message body to { "to": "`RANDOM_USER.17`" , "title": "Write two message" , "content": "My message content" }
+  And I set message body to { "to": "`RANDOM_USER.13`" , "title": "Write two message" , "content": "My message content" }
   And I set signature header
   When I POST to /message
   Then response code should be 201
-  And I set message body to { "to": "`RANDOM_USER.17`" , "title": "Write three message" , "content": "My message content" }
+  And I set message body to { "to": "`RANDOM_USER.13`" , "title": "Write three message" , "content": "My message content" }
   And I set signature header
   When I POST to /message
   Then response code should be 201
-  And I set message body to { "to": "`RANDOM_USER.17`" , "title": "Write four message" , "content": "My message content" }
+  And I set message body to { "to": "`RANDOM_USER.13`" , "title": "Write four message" , "content": "My message content" }
   And I set signature header
   When I POST to /message
   Then response code should be 201
-  Given I am existing `RANDOM_USER.17`
+  Given I am existing `RANDOM_USER.13`
   And I set signature header
-  And I DELETE /user/`RANDOM_USER.17`
+  And I DELETE /user/`RANDOM_USER.13`
   Then response code should be 200
-  And I GET /identity/`RANDOM_USER.17`
+  And I GET /identity/`RANDOM_USER.13`
   Then response code should be 404
+  And I record `RANDOM_USER.13`

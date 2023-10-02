@@ -38,7 +38,7 @@ function formatSK(privateKey) {
   return `${pemHeader}\n${pemContents}\n${pemFooter}`;
 }
 
-const TABLE_NAME = 'MyLocalTable';
+const TABLE_NAME = 'MyTestTable';
 // const TABLE_NAME = 'TestIntegrMSM';
 const ALGORITHM = 'aes-256-gcm';
 const PASS_SIZE = 32;
@@ -358,12 +358,17 @@ class Util {
       at: {
         type: String,
       },
+      stage: {
+        type: String,
+      },
+      domainName: {
+        type: String,
+      },
     }), { tableName: TABLE_NAME, create: false });
     const ddb = new dynamoose.aws.ddb.DynamoDB({});
 
     // Set DynamoDB instance to the Dynamoose DDB instance
     dynamoose.aws.ddb.set(ddb);
-    dynamoose.aws.ddb.local();
 
     return Everything;
   }
@@ -391,7 +396,6 @@ class Util {
 
     // Set DynamoDB instance to the Dynamoose DDB instance
     dynamoose.aws.ddb.set(ddb);
-    dynamoose.aws.ddb.local();
 
     const result = await Keys.scan().exec();
 
@@ -413,7 +417,7 @@ class Util {
     }
   }
 
-  static async SetValueInDB(sk, pk, prop, val) {
+  static async setValueInDB(sk, pk, prop, val) {
     const Everything = Util.getEverythingModel();
     await Everything.update(
       { pk, sk },
@@ -421,6 +425,22 @@ class Util {
         $SET: { [prop]: val },
       },
     );
+  }
+
+  static async getValueInDB({ sk, pk }) {
+    const Everything = Util.getEverythingModel();
+    const e = await Everything.get({ sk, pk });
+    return e;
+  }
+
+  static async recordInDB(record) {
+    const Everything = Util.getEverythingModel();
+    const { pk, sk } = record;
+    const e = await Everything.get({ sk, pk });
+    Object.keys(record).forEach((k) => {
+      e[k] = record[k];
+    });
+    await e.save();
   }
 
   static roundTimeToDays(epoch, addDays = 0) {

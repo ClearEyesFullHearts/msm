@@ -31,35 +31,34 @@ Given(/^I set var (.*) to a (.*) characters long (.*)string$/, function (varName
   this.apickli.storeValueInScenarioScope(varName, str);
 });
 
-Given('I generate a false encryption key', function () {
-  const file = fs.readFileSync('./data/users/user1/public.pem').toString();
-  const [publicK] = file.split('\n----- HASH -----\n');
-  const [_, spkFile] = publicK.split('\n----- SIGNATURE -----\n');
+Given('I generate a false encryption key', async function () {
+  const keys = await Util.generateKeyPair();
+  const spk = keys.public.signature;
+  const ssk = keys.private.signature;
   const pair = Util.generateFalseKeyPair();
   const epk = pair.public.encrypt;
 
-  const privateK = fs.readFileSync('./data/users/user1/private.pem').toString();
-  const [ignore, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
-
   const hash = crypto.createHash('sha256');
-  hash.update(`${epk}\n${spkFile}`);
+  hash.update(`${epk}\n${spk}`);
   const pkHash = hash.digest();
 
-  const signedHash = Util.sign(sskFile, pkHash);
+  const signedHash = Util.sign(ssk, pkHash);
 
   this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(epk));
-  this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(spkFile));
+  this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(spk));
   this.apickli.storeValueInScenarioScope('NEW_SHA', signedHash);
   const username = Util.getRandomString(25);
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 });
 
-Given('I generate a false signature key', function () {
-  const publicK = fs.readFileSync('./data/users/user1/public.pem').toString();
-  const [epkFile] = publicK.split('\n----- SIGNATURE -----\n');
+Given('I generate a false signature key', async function () {
+  // const publicK = fs.readFileSync('./data/users/user1/public.pem').toString();
+  // const [epkFile] = publicK.split('\n----- SIGNATURE -----\n');
+  const keys = await Util.generateKeyPair();
+  const epk = keys.public.encrypt;
   const pair = Util.generateFalseKeyPair();
   const spk = pair.public.signature;
-  this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(epkFile));
+  this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(epk));
   this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(spk));
   this.apickli.storeValueInScenarioScope('NEW_SHA', pair.public.signedHash);
   const username = Util.getRandomString(25);

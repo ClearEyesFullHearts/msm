@@ -188,13 +188,12 @@ module.exports = {
         app: {
           locals: {
             db,
-            secret,
           },
         },
       } = req;
 
       AWSXRay.captureAsyncFunc('Message.getMessage', (subsegment) => {
-        Message.getMessage({ db, auth, secret }, Number(msgId))
+        Message.getMessage({ db, auth }, Number(msgId))
           .then((fullMessage) => {
             AsyncAction.autoMessageRemoval(db, auth.username, Number(msgId))
               .catch((err) => {
