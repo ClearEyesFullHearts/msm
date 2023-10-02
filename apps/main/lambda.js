@@ -23,3 +23,16 @@ async function handler(event, context) {
 }
 
 exports.handler = handler;
+
+/*
+Can't use async initialization or we'll lose secret manager traces
+const main = async () => {
+  const server = new MSMMain();
+  await server.setup();
+  const app = server.start();
+
+  return { handler: serverless(app) };
+};
+
+module.exports = main();
+*/

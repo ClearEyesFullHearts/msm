@@ -1,6 +1,6 @@
 const debug = require('debug')('ws-disconnect:app');
 const config = require('config');
-const AWSXRay = require('aws-xray-sdk');
+const AWSXRay = require('@shared/tracing');
 const { ApiGatewayManagementApiClient, PostToConnectionCommand, GoneException } = require('@aws-sdk/client-apigatewaymanagementapi');
 const Data = require('@shared/dynamolayer');
 

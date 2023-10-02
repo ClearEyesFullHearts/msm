@@ -1,6 +1,6 @@
 const debug = require('debug')('ws-connect:app');
 const config = require('config');
-const AWSXRay = require('aws-xray-sdk');
+const AWSXRay = require('@shared/tracing');
 const {
   ApiGatewayManagementApiClient, PostToConnectionCommand, DeleteConnectionCommand, GoneException,
 } = require('@aws-sdk/client-apigatewaymanagementapi');

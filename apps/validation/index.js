@@ -1,10 +1,10 @@
 const debug = require('debug')('validation:app');
 const config = require('config');
 const { SchedulerClient, CreateScheduleCommand } = require('@aws-sdk/client-scheduler');
-const AWSXRay = require('aws-xray-sdk');
+const AWSXRay = require('@shared/tracing');
 const Data = require('@shared/dynamolayer');
 const Secret = require('@shared/secrets');
-const Validator = require('@shared/validator');
+const Validator = require('./src/validator');
 
 const data = new Data(config.get('dynamo'));
 data.init();
@@ -43,19 +43,7 @@ async function initValidation(user, invokedFunctionArn) {
   await data.users.updateValidation(user.username, 'IS_VALIDATING');
 
   try {
-    await new Promise((resolve, reject) => {
-      AWSXRay.captureAsyncFunc('EtherValidation', (subsegment) => {
-        validator.validateUser({ userId: user.id, signature: user.hash })
-          .then((result) => {
-            resolve(result);
-          }).catch((exc) => {
-            reject(exc);
-          })
-          .finally(() => {
-            subsegment.close();
-          });
-      });
-    });
+    await AWSXRay.captureAsyncFunc('EtherValidation', validator.validateUser({ userId: user.id, signature: user.hash }));
     debug('Validation sent');
     await askConfirmation(user.username, 1, invokedFunctionArn);
     debug('Confirmation asked');
@@ -68,19 +56,7 @@ async function initValidation(user, invokedFunctionArn) {
 async function confirmValidation(user, tries, invokedFunctionArn) {
   debug(`Confirming user ${user.username}, time ${tries}`);
 
-  const isValid = await new Promise((resolve, reject) => {
-    AWSXRay.captureAsyncFunc('EtherConfirmation', (subsegment) => {
-      validator.isValidated(user.id)
-        .then((result) => {
-          resolve(result);
-        }).catch((exc) => {
-          reject(exc);
-        })
-        .finally(() => {
-          subsegment.close();
-        });
-    });
-  });
+  const isValid = await AWSXRay.captureAsyncFunc('EtherConfirmation', validator.isValidated(user.id));
   if (isValid) {
     debug('Validation confirmed');
     await data.users.updateValidation(user.username, 'VALIDATED');
@@ -94,7 +70,6 @@ async function confirmValidation(user, tries, invokedFunctionArn) {
 }
 
 exports.handler = async (event, context) => {
-  console.log(event, context);
   if (!secret.loaded) {
     await secret.getSecretValue();
 

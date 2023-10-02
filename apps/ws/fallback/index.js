@@ -2,7 +2,7 @@ const debug = require('debug')('ws-fallback:app');
 const config = require('config');
 const Ajv = require('ajv');
 const addFormats = require('ajv-formats');
-const AWSXRay = require('aws-xray-sdk');
+const AWSXRay = require('@shared/tracing');
 const {
   ApiGatewayManagementApiClient,
   PostToConnectionCommand,

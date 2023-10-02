@@ -13,7 +13,7 @@
       "@shared/encryption": "*",
       "@shared/secrets": "*",
       "@aws-sdk/client-apigatewaymanagementapi": "^3.405.0",
-      "aws-xray-sdk": "3.5.2",
+      "@shared/tracing": "*",
       "config": "3.3.9",
       "debug": "4.3.4",
       "web-push": "3.6.6"

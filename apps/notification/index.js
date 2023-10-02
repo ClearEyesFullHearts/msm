@@ -1,7 +1,7 @@
 const webpush = require('web-push');
 const debug = require('debug')('notification:app');
 const config = require('config');
-const AWSXRay = require('aws-xray-sdk');
+const AWSXRay = require('@shared/tracing');
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
 const Data = require('@shared/dynamolayer');
 const Secret = require('@shared/secrets');
@@ -70,37 +70,20 @@ async function webPushNotification({ to, from, action }) {
         p256dh,
       },
     };
-    const result = new Promise((resolve, reject) => {
-      AWSXRay.captureAsyncFunc('WebPush', (subsegment) => {
-        webpush.sendNotification(
-          subscription,
-          JSON.stringify({
-            action, from, to, unread: waitingMessages.length,
-          }),
-          {
-            topic: 'mail',
-            vapidDetails: {
-              subject: `mailto:${config.get('vapid.subject')}`,
-              publicKey: config.get('vapid.publicKey'),
-              privateKey: secret.PRIVATE_VAPID_KEY,
-            },
-          },
-        )
-          .then(() => {
-            resolve();
-          })
-          .catch((err) => {
-            if (err.name === 'WebPushError' && err.statusCode === 410) {
-              data.subscriptions.delete(to, endpoint);
-              return resolve();
-            }
-            return reject(err);
-          })
-          .finally(() => {
-            subsegment.close();
-          });
-      });
-    });
+    const result = AWSXRay.captureAsyncFunc('WebPush', webpush.sendNotification(
+      subscription,
+      JSON.stringify({
+        action, from, to, unread: waitingMessages.length,
+      }),
+      {
+        topic: 'mail',
+        vapidDetails: {
+          subject: `mailto:${config.get('vapid.subject')}`,
+          publicKey: config.get('vapid.publicKey'),
+          privateKey: secret.PRIVATE_VAPID_KEY,
+        },
+      },
+    ));
     promises.push(result);
   });
 

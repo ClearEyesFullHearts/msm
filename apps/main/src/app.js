@@ -65,9 +65,9 @@ class MSMMain {
       res.status(404).send("Sorry can't find that!");
     });
 
-    this.app.use(AWSXRay.express.closeSegment());
-
     this.app.use(ErrorHelper.catchMiddleware());
+
+    this.app.use(AWSXRay.express.closeSegment());
     debug('all middlewares added');
 
     return this.app;

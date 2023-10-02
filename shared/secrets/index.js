@@ -1,5 +1,5 @@
 const debug = require('debug')('secrets:starter');
-const AWSXRay = require('aws-xray-sdk');
+const AWSXRay = require('@shared/tracing');
 const {
   GetSecretValueCommand,
   SecretsManagerClient,

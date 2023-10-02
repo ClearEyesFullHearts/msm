@@ -1,5 +1,5 @@
 const { AlchemyProvider, Wallet, Contract } = require('ethers');
-const debug = require('debug')('validator:contract');
+const debug = require('debug')('validation:contract');
 const contract = require('./contract/BetaMsm.json');
 
 class ValidatorContract {

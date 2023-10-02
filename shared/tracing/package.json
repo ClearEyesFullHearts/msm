@@ -1,5 +1,5 @@
 {
-    "name": "@shared/secrets",
+    "name": "@shared/tracing",
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
@@ -9,9 +9,7 @@
     "author": "MFT",
     "license": "MIT",
     "dependencies": {
-      "debug": "4.3.4",
-      "@shared/tracing": "*",
-      "@aws-sdk/client-secrets-manager": "^3.386.0"
+      "aws-xray-sdk": "3.5.2"
     },
     "devDependencies": {
       "eslint": "^6.7.1",

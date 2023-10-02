@@ -11,12 +11,12 @@
     "dependencies": {
       "@shared/dynamolayer": "*",
       "@shared/encryption": "*",
-      "@shared/validator": "*",
       "@shared/secrets": "*",
-      "aws-xray-sdk": "3.5.2",
-      "@aws-sdk/client-scheduler": "3.*.0",
+      "@shared/tracing": "*",
+      "@aws-sdk/client-scheduler": "^3.420.0",
       "config": "3.3.9",
-      "debug": "4.3.4"
+      "debug": "4.3.4",
+      "ethers": "6.7.0"
     },
     "devDependencies": {
       "eslint": "^6.7.1",

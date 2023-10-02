@@ -1,5 +1,5 @@
 const dynamoose = require('dynamoose');
-const AWSXRay = require('aws-xray-sdk');
+const AWSXRay = require('@shared/tracing');
 const debug = require('debug')('dynamolayer:data');
 const Encryption = require('@shared/encryption');
 const UserData = require('./model/user');
