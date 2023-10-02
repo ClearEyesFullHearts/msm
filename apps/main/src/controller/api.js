@@ -60,7 +60,7 @@ module.exports = {
   },
   // Use only auth
   getUsers: [
-    AuthMiddleware.verify(config.get('timer.removal.session')),
+    AuthMiddleware.verify(),
     (req, res, next) => {
       const {
         auth,
@@ -83,7 +83,7 @@ module.exports = {
     },
   ],
   getOneUser: [
-    AuthMiddleware.verify(config.get('timer.removal.session')),
+    AuthMiddleware.verify(),
     (req, res, next) => {
       const {
         auth,
@@ -106,7 +106,7 @@ module.exports = {
     },
   ],
   getConnections: [
-    AuthMiddleware.verify(config.get('timer.removal.session')),
+    AuthMiddleware.verify(),
     (req, res, next) => {
       const {
         query: {
@@ -130,7 +130,7 @@ module.exports = {
     },
   ],
   getInbox: [
-    AuthMiddleware.verify(config.get('timer.removal.session')),
+    AuthMiddleware.verify(),
     (req, res, next) => {
       const {
         auth,
@@ -150,7 +150,7 @@ module.exports = {
     },
   ],
   getMessage: [
-    AuthMiddleware.verify(config.get('timer.removal.session')),
+    AuthMiddleware.verify(),
     (req, res, next) => {
       const {
         auth,
@@ -182,7 +182,7 @@ module.exports = {
   ],
   // User identified
   incinerate: [
-    AuthMiddleware.verify(config.get('timer.removal.session')),
+    AuthMiddleware.verify(),
     (req, res, next) => {
       const {
         auth,
@@ -205,7 +205,7 @@ module.exports = {
     },
   ],
   setUserContactList: [
-    AuthMiddleware.verify(config.get('timer.removal.session')),
+    AuthMiddleware.verify(),
     (req, res, next) => {
       const {
         auth,
@@ -226,7 +226,7 @@ module.exports = {
     },
   ],
   setUserVaultItem: [
-    AuthMiddleware.verify(config.get('timer.removal.session')),
+    AuthMiddleware.verify(),
     (req, res, next) => {
       const {
         auth,
@@ -247,7 +247,7 @@ module.exports = {
     },
   ],
   removeUserVaultItem: [
-    AuthMiddleware.verify(config.get('timer.removal.session')),
+    AuthMiddleware.verify(),
     (req, res, next) => {
       const {
         auth,
@@ -267,7 +267,7 @@ module.exports = {
     },
   ],
   writeMessage: [
-    AuthMiddleware.verify(config.get('timer.removal.session')),
+    AuthMiddleware.verify(),
     (req, res, next) => {
       const {
         auth,
@@ -296,7 +296,7 @@ module.exports = {
     },
   ],
   removeMessage: [
-    AuthMiddleware.verify(config.get('timer.removal.session')),
+    AuthMiddleware.verify(),
     (req, res, next) => {
       const {
         auth,
@@ -319,7 +319,7 @@ module.exports = {
     },
   ],
   subscribe: [
-    AuthMiddleware.verify(config.get('timer.removal.session')),
+    AuthMiddleware.verify(),
     (req, res, next) => {
       const {
         auth,

@@ -7,14 +7,15 @@ class XRayWrapper {
 
   static async captureAsyncFunc(segmentName, func) {
     return new Promise((resolve, reject) => {
-      AWSXRay.captureAsyncFunc('segmentName', (subsegment) => {
+      AWSXRay.captureAsyncFunc(segmentName, (subsegment) => {
         func
           .then((result) => {
             resolve(result);
-          })
-          .catch((err) => reject(err))
-          .finally(() => {
             subsegment.close();
+          })
+          .catch((err) => {
+            reject(err);
+            subsegment.close(err);
           });
       });
     });
