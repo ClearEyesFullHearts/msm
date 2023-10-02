@@ -97,13 +97,13 @@ Resources:
       Code:
         ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${NotificationImageName}'
       MemorySize: 128
+      Timeout: 5
       Role: !Sub ${NotifLambdaMSMRole.Arn}
       TracingConfig:
         Mode: Active
       Environment:
         Variables:
           NODE_ENV: !Ref MSMStageName
-          KEY_REPORT_AT: 'mat'
           SECRET_LOCATION: !Ref MSMSecretName
           DEBUG: 'notification:*,secrets:*,dynamolayer:*'
 

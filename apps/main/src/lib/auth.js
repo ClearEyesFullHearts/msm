@@ -57,7 +57,7 @@ class AuthMiddleware {
       AWSXRay.captureAsyncFunc('AuthMiddleware', (subsegment) => {
         verifyAuth(req, res, (err) => {
           next(err);
-          subsegment.close();
+          subsegment.close(err);
         });
       });
     };

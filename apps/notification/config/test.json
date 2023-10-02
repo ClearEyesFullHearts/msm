@@ -3,5 +3,8 @@
     "local": false,
     "tableName": "MyTestTable",
     "createTable": false
+  },
+  "wss" : {
+    "withStage": false
   }
 }

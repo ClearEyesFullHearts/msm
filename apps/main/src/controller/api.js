@@ -1,4 +1,4 @@
-const config = require('config');
+const AWSXRay = require('aws-xray-sdk');
 const AuthMiddleware = require('../lib/auth');
 const User = require('./actions/users');
 const Message = require('./actions/messages');
@@ -21,22 +21,27 @@ module.exports = {
         },
       },
     } = req;
-    User.createUser(db, {
-      at, key, signature, hash,
-    })
-      .then(({ username }) => {
-        AsyncAction.autoUserRemoval(db, username)
-          .catch((err) => {
-            console.error('error on user auto removal');
-            console.error(err);
-          })
-          .finally(() => {
-            res.status(201).send();
-          });
+
+    AWSXRay.captureAsyncFunc('User.createUser', (subsegment) => {
+      User.createUser(db, {
+        at, key, signature, hash,
       })
-      .catch((err) => {
-        next(err);
-      });
+        .then(({ username }) => {
+          AsyncAction.autoUserRemoval(db, username)
+            .catch((err) => {
+              console.error('error on user auto removal');
+              console.error(err);
+            })
+            .finally(() => {
+              res.status(201).send();
+              subsegment.close();
+            });
+        })
+        .catch((err) => {
+          next(err);
+          subsegment.close(err);
+        });
+    });
   },
   login: (req, res, next) => {
     const {
@@ -50,13 +55,17 @@ module.exports = {
         },
       },
     } = req;
-    User.getCredentials({ db, secret }, { at })
-      .then((challenge) => {
-        res.json(challenge);
-      })
-      .catch((err) => {
-        next(err);
-      });
+    AWSXRay.captureAsyncFunc('User.getCredentials', (subsegment) => {
+      User.getCredentials({ db, secret }, { at })
+        .then((challenge) => {
+          res.json(challenge);
+          subsegment.close();
+        })
+        .catch((err) => {
+          next(err);
+          subsegment.close(err);
+        });
+    });
   },
   // Use only auth
   getUsers: [
@@ -73,13 +82,18 @@ module.exports = {
           },
         },
       } = req;
-      User.getUsers({ db, auth }, { search })
-        .then((users) => {
-          res.json(users);
-        })
-        .catch((err) => {
-          next(err);
-        });
+
+      AWSXRay.captureAsyncFunc('User.getUsers', (subsegment) => {
+        User.getUsers({ db, auth }, { search })
+          .then((users) => {
+            res.json(users);
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   getOneUser: [
@@ -96,13 +110,18 @@ module.exports = {
           },
         },
       } = req;
-      User.getUserByName({ db, auth }, at)
-        .then((user) => {
-          res.json(user);
-        })
-        .catch((err) => {
-          next(err);
-        });
+
+      AWSXRay.captureAsyncFunc('User.getUserByName', (subsegment) => {
+        User.getUserByName({ db, auth }, at)
+          .then((user) => {
+            res.json(user);
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   getConnections: [
@@ -119,14 +138,18 @@ module.exports = {
         },
       } = req;
 
-      const users = list[0].split(',').map((u) => u.trim());
-      Connection.getConnectedUsers({ db }, { list: [...new Set(users)] })
-        .then((result) => {
-          res.json(result);
-        })
-        .catch((err) => {
-          next(err);
-        });
+      AWSXRay.captureAsyncFunc('Connection.getConnectedUsers', (subsegment) => {
+        const users = list[0].split(',').map((u) => u.trim());
+        Connection.getConnectedUsers({ db }, { list: [...new Set(users)] })
+          .then((result) => {
+            res.json(result);
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   getInbox: [
@@ -140,13 +163,18 @@ module.exports = {
           },
         },
       } = req;
-      Message.getInbox({ db, auth })
-        .then((inbox) => {
-          res.json(inbox);
-        })
-        .catch((err) => {
-          next(err);
-        });
+
+      AWSXRay.captureAsyncFunc('Message.getInbox', (subsegment) => {
+        Message.getInbox({ db, auth })
+          .then((inbox) => {
+            res.json(inbox);
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   getMessage: [
@@ -164,20 +192,25 @@ module.exports = {
           },
         },
       } = req;
-      Message.getMessage({ db, auth, secret }, Number(msgId))
-        .then((fullMessage) => {
-          AsyncAction.autoMessageRemoval(db, auth.username, Number(msgId))
-            .catch((err) => {
-              console.error('error on message auto removal');
-              console.error(err);
-            })
-            .finally(() => {
-              res.json(fullMessage);
-            });
-        })
-        .catch((err) => {
-          next(err);
-        });
+
+      AWSXRay.captureAsyncFunc('Message.getMessage', (subsegment) => {
+        Message.getMessage({ db, auth, secret }, Number(msgId))
+          .then((fullMessage) => {
+            AsyncAction.autoMessageRemoval(db, auth.username, Number(msgId))
+              .catch((err) => {
+                console.error('error on message auto removal');
+                console.error(err);
+              })
+              .finally(() => {
+                res.json(fullMessage);
+                subsegment.close();
+              });
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   // User identified
@@ -195,13 +228,18 @@ module.exports = {
           },
         },
       } = req;
-      User.removeUser({ db, user: auth }, at)
-        .then(() => {
-          res.status(200).send();
-        })
-        .catch((err) => {
-          next(err);
-        });
+
+      AWSXRay.captureAsyncFunc('User.removeUser', (subsegment) => {
+        User.removeUser({ db, user: auth }, at)
+          .then(() => {
+            res.status(200).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   setUserContactList: [
@@ -216,13 +254,18 @@ module.exports = {
           },
         },
       } = req;
-      User.setContacts({ db, user: auth }, body)
-        .then(() => {
-          res.status(200).send();
-        })
-        .catch((err) => {
-          next(err);
-        });
+
+      AWSXRay.captureAsyncFunc('User.setContacts', (subsegment) => {
+        User.setContacts({ db, user: auth }, body)
+          .then(() => {
+            res.status(200).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   setUserVaultItem: [
@@ -237,13 +280,18 @@ module.exports = {
           },
         },
       } = req;
-      User.setVaultItem({ db, user: auth }, body)
-        .then(() => {
-          res.status(200).send();
-        })
-        .catch((err) => {
-          next(err);
-        });
+
+      AWSXRay.captureAsyncFunc('User.setVaultItem', (subsegment) => {
+        User.setVaultItem({ db, user: auth }, body)
+          .then(() => {
+            res.status(200).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   removeUserVaultItem: [
@@ -257,13 +305,18 @@ module.exports = {
           },
         },
       } = req;
-      User.removeVaultItem({ db, user: auth })
-        .then(() => {
-          res.status(200).send();
-        })
-        .catch((err) => {
-          next(err);
-        });
+
+      AWSXRay.captureAsyncFunc('User.removeVaultItem', (subsegment) => {
+        User.removeVaultItem({ db, user: auth })
+          .then(() => {
+            res.status(200).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   writeMessage: [
@@ -279,20 +332,24 @@ module.exports = {
         },
       } = req;
 
-      Message.writeMessage({ db, user: auth }, body)
-        .then(() => {
-          AsyncAction.notifyMessage(auth.username, body.to)
-            .catch((err) => {
-              console.error('error on message notification');
-              console.error(err);
-            })
-            .finally(() => {
-              res.status(201).send();
-            });
-        })
-        .catch((err) => {
-          next(err);
-        });
+      AWSXRay.captureAsyncFunc('Message.writeMessage', (subsegment) => {
+        Message.writeMessage({ db, user: auth }, body)
+          .then(() => {
+            AsyncAction.notifyMessage(auth.username, body.to)
+              .catch((err) => {
+                console.error('error on message notification');
+                console.error(err);
+              })
+              .finally(() => {
+                res.status(201).send();
+                subsegment.close();
+              });
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   removeMessage: [
@@ -309,13 +366,18 @@ module.exports = {
           },
         },
       } = req;
-      Message.removeMessage({ db, user: auth }, Number(msgId))
-        .then(() => {
-          res.status(200).send();
-        })
-        .catch((err) => {
-          next(err);
-        });
+
+      AWSXRay.captureAsyncFunc('Message.removeMessage', (subsegment) => {
+        Message.removeMessage({ db, user: auth }, Number(msgId))
+          .then(() => {
+            res.status(200).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   subscribe: [
@@ -330,13 +392,18 @@ module.exports = {
           },
         },
       } = req;
-      User.addSubscription({ db, user: auth }, body)
-        .then(() => {
-          res.status(201).send();
-        })
-        .catch((err) => {
-          next(err);
-        });
+
+      AWSXRay.captureAsyncFunc('User.addSubscription', (subsegment) => {
+        User.addSubscription({ db, user: auth }, body)
+          .then(() => {
+            res.status(201).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
 };
