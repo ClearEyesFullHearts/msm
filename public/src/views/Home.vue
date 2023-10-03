@@ -67,6 +67,8 @@ function installApp() {
             </button>
           </p>
           <p v-if="!installed && !installable">
+            If you enable Notifications in the top right corner, you would potentially be eligible
+            to install this service as an app.<br>
             We can't determine if you can install this app on your device, it depends of your
             combination of browser and OS. You will have to search on the internet if your
             particular combination can install Progressive Web App and how to do it.<br>
@@ -74,7 +76,7 @@ function installApp() {
             congratulations and thank you!
           </p>
           <p v-if="installed">
-            Congratulations and thank you, this app is already installed on this device.
+            Congratulations and thank you for installing this app.
           </p>
           <h3>The obvious</h3>
           <p>
@@ -107,7 +109,8 @@ function installApp() {
               <li>
                 All conversations are temporary and are lost as soon as you log out.<br>
                 "Mail" messages are kept encrypted on our side until you read them after which
-                they are deleted (after 2 minutes), instant messages are never kept on our side.<br>
+                they are deleted (after 30 seconds),
+                instant messages are never kept on our side.<br>
                 No message information is transported or stored in clear text.
               </li>
             </ul>
