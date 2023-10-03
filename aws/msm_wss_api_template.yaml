@@ -181,6 +181,7 @@ Resources:
   MsmWssApi:
     Type: AWS::ApiGatewayV2::Api
     Properties:
+      Name: !Sub 'msm-wss-${MSMStageName}'
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: $request.body.action
 

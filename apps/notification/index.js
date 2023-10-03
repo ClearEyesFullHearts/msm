@@ -83,7 +83,13 @@ async function webPushNotification({ to, from, action }) {
           privateKey: secret.PRIVATE_VAPID_KEY,
         },
       },
-    ));
+    ).catch((err) => {
+      if (err.name === 'WebPushError' && err.statusCode === 410) {
+        debug('Unsubscribing');
+        return data.subscriptions.delete(to, endpoint);
+      }
+      throw err;
+    }));
     promises.push(result);
   });
 
