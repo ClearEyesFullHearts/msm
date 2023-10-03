@@ -172,7 +172,7 @@ When(/^(.*) send next fallback message to (.*)$/, function (sender, target, cb) 
 
   const wss = this.apickli.scenarioVariables[`SOCKET.${sendername}`];
   const message = this.apickli.scenarioVariables[`NEXT.${targetname}`];
-  
+
   this.apickli.storeValueInScenarioScope(`REQ.${sender.substring(1, sender.length - 1)}`, message.requestId);
 
   const body = {

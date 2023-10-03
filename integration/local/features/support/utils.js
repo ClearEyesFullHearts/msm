@@ -440,6 +440,7 @@ class Util {
     Object.keys(record).forEach((k) => {
       e[k] = record[k];
     });
+    delete e.expirationDate;
     await e.save();
   }
 

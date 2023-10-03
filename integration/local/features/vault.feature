@@ -16,11 +16,13 @@ Scenario: Set the vault up
     
 Scenario: Delete the vault
   Given I am existing `RANDOM_USER.12`
+  And I save `RANDOM_USER.12`
   And I set signature header
   When I DELETE /vault
   Then response code should be 200
   And I GET /identity/`RANDOM_USER.12`
   And response body should not contain vault
+  And I record `RANDOM_USER.12`
     
 Scenario: The vault item should have a valid token
     

@@ -69,7 +69,7 @@ async function broadcast(sender) {
   }
 }
 
-function asyncCleanSocket({
+async function asyncCleanSocket({
   id, stage, domainName,
 }) {
   const endpoint = config.get('wss.withStage') ? `https://${domainName}/${stage}` : `https://${domainName}`;
@@ -138,7 +138,7 @@ exports.handler = async function lambdaHandler(event) {
         debug('connection retrieved', !!connection);
 
         if (connection) {
-          asyncCleanSocket(connection);
+          await asyncCleanSocket(connection);
           debug('socket is closing');
           await data.connections.delete(connection.username);
           debug('delete the previous connection data');
