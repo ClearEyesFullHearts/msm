@@ -1,19 +1,22 @@
 const { Given, When } = require('@cucumber/cucumber');
-const request = require('request');
+const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda'); // CommonJS import
 const Util = require('../support/utils');
 
-Given(/^I invalidate (.*)$/, async (name) => {
+Given(/^I invalidate (.*)$/, async function (name) {
+  const username = this.apickli.replaceVariables(name);
   const daysInMs = (24 * 60 * 60000);
   const yesterday = Date.now() - daysInMs;
 
   const yesterdayRounded = Util.roundTimeToDays(-yesterday);
+  console.log(yesterdayRounded);
 
-  await Util.setValueInDB(name, `U#${name}`, 'lastActivity', yesterdayRounded);
+  await Util.setValueInDB(username, `U#${username}`, 'lastActivity', yesterdayRounded);
 });
 
 Given(/^I mark (.*) message with ID (.*) as read$/, async function (name, msgId) {
   const username = this.apickli.replaceVariables(name);
-  await Util.setValueInDB(`M#${msgId}`, `U#${username}`, 'hasBeenRead', 1);
+  const id = this.apickli.replaceVariables(msgId);
+  await Util.setValueInDB(`M#${id}`, `U#${username}`, 'hasBeenRead', 1);
 });
 
 Given(/^I mark (.*) as inactive$/, async function (name) {
@@ -23,20 +26,15 @@ Given(/^I mark (.*) as inactive$/, async function (name) {
 });
 
 When('I invoke the cleanup lambda function', async function () {
-  const options = {};
-  options.url = 'http://localhost:9000/2015-03-31/functions/function/invocations';
-  options.method = 'POST';
-  options.body = '{}';
-
-  const result = await new Promise((resolve, reject) => {
-    request(options, (error, response) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(response);
-      }
-    });
-  });
-
-  this.apickli.httpResponse = result;
+  const client = new LambdaClient();
+  const input = { // InvocationRequest
+    FunctionName: 'TestMsmMasterStack-MSMCle-MSMCleanupLambdaFunction-cJ4OyzmUzLQo', // required
+    InvocationType: 'RequestResponse', // 'Event' || 'DryRun',
+    LogType: 'None',
+    Payload: Buffer.from(JSON.stringify({})),
+  };
+  const command = new InvokeCommand(input);
+  const { Payload } = await client.send(command);
+  const response = JSON.parse(Buffer.from(Payload).toString());
+  this.apickli.httpResponse.body = JSON.stringify(response);
 });

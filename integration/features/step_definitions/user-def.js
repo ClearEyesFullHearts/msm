@@ -37,7 +37,7 @@ Given('I am a new valid user', async function () {
   this.apickli.storeValueInScenarioScope('NEW_SHA', sha);
   this.apickli.storeValueInScenarioScope('NEW_ESK', keys.private.encrypt);
   this.apickli.storeValueInScenarioScope('NEW_SSK', keys.private.signature);
-  const username = Util.getRandomString(25);
+  const username = Util.getRandomString(7);
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 
   this.apickli.setRequestBody(JSON.stringify({

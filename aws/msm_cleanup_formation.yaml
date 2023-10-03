@@ -115,6 +115,7 @@ Resources:
       Code:
         ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${DailyCleanupImageName}'
       MemorySize: 128
+      Timeout: 5
       Role: !Sub ${MSMCleanupRole.Arn}
       TracingConfig:
         Mode: Active
