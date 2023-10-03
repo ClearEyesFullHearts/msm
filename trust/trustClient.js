@@ -6,7 +6,6 @@ const http = require('http');
 const url = require('url');
 
 // url of the public facing website
-const API_URL = 'http://api.ysypya.com';
 const BASE_URL = 'http://localhost:3000';
 
 const PROD_URL = 'https://beta.ysypya.com';
@@ -75,7 +74,6 @@ function download(filename) {
   let downTxt = '';
   const map = {
     COMMIT: process.env.BUILD_HASH,
-    API_URL,
     BASE_URL: `${PROD_URL}/`,
   };
   paths.forEach((p) => {

@@ -12,6 +12,7 @@ const loginInput = ref(null);
 const fileInput = ref(null);
 const passphraseInput = ref(null);
 const hasVault = ref(false);
+const isSubmitting = ref(false);
 
 onMounted(() => {
   const usersStore = useUsersStore();
@@ -38,12 +39,15 @@ async function onLog() {
     return;
   }
   try {
+    isSubmitting.value = true;
     await authStore.getIdentity(loginInput.value.value);
     hasVault.value = authStore.hasVault;
     if (!authStore.hasVault) {
       onKeyFileNeeded();
     }
+    isSubmitting.value = false;
   } catch (error) {
+    isSubmitting.value = false;
     alertStore.error(error);
   }
 }
@@ -108,13 +112,16 @@ async function openVault() {
             >
           </div>
         </div>
-        <div class="form-group" />
       </form>
       <div v-show="!hasVault">
         <button
           class="btn btn-primary"
           @click="onLog()"
         >
+          <span
+            v-show="isSubmitting"
+            class="spinner-border spinner-border-sm me-1"
+          />
           Login
         </button>
         <router-link

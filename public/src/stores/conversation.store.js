@@ -29,13 +29,20 @@ export const useConversationStore = defineStore({
       }
 
       this.current = this.conversations[at];
-      const promises = target.messages.map((m) => {
-        if (m.id) return this.getMissedMessage(m.id);
-        return Promise.resolve(m);
-      });
 
-      const allMissedMessages = await Promise.all(promises);
-      this.current.messages.push(...allMissedMessages);
+      const sequence = target.messages.reduce((acc, m) => {
+        if (m.id) {
+          return acc.then(() => this.getMissedMessage(m.id)
+            .then((msg) => {
+              if (msg) {
+                this.current.messages.push(msg);
+              }
+            })
+            .catch(console.log));
+        }
+        return acc;
+      }, Promise.resolve());
+      await sequence;
       target.messages = [];
 
       document.title = `ySyPyA (${contactsStore.messageCount})`;
