@@ -80,8 +80,11 @@ async function asyncCleanSocket({
     ConnectionId: id, // required
   };
   const command = new DeleteConnectionCommand(input);
-  // We do not care for the response
-  client.send(command).catch(console.log);
+  try {
+    await client.send(command);
+  } catch (err) {
+    debug('socket cleanup errored', err.message);
+  }
 }
 
 exports.handler = async function lambdaHandler(event) {
