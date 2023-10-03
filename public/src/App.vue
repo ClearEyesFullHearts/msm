@@ -3,9 +3,11 @@ import { Nav, Alert, Toaster } from '@/components';
 import { useAuthStore, useWorkerStore } from '@/stores';
 
 const authStore = useAuthStore();
-const workerStore = useWorkerStore();
 
-workerStore.start();
+if (Notification.permission === 'granted') {
+  const workerStore = useWorkerStore();
+  workerStore.start();
+}
 </script>
 
 <template>

@@ -49,6 +49,7 @@ export const useWorkerStore = defineStore({
           this.installed = true;
         });
         this.sw = await navigator.serviceWorker.register('/worker/sw.js');
+        await new Promise((r) => setTimeout(() => r(), 500));
         this.permission = Notification.permission;
       }
     },

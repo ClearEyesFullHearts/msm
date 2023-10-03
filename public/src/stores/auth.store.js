@@ -70,8 +70,12 @@ export const useAuthStore = defineStore({
         const contactsStore = useContactsStore();
         contactsStore.setContactList(this.pem, this.user.contacts)
           .then(() => {
-            const workerStore = useWorkerStore();
-            workerStore.subscribe().then((result) => {
+            let p = Promise.resolve();
+            if (Notification.permission === 'granted') {
+              const workerStore = useWorkerStore();
+              p = workerStore.subscribe();
+            }
+            p.then((result) => {
               if (!result) {
                 contactsStore.updateMessages();
               } else {

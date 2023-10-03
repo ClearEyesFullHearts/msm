@@ -13,10 +13,16 @@ const workerStore = useWorkerStore();
 const { countDownMsg } = storeToRefs(authStore);
 const { isConnected } = storeToRefs(connectionStore);
 
+const isAllowed = ref(true);
+const isDisabled = ref(false);
+
 onMounted(() => {
   new Tooltip(document.body, {
     selector: "[data-bs-toggle='tooltip']",
   });
+
+  isAllowed.value = Notification.permission === 'granted';
+  isDisabled.value = Notification.permission !== 'default';
 });
 
 async function incinerate() {
@@ -27,8 +33,11 @@ async function incinerate() {
 }
 
 async function acceptNotification() {
-  if (!workerStore.allowed && !workerStore.disabled) {
+  if (!isAllowed.value && !isDisabled.value) {
+    await workerStore.start();
     await workerStore.subscribe(true);
+    isAllowed.value = Notification.permission === 'granted';
+    isDisabled.value = Notification.permission !== 'default';
   }
 }
 
@@ -169,10 +178,10 @@ async function acceptNotification() {
             <div class="form-check form-switch">
               <input
                 id="flexSwitchCheckNotification"
-                :checked="workerStore.allowed"
+                :checked="isAllowed"
                 class="form-check-input"
                 type="checkbox"
-                :disabled="workerStore.disabled"
+                :disabled="isDisabled"
                 @change="acceptNotification()"
               >
               <label
