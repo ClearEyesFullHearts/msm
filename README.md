@@ -15,9 +15,9 @@ The back-end code is in the `./apps/` and `./shared/` folder.
 `./apps/notification` is a lambda triggered by an SNS event that try to notify users when they received a message, through web socket or web push.  
 `./apps/validation` is a lambda triggered by an SNS event that start the on-chain user validation.  
 `./apps/cleanup` contains cleanup code triggered once a day to removed dead data from the datalayer.  
-`./apps/cleanAccount` and `./apps/cleanMessage` are lambdas triggered by th EventBridge scheduler to removed inactive account and read messages respectively.  
+`./apps/cleanAccount` and `./apps/cleanMessage` are lambdas triggered by the EventBridge scheduler to remove inactive account and read messages respectively.  
 `./apps/ws` contains the lambdas that manage the web socket server.  
-The datalayer uses DynamoDB with [Dynamoose](https://www.npmjs.com/package/dynamoose), the code is in the `./shared/dynamolayer` folder.  
+The datalayer uses DynamoDB with Single Table Design and [Dynamoose](https://www.npmjs.com/package/dynamoose), the code is in the `./shared/dynamolayer` folder.  
 The docker files for the back-end are in `./docker/files`.  
   
 The back-end is hosted by AWS through API Gateways for the main REST server and the web socket side, deployed through the master CloudFormation template in `./aws`.  
