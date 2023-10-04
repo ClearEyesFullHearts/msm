@@ -4,6 +4,7 @@ https://beta.ysypya.com/
 
 ## Project
 The main component of the project is actually the (very ugly) client side (powered by Vue.js v3) thanks to the [SubtleCrypto API](https://developer.mozilla.org/fr/docs/Web/API/SubtleCrypto) present in all browsers, that allows us to create RSA key pairs and encrypt/decrypt data without sharing any information in clear text with the back-end as is demonstrated by the "Engine" part of the website.  
+It's a Progressive Web App that can be installed as a native app on most platform.  
 The client side code is in the `./public` folder.  
   
 The front-end is hosted in a public AWS S3 bucket as a static website.  
@@ -11,22 +12,29 @@ The front-end is hosted in a public AWS S3 bucket as a static website.
 The back-end (powered by Node.JS) mostly manage users and their public key as well as encrypted messages delivery and some specific behaviors.  
 The back-end code is in the `./apps/` and `./shared/` folder.  
 `./apps/main` contains the REST API as the main entry point.  
+`./apps/notification` is a lambda triggered by an SNS event that try to notify users when they received a message, through web socket or web push.  
+`./apps/validation` is a lambda triggered by an SNS event that start the on-chain user validation.  
 `./apps/cleanup` contains cleanup code triggered once a day to removed dead data from the datalayer.  
+`./apps/cleanAccount` and `./apps/cleanMessage` are lambdas triggered by th EventBridge scheduler to removed inactive account and read messages respectively.  
 `./apps/ws` contains the lambdas that manage the web socket server.  
 The datalayer uses DynamoDB with [Dynamoose](https://www.npmjs.com/package/dynamoose), the code is in the `./shared/dynamolayer` folder.  
 The docker files for the back-end are in `./docker/files`.  
   
-The back-end is hosted by AWS in ECS Fargate and through an API Gateway for the web socket side, deployed through the CloudFormation templates in `./aws`.  
+The back-end is hosted by AWS through API Gateways for the main REST server and the web socket side, deployed through the master CloudFormation template in `./aws`.  
 What is not created by the templates are:
 - The secrets managed by AWS Secret Manager and used in `./shared/secrets`
-- The Docker Image in the public and private AWS container registry.
-- The Route 53 DNS "A" record to the Load Balancer and the custom domain of the API Gateway (which I should add) 
+- The Docker Image in the AWS container registry.
+- The hosted zone and the certificates used to create the domain names  
+  
+Everything is traced through X-Ray.
 
 The smart contract (written in Solidity) used for automatic validation is in `./trust/chainValidation`. It is still using the Sepolia testnet for the moment and not the Ethereum mainnet.  
-The user validation code used in the back-end is in `./shared/validator`.  
   
 The code of the Chrome extension to verify the public client integrity is in `./trust/extension`.  
-
+  
+The whole system is tested through integration tests written in Gherkin on a test stack deployed in AWS that matches exactly the "production" stack.   
+The tests can be found in `./integration`  
+  
 ## Implementation
 ### Lexicon
 #### key pair
@@ -68,7 +76,7 @@ We add the sender identification information (the "From" part) to the message du
 We cannot be sure that a joker wouldn't try to send anything in clear text to us though so we have some mechanism to be sure not to store any information we do not want to have.  
 First the format of the title and the content of the message is highly controlled. Since the public key of the target is directly used to encrypt those informations we know that the resulting data should be a base64 encoded string with exactly 684 characters, for both. (unfortunately or not it also limits the size of the content that can be sent to 446 bytes.)  
 Second every messages are separated as a header and a full object, each stored as a challenge, ensuring that everything is encrypted at least once.  
-The header contains only the sender information, the title of the message and the time it was sent and is used for display in the inbox. The full object adds the content of the message and once it has been requested by the user it triggers the deletion of the message after 2 minutes.  
+The header contains only the sender information, the title of the message and the time it was sent and is used for display in the inbox. The full object adds the content of the message and once it has been requested by the user it triggers the deletion of the message after some time.  
 
 ### Verification system
 What we want to verify is that the Public Keys users use to encrypt and send messages to each other are really each others' keys, so that whatever happen to the messages only the owner of the secret key will be able to open them.  
@@ -83,6 +91,12 @@ The blockchain technology is a developer wet dream offering algorithmic trust an
 The problem is that these problems have been resolved for centuries now through the rule of law in liberal systems of government and the power of coercion of the state by illiberal ones. The internet doesn't change that you own something because the law recognize you as the sole owner of that thing and not because a computer says so.  
 Hence the only use case for that technology is when you want to escape the power of the state or at least can't trust or rely on it, so mostly for criminal or political activities.  
 The crypto currency part of it is just stupid and only exists to scam and defraud people.  
+
+### Instant messaging
+The instant messaging capability is achieved thanks to a Web Socket server.  
+It uses the same authentication mechanism than the REST API (JWT + signature) to establish the connection and all messages are client-side encrypted. Obviously they are never recorded on the server side.  
+Soon it will only be the fallback mechanism if a peer to peer connection is impossible.  
+  
 ## Trust issues
 If you have read everything up to here you probably have some trust issues and I can't blame you. You shouldn't trust me.  
 Like I said in the project description the heavy lifting is done on the client side, the Secret Key is never shared, never stored out of the memory and the messages are at no point sent in clear text, so I wrote a simple script for you to be able to use the client code directly from your machine:  
@@ -100,11 +114,12 @@ git checkout [commit hash]
 - Go to http://localhost:3000 in your browser and then you can be sure that the client code has not been tampered with.
 
 I also created a Chrome Extension validating that the files you use in your browser match exactly those that are produced during the build phase of the client.  
-You can find and download that extension by going to the [Chrome Web Store](https://chrome.google.com/webstore/category/extensions) and searching for ["ySyPyA Verification Tool"](https://chrome.google.com/webstore/detail/ysypya-verification-tool/deemknibjlkcilgadkmcmlbeingpgefe). Once it's installed you can go to the ySyPyA Home Page and follow the instructions.  
+You can find and download that extension by going to the [Chrome Web Store](https://chrome.google.com/webstore/category/extensions) and searching for "ySyPyA Verification Tool". Once it's installed you can go to the ySyPyA Home Page and follow the instructions.  
 Chrome on mobile doesn't let you install extensions so you'll need to use the [Kiwi Browser](https://play.google.com/store/apps/details?id=com.kiwibrowser.browser) that let's you do it.  
   
 For the truly paranoid, you can always copy the reader and writer code available in `./public/offline` to encrypt your messages on an air-gapped computer. ;)  
   
 ## What's next
+- Group conversation
 - Enable peer-to-peer chat with WebRTC
 - Create a password "kill switch"
