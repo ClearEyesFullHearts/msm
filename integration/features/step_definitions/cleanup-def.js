@@ -8,7 +8,6 @@ Given(/^I invalidate (.*)$/, async function (name) {
   const yesterday = Date.now() - daysInMs;
 
   const yesterdayRounded = Util.roundTimeToDays(-yesterday);
-  console.log(yesterdayRounded);
 
   await Util.setValueInDB(username, `U#${username}`, 'lastActivity', yesterdayRounded);
 });
@@ -35,6 +34,6 @@ When('I invoke the cleanup lambda function', async function () {
   };
   const command = new InvokeCommand(input);
   const { Payload } = await client.send(command);
-  const response = JSON.parse(Buffer.from(Payload).toString());
-  this.apickli.httpResponse.body = JSON.stringify(response);
+  const response = Buffer.from(Payload).toString();
+  this.apickli.httpResponse.body = response;
 });

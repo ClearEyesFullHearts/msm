@@ -143,4 +143,5 @@ Then(/^I record (.*)$/, async function (varName) {
     [`USER.${username}`]: user,
   } = this.apickli.scenarioVariables;
   await Util.recordInDB(user);
+  delete this.apickli.scenarioVariables[`USER.${username}`];
 });

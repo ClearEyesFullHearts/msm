@@ -63,10 +63,17 @@ Before(function () {
   }
 });
 
-After(function () {
+After(async function () {
+  const promises = [];
   Object.keys(this.apickli.scenarioVariables).forEach((p) => {
     if (p.startsWith('SOCKET')) {
       this.apickli.scenarioVariables[p].close();
     }
+    if (p.startsWith('USER')) {
+      promises.push(Util.recordInDB(this.apickli.scenarioVariables[p]));
+    }
   });
+  if (promises.length > 0) {
+    await Promise.all(promises);
+  }
 });

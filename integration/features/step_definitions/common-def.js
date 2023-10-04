@@ -4,13 +4,27 @@ const assert = require('assert');
 const { Given, Then } = require('@cucumber/cucumber');
 const Util = require('../support/utils');
 
-Given(/^I load up (.*) public keys$/, function (folder) {
-  const file = fs.readFileSync(`./data/users/${folder}/public.pem`).toString();
-  const [publicK, hash] = file.split('\n----- HASH -----\n');
-  const [epkFile, spkFile] = publicK.split('\n----- SIGNATURE -----\n');
-  this.apickli.storeValueInScenarioScope('EPK', JSON.stringify(epkFile));
-  this.apickli.storeValueInScenarioScope('SPK', JSON.stringify(spkFile));
-  this.apickli.storeValueInScenarioScope('SHA', hash);
+Given(/^I load up (.*) public keys$/, async function (folder) {
+  if (folder === 'random') {
+    const {
+      public: {
+        encrypt: formattedPK,
+        signature: formattedSPK,
+        signedHash,
+      },
+    } = await Util.generateKeyPair();
+
+    this.apickli.storeValueInScenarioScope('EPK', JSON.stringify(formattedPK));
+    this.apickli.storeValueInScenarioScope('SPK', JSON.stringify(formattedSPK));
+    this.apickli.storeValueInScenarioScope('SHA', signedHash);
+  } else {
+    const file = fs.readFileSync(`./data/users/${folder}/public.pem`).toString();
+    const [publicK, hash] = file.split('\n----- HASH -----\n');
+    const [epkFile, spkFile] = publicK.split('\n----- SIGNATURE -----\n');
+    this.apickli.storeValueInScenarioScope('EPK', JSON.stringify(epkFile));
+    this.apickli.storeValueInScenarioScope('SPK', JSON.stringify(spkFile));
+    this.apickli.storeValueInScenarioScope('SHA', hash);
+  }
 });
 
 Given(/^I load up (.*) private keys$/, function (folder) {
