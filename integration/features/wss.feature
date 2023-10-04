@@ -2,7 +2,7 @@ Feature: Ws connection function Test
 
     Lambda called when there is a websocket connection to the API Getaway
 
-Scenario: `RANDOM_USER.7` connects and disconnect
+Scenario: `RANDOM_USER.7` and `RANDOM_USER.9` connects and disconnect
     Given I am existing `RANDOM_USER.7`
     And I am existing `RANDOM_USER.9`
     And `RANDOM_USER.7` is connected
@@ -55,3 +55,4 @@ Scenario: Disconnected target send event
     When `RANDOM_USER.7` send next fallback message to `RANDOM_USER.9`
     Then I wait for 2 seconds
     Then `RANDOM_USER.7` last message action is disconnected
+    And response body path $.message.username should be `RANDOM_USER.9`

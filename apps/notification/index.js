@@ -2,7 +2,7 @@ const webpush = require('web-push');
 const debug = require('debug')('notification:app');
 const config = require('config');
 const AWSXRay = require('@shared/tracing');
-const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
+const { ApiGatewayManagementApiClient, PostToConnectionCommand, GoneException } = require('@aws-sdk/client-apigatewaymanagementapi');
 const Data = require('@shared/dynamolayer');
 const Secret = require('@shared/secrets');
 
@@ -38,8 +38,17 @@ async function wssNotification({ to, from, action }) {
       ConnectionId: id,
     };
     const command = new PostToConnectionCommand(input);
-    await client.send(command);
-    debug('notification sent');
+    try {
+      await client.send(command);
+      debug('notification sent');
+    } catch (err) {
+      if (err instanceof GoneException) {
+        debug('target is disconnected', to);
+        await data.connections.delete(to);
+        return false;
+      }
+      throw err;
+    }
     return true;
   }
 

@@ -98,6 +98,8 @@ Given(/^(.*) is listening$/, function (name) {
       allMsg = [];
     }
     allMsg.push(msg.toString());
+    this.apickli.httpResponse.body = msg.toString();
+
     this.apickli.storeValueInScenarioScope(`MSG.${username}`, allMsg);
   });
 });
@@ -193,8 +195,6 @@ Then(/^(.*) decrypt content of message (.*) from route (.*)$/, function (name, i
   const { action, message: { from, requestId, content } } = msg;
   assert.strictEqual(action, route);
 
-  // const privateK = fs.readFileSync(`./data/users/${username}/private.pem`).toString();
-  // const [eskFile] = privateK.split('\n----- SIGNATURE -----\n');
   const {
     [`ESK.${username}`]: eskFile,
   } = this.apickli.scenarioVariables;
