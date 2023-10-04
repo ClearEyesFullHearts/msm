@@ -65,9 +65,11 @@ Before(function () {
 
 After(async function () {
   const promises = [];
+  let socketClosing = false;
   Object.keys(this.apickli.scenarioVariables).forEach((p) => {
     if (p.startsWith('SOCKET')) {
       this.apickli.scenarioVariables[p].close();
+      socketClosing = true;
     }
     if (p.startsWith('USER')) {
       promises.push(Util.recordInDB(this.apickli.scenarioVariables[p]));
@@ -75,5 +77,8 @@ After(async function () {
   });
   if (promises.length > 0) {
     await Promise.all(promises);
+  }
+  if (socketClosing) {
+    await new Promise((resolve) => setTimeout(resolve, 700));
   }
 });

@@ -7,64 +7,7 @@ const config = require('config');
 const { v4: uuidv4 } = require('uuid');
 const Util = require('../support/utils');
 
-const IDS = {
-  mat: 'a5839ded-e0e7-413e-928c-dfd59c7ff158',
-  batmat: '405a50e4-cc26-4475-be83-d4fc457d930a',
-  vaultUser: 'c8c691df-d12d-4dda-bb7e-236b4dd0f64d',
-};
-
 const WSS_URL = 'wss://socktest.ysypya.com';
-
-// Given(/^(.*) is connected$/, async function (name) {
-//   const username = this.apickli.replaceVariables(name);
-//   const privateK = fs.readFileSync(`./data/users/${username}/private.pem`).toString();
-//   const [_, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
-
-//   this.apickli.storeValueInScenarioScope('MY_AT', username);
-
-//   const payload = {
-//     connection: Date.now(),
-//     config: {
-//       sessionTime: config.get('timer.removal.session'),
-//       pollingTime: config.get('timer.interval.poll'),
-//     },
-//     user: {
-//       id: IDS[username],
-//       username,
-//     },
-//   };
-//   const token = Buffer.from(jwt.sign(payload, config.get('auth'))).toString('hex');
-
-//   const data = JSON.stringify({
-//     ...payload,
-//     action: 'WSS',
-//   });
-
-//   const signature = Buffer.from(Util.sign(sskFile, data)).toString('hex');
-//   // console.log('token', token);
-//   // console.log('signature', signature);
-
-//   await new Promise((resolve, reject) => {
-//     const wss = new WebSocket(WSS_URL, [token, signature]);
-//     wss.on('error', (err) => {
-//       throw err;
-//     });
-
-//     wss.on('open', () => {
-//       Util.getValueInDB({ sk: username, pk: 'WSS' })
-//         .then((connection) => {
-//           if (connection) {
-//             // console.log(`${username} connected`);
-//             this.apickli.storeValueInScenarioScope(`SOCKET.${username}`, wss);
-//             resolve();
-//           } else {
-//             reject(new Error('Connection not created in db'));
-//           }
-//         })
-//         .catch(reject);
-//     });
-//   });
-// });
 
 Given(/^(.*) is connected$/, async function (name) {
   const username = this.apickli.replaceVariables(name);

@@ -73,7 +73,7 @@ exports.handler = async function lambdaHandler(event) {
       debug('connection deleted');
 
       if (process.env.CONNECT_BROADCAST) {
-        debug('trying to broadcast new connection');
+        debug('trying to broadcast disconnection');
         await broadcast(connection.username);
         debug('broadcast done');
       }
