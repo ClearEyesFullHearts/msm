@@ -140,12 +140,15 @@ Scenario: I cannot register 2 users with the same signature key
     Then response code should be 403
     And response body path $.code should be USER_EXISTS
 
-# Scenario: Inactivate user is removed after a time
-#     Given I am a new invalidated user
-#     And I wait for 10 seconds
-#     And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`" }
-#     When I POST to /users
-#     Then response code should be 201
+Scenario: Inactivate user is removed after a time
+    Given I am a new invalidated user
+    When I wait for 1 seconds
+    Then user removal is scheduled
+    And response body path $.username should be `MY_AT`
+    When I invoke the clean user lambda function
+    Then I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`" }
+    And I POST to /users
+    Then response code should be 201
 
 Scenario: You cannot create a user with a false encryption key
     Given I generate a false encryption key

@@ -28,15 +28,19 @@ Scenario: Only the target can read a message
   Then response code should be 404
   And response body path $.code should be NOT_FOUND
 
-# Scenario: Messages is deleted after reading
-#   Given mat write a message as { "to": "`RANDOM_USER.7`" , "title": "Write one message" , "content": "My message content" }
-#   And I am existing `RANDOM_USER.7`
-#   And I GET /inbox
-#   And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
-#   And I GET /message/`FIRST_MSG_ID`
-#   When I wait for 10 seconds
-#   Then I GET /message/`FIRST_MSG_ID`
-#   And response code should be 404
+Scenario: Messages is deleted after reading
+  Given mat write a message as { "to": "`RANDOM_USER.7`" , "title": "Write one message" , "content": "My message content" }
+  And I am existing `RANDOM_USER.7`
+  And I GET /inbox
+  And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
+  And I GET /message/`FIRST_MSG_ID`
+  When I wait for 1 seconds
+  Then message removal is scheduled for `RANDOM_USER.7`
+  And response body path $.username should be `RANDOM_USER.7`
+  And response body path $.messageId should be `FIRST_MSG_ID`
+  And I invoke the clean message lambda function
+  When I GET /message/`FIRST_MSG_ID`
+  And response code should be 404
 
 Scenario: Delete one message
   Given mat write a message as { "to": "`RANDOM_USER.7`" , "title": "Write one message" , "content": "My message content" }
