@@ -578,6 +578,7 @@ components:
       properties:
         endpoint:
           type: string
+          pattern: '^https:\/\/(\bandroid\.googleapis\.com\b|\bfcm\.googleapis\.com\b|\bupdates\.push\.services\.mozilla\.com\b|\bupdates-autopush\.stage\.mozaws\.net\b|\bupdates-autopush\.dev\.mozaws\.net\b|\b.*\.notify\.windows\.com\b|\b.*\.push\.apple\.com\b)\/'
         keys:
           type: object
           required:
@@ -586,8 +587,12 @@ components:
           properties:
             auth:
               type: string
+              minLength: 22
+              maxLength: 22
             p256dh:
               type: string
+              minLength: 87
+              maxLength: 87
     Error:
       type: object
       properties:

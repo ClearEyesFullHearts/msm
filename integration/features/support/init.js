@@ -7,10 +7,9 @@ const Util = require('./utils');
 
 // lengths: ESK = 3222 SSK = 898
 // lengths: ESK = 3222 SSK = 902
-
 // BeforeAll((cb) => {
 //   Util.emptyTable()
-//     .then(() => Util.restoreTable())
+//     .then(() => Util.restoreTable())'^https:\\/\\/(\\bandroid\\.googleapis\\.com\\b|\\bfcm\\.googleapis\\.com\\b)\\//'
 //     .then(cb);
 // });
 
