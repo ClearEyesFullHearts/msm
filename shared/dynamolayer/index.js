@@ -108,6 +108,15 @@ class Data {
       .exec();
 
     await Data.batchDelete(messages, this.messages);
+
+    const subscriptions = await this.subscriptions.Entity
+      .query('pk').eq(`P#${username}`)
+      .attributes(['sk', 'pk'])
+      .exec();
+
+    await Data.batchDelete(subscriptions, this.subscriptions);
+
+    await this.connections.delete(username);
   }
 
   async clearReadMessages() {
