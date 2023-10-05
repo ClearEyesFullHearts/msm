@@ -57,7 +57,17 @@ async function openVault() {
     const [key, signKey] = keyFile.split(CryptoHelper.SEPARATOR);
     await authStore.login(key, signKey);
   } catch (err) {
-    onKeyFileNeeded();
+    if (err.message === 'WRONG_PASSWORD') {
+      try {
+        const keyFile = await authStore.openKillSwitch(passphraseInput.value.value);
+        const [key, signKey] = keyFile.split(CryptoHelper.SEPARATOR);
+        await authStore.kill(key, signKey);
+      } catch (exc) {
+        onKeyFileNeeded();
+      }
+    } else {
+      onKeyFileNeeded();
+    }
   }
 }
 </script>

@@ -4,7 +4,7 @@ import { defineStore, getActivePinia } from 'pinia';
 import { fetchWrapper } from '@/helpers';
 import { router } from '@/router';
 import {
-  useAlertStore, useContactsStore, useConnectionStore, useWorkerStore,
+  useAlertStore, useUsersStore, useContactsStore, useConnectionStore, useWorkerStore,
 } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
@@ -15,6 +15,7 @@ const mycrypto = new CryptoHelper();
 const myvalidator = new ChainHelper();
 let interval;
 let myVault;
+let myKillSwitch;
 let myChallenge;
 let verificationTimeoutID;
 
@@ -33,7 +34,7 @@ export const useAuthStore = defineStore({
   }),
   actions: {
     async getIdentity(username) {
-      const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${username}`);
+      const { vault, switch: killSwitch, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${username}`);
       myChallenge = challenge;
       if (vault) {
         this.hasVault = true;
@@ -41,6 +42,11 @@ export const useAuthStore = defineStore({
       } else {
         this.hasVault = false;
         myVault = undefined;
+      }
+      if (killSwitch) {
+        myKillSwitch = killSwitch;
+      } else {
+        myKillSwitch = undefined;
       }
     },
     async openVault(passphrase) {
@@ -52,10 +58,33 @@ export const useAuthStore = defineStore({
         token,
       } = myVault;
       const hashPass = await mycrypto.hash(passphrase);
-      const decryptedVault = await mycrypto.symmetricDecrypt(hashPass, iv, token);
+      try {
+        const decryptedVault = await mycrypto.symmetricDecrypt(hashPass, iv, token);
 
-      const dec = new TextDecoder();
-      return dec.decode(decryptedVault);
+        const dec = new TextDecoder();
+        return dec.decode(decryptedVault);
+      } catch (err) {
+        throw new Error('WRONG_PASSWORD');
+      }
+    },
+    async openKillSwitch(passphrase) {
+      if (!myKillSwitch || !myKillSwitch.iv || !myKillSwitch.token) {
+        throw new Error('No vault recorded');
+      }
+
+      const {
+        iv,
+        token,
+      } = myKillSwitch;
+      const hashPass = await mycrypto.hash(passphrase);
+      try {
+        const decryptedVault = await mycrypto.symmetricDecrypt(hashPass, iv, token);
+
+        const dec = new TextDecoder();
+        return dec.decode(decryptedVault);
+      } catch (err) {
+        throw new Error('WRONG_PASSWORD');
+      }
     },
     async login(key, signKey) {
       const alertStore = useAlertStore();
@@ -90,7 +119,19 @@ export const useAuthStore = defineStore({
         this.onChainVerification();
 
         myVault = undefined;
+        myKillSwitch = undefined;
         myChallenge = undefined;
+      } catch (error) {
+        alertStore.error(error);
+      }
+    },
+    async kill(key, signKey) {
+      const alertStore = useAlertStore();
+      const usersStore = useUsersStore();
+      try {
+        await this.setIdentityUp(key, signKey, myChallenge);
+        await usersStore.destroy(this.user.user.username);
+        this.logout();
       } catch (error) {
         alertStore.error(error);
       }
@@ -146,15 +187,21 @@ export const useAuthStore = defineStore({
         }
       }, 1000);
     },
-    async setVault(passphrase) {
+    async setVault(passphrase, killSwitch) {
       const itemValue = `${this.pem}${CryptoHelper.SEPARATOR}${this.signing}`;
       const { token, iv } = await mycrypto.symmetricEncrypt(itemValue, passphrase);
+      const vault = { token, iv };
 
-      console.log('this.pem length', this.pem.length);
-      console.log('this.signing length', this.signing.length);
-      console.log('token length', token.length);
+      let kill;
+      if (killSwitch && killSwitch.length && killSwitch.length > 7) {
+        const switchEnc = await mycrypto.symmetricEncrypt(itemValue, killSwitch);
+        kill = { token: switchEnc.token, iv: switchEnc.iv };
+      } else {
+        const switchEnc = await mycrypto.symmetricEncrypt(itemValue);
+        kill = { token: switchEnc.token, iv: switchEnc.iv };
+      }
 
-      await fetchWrapper.put(`${baseUrl}/vault`, { token, iv });
+      await fetchWrapper.put(`${baseUrl}/vault`, { vault, switch: kill });
 
       this.hasVault = true;
     },

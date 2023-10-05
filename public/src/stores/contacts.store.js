@@ -76,7 +76,6 @@ export const useContactsStore = defineStore({
           }
         })
         .catch((err) => {
-          console.log(err);
           if (err === '@ unknown') {
             const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
             checkingUser.alert = alertMsg;
