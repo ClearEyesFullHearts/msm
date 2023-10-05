@@ -249,7 +249,7 @@ class UserData {
     this.Entity.update(
       { pk: `U#${username}`, sk: username },
       {
-        $SET: { vault: item },
+        $SET: { vault: item.vault, switch: item.switch },
       },
     );
   }
@@ -258,7 +258,7 @@ class UserData {
     this.Entity.update(
       { pk: `U#${username}`, sk: username },
       {
-        $REMOVE: ['vault'],
+        $REMOVE: ['vault', 'switch'],
       },
     );
   }

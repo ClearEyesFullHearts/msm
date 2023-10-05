@@ -263,7 +263,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VaultItem'
+              $ref: '#/components/schemas/Vault'
       responses:
         '200':
           description: Key saved
@@ -481,6 +481,10 @@ components:
           properties:
             vault:
               $ref: "#/components/schemas/VaultItem"
+        - type: object
+          properties:
+            switch:
+              $ref: "#/components/schemas/VaultItem"
     User:
       type: object
       required:
@@ -554,6 +558,16 @@ components:
           format: byte
           minLength: 684
           maxLength: 684
+    Vault:
+      type: object
+      required:
+        - vault
+        - switch
+      properties:
+        vault:
+          $ref: "#/components/schemas/VaultItem"
+        switch:
+          $ref: "#/components/schemas/VaultItem"
     VaultItem:
       type: object
       required:

@@ -113,20 +113,34 @@ Given('I set false signature header', function () {
   this.apickli.addRequestHeader('x-msm-sig', falseSig);
 });
 
-Given(/^I set my vault item (.*) with password (.*)$/, function (varName, passphrase) {
+Given(/^I set my vault item (.*) with password (.*) and (.*)$/, function (varName, passphrase, killswitch) {
   this.apickli.storeValueInScenarioScope('VAULT_PASS', passphrase);
   const eskVal = this.apickli.scenarioVariables.ESK || this.apickli.scenarioVariables.NEW_ESK;
   const sskVal = this.apickli.scenarioVariables.SSK || this.apickli.scenarioVariables.NEW_SSK;
   const keys = `${eskVal}\n----- SIGNATURE -----\n${sskVal}`;
-  const vaultItem = Util.symmetricEncrypt(keys, passphrase);
+  const vault = Util.symmetricEncrypt(keys, passphrase);
+  const kill = Util.symmetricEncrypt(keys, killswitch);
 
-  this.apickli.storeValueInScenarioScope(varName, JSON.stringify(vaultItem));
+  this.apickli.storeValueInScenarioScope(varName, JSON.stringify({
+    vault,
+    switch: kill,
+  }));
 });
 
 Then(/^I open the vault (.*) with (.*)$/, function (vaultName, passphrase) {
   const vault = this.apickli.scenarioVariables[vaultName];
 
   const privateK = Util.symmetricDecrypt(vault, passphrase);
+
+  const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
+  this.apickli.storeValueInScenarioScope('ESK', eskFile);
+  this.apickli.storeValueInScenarioScope('SSK', sskFile);
+});
+
+Then(/^I open the switch (.*) with (.*)$/, function (vaultName, passphrase) {
+  const kill = this.apickli.scenarioVariables[vaultName];
+
+  const privateK = Util.symmetricDecrypt(kill, passphrase);
 
   const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
   this.apickli.storeValueInScenarioScope('ESK', eskFile);

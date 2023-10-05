@@ -102,13 +102,23 @@ class User {
           iv,
           token,
         } = knownUser.vault;
-        return {
+        const identity = {
           ...rawChallenge,
           vault: {
             iv,
             token,
           },
         };
+        if (knownUser.switch) {
+          return {
+            ...identity,
+            switch: {
+              iv: knownUser.switch.iv,
+              token: knownUser.switch.token,
+            },
+          };
+        }
+        return identity;
       }
       return rawChallenge;
     }
@@ -163,13 +173,17 @@ class User {
 
   static async setVaultItem({ db, user }, item) {
     const {
-      token,
-      iv,
+      vault,
+      switch: kill,
     } = item;
     debug(`set vault item for ${user.username}`);
 
-    if (!Encryption.isBase64(token)
-    || !Encryption.isBase64(iv)) {
+    if (!Encryption.isBase64(vault.token)
+    || !Encryption.isBase64(vault.iv)) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong challenge format');
+    }
+    if (!Encryption.isBase64(kill.token)
+    || !Encryption.isBase64(kill.iv)) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong challenge format');
     }
 
