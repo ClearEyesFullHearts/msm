@@ -151,17 +151,17 @@ class User {
     debug('user removed');
   }
 
-  static async removeVaultItem({ user }) {
+  static async removeVaultItem({ db, user }) {
     debug(`remove vault item for ${user.username}`);
     if (user.lastActivity < 0) {
       throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
     }
-    delete user.vault;
-    await user.save();
+
+    await db.users.deleteVault(user.username);
     debug('vault item removed');
   }
 
-  static async setVaultItem({ user }, item) {
+  static async setVaultItem({ db, user }, item) {
     const {
       token,
       iv,
@@ -176,12 +176,11 @@ class User {
     if (user.lastActivity < 0) {
       throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
     }
-    user.vault = item;
-    await user.save();
+    await db.users.addVault(user.username, item);
     debug('vault item set');
   }
 
-  static async setContacts({ user }, challenge) {
+  static async setContacts({ db, user }, challenge) {
     const {
       token,
       passphrase,
@@ -198,8 +197,7 @@ class User {
     if (user.lastActivity < 0) {
       throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
     }
-    user.contacts = challenge;
-    await user.save();
+    await db.users.setContacts(user.username, challenge);
     debug('contacts set');
   }
 

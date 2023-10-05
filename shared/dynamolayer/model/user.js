@@ -244,6 +244,33 @@ class UserData {
       },
     );
   }
+
+  async addVault(username, item) {
+    this.Entity.update(
+      { pk: `U#${username}`, sk: username },
+      {
+        $SET: { vault: item },
+      },
+    );
+  }
+
+  async deleteVault(username) {
+    this.Entity.update(
+      { pk: `U#${username}`, sk: username },
+      {
+        $REMOVE: ['vault'],
+      },
+    );
+  }
+
+  async setContacts(username, item) {
+    this.Entity.update(
+      { pk: `U#${username}`, sk: username },
+      {
+        $SET: { contacts: item },
+      },
+    );
+  }
 }
 
 module.exports = UserData;
