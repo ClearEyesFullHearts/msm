@@ -26,6 +26,11 @@ Parameters:
     Default: test
     Description: The name of the secret to use.
 
+  MSMSecretID:
+    Type: String
+    Default: test
+    Description: The id of the secret to use.
+
   NotificationImageName:
     Type: String
     Default: mft-msm-notification.latest
@@ -56,7 +61,7 @@ Resources:
             Action:
               - secretsmanager:GetSecretValue
             Resource:
-              - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:BetaMSMSecret-shRNxY'
+              - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${MSMSecretID}'
           - Sid: DynamoDBTableAccess
             Effect: Allow
             Action:

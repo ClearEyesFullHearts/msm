@@ -20,6 +20,11 @@ Parameters:
     Default: test
     Description: The name of the secret to use.
 
+  MSMSecretID:
+    Type: String
+    Default: test
+    Description: The id of the secret to use.
+
   MSMHttpApiDomainName:
     Type: String
     Default: test.ysypya.com
@@ -77,6 +82,7 @@ Resources:
         MSMApiDomainName: !Ref MSMWssApiDomainName
         MSMApiCertificateID: !Ref MSMWssApiCertificateID
         MSMHostedZoneID: !Ref MSMHostedZoneID
+        MSMSecretID: !Ref MSMSecretID
 
   MSMNotifiedStack:
     Type: AWS::CloudFormation::Stack
@@ -89,6 +95,7 @@ Resources:
         NotificationImageName: !Sub 'mft-msm-notification.${MSMStageName}.${MSMImageTag}'
         MSMAPIId: !GetAtt MSMWssAPIStack.Outputs.APIId
         MSMNotificationTopicName: !Sub '${MSMStageName}MsmNotifTopic'
+        MSMSecretID: !Ref MSMSecretID
 
   MSMValidateStack:
     Type: AWS::CloudFormation::Stack
@@ -101,6 +108,7 @@ Resources:
         ValidationImageName: !Sub 'mft-msm-validation.${MSMStageName}.${MSMImageTag}'
         MSMValidationTopicName: !Sub '${MSMStageName}MsmValidateTopic'
         SchedulerGroupName: !Sub '${MSMStageName}-MSM-Confirmation-Group'
+        MSMSecretID: !Ref MSMSecretID
 
   MSMMainStack:
     Type: AWS::CloudFormation::Stack
@@ -120,3 +128,4 @@ Resources:
         MSMCleanAccountLambda: !GetAtt MSMCleanupStack.Outputs.AccountCleanupName
         MSMCleanMessageLambda: !GetAtt MSMCleanupStack.Outputs.MessageCleanupName
         MSMCleanupSchedulerRole: !GetAtt MSMCleanupStack.Outputs.SchedulerRoleName
+        MSMSecretID: !Ref MSMSecretID
