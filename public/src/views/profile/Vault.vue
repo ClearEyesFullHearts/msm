@@ -40,8 +40,8 @@ async function onEmptyVault() {
 }
 
 function onDownloadSK() {
-  const itemValue = `${this.authStore.pem}${CryptoHelper.SEPARATOR}${this.authStore.signing}`;
-  FileHelper.download(`@${this.authStore.user.user.username}.pem`, itemValue);
+  const itemValue = `${authStore.pem}${CryptoHelper.SEPARATOR}${authStore.signing}`;
+  FileHelper.download(`@${authStore.user.user.username}.pem`, itemValue);
 }
 </script>
 
