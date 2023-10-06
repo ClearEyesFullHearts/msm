@@ -1,5 +1,6 @@
 const { Given, When, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
+const config = require('config');
 const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda'); // CommonJS import
 const { SchedulerClient, GetScheduleCommand } = require('@aws-sdk/client-scheduler'); // CommonJS import
 const Util = require('../support/utils');
@@ -54,7 +55,7 @@ Then(/^message removal is scheduled for (.*)$/, async function (varName) {
 When('I invoke the cleanup lambda function', async function () {
   const client = new LambdaClient();
   const input = { // InvocationRequest
-    FunctionName: 'TestMsmMasterStack-MSMCle-MSMCleanupLambdaFunction-cJ4OyzmUzLQo', // required
+    FunctionName: config.get('lambdas.cleanup'), // required
     InvocationType: 'RequestResponse', // 'Event' || 'DryRun',
     LogType: 'None',
     Payload: Buffer.from(JSON.stringify({})),
@@ -68,7 +69,7 @@ When('I invoke the cleanup lambda function', async function () {
 When('I invoke the clean user lambda function', async function () {
   const client = new LambdaClient();
   const input = { // InvocationRequest
-    FunctionName: 'TestMsmMasterStack-MSMCle-MSMAccountCleanupLambdaF-3xv2rFzE7TgC', // required
+    FunctionName: config.get('lambdas.clean-user'), // required
     InvocationType: 'RequestResponse', // 'Event' || 'DryRun',
     LogType: 'None',
     Payload: Buffer.from(this.apickli.httpResponse.body),
@@ -83,7 +84,7 @@ When('I invoke the clean user lambda function', async function () {
 When('I invoke the clean message lambda function', async function () {
   const client = new LambdaClient();
   const input = { // InvocationRequest
-    FunctionName: 'TestMsmMasterStack-MSMCle-MSMMessageCleanupLambdaF-zHXEqDvzjXbT', // required
+    FunctionName: config.get('lambdas.clean-msg'), // required
     InvocationType: 'RequestResponse', // 'Event' || 'DryRun',
     LogType: 'None',
     Payload: Buffer.from(this.apickli.httpResponse.body),

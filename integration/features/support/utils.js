@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const dynamoose = require('dynamoose');
+const config = require('config');
 const fs = require('fs');
 
 async function asyncGenerateKeyPair(modulo) {
@@ -38,8 +39,7 @@ function formatSK(privateKey) {
   return `${pemHeader}\n${pemContents}\n${pemFooter}`;
 }
 
-const TABLE_NAME = 'MyTestTable';
-// const TABLE_NAME = 'TestIntegrMSM';
+const TABLE_NAME = config.get('dynamo.table');
 const ALGORITHM = 'aes-256-gcm';
 const PASS_SIZE = 32;
 const IV_SIZE = 16;

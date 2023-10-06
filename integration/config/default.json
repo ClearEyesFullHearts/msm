@@ -1,16 +1,14 @@
 {
   "dynamo": {
-    "credentials":{
-      "accessKeyId": "local",
-      "secretAccessKey": "local"
-    },
-    "region": "us-west-2"
+    "table": "MyTestTable"
   },
-  "base": {
-    "instance": {
-      "protocol": "http",
-      "host": "localhost",
-      "port": "4000"
-    }
+  "instance": {
+    "protocol": "https",
+    "host": "test.ysypya.com"
+  },
+  "lambdas": {
+    "cleanup": "TestMsmMasterStack-MSMCle-MSMCleanupLambdaFunction-cJ4OyzmUzLQo",
+    "clean-user": "TestMsmMasterStack-MSMCle-MSMAccountCleanupLambdaF-3xv2rFzE7TgC",
+    "clean-msg": "TestMsmMasterStack-MSMCle-MSMMessageCleanupLambdaF-zHXEqDvzjXbT"
   }
 }

@@ -99,7 +99,7 @@ Scenario: Signature header is mandatory to set up the vault
     Given I am authenticated user batmat
     And I set var TOKEN to a 4164 characters long base64 string
     And I set var IV to a 18 characters long base64 string
-    And I set body to { "token": "`TOKEN`", "iv": "`IV`" }
+    And I set body to { "vault": { "token": "`TOKEN`", "iv": "`IV`" }, "switch": { "token": "`TOKEN`", "iv": "`IV`" } }
     And I set false signature header
     When I PUT /vault
     Then response code should be 403

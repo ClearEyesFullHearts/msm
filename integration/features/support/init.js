@@ -1,21 +1,24 @@
 const fs = require('fs');
 const apickli = require('apickli');
+const config = require('config');
 const {
   Before, BeforeAll, After,
 } = require('@cucumber/cucumber');
 const Util = require('./utils');
 
-// lengths: ESK = 3222 SSK = 898
-// lengths: ESK = 3222 SSK = 902
-// BeforeAll((cb) => {
-//   Util.emptyTable()
-//     .then(() => Util.restoreTable())'^https:\\/\\/(\\bandroid\\.googleapis\\.com\\b|\\bfcm\\.googleapis\\.com\\b)\\//'
-//     .then(cb);
-// });
+BeforeAll((cb) => {
+  if (process.env.RESET_FIXTURE) {
+    Util.emptyTable()
+      .then(() => Util.restoreTable())
+      .then(cb);
+  } else {
+    cb();
+  }
+});
 
 Before(function () {
-  const host = 'test.ysypya.com';
-  const protocol = 'https';
+  const host = config.get('instance.host');
+  const protocol = config.get('instance.protocol');
 
   this.apickli = new apickli.Apickli(protocol, host, 'data');
   this.apickli.addRequestHeader('Cache-Control', 'no-cache');
