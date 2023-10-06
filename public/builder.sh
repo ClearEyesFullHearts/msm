@@ -11,10 +11,15 @@ VITE_CHAIN_CONTRACT=0xeCb67f9705110bf703a0E34CA04749e46823c3be
 VITE_PUBLIC_VAPID_KEY=BKsOGQP66VNVwrjUhi3CZRUiGDxzSFJPaiCqcrN3tyaIVSySMkNRVoaIbX9VcuFrHfiHqxfwEbQ67kbNjCHAclk
 VITE_COMMIT_HASH=${myVar}" > .env.production
 
+rm -r dist
+
 BUILD_HASH=$myVar npm run build
+
+rm -r ../trust/dist
 
 cp -R ./dist ../trust/
 
 cd ../trust
+
 node serve > /dev/null 2>&1 &
 BUILD_HASH=$myVar node trustClient
