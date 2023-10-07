@@ -82,18 +82,21 @@ function installApp() {
           <p>
             <ul>
               <li>
-                The account's owner is the owner of the Secret Key,
-                the file that you downloaded when you created the account.<br>
-                There is no recovery mechanism, if you lose the SK, the account is lost.<br>
-                Everyone who has access to a copy of the SK shares the account.<br>
-              </li>
-              <li>
                 In the top right corner are all pages related to your account.<br>
                 There you'll find your own profile data to be verified by others
-                and your vault to upgrade to an official account.<br>
+                and your vault.<br>
                 Start by visiting your profile, download your own security file,
                 go back to the home page and upload it to verify yourself.<br>
                 The Incinerate button deletes your account.
+              </li>
+              <li>
+                In your vault you can download your secret key as a file, this file can be used
+                instead of your password.
+                (you'll be prompted to upload this file if you fail to write the right password)<br>
+                If you empty your vault you'll be able to change your password and set
+                a password killswitch up.<br>
+                If you empty your vault without replacing your password
+                the secret key file is the only way to connect.<br>
               </li>
               <li>
                 The "Connect" button on the home page allows you to receive
@@ -233,7 +236,7 @@ function installApp() {
                 Peer to peer chat
               </li>
               <li>
-                Password kill switch
+                Group chat
               </li>
             </ul>
           </p>

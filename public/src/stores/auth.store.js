@@ -86,7 +86,7 @@ export const useAuthStore = defineStore({
         throw new Error('WRONG_PASSWORD');
       }
     },
-    async login(key, signKey) {
+    async login(key, signKey, firstTime = false) {
       const alertStore = useAlertStore();
       try {
         await this.setIdentityUp(key, signKey, myChallenge);
@@ -97,26 +97,22 @@ export const useAuthStore = defineStore({
         this.publicHash = await mycrypto.hash(`${epk}\n${spk}`);
 
         const contactsStore = useContactsStore();
-        contactsStore.setContactList(this.pem, this.user.contacts)
-          .then(() => {
-            let p = Promise.resolve();
-            if (Notification.permission === 'granted') {
-              const workerStore = useWorkerStore();
-              p = workerStore.subscribe();
-            }
-            p.then((result) => {
-              if (!result) {
-                contactsStore.updateMessages();
-              } else {
-                contactsStore.updateMessages(false);
-              }
-            });
-          });
+        await contactsStore.setContactList(this.pem, this.user.contacts);
 
-        // redirect to previous url or default to home page
-        router.push(this.returnUrl || '/conversations');
+        let isSubscribed = false;
+        if (Notification.permission === 'granted') {
+          const workerStore = useWorkerStore();
+          isSubscribed = await workerStore.subscribe();
+        }
+        if (!isSubscribed) {
+          await contactsStore.updateMessages();
+        } else {
+          await contactsStore.updateMessages(false);
+        }
 
-        this.onChainVerification();
+        if (!firstTime) {
+          this.onChainVerification();
+        }
 
         myVault = undefined;
         myKillSwitch = undefined;

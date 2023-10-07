@@ -23,43 +23,50 @@ import config from '@/lib/config';
             target="_blank"
           >encrypted communication intro.</a>
         </p>
-        <h4>ySyPyA is organized around three tiers:</h4>
+        <p>
+          The "Engine" is a demo page of these cryptographic principles.
+        </p>
+        <h4>ySyPyA features:</h4>
         <ul>
           <li>
-            <b>Public</b>
+            <b>Messaging</b>
             <p>
-              The public tier is our "Engine" page (top left).<br>
-              From there you can encrypt and decrypt messages but you have to manage your own key pair
-              and all your potential recipients' public keys, yourself.<br>
-              Your encrypted messages have to be transported through another messaging service,
-              like e-mails, Signal or Whatsapp.<br>
-              This is mostly just for fun and help the public understand how encryption works.
+              Write ephemeral messages to your contacts either instantly or as mail.<br>
+              Nothing links a message to its sender and every message is deleted once read.
             </p>
           </li>
           <li>
-            <b>Burner</b>
+            <b>Strong encryption</b>
             <p>
-              The "burner" tier is when you create a simple account with us.<br>
-              You access our messaging platform where we manage all accounts public keys
-              so that you can search for other accounts and write encrypted messages to them
-              as well as easily receive encrypted messages from others.<br>
-              You still have to manage and secure your secret key.<br>
-              Use it to have just one important conversation or topic
-              for a limited time and then burn it.<br>
-              For more informations on the "burner" tier, click on "Register"
-              in the top right corner
-              and create an account by following the instructions
-              then sign in and go to the home page.
+              Every piece of data exchanged between you and us is, at least, encrypted with
+              a RSA 4096-bit key and signed with a RSA 1024-bit key.
             </p>
           </li>
           <li>
-            <b>Official</b>
+            <b>No record</b>
             <p>
-              The Official tier will allow you to trust us with your secret key's management,
-              and be able to connect to your account with a simple password.<br>
-              Your official account is there to stay and keep in touch with your contacts
-              through the contact list and our verification system.<br>
-              You'll be able to upgrade any account from "burner" to official freely.<br>
+              The only data we keep server side are your username, your public key,
+              the unread encrypted messages and your contact list, entirely encrypted.<br>
+              Nothing is stored out of memory client side so a simple page refresh makes
+              all datas disappear.<br>
+            </p>
+          </li>
+          <li>
+            <b>Users verification</b>
+            <p>
+              We offer 2 layers of users' integrity verification.<br>
+              First, all users' public keys are certified through the Ethereum blockchain.<br>
+              Second you can share a security file with your contact for a strong verification
+              of your public keys.
+            </p>
+          </li>
+          <li>
+            <b>Site integrity</b>
+            <p>
+              A Chrome Extension is available for you to be sure that this website is what it claims
+              to be, without external tampering.<br>
+              You can find it in <a target="_blank" href="https://chrome.google.com/webstore/category/extensions?hl=fr">Chrome Web Store</a>
+              under the name "ySyPyA Verification Tool".
             </p>
           </li>
         </ul>

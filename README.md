@@ -20,11 +20,12 @@ The back-end code is in the `./apps/` and `./shared/` folder.
 The datalayer uses DynamoDB with Single Table Design and [Dynamoose](https://www.npmjs.com/package/dynamoose), the code is in the `./shared/dynamolayer` folder.  
 The docker files for the back-end are in `./docker/files`.  
   
-The back-end is hosted by AWS through API Gateways for the main REST server and the web socket side, deployed through the master CloudFormation template in `./aws`.  
+The back-end is hosted by AWS through API Gateways for the main REST server and the web socket side, deployed through the master CloudFormation template in `./aws/templates`.  
 What is not created by the templates are:
 - The secrets managed by AWS Secret Manager and used in `./shared/secrets`
-- The Docker Image in the AWS container registry.
+- The Docker containers in the AWS container registry.
 - The hosted zone and the certificates used to create the domain names  
+The deployment script is in `./aws/scripts`.  
   
 Everything is traced through X-Ray.
 
@@ -122,4 +123,3 @@ For the truly paranoid, you can always copy the reader and writer code available
 ## What's next
 - Group conversation
 - Enable peer-to-peer chat with WebRTC
-- Create a password "kill switch"

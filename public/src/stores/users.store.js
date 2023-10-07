@@ -36,6 +36,26 @@ export const useUsersStore = defineStore({
     newUsername: null,
   }),
   actions: {
+    async createUser(user) {
+      const {
+        username,
+      } = user;
+      const { PK, SK } = await mycrypto.generateKeyPair();
+      const { PK: signPK, SK: signSK } = await mycrypto.generateSignatureKeyPair();
+
+      const clearHash = await mycrypto.hash(`${PK}\n${signPK}`);
+      const signedHash = await mycrypto.sign(signSK, clearHash, true);
+
+      const send = {
+        at: username,
+        key: PK,
+        signature: signPK,
+        hash: signedHash,
+      };
+      await fetchWrapper.post(`${baseUrl}/users`, send);
+
+      return { ESK: SK, SSK: signSK };
+    },
     async register(user) {
       const {
         username,

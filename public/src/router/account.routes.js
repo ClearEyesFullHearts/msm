@@ -1,10 +1,10 @@
-import { Layout, Login, Register } from '@/views/account';
+import { Layout, Create, Connect } from '@/views/account';
 
 export default {
   path: '/',
   component: Layout,
   children: [
-    { path: 'login', component: Login },
-    { path: 'register', component: Register },
+    { path: 'login', component: Connect },
+    { path: 'register', component: Create },
   ],
 };

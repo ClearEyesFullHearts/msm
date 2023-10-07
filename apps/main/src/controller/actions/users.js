@@ -187,9 +187,6 @@ class User {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong challenge format');
     }
 
-    if (user.lastActivity < 0) {
-      throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');
-    }
     await db.users.addVault(user.username, item);
     debug('vault item set');
   }
