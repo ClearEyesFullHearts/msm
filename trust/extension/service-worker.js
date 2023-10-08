@@ -94,6 +94,17 @@ function onClientReady(request) {
         },
       });
       resultMap = [];
+      // fetching the content of the website service worker file to hash and compare
+      // because it doesn't trigger any event even the first time it registers
+      // No external code is being used here
+      fetch(`${BASE_URL}worker/sw.js`)
+        .then((response) => response.text())
+        .then((sw) => getHash(btoa(ToBinary(sw))))
+        .then((hash) => {
+          console.log('loadingFinished', `${BASE_URL}worker/sw.js`);
+          responseResult(`${BASE_URL}worker/sw.js`, hash);
+        })
+        .catch(console.error);
     }
     scriptReady = true;
   }
