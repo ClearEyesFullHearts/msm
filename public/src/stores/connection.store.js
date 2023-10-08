@@ -180,17 +180,19 @@ export const useConnectionStore = defineStore({
       const contactsStore = useContactsStore();
       contactsStore.updateMessages(false);
     },
-    disconnect() {
+    disconnect(logout = false) {
       const contactsStore = useContactsStore();
       try {
         this.socket.close();
-        this.isConnected = false;
-        contactsStore.updateMessages();
-      } catch (err) {
         this.socket = null;
         this.isConnected = false;
         this.isConnecting = false;
-        contactsStore.disconnected();
+        if (!logout) {
+          contactsStore.disconnected();
+          contactsStore.updateMessages();
+        }
+      } catch (err) {
+        console.log(err);
       }
     },
   },

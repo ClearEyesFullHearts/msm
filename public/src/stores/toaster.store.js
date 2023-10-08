@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import { defineStore } from 'pinia';
+import { useWorkerStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 
 const mycrypto = new CryptoHelper();
@@ -19,15 +20,20 @@ export const useToasterStore = defineStore({
   }),
   actions: {
     updateState(payload, status) {
-      const { text, timeout } = payload;
+      const workerStore = useWorkerStore();
+      const isSent = workerStore.notify(payload);
 
-      const toast = createToast(text, status);
+      if (!isSent) {
+        const { text, timeout } = payload;
 
-      this.toasts.push(toast);
+        const toast = createToast(text, status);
 
-      setTimeout(() => {
-        this.toasts = this.toasts.filter((t) => t.id !== toast.id);
-      }, timeout || defaultTimeout);
+        this.toasts.push(toast);
+
+        setTimeout(() => {
+          this.toasts = this.toasts.filter((t) => t.id !== toast.id);
+        }, timeout || defaultTimeout);
+      }
     },
     success(payload) {
       this.updateState(payload, 'success');

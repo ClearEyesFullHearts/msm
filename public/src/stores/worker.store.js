@@ -22,7 +22,7 @@ function urlB64ToUint8Array(base64String) {
   }
   return outputArray;
 }
-
+let notifTimeout;
 export const useWorkerStore = defineStore({
   id: 'worker',
   state: () => ({
@@ -32,6 +32,8 @@ export const useWorkerStore = defineStore({
     installable: false,
     installed: false,
     installPrompt: null,
+    channel: null,
+    notifOk: true,
   }),
   getters: {
     allowed: (state) => state.permission === 'granted',
@@ -78,12 +80,16 @@ export const useWorkerStore = defineStore({
       this.permission = Notification.permission;
       if (this.permission === 'granted') {
         const authStore = useAuthStore();
-        const bc = new BroadcastChannel('new_mail');
-        bc.onmessage = (event) => {
+        this.channel = new BroadcastChannel('new_mail');
+        this.channel.onmessage = (event) => {
           const { data } = event;
           if (data.to === authStore.user.user.username) {
             const contactsStore = useContactsStore();
             contactsStore.updateMessages(false);
+            this.notifOk = false;
+            notifTimeout = setTimeout(() => {
+              this.notifOk = true;
+            }, 1000);
           }
         };
       }
@@ -109,6 +115,23 @@ export const useWorkerStore = defineStore({
           unread: unreadMessages,
         });
       }
+    },
+    notify({ text }) {
+      if (!this.sw) return false;
+
+      if (this.sw.active) {
+        if (this.notifOk) {
+          this.sw.active.postMessage({
+            action: 'notify',
+            text,
+          });
+        } else {
+          this.notifOk = true;
+          clearTimeout(notifTimeout);
+        }
+        return true;
+      }
+      return false;
     },
   },
 });

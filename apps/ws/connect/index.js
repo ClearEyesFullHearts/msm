@@ -141,10 +141,10 @@ exports.handler = async function lambdaHandler(event) {
         debug('connection retrieved', !!connection);
 
         if (connection) {
-          await asyncCleanSocket(connection);
-          debug('socket is closing');
           await data.connections.delete(connection.username);
           debug('delete the previous connection data');
+          await asyncCleanSocket(connection);
+          debug('socket is closing');
         }
 
         await data.connections.create({

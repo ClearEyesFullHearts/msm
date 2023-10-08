@@ -36,7 +36,7 @@ self.addEventListener('push', (event) => {
 });
 
 self.onmessage = function (e) {
-  const { action, unread } = e.data;
+  const { action, unread, text } = e.data;
 
   if (action === 'updatebadge') {
     // Check for support first.
@@ -47,5 +47,16 @@ self.onmessage = function (e) {
         navigator.clearAppBadge();
       }
     }
+  }
+  if (action === 'notify') {
+    const options = {
+      body: text,
+      icon: '/img/notification-icon.png',
+      data: {},
+      vibrate: [200, 100, 200],
+      tag: 'toaster',
+      badge: '/img/notification-badge.png',
+    };
+    self.registration.showNotification('ySyPyA', options);
   }
 };

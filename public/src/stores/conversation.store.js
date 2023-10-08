@@ -40,6 +40,8 @@ export const useConversationStore = defineStore({
             })
             .catch(console.log));
         }
+        this.current.messages.push(m);
+
         return acc;
       }, Promise.resolve());
       await sequence;

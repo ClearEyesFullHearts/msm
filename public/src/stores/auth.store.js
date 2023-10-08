@@ -238,11 +238,16 @@ export const useAuthStore = defineStore({
     },
     logout() {
       const contactsStore = useContactsStore();
+      const connectionStore = useConnectionStore();
+      const workersStore = useWorkerStore();
       clearTimeout(contactsStore.timeout);
       clearTimeout(verificationTimeoutID);
       clearInterval(interval);
-      if (useConnectionStore.isConnected) {
-        useConnectionStore.disconnect();
+      if (connectionStore.isConnected) {
+        connectionStore.disconnect(true);
+      }
+      if (workersStore.channel) {
+        workersStore.channel.close();
       }
       const pinia = getActivePinia();
       pinia._s.forEach((store) => store.$reset());
