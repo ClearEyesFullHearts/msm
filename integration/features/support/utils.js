@@ -320,7 +320,9 @@ class Util {
       msgCount: {
         type: Number,
       },
-      expirationDate: Number,
+      expirationDate: {
+        type: Number,
+      },
       hasBeenRead: {
         type: Number,
       },
@@ -362,6 +364,18 @@ class Util {
         type: String,
       },
       domainName: {
+        type: String,
+      },
+      groupName: {
+        type: String,
+      },
+      isAdmin: {
+        type: Number,
+      },
+      auth: {
+        type: String,
+      },
+      p256dh: {
         type: String,
       },
     }), { tableName: TABLE_NAME, create: config.get('dynamo.createTable') });

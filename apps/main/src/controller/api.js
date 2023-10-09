@@ -4,6 +4,7 @@ const User = require('./actions/users');
 const Message = require('./actions/messages');
 const AsyncAction = require('./actions/async');
 const Connection = require('./actions/connection');
+const Group = require('./actions/groups');
 
 module.exports = {
   // Anonymous
@@ -212,6 +213,18 @@ module.exports = {
       });
     },
   ],
+  getGroups: [
+    AuthMiddleware.verify(),
+    (req, res, next) => {
+      next();
+    },
+  ],
+  getOneGroup: [
+    AuthMiddleware.verify(),
+    (req, res, next) => {
+      next();
+    },
+  ],
   // User identified
   incinerate: [
     AuthMiddleware.verify(),
@@ -403,6 +416,83 @@ module.exports = {
             subsegment.close(err);
           });
       });
+    },
+  ],
+  createGroup: [
+    AuthMiddleware.verify(),
+    (req, res, next) => {
+      const {
+        auth,
+        body,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      AWSXRay.captureAsyncFunc('Group.create', (subsegment) => {
+        Group.create({ db, user: auth }, body)
+          .then((result) => {
+            res.status(201).json(result);
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
+    },
+  ],
+  deleteGroup: [
+    AuthMiddleware.verify(),
+    (req, res, next) => {
+      next();
+    },
+  ],
+  groupAddMember: [
+    AuthMiddleware.verify(),
+    (req, res, next) => {
+      const {
+        auth,
+        params: {
+          id,
+        },
+        body,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      AWSXRay.captureAsyncFunc('Group.create', (subsegment) => {
+        Group.add({ db, user: auth }, id, body)
+          .then(() => {
+            res.status(201).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
+    },
+  ],
+  groupRemoveMember: [
+    AuthMiddleware.verify(),
+    (req, res, next) => {
+      next();
+    },
+  ],
+  revokeMember: [
+    AuthMiddleware.verify(),
+    (req, res, next) => {
+      next();
+    },
+  ],
+  writeGroup: [
+    AuthMiddleware.verify(),
+    (req, res, next) => {
+      next();
     },
   ],
 };

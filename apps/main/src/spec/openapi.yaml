@@ -98,10 +98,7 @@ paths:
           required: true
           description: SK signature of the body
           schema:
-            type: string
-            format: byte
-            minLength: 172
-            maxLength: 172
+            $ref: "#/components/schemas/SignatureHeader"
       requestBody:
         content:
           application/json:
@@ -187,10 +184,7 @@ paths:
           required: true
           description: SK signature of the body
           schema:
-            type: string
-            format: byte
-            minLength: 172
-            maxLength: 172
+            $ref: "#/components/schemas/SignatureHeader"
         - name: at
           in: path
           description: Username
@@ -223,10 +217,7 @@ paths:
           required: true
           description: SK signature of the body
           schema:
-            type: string
-            format: byte
-            minLength: 172
-            maxLength: 172
+            $ref: "#/components/schemas/SignatureHeader"
       requestBody:
         content:
           application/json:
@@ -255,10 +246,7 @@ paths:
           required: true
           description: SK signature of the body
           schema:
-            type: string
-            format: byte
-            minLength: 172
-            maxLength: 172
+            $ref: "#/components/schemas/SignatureHeader"
       requestBody:
         content:
           application/json:
@@ -285,10 +273,7 @@ paths:
           required: true
           description: SK signature of the body
           schema:
-            type: string
-            format: byte
-            minLength: 172
-            maxLength: 172
+            $ref: "#/components/schemas/SignatureHeader"
       responses:
         '200':
           description: Vault item is removed
@@ -338,10 +323,7 @@ paths:
           required: true
           description: SK signature of the body
           schema:
-            type: string
-            format: byte
-            minLength: 172
-            maxLength: 172
+            $ref: "#/components/schemas/SignatureHeader"
       requestBody:
         content:
           application/json:
@@ -403,10 +385,7 @@ paths:
           required: true
           description: SK signature of the body
           schema:
-            type: string
-            format: byte
-            minLength: 172
-            maxLength: 172
+            $ref: "#/components/schemas/SignatureHeader"
         - name: msgId
           in: path
           required: true
@@ -422,6 +401,262 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
+  /groups:
+    post:
+      summary: Create a new group
+      operationId: createGroup
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          schema:
+            $ref: "#/components/schemas/SignatureHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewGroup'
+      responses:
+        '201':
+          description: Group created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: Get users' group list
+      operationId: getGroups
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of users' groups as a challenge
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /group/{id}:
+    get:
+      summary: Get group information
+      operationId: getOneGroup
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: group id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A list of users' groups as a challenge
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Admin delete the group
+      operationId: deleteGroup
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          schema:
+            $ref: "#/components/schemas/SignatureHeader"
+        - name: id
+          in: path
+          description: group id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: The group is deleted
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /group/{id}/member:
+    post:
+      summary: Add a member to a group
+      operationId: groupAddMember
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          schema:
+            $ref: "#/components/schemas/SignatureHeader"
+        - name: id
+          in: path
+          description: group id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewMember'
+      responses:
+        '201':
+          description: Member added
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Member unsubscribe from a group
+      operationId: groupRemoveMember
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          schema:
+            $ref: "#/components/schemas/SignatureHeader"
+        - name: id
+          in: path
+          description: group id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: The member is removed from the group
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  
+  /group/{id}/revoke/{username}:
+    post:
+      summary: Revoke a member's access right
+      operationId: revokeMember
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          schema:
+            $ref: "#/components/schemas/SignatureHeader"
+        - name: id
+          in: path
+          description: group id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: username
+          in: path
+          description: member's username
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 35
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewKeysList'
+      responses:
+        '200':
+          description: Member revoked and all keys updated
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /group/{id}/message:
+    post:
+      summary: Send a message to a group
+      operationId: writeGroup
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          schema:
+            $ref: "#/components/schemas/SignatureHeader"
+        - name: id
+          in: path
+          description: group id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewKeysList'
+      responses:
+        '202':
+          description: Message sent
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -429,6 +664,12 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    SignatureHeader:
+      description: SK signature of the body
+      type: string
+      format: byte
+      minLength: 172
+      maxLength: 172
     NewUser:
       type: object
       required:
@@ -607,6 +848,38 @@ components:
               type: string
               minLength: 87
               maxLength: 87
+    NewGroup:
+      type: object
+      required:
+        - name
+        - key
+      properties:
+        name:
+          type: string
+        key:
+          type: string
+          format: byte
+          minLength: 684
+          maxLength: 684
+    NewMember:
+      type: object
+      required:
+        - username
+        - key
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 35
+        key:
+          type: string
+          format: byte
+          minLength: 684
+          maxLength: 684
+    NewKeysList:
+      type: array
+      items:
+        $ref: "#/components/schemas/NewMember"
     Error:
       type: object
       properties:
