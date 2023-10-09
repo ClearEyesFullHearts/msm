@@ -1,0 +1,13 @@
+{
+  "dynamo": {
+    "local": {
+      "url": "http://localhost:8000"
+    },
+    "table": "MyLocalTable",
+    "createTable": true
+  },
+  "instance": {
+    "protocol": "http",
+    "host": "localhost:4000"
+  }
+}

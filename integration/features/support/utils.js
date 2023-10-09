@@ -364,11 +364,12 @@ class Util {
       domainName: {
         type: String,
       },
-    }), { tableName: TABLE_NAME, create: false });
+    }), { tableName: TABLE_NAME, create: config.get('dynamo.createTable') });
     const ddb = new dynamoose.aws.ddb.DynamoDB({});
 
     // Set DynamoDB instance to the Dynamoose DDB instance
     dynamoose.aws.ddb.set(ddb);
+    if (config.get('dynamo.local')) dynamoose.aws.ddb.local(config.get('dynamo.local.url'));
 
     return Everything;
   }
@@ -391,11 +392,12 @@ class Util {
         type: String,
         rangeKey: true,
       },
-    }), { tableName: TABLE_NAME, create: false });
+    }), { tableName: TABLE_NAME, create: config.get('dynamo.createTable') });
     const ddb = new dynamoose.aws.ddb.DynamoDB({});
 
     // Set DynamoDB instance to the Dynamoose DDB instance
     dynamoose.aws.ddb.set(ddb);
+    if (config.get('dynamo.local')) dynamoose.aws.ddb.local(config.get('dynamo.local.url'));
 
     const result = await Keys.scan().exec();
 
