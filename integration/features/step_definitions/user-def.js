@@ -16,6 +16,7 @@ Given('I am a new invalidated user', async function () {
   const username = Util.getRandomString(25);
 
   this.apickli.storeValueInScenarioScope('MY_AT', username);
+  this.apickli.storeValueInScenarioScope(`EPK.${username}`, epk);
 
   this.apickli.setRequestBody(JSON.stringify({
     at: username,
@@ -106,6 +107,7 @@ Given(/^I am authenticated user (.*)$/, async function (folder) {
   const [epkFile, spkFile] = publicK.split('\n----- SIGNATURE -----\n');
 
   this.apickli.storeValueInScenarioScope('EPK', epkFile);
+  this.apickli.storeValueInScenarioScope(`EPK.${folder}`, epkFile);
   this.apickli.storeValueInScenarioScope('SPK', spkFile);
   this.apickli.storeValueInScenarioScope('SHA', hash);
   const privateK = fs.readFileSync(`./data/users/${folder}/private.pem`).toString();

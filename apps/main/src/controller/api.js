@@ -222,7 +222,28 @@ module.exports = {
   getOneGroup: [
     AuthMiddleware.verify(),
     (req, res, next) => {
-      next();
+      const {
+        auth,
+        params: {
+          id,
+        },
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      AWSXRay.captureAsyncFunc('Group.getOne', (subsegment) => {
+        Group.getOne({ db, auth }, id)
+          .then((member) => {
+            res.json(member);
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   // User identified
@@ -464,7 +485,7 @@ module.exports = {
           },
         },
       } = req;
-      AWSXRay.captureAsyncFunc('Group.create', (subsegment) => {
+      AWSXRay.captureAsyncFunc('Group.add', (subsegment) => {
         Group.add({ db, user: auth }, id, body)
           .then(() => {
             res.status(201).send();
@@ -492,7 +513,29 @@ module.exports = {
   writeGroup: [
     AuthMiddleware.verify(),
     (req, res, next) => {
-      next();
+      const {
+        auth,
+        params: {
+          id,
+        },
+        body,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      AWSXRay.captureAsyncFunc('Group.write', (subsegment) => {
+        Group.write({ db, user: auth }, id, body)
+          .then(() => {
+            res.status(201).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
 };

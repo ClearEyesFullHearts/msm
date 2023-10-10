@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const assert = require('assert');
 const { Given, When, Then } = require('@cucumber/cucumber');
 const Util = require('../support/utils');
 
@@ -6,14 +7,14 @@ Given(/^I generate my group key for (.*)$/, async function (name) {
   const username = this.apickli.replaceVariables(name);
   if (!this.apickli.scenarioVariables.GROUP_HASH) {
     const pass = crypto.randomBytes(32);
-    const hash = crypto.createHash('sha256');
-    hash.update(pass);
-    const passHash = hash.digest();
-    this.apickli.storeValueInScenarioScope('GROUP_HASH', passHash.toString('base64'));
+    this.apickli.storeValueInScenarioScope('GROUP_HASH', pass.toString('base64'));
   }
 
   const num = name.split('.')[1];
-  const n = num.substring(0, num.length - 1);
+  let n = 'USER';
+  if (num) {
+    n = num.substring(0, num.length - 1);
+  }
 
   const {
     GROUP_HASH,
@@ -48,12 +49,10 @@ Given(/^(.*) creates a group (.*) for (.*)$/, async function (admin, group, memb
   this.apickli.setBearerToken();
 
   const pass = crypto.randomBytes(32);
-  const hash = crypto.createHash('sha256');
-  hash.update(pass);
-  const passHash = hash.digest().toString('base64');
+  const passHash = pass.toString('base64');
   this.apickli.storeValueInScenarioScope('GROUP_HASH', passHash);
 
-  const creatorKey = Util.encrypt(epk, passHash);
+  const creatorKey = Util.encrypt(epk, pass);
 
   const num = admin.split('.')[1];
   const n = num.substring(0, num.length - 1);
@@ -116,4 +115,46 @@ Given(/^(.*) creates a group (.*) for (.*)$/, async function (admin, group, memb
 
     await this.post(`/group/${id}/member`);
   }
+});
+
+Given(/^I set group message body to (.*)$/, async function (messageBody) {
+  const { title, content } = JSON.parse(messageBody);
+  const passphrase = this.apickli.scenarioVariables.GROUP_HASH;
+
+  const cypheredTitle = Util.symmetricEncrypt(title, Buffer.from(passphrase, 'base64'));
+  const cypheredContent = Util.symmetricEncrypt(content, Buffer.from(passphrase, 'base64'));
+  this.apickli.setRequestBody(JSON.stringify({
+    title: cypheredTitle,
+    content: cypheredContent,
+  }));
+});
+
+Then('resolved challenge should match a group message', function () {
+  const { resolved } = this.apickli.scenarioVariables;
+  const {
+    id,
+    from,
+    sentAt,
+    title,
+    content,
+    groupId,
+  } = resolved;
+
+  assert.ok(id);
+  assert.ok(from);
+  assert.ok(sentAt);
+  assert.ok(title);
+  assert.ok(groupId);
+
+  const key = this.apickli.scenarioVariables.MY_GROUP_KEY;
+  const pem = this.apickli.scenarioVariables.ESK;
+
+  const passphrase = Util.decrypt(pem, key, false);
+
+  const clearTitle = Util.symmetricDecrypt(title, passphrase);
+  let clearContent;
+  if (content) {
+    clearContent = Util.symmetricDecrypt(content, passphrase);
+  }
+  this.apickli.storeValueInScenarioScope('resolved', { ...resolved, title: clearTitle, content: clearContent });
 });

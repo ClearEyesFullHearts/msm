@@ -646,9 +646,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewKeysList'
+              $ref: '#/components/schemas/GroupPost'
       responses:
-        '202':
+        '201':
           description: Message sent
         default:
           description: unexpected error
@@ -880,6 +880,30 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/NewMember"
+    EncryptedItem:
+      type: object
+      required:
+        - token
+        - iv
+      properties:
+        token:
+          type: string
+          format: byte
+        iv:
+          type: string
+          format: byte
+          minLength: 24
+          maxLength: 24
+    GroupPost:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          $ref: "#/components/schemas/EncryptedItem"
+        content:
+          $ref: "#/components/schemas/EncryptedItem"
     Error:
       type: object
       properties:

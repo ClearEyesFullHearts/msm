@@ -114,12 +114,16 @@ class Util {
     return Buffer.from(crypted).toString('base64');
   }
 
-  static decrypt(pem, base64str) {
-    return crypto.privateDecrypt({
+  static decrypt(pem, base64str, inPlainText = true) {
+    const pass = crypto.privateDecrypt({
       key: pem,
       oaepHash: 'sha256',
       padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-    }, Buffer.from(base64str, 'base64')).toString();
+    }, Buffer.from(base64str, 'base64'));
+    if (inPlainText) {
+      return pass.toString();
+    }
+    return pass;
   }
 
   static resolve(pem, challenge) {

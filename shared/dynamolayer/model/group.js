@@ -89,6 +89,14 @@ class GroupData {
     const member = await this.Entity.get({ pk: id, sk: username });
     return member;
   }
+
+  async findAllMembers(id) {
+    const members = await this.Entity
+      .query('pk').eq(id)
+      .exec();
+
+    return members;
+  }
 }
 
 module.exports = GroupData;
