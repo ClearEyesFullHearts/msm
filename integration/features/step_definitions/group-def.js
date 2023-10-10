@@ -24,7 +24,8 @@ Given(/^I generate my group key for (.*)$/, async function (name) {
   this.apickli.storeValueInScenarioScope(`GK.${n}`, key);
 });
 
-Given(/^(.*) creates a group (.*) for (.*)$/, async function (admin, group, members) {
+Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (admin, group, members, index) {
+  this.apickli.removeRequestHeader('x-msm-sig');
   const creator = this.apickli.replaceVariables(admin);
 
   await this.get(`/identity/${creator}`);
@@ -79,7 +80,7 @@ Given(/^(.*) creates a group (.*) for (.*)$/, async function (admin, group, memb
   await this.post('/groups');
   const { id } = JSON.parse(this.apickli.httpResponse.body);
   const membersArray = JSON.parse(members);
-  this.apickli.storeValueInScenarioScope('GROUP_ID', id);
+  this.apickli.storeValueInScenarioScope(`GROUP_ID.${index}`, id);
 
   for (let i = 0; i < membersArray.length; i += 1) {
     this.apickli.removeRequestHeader('x-msm-sig');

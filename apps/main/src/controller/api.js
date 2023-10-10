@@ -216,7 +216,25 @@ module.exports = {
   getGroups: [
     AuthMiddleware.verify(),
     (req, res, next) => {
-      next();
+      const {
+        auth,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      AWSXRay.captureAsyncFunc('Group.getAll', (subsegment) => {
+        Group.getAll({ db, auth })
+          .then((groups) => {
+            res.json(groups);
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   getOneGroup: [
@@ -501,7 +519,28 @@ module.exports = {
   groupRemoveMember: [
     AuthMiddleware.verify(),
     (req, res, next) => {
-      next();
+      const {
+        auth,
+        params: {
+          id,
+        },
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      AWSXRay.captureAsyncFunc('Group.remove', (subsegment) => {
+        Group.remove({ db, user: auth }, id)
+          .then(() => {
+            res.status(204).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   revokeMember: [

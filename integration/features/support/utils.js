@@ -464,6 +464,28 @@ class Util {
     await e.save();
   }
 
+
+  static async removeGroup(groupId) {
+    const Keys = dynamoose.model('Keys', new dynamoose.Schema({
+      pk: {
+        type: String,
+        hashKey: true,
+      },
+      sk: {
+        type: String,
+        rangeKey: true,
+      },
+    }), { tableName: TABLE_NAME, create: config.get('dynamo.createTable') });
+    const ddb = new dynamoose.aws.ddb.DynamoDB({});
+
+    // Set DynamoDB instance to the Dynamoose DDB instance
+    dynamoose.aws.ddb.set(ddb);
+    if (config.get('dynamo.local')) dynamoose.aws.ddb.local(config.get('dynamo.local.url'));
+
+    const result = await Keys.query('pk').eq(groupId).exec();
+    await Keys.batchDelete(result);
+  }
+
   static roundTimeToDays(epoch, addDays = 0) {
     const daysInMs = (24 * 60 * 60000);
     const dayMs = Math.floor(epoch / daysInMs) * daysInMs;

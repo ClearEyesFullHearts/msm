@@ -76,6 +76,9 @@ After(async function () {
     if (p.startsWith('USER')) {
       promises.push(Util.recordInDB(this.apickli.scenarioVariables[p]));
     }
+    if (p.startsWith('GROUP_ID')) {
+      promises.push(Util.removeGroup(this.apickli.scenarioVariables[p]));
+    }
   });
   if (promises.length > 0) {
     await Promise.all(promises);

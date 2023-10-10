@@ -56,7 +56,7 @@ class GroupData {
 
     const newGroup = {
       pk: id,
-      sk: username,
+      sk: `G#${username}`,
       groupName,
       key,
       isAdmin: admin ? 1 : 0,
@@ -75,7 +75,7 @@ class GroupData {
   }) {
     const newMember = {
       pk: id,
-      sk: username,
+      sk: `G#${username}`,
       groupName,
       key,
       isAdmin: admin ? 1 : 0,
@@ -85,8 +85,13 @@ class GroupData {
     return group;
   }
 
+  async deleteMember(id, username) {
+    const result = await this.Entity.delete({ pk: id, sk: `G#${username}` });
+    return result;
+  }
+
   async findMember(id, username) {
-    const member = await this.Entity.get({ pk: id, sk: username });
+    const member = await this.Entity.get({ pk: id, sk: `G#${username}` });
     return member;
   }
 
@@ -96,6 +101,15 @@ class GroupData {
       .exec();
 
     return members;
+  }
+
+  async findAllGroups(username) {
+    const groups = await this.Entity
+      .query('sk').eq(`G#${username}`)
+      .using('UserGroupIndex')
+      .exec();
+
+    return groups;
   }
 }
 
