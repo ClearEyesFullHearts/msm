@@ -46,6 +46,18 @@ class GroupData {
     this.Entity = dynamoose.model('Group', this.groupSchema, options);
   }
 
+  async batchDelete(keys) {
+    if (!keys.length) return;
+
+    const size = 24; const arrayOfBatch = [];
+    for (let i = 0; i < keys.length; i += size) {
+      const batchKeys = keys.slice(i, i + size);
+      arrayOfBatch.push(this.Entity.batchDelete(batchKeys));
+    }
+
+    await Promise.all(arrayOfBatch);
+  }
+
   async create({
     groupName,
     username,
@@ -88,6 +100,13 @@ class GroupData {
   async deleteMember(id, username) {
     const result = await this.Entity.delete({ pk: id, sk: `G#${username}` });
     return result;
+  }
+
+  async deleteGroup(id) {
+    const members = await this.Entity.query('pk').eq(id).exec();
+    const keys = members.map((m) => ({ pk: m.groupId, sk: m.username }));
+
+    await this.batchDelete(keys);
   }
 
   async findMember(id, username) {

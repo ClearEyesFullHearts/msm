@@ -216,3 +216,13 @@ Scenario: Admin can't quit a group if its the last
   And I set signature header
   When I DELETE /group/`GROUP_ID.0`/member
   Then response code should be 403
+
+Scenario: Admin can delete a group
+  Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.3`", "`RANDOM_USER.4`"] with index 0
+  And I am existing `RANDOM_USER.1`
+  And I set signature header
+  When I DELETE /group/`GROUP_ID.0`
+  Then response code should be 204
+  When I GET /groups
+  And response body match a challenge
+  And response body path $ should be of type array with length 0

@@ -464,7 +464,6 @@ class Util {
     await e.save();
   }
 
-
   static async removeGroup(groupId) {
     const Keys = dynamoose.model('Keys', new dynamoose.Schema({
       pk: {
@@ -483,7 +482,9 @@ class Util {
     if (config.get('dynamo.local')) dynamoose.aws.ddb.local(config.get('dynamo.local.url'));
 
     const result = await Keys.query('pk').eq(groupId).exec();
-    await Keys.batchDelete(result);
+    if (result.length && result.length > 0) {
+      await Keys.batchDelete(result);
+    }
   }
 
   static roundTimeToDays(epoch, addDays = 0) {

@@ -95,6 +95,25 @@ class Group {
     return { id: group.pk };
   }
 
+  static async delete({ db, user }, groupId) {
+    debug('delete group:', groupId);
+
+    const admin = await db.groups.findMember(groupId, user.username);
+
+    if (!admin) {
+      debug('asking member is not an member');
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+    }
+    debug('asking member found');
+    if (admin.isAdmin < 1) {
+      debug('asking member is not an admin');
+      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin cann add a member');
+    }
+
+    await db.groups.deleteGroup(groupId);
+    debug('group is deleted');
+  }
+
   static async add({ db, user }, groupId, { username, key }) {
     debug('add member:', username);
 
@@ -198,15 +217,20 @@ class Group {
       if (member.username !== writer.username) {
         const cleanName = member.username.split('#')[1]; // username format is `G#${username}` in groups
         return db.users.findByName(cleanName)
-          .then(({ key }) => {
-            const headerChallenge = Encryption.hybrid(JSON.stringify(headerPlain), key);
-            const fullChallenge = Encryption.hybrid(JSON.stringify(fullPlain), key);
-            debug('write group message to', cleanName);
-            return db.messages.create({
-              username: cleanName,
-              header: headerChallenge,
-              full: fullChallenge,
-            });
+          .then((target) => {
+            if (target) {
+              const { key } = target;
+              const headerChallenge = Encryption.hybrid(JSON.stringify(headerPlain), key);
+              const fullChallenge = Encryption.hybrid(JSON.stringify(fullPlain), key);
+              debug('write group message to', cleanName);
+              return db.messages.create({
+                username: cleanName,
+                header: headerChallenge,
+                full: fullChallenge,
+              });
+            }
+            debug('user do not exists, removed from the group');
+            return db.groups.deleteMember(groupId, cleanName);
           });
       }
       return Promise.resolve();

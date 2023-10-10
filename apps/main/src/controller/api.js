@@ -485,7 +485,28 @@ module.exports = {
   deleteGroup: [
     AuthMiddleware.verify(),
     (req, res, next) => {
-      next();
+      const {
+        auth,
+        params: {
+          id,
+        },
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      AWSXRay.captureAsyncFunc('Group.delete', (subsegment) => {
+        Group.delete({ db, user: auth }, id)
+          .then(() => {
+            res.status(204).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   groupAddMember: [
