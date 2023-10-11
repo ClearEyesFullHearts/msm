@@ -2,36 +2,36 @@ const debug = require('debug')('msm-main:group');
 const ErrorHelper = require('@shared/error');
 const Encryption = require('@shared/encryption');
 
-class Group {
-  static async formatGroup(db, groupId, user) {
-    const members = await db.groups.findAllMembers(groupId);
-    if (!members || !members.length || members.length <= 0) {
-      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'Unknown group');
-    }
-    const askerIndex = members.findIndex((m) => m.username === `G#${user.username}`);
-    if (askerIndex < 0) {
-      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
-    }
-    debug('is a member');
-
-    const [asker] = members.splice(askerIndex, 1);
-
-    const {
-      groupId: id,
-      groupName,
-      key,
-      isAdmin,
-    } = asker;
-
-    return {
-      groupId: id,
-      groupName,
-      key,
-      isAdmin: !!isAdmin,
-      members: members.map((m) => m.username.split('#')[1]),
-    };
+async function formatGroup(db, groupId, user) {
+  const members = await db.groups.findAllMembers(groupId);
+  if (!members || !members.length || members.length <= 0) {
+    throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'Unknown group');
   }
+  debug('group exists');
+  const askerIndex = members.findIndex((m) => m.username === `G#${user.username}`);
+  if (askerIndex < 0) {
+    throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+  }
+  debug('is a member');
 
+  const [asker] = members.splice(askerIndex, 1);
+
+  const {
+    groupId: id,
+    groupName,
+    key,
+    isAdmin,
+  } = asker;
+
+  return {
+    groupId: id,
+    groupName,
+    key,
+    isAdmin: !!isAdmin,
+    members: members.map((m) => m.username.split('#')[1]),
+  };
+}
+class Group {
   static async getOne({ db, auth }, groupId) {
     debug(`${auth.username} wants its data membership for group ${groupId}`);
     const user = await db.users.findByName(auth.username);
@@ -40,7 +40,7 @@ class Group {
     }
     debug('user exists');
 
-    const group = await this.formatGroup(db, groupId, user);
+    const group = await formatGroup(db, groupId, user);
 
     const { key: publicKey } = user;
 
@@ -62,7 +62,7 @@ class Group {
 
     debug('groups found', groups.length);
 
-    const promises = groups.map((g) => this.formatGroup(db, g.groupId, user));
+    const promises = groups.map((g) => formatGroup(db, g.groupId, user));
 
     const result = await Promise.all(promises);
 
@@ -107,7 +107,7 @@ class Group {
     debug('asking member found');
     if (admin.isAdmin < 1) {
       debug('asking member is not an admin');
-      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin cann add a member');
+      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin cann delete the group');
     }
 
     await db.groups.deleteGroup(groupId);
@@ -177,6 +177,53 @@ class Group {
 
     await db.groups.deleteMember(groupId, user.username);
     debug('member deleted');
+
+    // TODO add update group notif
+  }
+
+  static async revoke({ db, user }, groupId, revoked, newKeys) {
+    debug('revoke member:', revoked);
+
+    const members = await db.groups.findAllMembers(groupId);
+    const admin = members.find((m) => m.username === `G#${user.username}`);
+
+    if (!admin) {
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+    }
+    debug('asking member found');
+
+    if (admin.isAdmin <= 0) {
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'Only admins can revoke a member');
+    }
+    debug('asking member is admin');
+
+    if (admin.username === `G#${revoked}`) {
+      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.UNAUTHORIZED, 'You can\'t revoke yourself');
+    }
+    debug('asking member is not revokation target');
+
+    if (!members.some((m) => m.username === `G#${revoked}`)) {
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'Revokation target is not a member');
+    }
+    debug('revokation target is a member');
+
+    const validKeys = newKeys.every((k) => {
+      if (k.username !== revoked) {
+        return members.some((m) => `G#${k.username}` === m.username);
+      }
+      return false;
+    });
+
+    if (!validKeys || newKeys.length !== members.length - 1) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Every member should have a new key');
+    }
+    debug('New keys are correct');
+
+    await db.groups.deleteMember(groupId, revoked);
+    debug('member deleted');
+
+    await db.groups.setNewKeys(groupId, newKeys);
+    debug('Keys changed');
 
     // TODO add update group notif
   }

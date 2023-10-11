@@ -567,7 +567,30 @@ module.exports = {
   revokeMember: [
     AuthMiddleware.verify(),
     (req, res, next) => {
-      next();
+      const {
+        auth,
+        params: {
+          id,
+          username,
+        },
+        body,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      AWSXRay.captureAsyncFunc('Group.revoke', (subsegment) => {
+        Group.revoke({ db, user: auth }, id, username, body)
+          .then(() => {
+            res.status(200).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
     },
   ],
   writeGroup: [

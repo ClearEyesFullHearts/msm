@@ -216,6 +216,13 @@ Then(/^response body path (.*) should match Signature Public Key$/, async functi
   assert.ok(success, `Error: expected: Signature PK, got: ${evalValue}`);
 });
 
+Then(/^response body path (.*) should strictly be equal to (.*)$/, function (path, value) {
+  const obj = this.apickli.scenarioVariables.resolved;
+  const trueValue = this.apickli.replaceVariables(value);
+  const test = Util.getPathValue(obj, path);
+  const success = assert.strictEqual(test, trueValue);
+});
+
 Then(/^I wait for (.*) seconds$/, async function (seconds) {
   const time = this.apickli.replaceVariables(seconds);
   await new Promise((resolve) => {

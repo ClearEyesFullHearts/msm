@@ -130,6 +130,17 @@ class GroupData {
 
     return groups;
   }
+
+  async setNewKeys(id, keys) {
+    const promises = keys.map((k) => this.Entity.update(
+      { pk: id, sk: `G#${k.username}` },
+      {
+        $SET: { key: k.key },
+      },
+    ));
+
+    await Promise.all(promises);
+  }
 }
 
 module.exports = GroupData;

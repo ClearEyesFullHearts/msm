@@ -24,6 +24,11 @@ Given(/^I generate my group key for (.*)$/, async function (name) {
   this.apickli.storeValueInScenarioScope(`GK.${n}`, key);
 });
 
+Given('I generate new shared key', async function () {
+  const pass = crypto.randomBytes(32);
+  this.apickli.storeValueInScenarioScope('GROUP_HASH', pass.toString('base64'));
+});
+
 Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (admin, group, members, index) {
   this.apickli.removeRequestHeader('x-msm-sig');
   const creator = this.apickli.replaceVariables(admin);

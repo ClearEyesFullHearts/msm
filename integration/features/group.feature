@@ -216,6 +216,7 @@ Scenario: Admin can't quit a group if its the last
   And I set signature header
   When I DELETE /group/`GROUP_ID.0`/member
   Then response code should be 403
+  And response body path $.code should be FORBIDDEN
 
 Scenario: Admin can delete a group
   Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.3`", "`RANDOM_USER.4`"] with index 0
@@ -226,3 +227,107 @@ Scenario: Admin can delete a group
   When I GET /groups
   And response body match a challenge
   And response body path $ should be of type array with length 0
+
+Scenario: Member cannot delete a group
+  Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.3`", "`RANDOM_USER.4`"] with index 0
+  And I am existing `RANDOM_USER.2`
+  And I set signature header
+  When I DELETE /group/`GROUP_ID.0`
+  Then response code should be 401
+  And response body path $.code should be BAD_ROLE
+
+Scenario: Admin can revoke a member
+  Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.3`", "`RANDOM_USER.4`"] with index 0
+  And I am existing `RANDOM_USER.1`
+  And I generate new shared key
+  And I generate my group key for `RANDOM_USER.1`
+  And I generate my group key for `RANDOM_USER.2`
+  And I generate my group key for `RANDOM_USER.4`
+  And I set body to [{ "username": "`RANDOM_USER.1`", "key": "`GK.1`"}, { "username": "`RANDOM_USER.2`", "key": "`GK.2`"}, { "username": "`RANDOM_USER.4`", "key": "`GK.4`"}]
+  And I set signature header
+  When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.3`
+  Then response code should be 200
+  When I GET /group/`GROUP_ID.0`
+  Then response code should be 200
+  And response body match a challenge
+  And response body path $.key should strictly be equal to `GK.1`
+  And response body path $.members should be of type array with length 2
+
+Scenario: Can't revoke a non member
+  Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`"] with index 0
+  And I am existing `RANDOM_USER.1`
+  And I generate new shared key
+  And I generate my group key for `RANDOM_USER.1`
+  And I generate my group key for `RANDOM_USER.2`
+  And I set body to [{ "username": "`RANDOM_USER.1`", "key": "`GK.1`"}, { "username": "`RANDOM_USER.2`", "key": "`GK.2`"}]
+  And I set signature header
+  When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.3`
+  Then response code should be 404
+  And response body path $.code should be NOT_FOUND
+
+Scenario: Can't revoke if you're not a member
+  Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`"] with index 0
+  And I am existing `RANDOM_USER.3`
+  And I generate new shared key
+  And I generate my group key for `RANDOM_USER.2`
+  And I set body to [{ "username": "`RANDOM_USER.2`", "key": "`GK.2`"}]
+  And I set signature header
+  When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.1`
+  Then response code should be 403
+  And response body path $.code should be FORBIDDEN
+
+Scenario: Can't revoke if you're not an admin
+  Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`"] with index 0
+  And I am existing `RANDOM_USER.2`
+  And I generate new shared key
+  And I generate my group key for `RANDOM_USER.2`
+  And I set body to [{ "username": "`RANDOM_USER.2`", "key": "`GK.2`"}]
+  And I set signature header
+  When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.1`
+  Then response code should be 403
+  And response body path $.code should be FORBIDDEN
+
+Scenario: Can't revoke with wrong keys
+  Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.3`", "`RANDOM_USER.4`"] with index 0
+  And I am existing `RANDOM_USER.5`
+  And I generate new shared key
+  And I generate my group key for `RANDOM_USER.5`
+  And I am existing `RANDOM_USER.1`
+  And I generate my group key for `RANDOM_USER.1`
+  And I generate my group key for `RANDOM_USER.2`
+  And I generate my group key for `RANDOM_USER.4`
+  And I set body to [{ "username": "`RANDOM_USER.1`", "key": "`GK.1`"}, { "username": "`RANDOM_USER.2`", "key": "`GK.2`"}, { "username": "`RANDOM_USER.4`", "key": "`GK.4`"}, { "username": "`RANDOM_USER.5`", "key": "`GK.5`"}]
+  And I set signature header
+  When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.3`
+  Then response code should be 400
+  And response body path $.code should be BAD_REQUEST_FORMAT
+  And I set body to [{ "username": "`RANDOM_USER.1`", "key": "`GK.1`"}, { "username": "`RANDOM_USER.2`", "key": "`GK.2`"}]
+  And I set signature header
+  When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.3`
+  Then response code should be 400
+  And response body path $.code should be BAD_REQUEST_FORMAT
+  And I set body to [{ "username": "`RANDOM_USER.1`", "key": "`GK.1`"}, { "username": "`RANDOM_USER.3`", "key": "`GK.3`"}, { "username": "`RANDOM_USER.2`", "key": "`GK.2`"}]
+  And I set signature header
+  When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.3`
+  Then response code should be 400
+  And response body path $.code should be BAD_REQUEST_FORMAT
+  And I set body to [{ "username": "`RANDOM_USER.1`", "key": "`GK.1`"}, { "username": "`RANDOM_USER.5`", "key": "`GK.5`"}, { "username": "`RANDOM_USER.2`", "key": "`GK.2`"}]
+  And I set signature header
+  When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.3`
+  Then response code should be 400
+  And response body path $.code should be BAD_REQUEST_FORMAT
+  And I set body to [{ "username": "`RANDOM_USER.1`", "key": "`GK.1`"}, { "username": "`RANDOM_USER.4`", "key": "`GK.4`"}, { "username": "`RANDOM_USER.2`", "key": "`GK.2`"}]
+  And I set signature header
+  When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.3`
+  Then response code should be 200
+
+Scenario: Can't revoke yourself
+  Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`"] with index 0
+  And I am existing `RANDOM_USER.1`
+  And I generate new shared key
+  And I generate my group key for `RANDOM_USER.2`
+  And I set body to [{ "username": "`RANDOM_USER.2`", "key": "`GK.2`"}]
+  And I set signature header
+  When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.1`
+  Then response code should be 401
+  And response body path $.code should be UNAUTHORIZED
