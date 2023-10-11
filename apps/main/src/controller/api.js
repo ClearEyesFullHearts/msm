@@ -564,6 +564,35 @@ module.exports = {
       });
     },
   ],
+  setMemberStatus: [
+    AuthMiddleware.verify(),
+    (req, res, next) => {
+      const {
+        auth,
+        params: {
+          id,
+          username,
+        },
+        body,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      AWSXRay.captureAsyncFunc('Group.setAdmin', (subsegment) => {
+        Group.setAdmin({ db, user: auth }, id, username, body)
+          .then(() => {
+            res.status(200).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
+    },
+  ],
   revokeMember: [
     AuthMiddleware.verify(),
     (req, res, next) => {

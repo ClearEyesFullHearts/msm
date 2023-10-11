@@ -101,14 +101,13 @@ class Group {
     const admin = await db.groups.findMember(groupId, user.username);
 
     if (!admin) {
-      debug('asking member is not an member');
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
     }
     debug('asking member found');
     if (admin.isAdmin < 1) {
-      debug('asking member is not an admin');
       throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin cann delete the group');
     }
+    debug('asking member is an admin');
 
     await db.groups.deleteGroup(groupId);
     debug('group is deleted');
@@ -181,6 +180,52 @@ class Group {
     // TODO add update group notif
   }
 
+  static async setAdmin({ db, user }, groupId, username, { isAdmin }) {
+    debug(`set admin status of ${username} to ${isAdmin}`);
+    const admin = await db.groups.findMember(groupId, user.username);
+
+    if (!admin) {
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+    }
+    debug('asking member found');
+    if (admin.isAdmin < 1) {
+      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin can change member\'s status');
+    }
+    debug('asking member is an admin');
+
+    const target = await db.groups.findMember(groupId, username);
+    if (!target) {
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'Target is not part of this group');
+    }
+    debug('target member found');
+
+    const status = isAdmin ? 1 : 0;
+    if (target.isAdmin === status) {
+      debug('no status change');
+      return;
+    }
+
+    if (isAdmin) {
+      await db.groups.setAdminStatus(groupId, username, isAdmin);
+      debug('target is admin');
+      return;
+    }
+    if (target.isAdmin > 0) {
+      if (target.username !== admin.username) {
+        throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot change another admin status');
+      }
+      debug('self status update');
+
+      const allMembers = await db.groups.findAllMembers(groupId);
+      if (!allMembers.some((m) => m.isAdmin > 0 && m.username !== admin.username)) {
+        throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re the last admin you cannot quit');
+      }
+      debug('someone else is admin');
+      await db.groups.setAdminStatus(groupId, username, isAdmin);
+      debug('target is no longer admin');
+    }
+  }
+
   static async revoke({ db, user }, groupId, revoked, newKeys) {
     debug('revoke member:', revoked);
 
@@ -232,7 +277,6 @@ class Group {
     // usual checks
     const writer = await db.groups.findMember(groupId, user.username);
     if (!writer) {
-      debug('writer is not an member');
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
     }
     debug('writing member found');

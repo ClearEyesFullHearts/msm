@@ -20,7 +20,7 @@ Given(/^I generate my group key for (.*)$/, async function (name) {
     GROUP_HASH,
     [`EPK.${username}`]: pem,
   } = this.apickli.scenarioVariables;
-  const key = Util.encrypt(pem, GROUP_HASH);
+  const key = Util.encrypt(pem, Buffer.from(GROUP_HASH, 'base64'));
   this.apickli.storeValueInScenarioScope(`GK.${n}`, key);
 });
 
@@ -98,7 +98,7 @@ Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (ad
     const [mEsk] = pK.split('\n----- SIGNATURE -----\n');
     const mEpk = Util.extractPublicKey(mEsk);
 
-    const memberKey = Util.encrypt(mEpk, passHash);
+    const memberKey = Util.encrypt(mEpk, pass);
     const mNum = membersArray[i].split('.')[1];
     const mn = mNum.substring(0, mNum.length - 1);
 

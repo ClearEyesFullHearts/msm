@@ -110,14 +110,47 @@ Scenario: Writing to a group
   When I GET /inbox
   Then response body path $ should be of type array with length 0
   Given I am existing `RANDOM_USER.1`
+  When I GET /group/`GROUP_ID.0`
+  And response body match a challenge
+  And I store the value of body path $.key as MY_GROUP_KEY in scenario scope
   When I GET /inbox
   Then response body path $ should be of type array with length 1
+  And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
+  When I GET /message/`FIRST_MSG_ID`
+  And response body path $ should match a challenge
+  And resolved challenge should match a group message
+  And resolved challenge path $.groupId should match `GROUP_ID.0`
+  And resolved challenge path $.from should match best group
+  And resolved challenge path $.title should match Write one group message
+  And resolved challenge path $.content should match My group message content
   Given I am existing `RANDOM_USER.2`
+  When I GET /group/`GROUP_ID.0`
+  And response body match a challenge
+  And I store the value of body path $.key as MY_GROUP_KEY in scenario scope
   When I GET /inbox
   Then response body path $ should be of type array with length 1
+  And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
+  When I GET /message/`FIRST_MSG_ID`
+  And response body path $ should match a challenge
+  And resolved challenge should match a group message
+  And resolved challenge path $.groupId should match `GROUP_ID.0`
+  And resolved challenge path $.from should match best group
+  And resolved challenge path $.title should match Write one group message
+  And resolved challenge path $.content should match My group message content
   Given I am existing `RANDOM_USER.3`
+  When I GET /group/`GROUP_ID.0`
+  And response body match a challenge
+  And I store the value of body path $.key as MY_GROUP_KEY in scenario scope
   When I GET /inbox
   Then response body path $ should be of type array with length 1
+  And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
+  When I GET /message/`FIRST_MSG_ID`
+  And response body path $ should match a challenge
+  And resolved challenge should match a group message
+  And resolved challenge path $.groupId should match `GROUP_ID.0`
+  And resolved challenge path $.from should match best group
+  And resolved challenge path $.title should match Write one group message
+  And resolved challenge path $.content should match My group message content
 
 Scenario: Cannot write to a group if you're not a member
   Given `RANDOM_USER.1` creates a group best group for [] with index 0
@@ -331,3 +364,55 @@ Scenario: Can't revoke yourself
   When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.1`
   Then response code should be 401
   And response body path $.code should be UNAUTHORIZED
+
+Scenario: An Admin can raise a member to admin status
+  Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`"] with index 0
+  And I am existing `RANDOM_USER.1`
+  And I set body to { "isAdmin": true }
+  And I set signature header
+  When I PUT /group/`GROUP_ID.0`/member/`RANDOM_USER.2`
+  Then response code should be 200
+  And I am existing `RANDOM_USER.2`
+  When I GET /group/`GROUP_ID.0`
+  Then response code should be 200
+  And response body match a challenge
+  And response body path $.isAdmin should be true
+
+Scenario: An Admin cannot lower another admin status
+  Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`"] with index 0
+  And I am existing `RANDOM_USER.1`
+  And I set body to { "isAdmin": true }
+  And I set signature header
+  When I PUT /group/`GROUP_ID.0`/member/`RANDOM_USER.2`
+  Then response code should be 200
+  And I am existing `RANDOM_USER.2`
+  And I set body to { "isAdmin": false }
+  And I set signature header
+  When I PUT /group/`GROUP_ID.0`/member/`RANDOM_USER.1`
+  Then response code should be 403
+  And response body path $.code should be FORBIDDEN
+
+Scenario: An Admin can lower its own status
+  Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`"] with index 0
+  And I am existing `RANDOM_USER.1`
+  And I set body to { "isAdmin": true }
+  And I set signature header
+  When I PUT /group/`GROUP_ID.0`/member/`RANDOM_USER.2`
+  Then response code should be 200
+  And I set body to { "isAdmin": false }
+  And I set signature header
+  When I PUT /group/`GROUP_ID.0`/member/`RANDOM_USER.1`
+  Then response code should be 200
+  When I GET /group/`GROUP_ID.0`
+  Then response code should be 200
+  And response body match a challenge
+  And response body path $.isAdmin should be false
+
+Scenario: An Admin cannot lower its own status if they are the last one
+  Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`"] with index 0
+  And I am existing `RANDOM_USER.1`
+  And I set body to { "isAdmin": false }
+  And I set signature header
+  When I PUT /group/`GROUP_ID.0`/member/`RANDOM_USER.1`
+  Then response code should be 403
+  And response body path $.code should be FORBIDDEN

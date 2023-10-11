@@ -141,6 +141,17 @@ class GroupData {
 
     await Promise.all(promises);
   }
+
+  async setAdminStatus(id, username, isAdmin) {
+    let status = 0;
+    if (isAdmin) status = 1;
+    await this.Entity.update(
+      { pk: id, sk: `G#${username}` },
+      {
+        $SET: { isAdmin: status },
+      },
+    );
+  }
 }
 
 module.exports = GroupData;
