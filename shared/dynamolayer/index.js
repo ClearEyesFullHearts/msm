@@ -112,6 +112,8 @@ class Data {
 
     await Data.batchDelete(messages, this.messages);
 
+    await this.groups.clearMembership(username);
+
     const subscriptions = await this.subscriptions.Entity
       .query('pk').eq(`P#${username}`)
       .attributes(['sk', 'pk'])

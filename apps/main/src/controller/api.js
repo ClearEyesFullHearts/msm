@@ -509,6 +509,34 @@ module.exports = {
       });
     },
   ],
+  setGroupName: [
+    AuthMiddleware.verify(),
+    (req, res, next) => {
+      const {
+        auth,
+        params: {
+          id,
+        },
+        body,
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+      AWSXRay.captureAsyncFunc('Group.rename', (subsegment) => {
+        Group.rename({ db, user: auth }, id, body)
+          .then(() => {
+            res.status(200).send();
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
+    },
+  ],
   groupAddMember: [
     AuthMiddleware.verify(),
     (req, res, next) => {

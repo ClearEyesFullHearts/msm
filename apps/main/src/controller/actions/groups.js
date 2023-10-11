@@ -105,12 +105,30 @@ class Group {
     }
     debug('asking member found');
     if (admin.isAdmin < 1) {
-      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin cann delete the group');
+      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin can delete the group');
     }
     debug('asking member is an admin');
 
     await db.groups.deleteGroup(groupId);
     debug('group is deleted');
+  }
+
+  static async rename({ db, user }, groupId, { name }) {
+    debug(`change name of group ${groupId} to ${name}`);
+
+    const admin = await db.groups.findMember(groupId, user.username);
+
+    if (!admin) {
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+    }
+    debug('asking member found');
+    if (admin.isAdmin < 1) {
+      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin can rename the group');
+    }
+    debug('asking member is an admin');
+
+    await db.groups.setGroupName(groupId, name);
+    debug('group is renamed');
   }
 
   static async add({ db, user }, groupId, { username, key }) {

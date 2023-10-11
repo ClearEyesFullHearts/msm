@@ -515,7 +515,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-
+    put:
+      summary: Change the name of the group
+      operationId: setGroupName
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: X-msm-Sig
+          required: true
+          description: SK signature of the body
+          schema:
+            $ref: "#/components/schemas/SignatureHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupName'
+      responses:
+        '200':
+          description: Name updated
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    
   /group/{id}/member:
     post:
       summary: Add a member to a group
@@ -885,6 +912,8 @@ components:
       properties:
         name:
           type: string
+          minLength: 5
+          maxLength: 125
         key:
           type: string
           format: byte
@@ -940,6 +969,15 @@ components:
       properties:
         isAdmin:
           type: boolean
+    GroupName:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 5
+          maxLength: 125
     Error:
       type: object
       properties:

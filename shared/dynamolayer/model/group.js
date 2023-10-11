@@ -27,6 +27,8 @@ class GroupData {
       groupName: {
         type: String,
         required: true,
+        minLength: 5,
+        maxLength: 125,
       },
       key: {
         type: String,
@@ -151,6 +153,35 @@ class GroupData {
         $SET: { isAdmin: status },
       },
     );
+  }
+
+  async setGroupName(id, name) {
+    const keys = await this.Entity.query('pk').eq(id).attributes(['pk', 'sk']).exec();
+    const promises = keys.map(({ groupId, username }) => this.Entity.update(
+      { pk: groupId, sk: username },
+      {
+        $SET: { groupName: name },
+      },
+    ));
+
+    await Promise.all(promises);
+  }
+
+  async clearMembership(username) {
+    const groups = await this.Entity.query('sk').eq(`G#${username}`).using('UserGroupIndex').exec();
+
+    const keysArray = await Promise.all(groups.map(async (g) => {
+      if (g.isAdmin > 0) {
+        const members = await this.Entity.query('pk').eq(g.groupId).exec();
+        const hasOtherAdmin = members.some((m) => m.username !== g.username && m.isAdmin > 0);
+        if (!hasOtherAdmin) {
+          return members.map((m) => ({ pk: m.groupId, sk: m.username }));
+        }
+      }
+      return { pk: g.groupId, sk: g.username };
+    }));
+
+    await this.batchDelete(keysArray.flat());
   }
 }
 
