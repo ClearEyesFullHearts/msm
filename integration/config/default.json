@@ -1,7 +1,8 @@
 {
   "dynamo": {
     "table": "MyTestTable",
-    "createTable": false
+    "createTable": false,
+    "local": false
   },
   "instance": {
     "protocol": "https",

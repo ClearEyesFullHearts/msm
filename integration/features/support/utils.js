@@ -392,12 +392,12 @@ class Util {
     return Everything;
   }
 
-  static async backupTable() {
+  static async backupTable(fileName = 'backupdb') {
     const Everything = Util.getEverythingModel();
 
     const result = await Everything.scan().exec();
 
-    fs.writeFileSync('./data/msm/dynamodb.json', JSON.stringify(result));
+    fs.writeFileSync(`./data/msm/${fileName}.json`, JSON.stringify(result));
   }
 
   static async emptyTable() {
@@ -426,13 +426,25 @@ class Util {
     }
   }
 
-  static async restoreTable() {
-    const dynamoTable = JSON.parse(fs.readFileSync('./data/msm/dynamodb.json'));
+  static async restoreTable(fileName = 'dynamodb') {
+    const dynamoTable = JSON.parse(fs.readFileSync(`./data/msm/${fileName}.json`));
     const Everything = Util.getEverythingModel();
 
     const size = 24;
     for (let i = 0; i < dynamoTable.length; i += size) {
       const objects = dynamoTable.slice(i, i + size);
+      // .map((o) => {
+      //   if (o.size) {
+      //     const { pk, sk, ...rest } = o;
+      //     return {
+      //       pk: sk,
+      //       sk: pk,
+      //       ...rest,
+      //     };
+      //   }
+      //   return o;
+      // });
+
       await Everything.batchPut(objects);
     }
   }

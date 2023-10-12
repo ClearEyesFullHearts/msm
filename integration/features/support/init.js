@@ -10,6 +10,7 @@ BeforeAll((cb) => {
   if (process.env.RESET_FIXTURE) {
     Util.emptyTable()
       .then(() => Util.restoreTable())
+      // .then(() => Util.backupTable())
       .then(cb);
   } else {
     cb();

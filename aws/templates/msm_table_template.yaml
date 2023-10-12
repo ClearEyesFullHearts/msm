@@ -82,6 +82,14 @@ Resources:
               KeyType: HASH
           Projection:
             ProjectionType: KEYS_ONLY
+        - IndexName: UserGroupIndex
+          KeySchema:
+            - AttributeName: sk
+              KeyType: HASH
+            - AttributeName: pk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
     UpdateReplacePolicy: Delete
     DeletionPolicy: Delete
 

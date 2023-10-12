@@ -528,6 +528,13 @@ paths:
           description: SK signature of the body
           schema:
             $ref: "#/components/schemas/SignatureHeader"
+        - name: id
+          in: path
+          description: group id
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         content:
           application/json:
@@ -620,6 +627,20 @@ paths:
           description: SK signature of the body
           schema:
             $ref: "#/components/schemas/SignatureHeader"
+        - name: id
+          in: path
+          description: group id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 5
+            maxLength: 125
       requestBody:
         content:
           application/json:
