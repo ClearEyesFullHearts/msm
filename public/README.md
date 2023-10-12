@@ -1,4 +1,4 @@
 # ySyPyA client
 
 Publicly available at https://beta.ysypya.com/  
-commit hash: 94a401f16bd0eb95da1275468f944822d6f25eac
+commit hash: 1b48d996ec9f730bab8ac28da484194a20657ee6
