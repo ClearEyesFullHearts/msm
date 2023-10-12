@@ -203,9 +203,10 @@ Then(/^(.*) decrypt content of message (.*) from route (.*)$/, function (name, i
   this.apickli.httpResponse.body = JSON.stringify({ from, requestId, content: body });
 });
 
-Then(/^(.*) last message action is (.*)$/, function (name, route) {
+Then(/^(.*) last message action match (.*)$/, function (name, route) {
   const username = this.apickli.replaceVariables(name);
   const allMsg = this.apickli.scenarioVariables[`MSG.${username}`];
+
   const msg = JSON.parse(allMsg[allMsg.length - 1]);
 
   assert.strictEqual(msg.action, route);

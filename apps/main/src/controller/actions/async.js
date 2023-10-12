@@ -80,6 +80,28 @@ class Async {
       }),
     );
   }
+
+  static async notifyGroup(from, sender, members, action) {
+    debug(`Notify members that ${from} had a change as ${action}`);
+    const snsClient = AWSXRay.captureAWSv3Client(new SNSClient({}));
+    const promises = members.reduce((acc, m) => {
+      if (m.username !== sender.username) {
+        acc.push(snsClient.send(
+          new PublishCommand({
+            Message: JSON.stringify({
+              to: m.username.split('#')[1],
+              from,
+              action,
+            }),
+            TopicArn: process.env.NOTIF_TOPIC,
+          }),
+        ));
+      }
+      return acc;
+    }, []);
+
+    await Promise.all(promises);
+  }
 }
 
 module.exports = Async;

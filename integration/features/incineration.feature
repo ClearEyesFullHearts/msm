@@ -44,3 +44,49 @@ Scenario: Delete one's account with messages
   And I GET /identity/`RANDOM_USER.13`
   Then response code should be 404
   And I record `RANDOM_USER.13`
+
+Scenario: A member is removed from its groups when it is incinerated
+  Given `RANDOM_USER.1` creates a group firstNameGroup for ["`RANDOM_USER.2`"] with index 0
+  Given `RANDOM_USER.3` creates a group firstNameGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.4`", "`RANDOM_USER.1`"] with index 1
+  Given `RANDOM_USER.4` creates a group firstNameGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.1`"] with index 2
+  And I save `RANDOM_USER.2`
+  And I am existing `RANDOM_USER.2`
+  And I set signature header
+  When I DELETE /user/`RANDOM_USER.2`
+  Then response code should be 200
+  And I am existing `RANDOM_USER.1`
+  When I GET /group/`GROUP_ID.0`
+  Then response code should be 200
+  And response body match a challenge
+  And response body path $.members should be of type array with length 0
+  When I GET /group/`GROUP_ID.1`
+  Then response code should be 200
+  And response body match a challenge
+  And response body path $.members should be of type array with length 2
+  When I GET /group/`GROUP_ID.2`
+  Then response code should be 200
+  And response body match a challenge
+  And response body path $.members should be of type array with length 1
+  And I record `RANDOM_USER.2`
+
+Scenario: An admin incinerate its groups if they are the only admin
+  Given `RANDOM_USER.1` creates a group firstNameGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.3`"] with index 0
+  Given `RANDOM_USER.3` creates a group firstNameGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.4`", "`RANDOM_USER.1`"] with index 1
+  Given `RANDOM_USER.4` creates a group firstNameGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.3`"] with index 2
+  And I save `RANDOM_USER.3`
+  And I am existing `RANDOM_USER.3`
+  And I set signature header
+  When I DELETE /user/`RANDOM_USER.3`
+  Then response code should be 200
+  And I am existing `RANDOM_USER.2`
+  When I GET /group/`GROUP_ID.0`
+  Then response code should be 200
+  And response body match a challenge
+  And response body path $.members should be of type array with length 1
+  When I GET /group/`GROUP_ID.1`
+  Then response code should be 404
+  When I GET /group/`GROUP_ID.2`
+  Then response code should be 200
+  And response body match a challenge
+  And response body path $.members should be of type array with length 1
+  And I record `RANDOM_USER.3`

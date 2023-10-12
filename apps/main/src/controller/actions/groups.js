@@ -1,6 +1,7 @@
 const debug = require('debug')('msm-main:group');
 const ErrorHelper = require('@shared/error');
 const Encryption = require('@shared/encryption');
+const AsyncAction = require('./async');
 
 async function formatGroup(db, groupId, user) {
   const members = await db.groups.findAllMembers(groupId);
@@ -31,6 +32,7 @@ async function formatGroup(db, groupId, user) {
     members: members.map((m) => m.username.split('#')[1]),
   };
 }
+
 class Group {
   static async getOne({ db, auth }, groupId) {
     debug(`${auth.username} wants its data membership for group ${groupId}`);
@@ -162,14 +164,17 @@ class Group {
         id: groupId, groupName: admin.groupName, key, username, admin: false,
       });
       debug('new member added');
-
-      // TODO add update group notif
     } catch (err) {
       if (err.name === 'ConditionalCheckFailedException') {
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.USER_EXISTS, 'user is already a member');
       }
       throw err;
     }
+
+    // change group notif
+    const members = await db.groups.findAllMembers(groupId);
+    await AsyncAction.notifyGroup(groupId, admin, members, 'group-add');
+    debug('group notified');
   }
 
   static async remove({ db, user }, groupId) {
@@ -195,7 +200,10 @@ class Group {
     await db.groups.deleteMember(groupId, user.username);
     debug('member deleted');
 
-    // TODO add update group notif
+    // change group notif
+    const members = await db.groups.findAllMembers(groupId);
+    await AsyncAction.notifyGroup(groupId, member, members, 'group-remove');
+    debug('group notified');
   }
 
   static async setAdmin({ db, user }, groupId, username, { isAdmin }) {
@@ -288,7 +296,9 @@ class Group {
     await db.groups.setNewKeys(groupId, newKeys);
     debug('Keys changed');
 
-    // TODO add update group notif
+    // change group notif
+    await AsyncAction.notifyGroup(groupId, admin, members, 'group-revokation');
+    debug('group notified');
   }
 
   static async write({ db, user }, groupId, { title, content }) {
@@ -336,7 +346,11 @@ class Group {
                 username: cleanName,
                 header: headerChallenge,
                 full: fullChallenge,
-              });
+              })
+                .then(() => AsyncAction.notifyMessage(groupId, cleanName).catch((err) => {
+                  console.error('error on message notification');
+                  console.error(err);
+                }));
             }
             debug('user do not exists, removed from the group');
             return db.groups.deleteMember(groupId, cleanName);

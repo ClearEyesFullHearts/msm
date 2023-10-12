@@ -36,7 +36,7 @@ Scenario: Bad content send error
     And `RANDOM_USER.7` is connected
     And I prepare next message for `RANDOM_USER.7` as { "to": "`RANDOM_USER.7`", "content": "blablabla", "requestId": "4365c1e0-72e6-492c-8832-eada64272c86" }
     When `RANDOM_USER.7` send next fallback message to `RANDOM_USER.7`
-    Then `RANDOM_USER.7` last message action is error
+    Then `RANDOM_USER.7` last message action match error
 
 Scenario: Bad requestId send error
     Given I am existing `RANDOM_USER.7`
@@ -44,7 +44,7 @@ Scenario: Bad requestId send error
     And I set var ENCRYPTED_CONTENT to a 513 characters long base64 string
     And I prepare next message for `RANDOM_USER.7` as { "to": "`RANDOM_USER.7`", "content": "`ENCRYPTED_CONTENT`", "requestId": "plouf" }
     When `RANDOM_USER.7` send next fallback message to `RANDOM_USER.7`
-    Then `RANDOM_USER.7` last message action is error
+    Then `RANDOM_USER.7` last message action match error
 
 Scenario: Disconnected target send event
     Given I am existing `RANDOM_USER.9`
@@ -54,5 +54,5 @@ Scenario: Disconnected target send event
     And I prepare fallback message "Glad youre here" for `RANDOM_USER.9`
     When `RANDOM_USER.7` send next fallback message to `RANDOM_USER.9`
     Then I wait for 2 seconds
-    Then `RANDOM_USER.7` last message action is disconnected
+    Then `RANDOM_USER.7` last message action match disconnected
     And response body path $.message.username should be `RANDOM_USER.9`
