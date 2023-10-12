@@ -21,8 +21,8 @@ onMounted(() => {
     selector: "[data-bs-toggle='tooltip']",
   });
 
-  isAllowed.value = !!Notification && Notification.permission === 'granted';
-  isDisabled.value = Notification.permission !== 'default' || !Notification;
+  isAllowed.value = !!window.Notification && window.Notification.permission === 'granted';
+  isDisabled.value = window.Notification.permission !== 'default' || !window.Notification;
 });
 
 async function incinerate() {
@@ -36,8 +36,8 @@ async function acceptNotification() {
   if (!isAllowed.value && !isDisabled.value) {
     await workerStore.start();
     await workerStore.subscribe(true);
-    isAllowed.value = !!Notification && Notification.permission === 'granted';
-    isDisabled.value = Notification.permission !== 'default' || !Notification;
+    isAllowed.value = !!window.Notification && window.Notification.permission === 'granted';
+    isDisabled.value = window.Notification.permission !== 'default' || !window.Notification;
   }
 }
 

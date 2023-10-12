@@ -120,7 +120,7 @@ class CryptoHelper {
   async getPublicKey(pem) {
     const privateKey = await this.importCryptoKey(pem, 'pkcs8', 'PRIVATE', true);
     // export private key to JWK
-    const jwk = await crypto.subtle.exportKey('jwk', privateKey);
+    const jwk = await window.crypto.subtle.exportKey('jwk', privateKey);
 
     // remove private data from JWK
     delete jwk.d;
@@ -131,7 +131,7 @@ class CryptoHelper {
     jwk.key_ops = ['encrypt'];
 
     // import public key
-    const publicKeyBuff = await crypto.subtle.importKey('jwk', jwk,
+    const publicKeyBuff = await window.crypto.subtle.importKey('jwk', jwk,
       {
         name: 'RSA-OAEP',
         modulusLength: 4096,
@@ -146,7 +146,7 @@ class CryptoHelper {
   async getSigningPublicKey(pem) {
     const privateKey = await this.importSigningKey(pem, 'pkcs8', 'PRIVATE', true);
     // export private key to JWK
-    const jwk = await crypto.subtle.exportKey('jwk', privateKey);
+    const jwk = await window.crypto.subtle.exportKey('jwk', privateKey);
 
     // remove private data from JWK
     delete jwk.d;
@@ -157,7 +157,7 @@ class CryptoHelper {
     jwk.key_ops = ['verify'];
 
     // import public key
-    const publicKeyBuff = await crypto.subtle.importKey('jwk', jwk,
+    const publicKeyBuff = await window.crypto.subtle.importKey('jwk', jwk,
       {
         name: 'RSA-PSS',
         modulusLength: 1024,
@@ -236,7 +236,7 @@ class CryptoHelper {
       ['encrypt'],
     );
 
-    const ctBuffer = await crypto.subtle.encrypt({
+    const ctBuffer = await window.crypto.subtle.encrypt({
       name: 'AES-GCM',
       iv,
     }, key, arrTxt);

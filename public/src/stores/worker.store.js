@@ -42,7 +42,7 @@ export const useWorkerStore = defineStore({
   },
   actions: {
     async start() {
-      if ('serviceWorker' in navigator) {
+      if ('serviceWorker' in window.navigator) {
         window.addEventListener('beforeinstallprompt', (event) => {
           event.preventDefault();
           this.installPrompt = event;
@@ -51,16 +51,16 @@ export const useWorkerStore = defineStore({
         window.addEventListener('appinstalled', () => {
           this.installed = true;
         });
-        this.sw = await navigator.serviceWorker.register('/worker/sw.js');
+        this.sw = await window.navigator.serviceWorker.register('/worker/sw.js');
         await new Promise((r) => setTimeout(() => r(), 500));
-        this.permission = !!Notification ? Notification.permission : 'denied';
+        this.permission = !!window.Notification ? window.Notification.permission : 'denied';
       }
     },
     async subscribe(force = false) {
       if (!this.sw) return false;
-      this.permission = !!Notification ? Notification.permission : 'denied';
+      this.permission = !!window.Notification ? window.Notification.permission : 'denied';
 
-      if (!Notification || (Notification.permission !== 'granted' && !force)) return false;
+      if (!window.Notification || (window.Notification.permission !== 'granted' && !force)) return false;
 
       this.subscription = await this.sw.pushManager.subscribe({
         userVisibleOnly: true,
@@ -78,7 +78,7 @@ export const useWorkerStore = defineStore({
         console.log('error on endpoint', endpoint);
       }
 
-      this.permission = !!Notification ? Notification.permission : 'denied';
+      this.permission = !!window.Notification ? window.Notification.permission : 'denied';
       if (this.permission === 'granted') {
         const authStore = useAuthStore();
         this.channel = new BroadcastChannel('new_mail');

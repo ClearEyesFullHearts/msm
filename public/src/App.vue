@@ -4,7 +4,7 @@ import { useAuthStore, useWorkerStore } from '@/stores';
 
 const authStore = useAuthStore();
 
-if (!!Notification && Notification.permission === 'granted') {
+if (!!window.Notification && window.Notification.permission === 'granted') {
   const workerStore = useWorkerStore();
   workerStore.start();
 }
