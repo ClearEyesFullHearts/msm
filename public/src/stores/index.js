@@ -7,3 +7,4 @@ export * from './conversation.store';
 export * from './connection.store';
 export * from './toaster.store';
 export * from './worker.store';
+export * from './group.store';

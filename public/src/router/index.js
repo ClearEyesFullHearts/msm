@@ -7,6 +7,7 @@ import Config from '@/lib/config';
 import accountRoutes from './account.routes';
 import profileRoutes from './profile.routes';
 import convosRoutes from './conversations.routes';
+import groupRoutes from './group.routes';
 
 export const router = createRouter({
   history: createWebHistory(Config.BASE_URL),
@@ -18,6 +19,7 @@ export const router = createRouter({
     { ...convosRoutes },
     { ...accountRoutes },
     { ...profileRoutes },
+    { ...groupRoutes },
     // catch all redirect to home page
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

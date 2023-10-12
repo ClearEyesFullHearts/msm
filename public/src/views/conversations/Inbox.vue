@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { Tooltip } from 'bootstrap';
 import { Autocomplete } from '@/components';
+import { router } from '@/router';
 import { useContactsStore, useAuthStore, useConnectionStore } from '@/stores';
 import FileHelper from '@/lib/fileHelper';
 
@@ -46,6 +47,9 @@ async function onVerifyFilePicked(evt) {
     .then(() => {
       contactsStore.saveContactList(authStore.pem);
     });
+}
+function addGroup() {
+  router.push('/groups');
 }
 
 </script>
@@ -92,16 +96,16 @@ async function onVerifyFilePicked(evt) {
       </div>
     </div>
     <div class="row">
-      <div class="col-lg-8 col-md-12">
+      <div class="col-lg-6 col-md-12">
         <Autocomplete @user-selected="addUser" />
       </div>
-      <div class="col-lg-4 col-md-12 text-end d-flex flex-column">
+      <div class="col-lg-4 col-md-6 text-end d-flex flex-column">
         <button
           ref="verifyUploadBtn"
           class="btn btn-primary mb-2"
           @click="onUploadVerify()"
         >
-          Add a contact by uploading its security file
+          Add a contact <span class="d-none d-lg-inline">by uploading its security file</span>
         </button>
         <input
           ref="verifyKeyInput"
@@ -110,6 +114,15 @@ async function onVerifyFilePicked(evt) {
           style="opacity: none;"
           @change="onVerifyFilePicked"
         >
+      </div>
+      <div class="col-lg-2 col-md-6 text-end d-flex flex-column">
+        <button
+          ref="verifyUploadBtn"
+          class="btn btn-primary mb-2"
+          @click="addGroup()"
+        >
+          Add a group
+        </button>
       </div>
     </div>
   </div>
