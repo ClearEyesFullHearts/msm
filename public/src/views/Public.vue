@@ -11,12 +11,12 @@ import config from '@/lib/config';
       <div class="col-md-10">
         <h1>Welcome to ySyPyA.</h1>
         <p>
-          ySyPyA is an ecrypted instant messaging app, letting you write and
+          ySyPyA is an encrypted instant messaging app, letting you write and
           share messages that cannot be read by anyone except you and your recipients
           through cryptography.
         </p>
         <p>
-          If you have no idea about what are cryptography or "keys", we advise you to read that very
+          If you have no idea about what cryptography or "keys" are, we advise you to read that very
           short introduction:
           <a
             href="https://github.com/ClearEyesFullHearts/msm/blob/main/INTRODUCTION.md"
@@ -46,9 +46,9 @@ import config from '@/lib/config';
             <b>No record</b>
             <p>
               The only data we keep server side are your username, your public key,
-              the unread encrypted messages and your contact list, entirely encrypted.<br>
+              the unread encrypted messages and your encrypted contact list.<br>
               Nothing is stored out of memory client side so a simple page refresh makes
-              all datas disappear.<br>
+              all data disappear.<br>
             </p>
           </li>
           <li>

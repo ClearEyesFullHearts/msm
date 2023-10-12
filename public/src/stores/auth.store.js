@@ -100,7 +100,7 @@ export const useAuthStore = defineStore({
         await contactsStore.setContactList(this.pem, this.user.contacts);
 
         let isSubscribed = false;
-        if (Notification.permission === 'granted') {
+        if (!!Notification && Notification.permission === 'granted') {
           const workerStore = useWorkerStore();
           isSubscribed = await workerStore.subscribe();
         }

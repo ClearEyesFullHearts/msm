@@ -58,6 +58,7 @@ function selectUser(user) {
           v-for="user in users"
           :key="user"
           class="list-group-item pointer"
+          translate="no"
           @click="selectUser(user)"
         >
           {{ user }}

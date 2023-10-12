@@ -134,7 +134,7 @@ async function onVerifyFilePicked(evt) {
           >{{ contact.messages.length }}</span>
           <span>
             <router-link :to="`/conversations/${contact.at}`">
-              <b>{{ contact.at }}</b>
+              <b translate="no">{{ contact.at }}</b>
               <i
                 class="bi bi-arrow-right-circle-fill ms-2 float-end"
                 style="font-size: 1.2rem; color: grey;"
@@ -237,7 +237,7 @@ async function onVerifyFilePicked(evt) {
                 Delete this conversation
               </button>
               <br>
-              <label>Username:</label>
+              <label translate="no">Username:</label>
               <h4>@{{ contact.at }}</h4>
               <label>Security Hash:</label>
               <h4>{{ contact.store.hash || contact.server.hash }}</h4>

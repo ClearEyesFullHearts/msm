@@ -1,4 +1,5 @@
 /* eslint-disable import/prefer-default-export */
+/* eslint-disable no-extra-boolean-cast */
 import { defineStore } from 'pinia';
 import Config from '@/lib/config';
 import { fetchWrapper } from '@/helpers';
@@ -52,14 +53,14 @@ export const useWorkerStore = defineStore({
         });
         this.sw = await navigator.serviceWorker.register('/worker/sw.js');
         await new Promise((r) => setTimeout(() => r(), 500));
-        this.permission = Notification.permission;
+        this.permission = !!Notification ? Notification.permission : 'denied';
       }
     },
     async subscribe(force = false) {
       if (!this.sw) return false;
-      this.permission = Notification.permission;
+      this.permission = !!Notification ? Notification.permission : 'denied';
 
-      if (Notification.permission !== 'granted' && !force) return false;
+      if (!Notification || (Notification.permission !== 'granted' && !force)) return false;
 
       this.subscription = await this.sw.pushManager.subscribe({
         userVisibleOnly: true,
@@ -77,7 +78,7 @@ export const useWorkerStore = defineStore({
         console.log('error on endpoint', endpoint);
       }
 
-      this.permission = Notification.permission;
+      this.permission = !!Notification ? Notification.permission : 'denied';
       if (this.permission === 'granted') {
         const authStore = useAuthStore();
         this.channel = new BroadcastChannel('new_mail');

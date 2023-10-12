@@ -21,7 +21,6 @@ self.addEventListener('push', (event) => {
     tag: 'new-message',
     badge: '/img/notification-badge.png',
   };
-  self.registration.showNotification('ySyPyA', options);
 
   const bc = new BroadcastChannel('new_mail');
   bc.postMessage(msg);
@@ -33,6 +32,7 @@ self.addEventListener('push', (event) => {
       navigator.setAppBadge(msg.unread);
     }
   }
+  self.registration.showNotification('ySyPyA', options);
 });
 
 self.onmessage = function (e) {

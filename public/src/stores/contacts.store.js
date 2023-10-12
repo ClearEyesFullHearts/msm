@@ -237,7 +237,7 @@ export const useContactsStore = defineStore({
         for (let i = 0; i < challenges.length; i += 1) {
           const { id, challenge } = challenges[i];
           const objStr = await mycrypto.resolve(pem, challenge);
-
+          console.log('header', objStr);
           const {
             from,
             sentAt,

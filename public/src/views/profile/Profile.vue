@@ -51,7 +51,7 @@ async function signHash() {
           Profile
         </h4>
         <div class="card-body text-center">
-          <label>Username:</label>
+          <label translate="no">Username:</label>
           <h4>@{{ authStore?.user?.user?.username }}</h4>
           <label>Security Hash:</label>
           <h4>{{ authStore?.publicHash }}</h4>

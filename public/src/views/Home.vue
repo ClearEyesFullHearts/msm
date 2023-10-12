@@ -23,7 +23,9 @@ function installApp() {
               Go to your conversations
             </router-link>
           </p>
-          <h1>Hi @{{ user.user.username }}!</h1>
+          <h1 translate="no">
+            Hi @{{ user.user.username }}!
+          </h1>
           <p>
             Welcome to ySyPyA.<br>
             ySyPyA is a secured, private and anonymous instant messaging system,

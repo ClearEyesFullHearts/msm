@@ -104,7 +104,7 @@ async function onFilePicked(evt) {
         style="font-size: 1.4rem; color: grey;"
       />
     </router-link>
-    Conversation with {{ props.at }}
+    <span translate="no">Conversation with {{ props.at }}</span>
     <button
       class="btn btn-secondary btn-sm float-end me-2"
       type="button"

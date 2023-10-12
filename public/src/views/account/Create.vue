@@ -114,25 +114,4 @@ async function onSubmit(values) {
       </Form>
     </div>
   </div>
-  <div class="card m-3">
-    <h4 class="card-header">
-      What's happening
-    </h4>
-    <div
-      class="card-body"
-    >
-      <p>
-        On registration ySyPyA creates for you a unique pair of RSA keys
-        and send the public one to the server with your username, for storage.
-      </p>
-      <p>
-        The server respond with your encrypted identity that ySyPyA decrypt with your secret key.
-        You're then able to connect to the site.
-      </p>
-      <p>
-        At this point ySyPyA encrypts the secret key with your password and send it
-        to be kept in your vault, it will be used for all subsequent login.
-      </p>
-    </div>
-  </div>
 </template>

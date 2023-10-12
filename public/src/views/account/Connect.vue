@@ -148,13 +148,14 @@ async function onSubmit(values) {
       class="card-body"
     >
       <p>
-        On login the server send your encrypted identity and the content of your vault.
+        Upon logging in, the server provides your encrypted identity
+        along with the contents of your vault.
       </p>
       <p>
-        Your password is used to decrypt your vault as your secret key.
+        Your password functions as the decryption key for your vault, which houses your secret key.
       </p>
       <p>
-        And your secret key is used to decrypt your identity and connect.
+        This secret key then decrypts your identity, allowing you to successfully connect.
       </p>
     </div>
   </div>
