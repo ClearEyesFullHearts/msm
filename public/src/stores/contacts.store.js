@@ -43,6 +43,7 @@ export const useContactsStore = defineStore({
           signingKey: null,
         },
         auto: 0,
+        group: false,
         alert: null,
         messages: [],
       });
@@ -81,11 +82,39 @@ export const useContactsStore = defineStore({
             checkingUser.alert = alertMsg;
           }
         })
-        .then(() =>
-          // check if user is verified in ether blockchain
-          this.autoValidation(checkingUser));
+        // check if user is verified in ether blockchain
+        .then(() => this.autoValidation(checkingUser));
 
       return checkingUser;
+    },
+    groupToContact({
+      id,
+      at,
+    }) {
+      const checkingGroup = reactive({
+        id,
+        at,
+        key: null,
+        secret: null,
+        group: true,
+        alert: null,
+        members: [],
+        messages: [],
+      });
+
+      fetchWrapper.get(`${baseUrl}/group/${id}`)
+        .then(async (challenge) => {
+          const authStore = useAuthStore();
+          const groupStr = await mycrypto.resolve(authStore.pem, challenge);
+          const { key, members } = JSON.parse(groupStr);
+          const keyBuff = await mycrypto.privateDecrypt(authStore.pem, key);
+          checkingGroup.key = new TextDecoder().decode(keyBuff);
+          checkingGroup.members = members;
+        })
+        .catch((err) => {
+          checkingGroup.alert = err.message;
+        });
+      return checkingGroup;
     },
     async setContactList(pem, contacts) {
       if (!contacts) {
@@ -106,13 +135,24 @@ export const useContactsStore = defineStore({
         id,
         at,
         store,
+        group,
       }) => {
-        const contact = this.userToContact({
-          id,
-          at,
-          store,
-        });
-        this.list.push(contact);
+        console.log('list', at, group);
+        if (!group) {
+          const contact = this.userToContact({
+            id,
+            at,
+            store,
+          });
+          this.list.push(contact);
+        } else {
+          const contact = this.groupToContact({
+            id,
+            at,
+            store,
+          });
+          this.list.push(contact);
+        }
       });
     },
     async saveContactList(pem) {
@@ -120,10 +160,12 @@ export const useContactsStore = defineStore({
         id,
         at,
         store,
+        group,
       }) => ({
         id,
         at,
         store,
+        group,
       }));
       const listChallenge = await mycrypto.challenge(pem, JSON.stringify(saveList));
       await fetchWrapper.put(`${baseUrl}/contacts`, listChallenge);
@@ -134,7 +176,7 @@ export const useContactsStore = defineStore({
       this.list.splice(index, 1);
       this.dirty = true;
     },
-    async manualAdd(name) {
+    manualAdd(name) {
       const [knownUser] = this.list.filter((u) => u.at === name);
       if (knownUser) return;
 
@@ -217,7 +259,8 @@ export const useContactsStore = defineStore({
         if (!isValidatedOnChain) return;
 
         const { signature } = isValidatedOnChain;
-        const result = await mycrypto.verify(user.server.signingKey, user.server.hash, signature, true);
+        const { server: { signingKey, hash } } = user;
+        const result = await mycrypto.verify(signingKey, hash, signature, true);
         if (!result) {
           throw new Error('Signature mismatch on chain');
         }
@@ -225,6 +268,16 @@ export const useContactsStore = defineStore({
       } catch (err) {
         user.alert = `${err.message || err}, do not trust this user.\nReport the problem to an admin ASAP!`;
       }
+    },
+    addGroup({ groupId, groupName }) {
+      const [knownGroup] = this.list.filter((u) => u.id === groupId);
+      if (knownGroup) return;
+      const contact = this.groupToContact({
+        id: groupId,
+        at: groupName,
+      });
+      this.list.unshift(contact);
+      this.dirty = true;
     },
     async getHeaders() {
       const headers = [];
@@ -300,7 +353,7 @@ export const useContactsStore = defineStore({
 
         contact.messages.push(header);
       } else {
-        await this.manualAdd(from);
+        this.manualAdd(from);
         const newContact = this.list.find((c) => c.at === from);
         newContact.messages.push(header);
       }
@@ -312,7 +365,7 @@ export const useContactsStore = defineStore({
       const from = header.from.substring(1);
       let contact = this.list.find((c) => c.at === from);
       if (!contact) {
-        await this.manualAdd(from);
+        this.manualAdd(from);
         contact = this.list.find((c) => c.at === from);
       }
 

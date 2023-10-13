@@ -99,7 +99,7 @@ export const useUsersStore = defineStore({
       if (search.length < 3) return;
       this.users = { loading: true };
       try {
-        this.users = await fetchWrapper.get(`${baseUrl}/users?search=${search}`);
+        this.users = await fetchWrapper.get(`${baseUrl}/search?user=${search}`);
       } catch (error) {
         this.users = { error };
       }

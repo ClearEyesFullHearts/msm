@@ -327,6 +327,11 @@ class CryptoHelper {
     return this.ArBuffToBase64(digest);
   }
 
+  getRandomBase64Password() {
+    const arrPass = window.crypto.getRandomValues(new Uint8Array(32));
+    return this.ArBuffToBase64(arrPass);
+  }
+
   uuidV4() {
     return window.crypto.randomUUID();
   }

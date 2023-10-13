@@ -1,10 +1,14 @@
 <script setup>
 import { Form, Field } from 'vee-validate';
 import * as Yup from 'yup';
-import { useGroupStore, useAlertStore } from '@/stores';
+import {
+  useGroupStore, useAlertStore, useContactsStore, useAuthStore,
+} from '@/stores';
 import { router } from '@/router';
 
 const groupStore = useGroupStore();
+const contactsStore = useContactsStore();
+const authStore = useAuthStore();
 const alertStore = useAlertStore();
 
 const schema = Yup.object().shape({
@@ -16,9 +20,15 @@ const schema = Yup.object().shape({
 
 async function onSubmit(values) {
   try {
-    const groupId = await groupStore.create(values);
+    const { id } = await groupStore.create(values);
 
-    router.push(`/group/${groupId}`);
+    contactsStore.addGroup({
+      groupId: id,
+      groupName: values.groupName,
+    });
+    contactsStore.saveContactList(authStore.pem);
+    // router.push(`/group/${groupId}`);
+    router.push('/conversations');
   } catch (error) {
     alertStore.error(error);
   }
