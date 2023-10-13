@@ -56,3 +56,14 @@ Scenario: Disconnected target send event
     Then I wait for 2 seconds
     Then `RANDOM_USER.7` last message action match disconnected
     And response body path $.message.username should be `RANDOM_USER.9`
+
+Scenario: Get connection status of a list
+  Given I am existing `RANDOM_USER.7`
+  And `RANDOM_USER.7` is connected
+  And I am existing `RANDOM_USER.8`
+  And `RANDOM_USER.8` is connected
+  And I am existing `RANDOM_USER.8`
+  When I GET /connections?list=`RANDOM_USER.7`,`RANDOM_USER.10`,`RANDOM_USER.8`,`RANDOM_USER.2`
+  And response body path $ should be of type array with length 2
+  And response body path $.0 should be `RANDOM_USER.7`
+  And response body path $.1 should be `RANDOM_USER.8`
