@@ -23,9 +23,11 @@ onMounted(() => {
   });
 });
 
-function addUser(user) {
-  contactsStore.manualAdd(user);
-  contactsStore.saveContactList(authStore.pem);
+async function addUser(user) {
+  contactsStore.manualAdd(user)
+    .then(() => {
+      contactsStore.saveContactList(authStore.pem);
+    });
 }
 function removeUser(user) {
   contactsStore.removeUser(user.id);

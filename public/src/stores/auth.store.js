@@ -4,7 +4,7 @@ import { defineStore, getActivePinia } from 'pinia';
 import { fetchWrapper } from '@/helpers';
 import { router } from '@/router';
 import {
-  useAlertStore, useUsersStore, useContactsStore, useConnectionStore, useWorkerStore,
+  useAlertStore, useUsersStore, useContactsStore, useConnectionStore, useWorkerStore, useGroupStore,
 } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
@@ -96,6 +96,8 @@ export const useAuthStore = defineStore({
 
         this.publicHash = await mycrypto.hash(`${epk}\n${spk}`);
 
+        const groupStore = useGroupStore();
+        await groupStore.setGroupList(this.pem);
         const contactsStore = useContactsStore();
         await contactsStore.setContactList(this.pem, this.user.contacts);
 

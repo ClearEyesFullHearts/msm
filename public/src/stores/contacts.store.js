@@ -3,7 +3,7 @@ import { reactive } from 'vue';
 import { defineStore } from 'pinia';
 import { fetchWrapper } from '@/helpers';
 import {
-  useAuthStore, useConversationStore, useToasterStore, useWorkerStore,
+  useAuthStore, useConversationStore, useToasterStore, useWorkerStore, useGroupStore,
 } from '@/stores';
 
 import CryptoHelper from '@/lib/cryptoHelper';
@@ -26,15 +26,16 @@ export const useContactsStore = defineStore({
     messageCount: (state) => state.list.reduce((nb, contact) => nb + contact.messages.length, 0),
   },
   actions: {
-    userToContact({
-      id,
-      at,
-      store,
+    getCheckingUser({
+      id, at, hash, signature,
     }) {
-      const checkingUser = reactive({
+      return reactive({
         id,
         at,
-        store,
+        store: {
+          hash,
+          signature,
+        },
         key: null,
         verified: false,
         connected: false,
@@ -47,74 +48,39 @@ export const useContactsStore = defineStore({
         alert: null,
         messages: [],
       });
-      fetchWrapper.get(`${baseUrl}/user/${at}`)
-        .then(async ({ id: userId, key, signature }) => {
-          if (!checkingUser.id) checkingUser.id = userId;
-          checkingUser.key = key;
-          const hash = await mycrypto.hash(`${key}\n${signature}`);
-          checkingUser.server.hash = hash;
-          checkingUser.server.signingKey = signature;
-          if (store.signature) {
-            try {
-              const result = await mycrypto.verify(signature, hash, store.signature, true);
-              if (result) {
-                checkingUser.verified = true;
-              } else {
-                checkingUser.alert = 'The stored signature failed to verify. This is very alarming.\nPlease report the problem to an admin.';
-              }
-            } catch (exc) {
-              checkingUser.alert = 'A problem happened while trying to validate this contact.\nIt may just be a temporary problem but you\'d be safer by not using this @';
-            }
-            return;
-          }
-          if (store.hash) {
-            const result = store.hash === hash;
-            if (result) {
-              checkingUser.verified = true;
-            } else {
-              checkingUser.alert = 'There is a mismatch between the server\'s hash and the stored one. This is very alarming.\nPlease report the problem to an admin.';
-            }
-          }
-        })
-        .catch((err) => {
-          if (err === '@ unknown') {
-            const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
-            checkingUser.alert = alertMsg;
-          }
-        })
-        // check if user is verified in ether blockchain
-        .then(() => this.autoValidation(checkingUser));
-
-      return checkingUser;
     },
-    groupToContact({
-      id,
-      at,
-    }) {
-      const checkingGroup = reactive({
-        id,
-        at,
-        key: null,
-        secret: null,
-        group: true,
-        alert: null,
-        members: [],
-        messages: [],
-      });
+    async setContactDetail(checking, detail) {
+      const { id: userId, key, signature } = detail;
 
-      fetchWrapper.get(`${baseUrl}/group/${id}`)
-        .then(async (challenge) => {
-          const authStore = useAuthStore();
-          const groupStr = await mycrypto.resolve(authStore.pem, challenge);
-          const { key, members } = JSON.parse(groupStr);
-          const keyBuff = await mycrypto.privateDecrypt(authStore.pem, key);
-          checkingGroup.key = new TextDecoder().decode(keyBuff);
-          checkingGroup.members = members;
-        })
-        .catch((err) => {
-          checkingGroup.alert = err.message;
-        });
-      return checkingGroup;
+      if (!checking.id) checking.id = userId;
+
+      checking.key = key;
+      const hash = await mycrypto.hash(`${key}\n${signature}`);
+      checking.server.hash = hash;
+      checking.server.signingKey = signature;
+
+      if (checking.store.signature) {
+        try {
+          const result = await mycrypto.verify(signature, hash, checking.store.signature, true);
+          if (result) {
+            checking.verified = true;
+          } else {
+            checking.alert = 'The stored signature failed to verify. This is very alarming.\nPlease report the problem to an admin.';
+          }
+        } catch (exc) {
+          checking.alert = 'A problem happened while trying to validate this contact.\nIt may just be a temporary problem but you\'d be safer by not using this @';
+        }
+        return checking;
+      }
+      if (checking.store.hash) {
+        const result = checking.store.hash === hash;
+        if (result) {
+          checking.verified = true;
+        } else {
+          checking.alert = 'There is a mismatch between the server\'s hash and the stored one. This is very alarming.\nPlease report the problem to an admin.';
+        }
+      }
+      return checking;
     },
     async setContactList(pem, contacts) {
       if (!contacts) {
@@ -131,27 +97,39 @@ export const useContactsStore = defineStore({
       const listStr = await mycrypto.resolve(pem, { token, passphrase, iv });
       const myList = JSON.parse(listStr);
 
+      const userAts = myList.reduce((acc, l) => {
+        if (!l.group) acc.push(l.at);
+        return acc;
+      }, []);
+
+      const users = await fetchWrapper.get(`${baseUrl}/users?list=${encodeURIComponent(userAts.join(','))}`);
+      const groupStore = useGroupStore();
       myList.forEach(({
         id,
         at,
-        store,
+        store: {
+          hash,
+          signature,
+        },
         group,
       }) => {
-        console.log('list', at, group);
         if (!group) {
-          const contact = this.userToContact({
-            id,
-            at,
-            store,
+          const checkingUser = this.getCheckingUser({
+            id, at, hash, signature,
           });
-          this.list.push(contact);
+          this.list.push(checkingUser);
+          const detail = users.find((u) => u.at === at);
+          if (!detail) {
+            checkingUser.alert = 'This user does not exists anymore.\nPlease remove it from your list.';
+          } else {
+            this.setContactDetail(checkingUser, detail)
+              .then(() => this.autoValidation(checkingUser));
+          }
         } else {
-          const contact = this.groupToContact({
-            id,
-            at,
-            store,
-          });
-          this.list.push(contact);
+          const groupContact = groupStore.list.find((g) => g.id === id);
+          if (groupContact) {
+            this.list.push(groupContact);
+          }
         }
       });
     },
@@ -159,12 +137,18 @@ export const useContactsStore = defineStore({
       const saveList = this.list.map(({
         id,
         at,
-        store,
+        store: {
+          hash,
+          signature,
+        },
         group,
       }) => ({
         id,
         at,
-        store,
+        store: {
+          hash,
+          signature,
+        },
         group,
       }));
       const listChallenge = await mycrypto.challenge(pem, JSON.stringify(saveList));
@@ -176,19 +160,21 @@ export const useContactsStore = defineStore({
       this.list.splice(index, 1);
       this.dirty = true;
     },
-    manualAdd(name) {
+    async manualAdd(name) {
       const [knownUser] = this.list.filter((u) => u.at === name);
       if (knownUser) return;
 
-      const contact = this.userToContact({
-        id: false,
-        at: name,
-        store: {
-          hash: null,
-          signature: null,
-        },
-      });
-      this.list.unshift(contact);
+      const user = await fetchWrapper.get(`${baseUrl}/user/${name}`);
+      const checkingUser = this.getCheckingUser({ at: name });
+      this.list.unshift(checkingUser);
+
+      if (!user) {
+        const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
+        checkingUser.alert = alertMsg;
+      } else {
+        this.setContactDetail(checkingUser, user)
+          .then(() => this.autoValidation(checkingUser));
+      }
       this.dirty = true;
     },
     async fileAdd({
@@ -198,10 +184,20 @@ export const useContactsStore = defineStore({
       if (knownUserIndex >= 0) {
         this.list.splice(knownUserIndex, 1);
       }
-      const contact = this.userToContact({
-        id, at, store: { hash, signature },
+
+      const user = await fetchWrapper.get(`${baseUrl}/user/${at}`);
+      const checkingUser = this.getCheckingUser({
+        id, at, hash, signature,
       });
-      this.list.unshift(contact);
+      this.list.unshift(checkingUser);
+
+      if (!user) {
+        const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
+        checkingUser.alert = alertMsg;
+      } else {
+        this.setContactDetail(checkingUser, user)
+          .then(() => this.autoValidation(checkingUser));
+      }
       this.dirty = true;
     },
     verifyUser(id) {
@@ -209,49 +205,6 @@ export const useContactsStore = defineStore({
       knownUser.store.hash = knownUser.server.hash;
       knownUser.verified = true;
       this.dirty = true;
-    },
-    async checkUser(user) {
-      // check if user is verified in contact list
-      const [knownUser] = this.list.filter((u) => u.id === user.id);
-      if (knownUser) {
-        if (knownUser.verified) {
-          const {
-            store: {
-              hash,
-              signature,
-            },
-          } = knownUser;
-          if (signature) {
-            const result = await mycrypto.verify(user.signature, user.security.hash, signature, true);
-
-            user.security.verification = result ? 1 : 4;
-            return;
-          }
-          user.security.verification = user.security.hash === hash ? 2 : 4;
-          return;
-        }
-        if (knownUser.auto) {
-          const result = await mycrypto.verify(user.signature, user.security.hash, knownUser.auto, true);
-          user.security.verification = result ? 3 : 4;
-          return;
-        }
-      }
-      // check if user is verified in ether blockchain
-      // if the hash checks out => user.security.verification = 3;
-      try {
-        const isValidatedOnChain = await myvalidator.isValidated(user.id);
-        if (!isValidatedOnChain) return;
-
-        const { signature } = isValidatedOnChain;
-        const result = await mycrypto.verify(user.signature, user.security.hash, signature, true);
-        if (result) {
-          user.security.verification = 3;
-        } else {
-          user.security.verification = 4;
-        }
-      } catch (err) {
-        user.security.verification = 4;
-      }
     },
     async autoValidation(user) {
       try {
@@ -268,16 +221,6 @@ export const useContactsStore = defineStore({
       } catch (err) {
         user.alert = `${err.message || err}, do not trust this user.\nReport the problem to an admin ASAP!`;
       }
-    },
-    addGroup({ groupId, groupName }) {
-      const [knownGroup] = this.list.filter((u) => u.id === groupId);
-      if (knownGroup) return;
-      const contact = this.groupToContact({
-        id: groupId,
-        at: groupName,
-      });
-      this.list.unshift(contact);
-      this.dirty = true;
     },
     async getHeaders() {
       const headers = [];
@@ -420,3 +363,49 @@ export const useContactsStore = defineStore({
     },
   },
 });
+
+/*
+async checkUser(user) {
+      // check if user is verified in contact list
+      const [knownUser] = this.list.filter((u) => u.id === user.id);
+      if (knownUser) {
+        if (knownUser.verified) {
+          const {
+            store: {
+              hash,
+              signature,
+            },
+          } = knownUser;
+          if (signature) {
+            const result = await mycrypto.verify(user.signature, user.security.hash, signature, true);
+
+            user.security.verification = result ? 1 : 4;
+            return;
+          }
+          user.security.verification = user.security.hash === hash ? 2 : 4;
+          return;
+        }
+        if (knownUser.auto) {
+          const result = await mycrypto.verify(user.signature, user.security.hash, knownUser.auto, true);
+          user.security.verification = result ? 3 : 4;
+          return;
+        }
+      }
+      // check if user is verified in ether blockchain
+      // if the hash checks out => user.security.verification = 3;
+      try {
+        const isValidatedOnChain = await myvalidator.isValidated(user.id);
+        if (!isValidatedOnChain) return;
+
+        const { signature } = isValidatedOnChain;
+        const result = await mycrypto.verify(user.signature, user.security.hash, signature, true);
+        if (result) {
+          user.security.verification = 3;
+        } else {
+          user.security.verification = 4;
+        }
+      } catch (err) {
+        user.security.verification = 4;
+      }
+    },
+*/

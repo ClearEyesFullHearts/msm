@@ -20,15 +20,13 @@ const schema = Yup.object().shape({
 
 async function onSubmit(values) {
   try {
-    const { id } = await groupStore.create(values);
+    const newGroup = await groupStore.create(values);
+    contactsStore.list.unshift(newGroup);
+    contactsStore.dirty = true;
 
-    contactsStore.addGroup({
-      groupId: id,
-      groupName: values.groupName,
-    });
     contactsStore.saveContactList(authStore.pem);
-    // router.push(`/group/${groupId}`);
-    router.push('/conversations');
+    router.push(`/group/${newGroup.id}`);
+    // router.push('/conversations');
   } catch (error) {
     alertStore.error(error);
   }

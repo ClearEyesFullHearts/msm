@@ -15,47 +15,72 @@ const mycrypto = new CryptoHelper();
 export const useGroupStore = defineStore({
   id: 'group',
   state: () => ({
+    list: [],
     current: {
       users: [],
     },
   }),
   actions: {
-    setDetailedMember(name, users, contactsStore) {
-      if (!contactsStore) contactsStore = useContactsStore();
-      const known = contactsStore.list.find((c) => c.at === name);
-      if (known) {
-        this.current.users.push(known);
-      } else {
-        const foundUser = users.find((c) => c.at === name);
-        if (foundUser) {
-          const {
-            at, id: userId, key, signature,
-          } = foundUser;
-          const unknown = reactive({
-            id: userId,
-            at,
-            key,
-            verified: false,
-            connected: false,
-            store: {
-              hash: null,
-              signature: null,
-            },
-            server: {
-              hash: null,
-              signingKey: signature,
-            },
-          });
-          this.current.users.push(unknown);
+    formatGroup(pem, {
+      groupId,
+      groupName,
+      key,
+      isAdmin,
+      members,
+    }) {
+      const checkingGroup = reactive({
+        id: groupId,
+        at: groupName,
+        store: {
+          hash: null,
+          signature: null,
+        },
+        isAdmin,
+        secret: null,
+        group: true,
+        alert: null,
+        members,
+        messages: [],
+        users: [],
+      });
 
-          console.log('this.current.users', this.current.users);
-          mycrypto.hash(`${key}\n${signature}`)
-            .then((hash) => {
-              unknown.server.hash = hash;
-            })
-            .then(() => contactsStore.autoValidation(unknown));
-        }
-      }
+      mycrypto.privateDecrypt(pem, key)
+        .then((keyBuff) => {
+          checkingGroup.secret = new TextDecoder().decode(keyBuff);
+        });
+
+      return checkingGroup;
+    },
+    async setGroupList(pem) {
+      const groups = await fetchWrapper.get(`${baseUrl}/groups`);
+
+      const {
+        passphrase,
+        iv,
+        token,
+      } = groups;
+
+      const listStr = await mycrypto.resolve(pem, { token, passphrase, iv });
+      const myList = JSON.parse(listStr);
+
+      myList.forEach((listedGroup) => {
+        const {
+          groupId,
+          groupName,
+          key,
+          isAdmin,
+          members,
+        } = listedGroup;
+
+        const checkingGroup = this.formatGroup(pem, {
+          groupId,
+          groupName,
+          key,
+          isAdmin,
+          members,
+        });
+        this.list.push(checkingGroup);
+      });
     },
     async create({ groupName }) {
       const authStore = useAuthStore();
@@ -71,44 +96,80 @@ export const useGroupStore = defineStore({
       };
       const { id } = await fetchWrapper.post(`${baseUrl}/groups`, send);
 
-      return { id, key };
+      const checkingGroup = reactive({
+        id,
+        at: groupName,
+        store: {
+          hash: null,
+          signature: null,
+        },
+        isAdmin: true,
+        secret: password,
+        group: true,
+        alert: null,
+        members: [],
+        messages: [],
+        users: [],
+      });
+      this.list.push(checkingGroup);
+
+      return checkingGroup;
     },
     async getCurrentGroup(id) {
-      const contactsStore = useContactsStore();
-      this.current = contactsStore.list.find((g) => g.id === id);
-      this.current.users = [];
-      console.log('this.current', this.current);
-      // const challenge = await fetchWrapper.get(`${baseUrl}/group/${id}`);
-      // const authStore = useAuthStore();
-      // const groupStr = await mycrypto.resolve(authStore.pem, challenge);
-      // this.current = JSON.parse(groupStr);
+      const challenge = await fetchWrapper.get(`${baseUrl}/group/${id}`);
+      const authStore = useAuthStore();
+      const groupStr = await mycrypto.resolve(authStore.pem, challenge);
+      const currentGroup = JSON.parse(groupStr);
 
-      // const keyBuff = await mycrypto.privateDecrypt(authStore.pem, this.current.key);
-      // this.current.key = new TextDecoder().decode(keyBuff);
-      // this.current.users = [];
+      this.current = this.formatGroup(authStore.pem, currentGroup);
 
       const { members } = this.current;
       if (members.length > 0) {
         const users = await fetchWrapper.get(`${baseUrl}/users?list=${encodeURIComponent(members.join(','))}`);
+        const contactsStore = useContactsStore();
+
         const l = members.length;
         for (let i = 0; i < l; i += 1) {
-          this.setDetailedMember(members[i], users, contactsStore);
+          const known = contactsStore.list.find((c) => c.at === members[i]);
+          if (known) {
+            this.current.users.push(known);
+          } else {
+            const foundUser = users.find((c) => c.at === members[i]);
+            if (foundUser) {
+              const { id: userId, at } = foundUser;
+              const checkingUser = contactsStore.getCheckingUser({
+                id: userId, at,
+              });
+
+              this.current.users.push(checkingUser);
+
+              contactsStore.setContactDetail(checkingUser, foundUser)
+                .then(() => contactsStore.autoValidation(checkingUser));
+            }
+          }
         }
       }
-
-      return this.current;
     },
     async addMember(at) {
       const user = await fetchWrapper.get(`${baseUrl}/user/${at}`);
-      console.log('user', user);
-      console.log('this.current.key', this.current.key);
+
       const { key } = user;
-      const targetSecret = await mycrypto.publicEncrypt(key, this.current.key);
+      const targetSecret = await mycrypto.publicEncrypt(key, this.current.secret);
 
       await fetchWrapper.post(`${baseUrl}/group/${this.current.id}/member`, { username: at, key: targetSecret });
 
-      this.setDetailedMember(at, [user]);
+      const contactsStore = useContactsStore();
+
+      const { id: userId, at: username } = user;
+      const checkingUser = contactsStore.getCheckingUser({
+        id: userId, at: username,
+      });
+
+      this.current.users.push(checkingUser);
       this.current.members.push(at);
+
+      contactsStore.setContactDetail(checkingUser, user)
+        .then(() => contactsStore.autoValidation(checkingUser));
     },
   },
 });
