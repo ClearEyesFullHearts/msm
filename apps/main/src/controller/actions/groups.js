@@ -29,7 +29,7 @@ async function formatGroup(db, groupId, user) {
     groupName,
     key,
     isAdmin: !!isAdmin,
-    members: members.map((m) => m.username.split('#')[1]),
+    members: members.map((m) => ({ at: m.username.split('#')[1], isAdmin: !!m.isAdmin })),
   };
 }
 

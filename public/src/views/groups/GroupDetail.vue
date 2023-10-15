@@ -5,6 +5,7 @@ import {
 } from 'vue';
 import { useGroupStore } from '@/stores';
 import { Autocomplete } from '@/components';
+import { router } from '@/router';
 
 const groupStore = useGroupStore();
 
@@ -23,17 +24,23 @@ onMounted(() => {
     });
 });
 onUnmounted(() => {
-  groupStore.current = { users: [] };
+  groupStore.current = {
+    members: [],
+  };
 });
 
 function groupAdd(user) {
-  groupStore.addMember(user).then(() => {
-    // console.log(current.value);
-  });
+  groupStore.addMember(user);
 }
-function privateTalk(user) {
-  // go to `/conversations/${contact.at}`
+function setAdmin(contact) {
+  groupStore.setAdmin(contact);
 }
+function revoke(contact) {
+  if (window.confirm('Revoking a user can lead to some unreadable messages for other users, do you want to proceed?')) {
+
+  }
+}
+
 </script>
 <template>
   <h4>
@@ -43,34 +50,40 @@ function privateTalk(user) {
         style="font-size: 1.4rem; color: grey;"
       />
     </router-link>
+    <i
+      v-if="current.isAdmin"
+      class="bi bi-star-fill ms-1 me-1"
+      style="color: #FFD700;"
+    />
     <span translate="no">{{ current.at }}</span>
   </h4>
   <hr>
   <div>
-    <Autocomplete @user-selected="groupAdd" />
+    <Autocomplete
+      v-if="current.isAdmin"
+      @user-selected="groupAdd"
+    />
   </div>
   <div
-    v-if="current.users.length"
+    v-if="current.members.length"
     class="container-fluid"
   >
     <div
-      v-for="contact in current.users"
+      v-for="contact in current.members"
       :key="contact.id"
     >
-      <div class="row">
-        <div class="col-8 col-lg-4 mt-2">
-          <a
-            href="#"
-            @click="privateTalk(contact)"
-          >
-            <b translate="no">{{ contact.at }}</b>
-            <i
-              class="bi bi-arrow-right-circle-fill ms-2 float-end"
-              style="font-size: 1.2rem; color: grey;"
-            />
-          </a>
+      <div class="row mb-1">
+        <div class="col-12 col-lg-4 mt-2">
+          <i
+            v-if="contact.isAdmin"
+            class="bi bi-star-fill me-1"
+            style="color: #FFD700;"
+            data-bs-toggle="tooltip"
+            title="Is an admin"
+          />
+          <b translate="no">{{ contact.at }}</b>
         </div>
-        <div class="col-8 col-lg-4">
+        <div class="col-12 col-lg-8">
           <div
             v-if="contact.alert"
             class="alert alert-danger"
@@ -78,74 +91,32 @@ function privateTalk(user) {
           >
             <pre>{{ contact.alert }}</pre>
           </div>
-          <span v-if="!contact.alert">
-            <i
-              class="bi me-1"
-              :class="contact.auto !== 0
-                ? 'bi-shield-fill-check'
-                : 'bi-shield-slash-fill'"
-              style="font-size: 1.8rem;"
-              :style="{ color: contact.auto !== 0 ? '#0d6efd' : 'grey' }"
-              data-bs-toggle="tooltip"
-              :title="contact.auto !== 0
-                ? 'On-chain validation confirmed'
-                : 'Waiting for on-chain validation'"
-            />
-            <i
-              v-if="contact.verified && contact.store.signature !== null"
-              class="bi bi-fingerprint me-1"
-              style="font-size: 1.8rem; color: #198754;"
-              data-bs-toggle="tooltip"
-              title="Signed and Trusted"
-            />
-            <i
-              v-if="contact.verified
-                && contact.store.signature === null
-                && contact.store.hash !== null"
-              class="bi bi-people me-1"
-              style="font-size: 1.8rem; color: #198754;"
-              data-bs-toggle="tooltip"
-              title="Manually trusted"
-            />
-            <i
-              v-if="!contact.verified"
-              class="bi bi-question-circle me-1"
-              style="font-size: 1.8rem; color: grey"
-              data-bs-toggle="tooltip"
-              data-bs-html="true"
-              title="Status unknown<br>Make sure that the hash displayed here
-              match your contact's profile page's hash before trusting them"
-            />
-            <i
-              class="bi me-1"
-              :class="contact.connected
-                ? 'bi-wifi'
-                : 'bi-wifi-off'"
-              style="font-size: 1.8rem;"
-              :style="{ color: contact.connected ? '#0d6efd' : 'grey' }"
-              data-bs-toggle="tooltip"
-              :title="contact.connected
-                ? 'online'
-                : 'offline'"
-            />
+          <span v-if="!contact.alert && !contact.isAdmin && current.isAdmin">
+            <button
+              class="btn btn-primary btn-sm me-2"
+              type="button"
+              @click="setAdmin(contact)"
+            >
+              <i
+                class="bi bi-star"
+                style="font-size: 1rem; color: white"
+                title="Makes it an admin"
+              />
+            </button>
           </span>
-        </div>
-        <div class="col-4 col-lg-4 text-end">
-          <button
-            class="btn btn-primary btn-sm me-2"
-            type="button"
-            data-bs-toggle="collapse"
-            :data-bs-target="`#profileCollapse-${contact.at.replaceAll(' ', '_')}`"
-            aria-expanded="false"
-            aria-controls="profileCollapse"
-          >
-            <i
-              class="bi bi-eye"
-              style="font-size: 1rem; color: white"
-              data-bs-toggle="tooltip"
-              title="Show contact's profile"
-            />
-          </button>
+          <span v-if="!contact.alert && !contact.isAdmin && current.isAdmin">
+            <button
+              class="btn btn-danger btn-sm me-2"
+              type="button"
+              @click="revoke(contact)"
+            >
+              <i
+                class="bi bi-person-dash"
+                style="font-size: 1rem; color: white"
+                title="Remove that contact from the group"
+              />
+            </button>
+          </span>
         </div>
       </div>
     </div>

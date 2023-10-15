@@ -26,7 +26,6 @@ async function onSubmit(values) {
 
     contactsStore.saveContactList(authStore.pem);
     router.push(`/group/${newGroup.id}`);
-    // router.push('/conversations');
   } catch (error) {
     alertStore.error(error);
   }

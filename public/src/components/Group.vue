@@ -37,7 +37,19 @@ function showDetail(groupId) {
         <pre>{{ group.alert }}</pre>
       </div>
       <div v-if="!group.alert">
-        {{ group.members.length }} members
+        <i
+          class="bi me-1"
+          :class="group.isAdmin
+            ? 'bi bi-star-fill'
+            : 'bi bi-star'"
+          style="font-size: 1.8rem;"
+          :style="{ color: group.isAdmin ? '#FFD700' : 'grey' }"
+          data-bs-toggle="tooltip"
+          :title="group.isAdmin
+            ? 'You\'re an admin'
+            : 'You\'re just a member'"
+        />
+        You and {{ group.members.length }} members
       </div>
     </div>
     <div class="col-4 col-lg-4 text-end">

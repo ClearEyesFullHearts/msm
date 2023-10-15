@@ -12,12 +12,16 @@ const baseUrl = Config.API_URL;
 
 const mycrypto = new CryptoHelper();
 
+function sortMembers(a, b) {
+  return a.isAdmin && !b.isAdmin ? -1 : (b.isAdmin && !a.isAdmin ? 1 : 0); // eslint-disable-line
+}
+
 export const useGroupStore = defineStore({
   id: 'group',
   state: () => ({
     list: [],
     current: {
-      users: [],
+      members: [],
     },
   }),
   actions: {
@@ -36,12 +40,12 @@ export const useGroupStore = defineStore({
           signature: null,
         },
         isAdmin,
+        userKey: key,
         secret: null,
         group: true,
         alert: null,
         members,
         messages: [],
-        users: [],
       });
 
       mycrypto.privateDecrypt(pem, key)
@@ -63,8 +67,6 @@ export const useGroupStore = defineStore({
       const listStr = await mycrypto.resolve(pem, { token, passphrase, iv });
       const myList = JSON.parse(listStr);
 
-      console.log('myList', myList)
-
       myList.forEach((listedGroup) => {
         const {
           groupId,
@@ -79,7 +81,7 @@ export const useGroupStore = defineStore({
           groupName,
           key,
           isAdmin,
-          members,
+          members: members.sort(sortMembers),
         });
         this.list.push(checkingGroup);
       });
@@ -118,67 +120,38 @@ export const useGroupStore = defineStore({
       return checkingGroup;
     },
     async getCurrentGroup(id) {
-      const challenge = await fetchWrapper.get(`${baseUrl}/group/${id}`);
-      const authStore = useAuthStore();
-      const groupStr = await mycrypto.resolve(authStore.pem, challenge);
-      const currentGroup = JSON.parse(groupStr);
+      this.current = this.list.find((l) => l.id === id);
+      fetchWrapper.get(`${baseUrl}/group/${id}`)
+        .then(async (challenge) => {
+          const authStore = useAuthStore();
+          const groupStr = await mycrypto.resolve(authStore.pem, challenge);
+          const currentGroup = JSON.parse(groupStr);
 
-      // this.current = this.formatGroup(authStore.pem, currentGroup);
-      this.current = this.list.find((l) => l.id === currentGroup.groupId);
-
-      const { members } = currentGroup;
-      this.current.members = members;
-      this.current.users = [];
-      if (members.length > 0) {
-        const users = await fetchWrapper.get(`${baseUrl}/users?list=${encodeURIComponent(members.join(','))}`);
-        const contactsStore = useContactsStore();
-
-        const l = members.length;
-        for (let i = 0; i < l; i += 1) {
-          const known = contactsStore.list.find((c) => c.at === members[i]);
-          if (known) {
-            this.current.users.push(known);
-          } else {
-            const foundUser = users.find((c) => c.at === members[i]);
-            if (foundUser) {
-              const { id: userId, at } = foundUser;
-              const checkingUser = contactsStore.getCheckingUser({
-                id: userId, at,
-              });
-
-              this.current.users.push(checkingUser);
-
-              contactsStore.setContactDetail(checkingUser, foundUser)
-                .then(() => contactsStore.autoValidation(checkingUser));
-            }
-          }
-        }
-      }
+          this.current.at = currentGroup.groupName;
+          this.current.members = currentGroup.members.sort(sortMembers);
+        });
     },
     async addMember(at) {
-      const user = await fetchWrapper.get(`${baseUrl}/user/${at}`);
+      this.current.members.unshift({ at, isAdmin: false });
+      this.current.members.sort(sortMembers);
+      try {
+        const user = await fetchWrapper.get(`${baseUrl}/user/${at}`);
 
-      const { key } = user;
-      const targetSecret = await mycrypto.publicEncrypt(key, this.current.secret);
+        const { key } = user;
+        const targetSecret = await mycrypto.publicEncrypt(key, this.current.secret);
 
-      await fetchWrapper.post(`${baseUrl}/group/${this.current.id}/member`, { username: at, key: targetSecret });
-
-      const contactsStore = useContactsStore();
-
-      const { id: userId, at: username } = user;
-      const checkingUser = contactsStore.getCheckingUser({
-        id: userId, at: username,
-      });
-
-      const known = contactsStore.list.find((c) => c.at === at);
-      if (known) {
-        this.current.users.unshift(known);
-      } else {
-        this.current.users.unshift(checkingUser);
-        contactsStore.setContactDetail(checkingUser, user)
-          .then(() => contactsStore.autoValidation(checkingUser));
+        await fetchWrapper.post(`${baseUrl}/group/${this.current.id}/member`, { username: at, key: targetSecret });
+      } catch (err) {
+        this.current.member.shift();
       }
-      this.current.members.unshift(at);
+    },
+    async setAdmin(member) {
+      const mIndex = this.current.members.findIndex((m) => m.at === member.at);
+      if (mIndex >= 0) {
+        await fetchWrapper.put(`${baseUrl}/group/${this.current.id}/member/${member.at}`, { isAdmin: true });
+        this.current.members[mIndex].isAdmin = true;
+        this.current.members.sort(sortMembers);
+      }
     },
   },
 });

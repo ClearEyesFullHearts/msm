@@ -669,8 +669,8 @@ paths:
           required: true
           schema:
             type: string
-            minLength: 5
-            maxLength: 125
+            minLength: 3
+            maxLength: 35
       requestBody:
         content:
           application/json:
