@@ -63,6 +63,8 @@ export const useGroupStore = defineStore({
       const listStr = await mycrypto.resolve(pem, { token, passphrase, iv });
       const myList = JSON.parse(listStr);
 
+      console.log('myList', myList)
+
       myList.forEach((listedGroup) => {
         const {
           groupId,
@@ -121,9 +123,12 @@ export const useGroupStore = defineStore({
       const groupStr = await mycrypto.resolve(authStore.pem, challenge);
       const currentGroup = JSON.parse(groupStr);
 
-      this.current = this.formatGroup(authStore.pem, currentGroup);
+      // this.current = this.formatGroup(authStore.pem, currentGroup);
+      this.current = this.list.find((l) => l.id === currentGroup.groupId);
 
-      const { members } = this.current;
+      const { members } = currentGroup;
+      this.current.members = members;
+      this.current.users = [];
       if (members.length > 0) {
         const users = await fetchWrapper.get(`${baseUrl}/users?list=${encodeURIComponent(members.join(','))}`);
         const contactsStore = useContactsStore();
@@ -165,11 +170,15 @@ export const useGroupStore = defineStore({
         id: userId, at: username,
       });
 
-      this.current.users.push(checkingUser);
-      this.current.members.push(at);
-
-      contactsStore.setContactDetail(checkingUser, user)
-        .then(() => contactsStore.autoValidation(checkingUser));
+      const known = contactsStore.list.find((c) => c.at === at);
+      if (known) {
+        this.current.users.unshift(known);
+      } else {
+        this.current.users.unshift(checkingUser);
+        contactsStore.setContactDetail(checkingUser, user)
+          .then(() => contactsStore.autoValidation(checkingUser));
+      }
+      this.current.members.unshift(at);
     },
   },
 });

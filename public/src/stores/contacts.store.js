@@ -83,8 +83,12 @@ export const useContactsStore = defineStore({
       return checking;
     },
     async setContactList(pem, contacts) {
+      const groupStore = useGroupStore();
       if (!contacts) {
         this.list = [];
+        if (groupStore.list.length > 0) {
+          this.list.unshift(...groupStore.list);
+        }
         return;
       }
 
@@ -103,7 +107,6 @@ export const useContactsStore = defineStore({
       }, []);
 
       const users = await fetchWrapper.get(`${baseUrl}/users?list=${encodeURIComponent(userAts.join(','))}`);
-      const groupStore = useGroupStore();
       myList.forEach(({
         id,
         at,
@@ -132,6 +135,9 @@ export const useContactsStore = defineStore({
           }
         }
       });
+
+      const newGroups = groupStore.list.filter((g) => myList.findIndex((l) => l.id === g.id) < 0);
+      this.list.unshift(...newGroups);
     },
     async saveContactList(pem) {
       const saveList = this.list.map(({

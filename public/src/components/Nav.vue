@@ -45,7 +45,7 @@ async function acceptNotification() {
 
 <template>
   <nav
-    v-if="!authStore.user"
+    v-if="!authStore.idIsSet"
     class="navbar navbar-expand navbar-dark bg-dark"
   >
     <div class="navbar-nav me-auto">
@@ -91,7 +91,7 @@ async function acceptNotification() {
     </div>
   </nav>
   <nav
-    v-if="authStore.user"
+    v-if="authStore.idIsSet"
     class="navbar navbar-expand-lg navbar-dark bg-dark"
   >
     <button
