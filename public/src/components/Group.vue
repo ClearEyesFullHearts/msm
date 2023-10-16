@@ -9,7 +9,7 @@ function showDetail(groupId) {
 </script>
 <template>
   <div class="row">
-    <div class="col-8 col-lg-4 mt-2">
+    <div class="col-12 col-lg-4 text-truncate mt-2">
       <span
         class="badge me-1 mb-1"
         :class="group.messages.length > 0
@@ -20,7 +20,7 @@ function showDetail(groupId) {
       >{{ group.messages.length }}</span>
       <span>
         <router-link :to="`/conversations/${group.id}`">
-          <b translate="no">{{ group.at }}</b>
+          <span><b translate="no">{{ group.at }}</b></span>
           <i
             class="bi bi-arrow-right-circle-fill ms-2 float-end"
             style="font-size: 1.2rem; color: grey;"
@@ -37,24 +37,26 @@ function showDetail(groupId) {
         <pre>{{ group.alert }}</pre>
       </div>
       <div v-if="!group.alert">
-        <i
-          class="bi me-1"
-          :class="group.isAdmin
-            ? 'bi bi-star-fill'
-            : 'bi bi-star'"
-          style="font-size: 1.8rem;"
-          :style="{ color: group.isAdmin ? '#FFD700' : 'grey' }"
-          data-bs-toggle="tooltip"
-          :title="group.isAdmin
-            ? 'You\'re an admin'
-            : 'You\'re just a member'"
-        />
-        You and {{ group.members.length }} members
+        <div class="d-flex align-items-center">
+          <i
+            class="bi me-2"
+            :class="group.isAdmin
+              ? 'bi bi-star-fill'
+              : 'bi bi-star'"
+            style="font-size: 1.8rem;"
+            :style="{ color: group.isAdmin ? '#FFD700' : 'grey' }"
+            data-bs-toggle="tooltip"
+            :title="group.isAdmin
+              ? 'You\'re an admin'
+              : 'You\'re just a member'"
+          />
+          You and {{ group.members.length }} members
+        </div>
       </div>
     </div>
-    <div class="col-4 col-lg-4 text-end">
+    <div class="col-4 col-lg-4 d-flex align-items-center justify-content-end">
       <button
-        class="btn btn-primary btn-sm me-2"
+        class="btn btn-primary btn-sm"
         type="button"
         @click="showDetail(group.id)"
       >

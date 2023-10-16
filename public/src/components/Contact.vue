@@ -11,7 +11,7 @@ function onVerify(c){
 </script>
 <template>
   <div class="row">
-    <div class="col-8 col-lg-4 mt-2">
+    <div class="col-12 col-lg-4 mt-2">
       <span
         class="badge me-1 mb-1"
         :class="contact.messages.length > 0
@@ -30,7 +30,7 @@ function onVerify(c){
         </router-link>
       </span>
     </div>
-    <div class="col-8 col-lg-4">
+    <div class="col-8 col-lg-4 d-flex align-items-center">
       <div
         v-if="contact.alert"
         class="alert alert-danger"
@@ -90,9 +90,9 @@ function onVerify(c){
         />
       </span>
     </div>
-    <div class="col-4 col-lg-4 text-end">
+    <div class="col-4 col-lg-4 d-flex align-items-center justify-content-end">
       <button
-        class="btn btn-primary btn-sm me-2"
+        class="btn btn-primary btn-sm"
         type="button"
         data-bs-toggle="collapse"
         :data-bs-target="`#profileCollapse-${contact.at.replaceAll(' ', '_')}`"

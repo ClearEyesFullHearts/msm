@@ -126,7 +126,7 @@ export const useAuthStore = defineStore({
           this.onChainVerification();
         }
 
-        this.idIsSet = true
+        this.idIsSet = true;
         myVault = undefined;
         myKillSwitch = undefined;
         myChallenge = undefined;

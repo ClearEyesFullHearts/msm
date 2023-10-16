@@ -45,7 +45,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopWatch();
-  conversationStore.current = {};
+  conversationStore.current = { messages: [] };
 });
 
 async function sendMessage() {
@@ -100,39 +100,11 @@ async function onFilePicked(evt) {
   <h4>
     <router-link :to="`/conversations`">
       <i
-        class="bi bi-arrow-left-circle-fill me-1"
+        class="bi bi-arrow-left-circle-fill me-2"
         style="font-size: 1.4rem; color: grey;"
       />
     </router-link>
     <span translate="no">Conversation with {{ props.at }}</span>
-    <button
-      class="btn btn-secondary btn-sm float-end me-2"
-      type="button"
-      @click="downloadConversation()"
-    >
-      <i
-        class="bi bi-download"
-        style="font-size: 1rem; color: white"
-      />
-    </button>
-    <button
-      class="btn btn-success btn-sm float-end me-2"
-      type="button"
-      @click="uploadConversation()"
-    >
-      <i
-        class="i bi-file-earmark-arrow-up-fill"
-        style="font-size: 1rem; color: white"
-      />
-    </button>
-    <input
-      ref="fileInput"
-      hidden
-      multiple
-      type="file"
-      style="opacity: none;"
-      @change="onFilePicked"
-    >
   </h4>
   <hr>
   <div
@@ -145,14 +117,16 @@ async function onFilePicked(evt) {
       class="row"
       :class="{ 'justify-content-end': message.from === 'me', 'justify-content-start': message.from !== 'me' }"
     >
-      <div class="col-10 col-md-8 my-1 message"
-      :class="{ 'message-out': message.from === 'me', 'message-in': message.from !== 'me' }">
-      <span
-        v-if="message.title"
-        class="message-title"
+      <div
+        class="col-10 col-md-8 my-1 message"
+        :class="{ 'message-out': message.from === 'me', 'message-in': message.from !== 'me' }"
       >
-        {{ message.title }} at {{ new Date(message.sentAt).toLocaleString() }}
-      </span>
+        <span
+          v-if="message.title"
+          class="message-title"
+        >
+          {{ message.title }} at {{ new Date(message.sentAt).toLocaleString() }}
+        </span>
         <pre class="message-content">{{ message.content }}</pre>
       </div>
     </div>
@@ -162,12 +136,12 @@ async function onFilePicked(evt) {
       class="row justify-content-end"
     >
       <div class="col-10 col-md-8 my-1 message message-out">
-      <span
-        v-if="waiting.title"
-        class="message-title"
-      >
-      {{ waiting.title }}
-      </span>
+        <span
+          v-if="waiting.title"
+          class="message-title"
+        >
+          {{ waiting.title }}
+        </span>
         <pre class="message-content">{{ waiting.content }}</pre>
       </div>
     </div>
@@ -201,6 +175,42 @@ async function onFilePicked(evt) {
           style="font-size: 1.1rem; color: white"
         />
       </button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-1 d-flex flex-column">
+      <button
+        class="btn btn-secondary btn-sm float-end mt-1"
+        type="button"
+        @click="downloadConversation()"
+        :disabled="current.messages.length <= 0"
+      >
+        <i
+          class="bi bi-download"
+          style="font-size: 1rem; color: white"
+        />
+      </button>
+    </div>
+    <div class="col-md-10" />
+    <div class="col-md-1 d-flex flex-column">
+      <button
+        class="btn btn-success btn-sm float-end mt-1"
+        type="button"
+        @click="uploadConversation()"
+      >
+        <i
+          class="i bi-file-earmark-arrow-up-fill"
+          style="font-size: 1rem; color: white"
+        />
+      </button>
+      <input
+        ref="fileInput"
+        hidden
+        multiple
+        type="file"
+        style="opacity: none;"
+        @change="onFilePicked"
+      >
     </div>
   </div>
 </template>

@@ -15,7 +15,9 @@ export const useConversationStore = defineStore({
   id: 'conversation',
   state: () => ({
     conversations: {},
-    current: {},
+    current: {
+      messages: [],
+    },
   }),
   actions: {
     async loadConvo(at) {

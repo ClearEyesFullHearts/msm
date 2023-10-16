@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import { reactive } from 'vue';
 import { fetchWrapper } from '@/helpers';
 import {
-  useAuthStore, useContactsStore,
+  useAuthStore,
 } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import Config from '@/lib/config';
@@ -24,6 +24,9 @@ export const useGroupStore = defineStore({
       members: [],
     },
   }),
+  getters: {
+    canQuit: (state) => !state.current.isAdmin || state.current.members.some((m) => m.isAdmin),
+  },
   actions: {
     formatGroup(pem, {
       groupId,
@@ -143,6 +146,7 @@ export const useGroupStore = defineStore({
         await fetchWrapper.post(`${baseUrl}/group/${this.current.id}/member`, { username: at, key: targetSecret });
       } catch (err) {
         this.current.member.shift();
+        throw err;
       }
     },
     async setAdmin(member) {
@@ -152,6 +156,73 @@ export const useGroupStore = defineStore({
         this.current.members[mIndex].isAdmin = true;
         this.current.members.sort(sortMembers);
       }
+    },
+    async revoke(member) {
+      const mIndex = this.current.members.findIndex((m) => m.at === member.at);
+      if (mIndex >= 0) {
+        const [revoked] = this.current.members.splice(mIndex, 1);
+        try {
+          const authStore = useAuthStore();
+
+          const password = mycrypto.getRandomBase64Password();
+
+          const newKeys = [];
+
+          const myPK = await mycrypto.getPublicKey(authStore.pem);
+          const key = await mycrypto.publicEncrypt(myPK, password);
+
+          newKeys.push({ username: authStore.user.user.username, key });
+
+          const list = this.current.members.filter((m) => m.at !== member.at).map((m) => m.at);
+          if (list.length > 0) {
+            const users = await fetchWrapper.get(`${baseUrl}/users?list=${encodeURIComponent(list.join(','))}`);
+
+            await users.reduce(async (p, u) => {
+              const acc = await p;
+              if (u.at !== member.at) {
+                const memberKey = await mycrypto.publicEncrypt(u.key, password);
+                acc.push({ username: u.at, key: memberKey });
+              }
+              return acc;
+            }, Promise.resolve(newKeys));
+          }
+
+          await fetchWrapper.post(`${baseUrl}/group/${this.current.id}/revoke/${member.at}`, newKeys);
+        } catch (err) {
+          this.current.members.splice(mIndex, 0, revoked);
+          throw err;
+        }
+      }
+    },
+    async quitGroup() {
+      if (this.canQuit) {
+        const index = this.list.findIndex((l) => l.id === this.current.id);
+        const [quit] = this.list.splice(index, 1);
+        try {
+          await fetchWrapper.delete(`${baseUrl}/group/${this.current.id}/member`);
+        } catch (err) {
+          this.list.splice(index, 0, quit);
+          throw err;
+        }
+        return quit;
+      }
+
+      return undefined;
+    },
+    async deleteGroup() {
+      if (this.current.isAdmin) {
+        const index = this.list.findIndex((l) => l.id === this.current.id);
+        const [quit] = this.list.splice(index, 1);
+        try {
+          await fetchWrapper.delete(`${baseUrl}/group/${this.current.id}`);
+        } catch (err) {
+          this.list.splice(index, 0, quit);
+          throw err;
+        }
+        return quit;
+      }
+
+      return undefined;
     },
   },
 });

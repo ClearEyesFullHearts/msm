@@ -105,7 +105,8 @@ function addGroup() {
           class="btn btn-primary mb-2"
           @click="onUploadVerify()"
         >
-          Add a contact <span class="d-none d-lg-inline">by uploading its security file</span>
+          <span class="d-none d-lg-inline">Add a contact by uploading its security file</span>
+          <span class="d-inline d-lg-none">Upload security file</span>
         </button>
         <input
           ref="verifyKeyInput"
@@ -121,7 +122,7 @@ function addGroup() {
           class="btn btn-primary mb-2"
           @click="addGroup()"
         >
-          Add a group
+          New group
         </button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 <template>
   <div class="p-4">
     <div
-      class="container"
+      class="container" style="min-height:80vh;"
     >
       <router-view />
     </div>
