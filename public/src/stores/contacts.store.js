@@ -102,43 +102,44 @@ export const useContactsStore = defineStore({
       } = contacts;
 
       const listStr = await mycrypto.resolve(pem, { token, passphrase, iv });
-      console.log('listStr', listStr)
       const myList = JSON.parse(listStr);
 
-      const userAts = myList.reduce((acc, l) => {
-        if (!l.group) acc.push(l.at);
-        return acc;
-      }, []);
+      if (myList.length > 0) {
+        const userAts = myList.reduce((acc, l) => {
+          if (!l.group) acc.push(l.at);
+          return acc;
+        }, []);
 
-      const users = await fetchWrapper.get(`${baseUrl}/users?list=${encodeURIComponent(userAts.join(','))}`);
-      myList.forEach(({
-        id,
-        at,
-        store: {
-          hash,
-          signature,
-        },
-        group,
-      }) => {
-        if (!group) {
-          const checkingUser = this.getCheckingUser({
-            id, at, hash, signature,
-          });
-          this.list.push(checkingUser);
-          const detail = users.find((u) => u.at === at);
-          if (!detail) {
-            checkingUser.alert = 'This user does not exists anymore.\nPlease remove it from your list.';
+        const users = await fetchWrapper.get(`${baseUrl}/users?list=${encodeURIComponent(userAts.join(','))}`);
+        myList.forEach(({
+          id,
+          at,
+          store: {
+            hash,
+            signature,
+          },
+          group,
+        }) => {
+          if (!group) {
+            const checkingUser = this.getCheckingUser({
+              id, at, hash, signature,
+            });
+            this.list.push(checkingUser);
+            const detail = users.find((u) => u.at === at);
+            if (!detail) {
+              checkingUser.alert = 'This user does not exists anymore.\nPlease remove it from your list.';
+            } else {
+              this.setContactDetail(checkingUser, detail)
+                .then(() => this.autoValidation(checkingUser));
+            }
           } else {
-            this.setContactDetail(checkingUser, detail)
-              .then(() => this.autoValidation(checkingUser));
+            const groupContact = groupStore.list.find((g) => g.at === id);
+            if (groupContact) {
+              this.list.push(groupContact);
+            }
           }
-        } else {
-          const groupContact = groupStore.list.find((g) => g.at === id);
-          if (groupContact) {
-            this.list.push(groupContact);
-          }
-        }
-      });
+        });
+      }
 
       const newGroups = groupStore.list.filter((g) => myList.findIndex((l) => l.id === g.at) < 0);
       this.list.unshift(...newGroups);
@@ -162,7 +163,7 @@ export const useContactsStore = defineStore({
         },
         group,
       }));
-      console.log('saveList', saveList)
+
       const listChallenge = await mycrypto.challenge(pem, JSON.stringify(saveList));
       await fetchWrapper.put(`${baseUrl}/contacts`, listChallenge);
       this.dirty = false;
@@ -256,11 +257,11 @@ export const useContactsStore = defineStore({
         for (let i = 0; i < challenges.length; i += 1) {
           const { id, challenge } = challenges[i];
           const objStr = await mycrypto.resolve(pem, challenge);
-          // console.log('header', objStr);
+
           const {
             from,
             sentAt,
-            title: cryptedTitle,
+            title,
             groupId,
           } = JSON.parse(objStr);
 
@@ -268,32 +269,10 @@ export const useContactsStore = defineStore({
             id,
             from,
             sentAt,
+            title,
             groupId,
           };
 
-          if (!groupId) {
-            const titleBuff = await mycrypto.privateDecrypt(pem, cryptedTitle);
-            const dec = new TextDecoder();
-            const title = dec.decode(titleBuff);
-
-            const conversationStore = useConversationStore();
-            header.title = conversationStore.decodeText(title);
-          } else {
-            const groupStore = useGroupStore();
-            const group = groupStore.list.find((g) => g.at === groupId);
-            if (!group) break;
-
-            const {
-              iv,
-              token,
-            } = cryptedTitle;
-            const titleBuff = await mycrypto.symmetricDecrypt(group.secret, iv, token);
-            const dec = new TextDecoder();
-            const title = dec.decode(titleBuff);
-
-            const conversationStore = useConversationStore();
-            header.title = conversationStore.decodeText(title);
-          }
           headers.push(header);
         }
       } catch (error) {
@@ -372,7 +351,9 @@ export const useContactsStore = defineStore({
       // logger.logTime(`addGroupMessage end ${!!group}`);
       if (!group) {
         // should delete message from groups we're no longer a member
-        console.log('Message from unknown group')
+        console.log('Message from unknown group');
+        fetchWrapper.delete(`${baseUrl}/message/${header.id}`);
+        return;
       }
       const convo = conversations[group.at];
 

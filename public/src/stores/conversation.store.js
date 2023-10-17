@@ -27,6 +27,7 @@ export const useConversationStore = defineStore({
   }),
   actions: {
     async loadConvo(at) {
+      // logger.start();
       const contactsStore = useContactsStore();
       const [target] = contactsStore.list.filter((c) => c.at === at);
       if (!this.conversations[at]) {
@@ -37,11 +38,14 @@ export const useConversationStore = defineStore({
       }
 
       this.current = this.conversations[at];
+      // logger.logTime('loadConvo current conversation loaded');
 
       const sequence = target.messages.reduce((acc, m) => {
         if (m.id) {
+          // logger.logTime(`loadConvo get message ${m.id}`);
           return acc.then(() => this.getMissedMessage(m.id)
             .then((msg) => {
+              // logger.logTime(`loadConvo message ${m.id} exists ${!!msg}`);
               if (msg) {
                 this.current.messages.push(msg);
               }
@@ -62,11 +66,13 @@ export const useConversationStore = defineStore({
     async getMissedMessage(msgId) {
       try {
         const { id, challenge } = await fetchWrapper.get(`${baseUrl}/message/${msgId}`);
+        // logger.logTime(`getMissedMessage message ${msgId} found`);
 
         const authStore = useAuthStore();
         const { pem } = authStore;
 
         const objStr = await mycrypto.resolve(pem, challenge);
+        // logger.logTime('getMissedMessage challenge resolved');
 
         const {
           from,
@@ -85,30 +91,38 @@ export const useConversationStore = defineStore({
           title = dec.decode(titleBuff);
           dec = new TextDecoder();
           content = dec.decode(contentBuff);
+          // logger.logTime('getMissedMessage user message decrypted');
         } else {
           const groupStore = useGroupStore();
           const group = groupStore.list.find((g) => g.at === groupId);
-          if (!group) return;
+          if (!group) return undefined;
 
-          const {
-            iv: titleIV,
-            token: titleToken,
-          } = cryptedTitle;
-          const titleBuff = await mycrypto.symmetricDecrypt(group.secret, titleIV, titleToken);
+          try {
+            const {
+              iv: titleIV,
+              token: titleToken,
+            } = cryptedTitle;
+            const titleBuff = await mycrypto.symmetricDecrypt(group.secret, titleIV, titleToken);
 
-          const {
-            iv: contentIV,
-            token: contentToken,
-          } = cryptedContent;
-          const contentBuff = await mycrypto.symmetricDecrypt(group.secret, contentIV, contentToken);
+            const {
+              iv: contentIV,
+              token: contentToken,
+            } = cryptedContent;
+            const contentBuff = await mycrypto.symmetricDecrypt(group.secret, contentIV, contentToken);
 
-          let dec = new TextDecoder();
-          title = dec.decode(titleBuff);
-          dec = new TextDecoder();
-          content = dec.decode(contentBuff);
+            let dec = new TextDecoder();
+            title = dec.decode(titleBuff);
+            dec = new TextDecoder();
+            content = dec.decode(contentBuff);
+            // logger.logTime('getMissedMessage group message decrypted');
+          } catch (err) {
+            title = 'Unreadable message';
+            content = 'The content of this message is unreadable';
+          }
         }
 
         authStore.onChainVerification();
+        // logger.logTime('getMissedMessage end');
         return {
           id,
           from,
@@ -163,7 +177,7 @@ export const useConversationStore = defineStore({
                 this.current.messages.push(message);
                 resolve();
               } else {
-                this.sendMail(at, 'Missed', text).then(() => resolve());
+                this.sendMail('Missed', text).then(() => resolve());
               }
             }
             connectionStore.sendFallback(reqBody, onAcknowledgment.bind(this));

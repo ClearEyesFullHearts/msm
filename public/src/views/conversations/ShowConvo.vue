@@ -36,6 +36,9 @@ onMounted(() => {
   conversationStore.loadConvo(props.at)
     .then(async () => {
       canWrite.value = current.value.target.alert === null;
+      if(current.value.target.group){
+        canWrite.value = current.value.target.members.length > 0;
+      }
       stopWatch = watch(current.value.messages, async () => {
         await nextTick();
         chatArea.value.scrollTop = chatArea.value.scrollHeight;
@@ -119,6 +122,14 @@ async function onFilePicked(evt) {
     </router-link>
     <span translate="no">Conversation with {{ current.target.group ? current.target.id : current.target.at }}</span>
   </h4>
+  <div class="text-truncate">
+  <span
+    v-if="current.target.group"
+    style="font-size: 0.8rem; color: grey;"
+  >
+    Members: {{ current.target.members.map((m) => m.at).join(', ') }}
+  </span>
+  </div>
   <hr>
   <div
     ref="chatArea"

@@ -132,9 +132,19 @@ export const useGroupStore = defineStore({
 
           this.current.id = currentGroup.groupName;
           this.current.members = currentGroup.members.sort(sortMembers);
+          mycrypto.privateDecrypt(authStore.pem, currentGroup.key)
+            .then((keyBuff) => {
+              this.current.secret = new TextDecoder().decode(keyBuff);
+            });
         });
     },
     async addMember(at) {
+      const existing = this.current.members.findIndex((m) => m.at === at);
+      if (existing >= 0) {
+        const [alreadyMember] = this.current.members.splice(existing, 1);
+        this.current.members.unshift(alreadyMember);
+        return;
+      }
       this.current.members.unshift({ at, isAdmin: false });
       this.current.members.sort(sortMembers);
       try {
@@ -188,6 +198,7 @@ export const useGroupStore = defineStore({
           }
 
           await fetchWrapper.post(`${baseUrl}/group/${this.current.at}/revoke/${member.at}`, newKeys);
+          this.getCurrentGroup(this.current.at);
         } catch (err) {
           this.current.members.splice(mIndex, 0, revoked);
           throw err;

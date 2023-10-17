@@ -99,8 +99,8 @@ async function deleteGroup() {
           :key="contact.at"
         >
           <div class="row mb-1">
-            <div class="col-6 mt-2">
-              <h5 translate="no">
+            <div class="col-8 mt-2">
+              <h5 class="text-break" translate="no">
                 {{ contact.at }}
               </h5>
               <span
@@ -115,7 +115,7 @@ async function deleteGroup() {
                 style="font-size: 0.8rem; color: grey;"
               >Member</span>
             </div>
-            <div class="col-6">
+            <div class="col-4">
               <div
                 v-if="contact.alert"
                 class="alert alert-danger"

@@ -39,22 +39,15 @@ async function onSubmit(values) {
   >
     <div class="form-group">
       <label>New Group Name</label>
-      <div class="input-group mb-3">
-        <div class="input-group-prepend">
-          <span
-            id="basic-addon1"
-            class="input-group-text"
-          >@</span>
-        </div>
-        <Field
-          name="groupName"
-          type="text"
-          class="form-control"
-          :class="{ 'is-invalid': errors.groupName }"
-        />
-        <div class="invalid-feedback">
-          {{ errors.groupName }}
-        </div>
+
+      <Field
+        name="groupName"
+        type="text"
+        class="form-control"
+        :class="{ 'is-invalid': errors.groupName }"
+      />
+      <div class="invalid-feedback">
+        {{ errors.groupName }}
       </div>
       <div class="form-group mt-2">
         <button

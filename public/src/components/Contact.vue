@@ -11,7 +11,7 @@ function onVerify(c){
 </script>
 <template>
   <div class="row">
-    <div class="col-12 col-lg-4 mt-2">
+    <div class="col-12 col-lg-4 text-truncate mt-2">
       <span
         class="badge me-1 mb-1"
         :class="contact.messages.length > 0
