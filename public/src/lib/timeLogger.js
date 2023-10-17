@@ -1,14 +1,21 @@
-let now;
-let time;
 class TimeLogger {
-  static start() {
-    now = Date.now();
+  constructor(file) {
+    this.file = file;
+    this.now = 0;
+    this.time = 0;
+    this.counter = 0;
   }
 
-  static logTime(txt) {
-    time = Date.now();
-    console.log(txt, time - now);
-    now = time;
+  start() {
+    this.now = Date.now();
+    this.counter = 0;
+  }
+
+  logTime(txt) {
+    this.time = Date.now();
+    console.log(`${this.file} - ${this.counter}: ${txt}`, this.time - this.now);
+    this.now = this.time;
+    this.counter += 1;
   }
 }
 

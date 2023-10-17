@@ -215,11 +215,12 @@ class CryptoHelper {
     return decripted;
   }
 
-  async symmetricEncrypt(txt, password = false) {
+  async symmetricEncrypt(txt, password = false, hashIt = true) {
     const iv = window.crypto.getRandomValues(new Uint8Array(16));
     let arrPass;
     if (password) {
-      const base64Hash = await this.hash(password);
+      let base64Hash = password;
+      if (hashIt) base64Hash = await this.hash(password);
       arrPass = this.base64ToArBuff(base64Hash);
     } else {
       arrPass = window.crypto.getRandomValues(new Uint8Array(32));

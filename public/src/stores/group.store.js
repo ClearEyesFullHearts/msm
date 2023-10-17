@@ -36,8 +36,8 @@ export const useGroupStore = defineStore({
       members,
     }) {
       const checkingGroup = reactive({
-        id: groupId,
-        at: groupName,
+        id: groupName,
+        at: groupId,
         store: {
           hash: null,
           signature: null,
@@ -104,8 +104,8 @@ export const useGroupStore = defineStore({
       const { id } = await fetchWrapper.post(`${baseUrl}/groups`, send);
 
       const checkingGroup = reactive({
-        id,
-        at: groupName,
+        id: groupName,
+        at: id,
         store: {
           hash: null,
           signature: null,
@@ -123,14 +123,14 @@ export const useGroupStore = defineStore({
       return checkingGroup;
     },
     async getCurrentGroup(id) {
-      this.current = this.list.find((l) => l.id === id);
+      this.current = this.list.find((l) => l.at === id);
       fetchWrapper.get(`${baseUrl}/group/${id}`)
         .then(async (challenge) => {
           const authStore = useAuthStore();
           const groupStr = await mycrypto.resolve(authStore.pem, challenge);
           const currentGroup = JSON.parse(groupStr);
 
-          this.current.at = currentGroup.groupName;
+          this.current.id = currentGroup.groupName;
           this.current.members = currentGroup.members.sort(sortMembers);
         });
     },
@@ -143,7 +143,7 @@ export const useGroupStore = defineStore({
         const { key } = user;
         const targetSecret = await mycrypto.publicEncrypt(key, this.current.secret);
 
-        await fetchWrapper.post(`${baseUrl}/group/${this.current.id}/member`, { username: at, key: targetSecret });
+        await fetchWrapper.post(`${baseUrl}/group/${this.current.at}/member`, { username: at, key: targetSecret });
       } catch (err) {
         this.current.member.shift();
         throw err;
@@ -152,7 +152,7 @@ export const useGroupStore = defineStore({
     async setAdmin(member) {
       const mIndex = this.current.members.findIndex((m) => m.at === member.at);
       if (mIndex >= 0) {
-        await fetchWrapper.put(`${baseUrl}/group/${this.current.id}/member/${member.at}`, { isAdmin: true });
+        await fetchWrapper.put(`${baseUrl}/group/${this.current.at}/member/${member.at}`, { isAdmin: true });
         this.current.members[mIndex].isAdmin = true;
         this.current.members.sort(sortMembers);
       }
@@ -187,7 +187,7 @@ export const useGroupStore = defineStore({
             }, Promise.resolve(newKeys));
           }
 
-          await fetchWrapper.post(`${baseUrl}/group/${this.current.id}/revoke/${member.at}`, newKeys);
+          await fetchWrapper.post(`${baseUrl}/group/${this.current.at}/revoke/${member.at}`, newKeys);
         } catch (err) {
           this.current.members.splice(mIndex, 0, revoked);
           throw err;
@@ -196,10 +196,10 @@ export const useGroupStore = defineStore({
     },
     async quitGroup() {
       if (this.canQuit) {
-        const index = this.list.findIndex((l) => l.id === this.current.id);
+        const index = this.list.findIndex((l) => l.at === this.current.at);
         const [quit] = this.list.splice(index, 1);
         try {
-          await fetchWrapper.delete(`${baseUrl}/group/${this.current.id}/member`);
+          await fetchWrapper.delete(`${baseUrl}/group/${this.current.at}/member`);
         } catch (err) {
           this.list.splice(index, 0, quit);
           throw err;
@@ -211,10 +211,10 @@ export const useGroupStore = defineStore({
     },
     async deleteGroup() {
       if (this.current.isAdmin) {
-        const index = this.list.findIndex((l) => l.id === this.current.id);
+        const index = this.list.findIndex((l) => l.at === this.current.at);
         const [quit] = this.list.splice(index, 1);
         try {
-          await fetchWrapper.delete(`${baseUrl}/group/${this.current.id}`);
+          await fetchWrapper.delete(`${baseUrl}/group/${this.current.at}`);
         } catch (err) {
           this.list.splice(index, 0, quit);
           throw err;

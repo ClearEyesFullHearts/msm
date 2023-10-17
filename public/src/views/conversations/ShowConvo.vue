@@ -19,6 +19,7 @@ const props = defineProps({
 const conversationStore = useConversationStore();
 const authStore = useAuthStore();
 const connectionStore = useConnectionStore();
+
 const { current } = storeToRefs(conversationStore);
 const chatArea = ref(null);
 const typingArea = ref(null);
@@ -45,12 +46,24 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopWatch();
-  conversationStore.current = { messages: [] };
+  conversationStore.current = {
+    target: {
+      at: '',
+      group: false,
+    },
+    messages: [],
+  };
 });
 
 async function sendMessage() {
   if (typingArea.value.value.trim() === '') return;
-  if (connectionStore.isConnected) {
+  if (current.value.target.group) {
+    const txt = typingArea.value.value;
+    await conversationStore.sendGroupMail(txt);
+
+    typingArea.value.value = '';
+    contentLength.value = 0;
+  } else if (connectionStore.isConnected) {
     const txt = typingArea.value.value;
     const requestId = mycrypto.uuidV4();
     waitingMessages.value.push({
@@ -58,7 +71,7 @@ async function sendMessage() {
       content: txt,
       title: 'Sending...',
     });
-    conversationStore.sendFallbackMessage(props.at, txt, requestId).then(async () => {
+    conversationStore.sendFallbackMessage(current.value.target.at, txt, requestId).then(async () => {
       const i = waitingMessages.value.findIndex((m) => m.requestId === requestId);
       waitingMessages.value.splice(i, 1);
     });
@@ -68,7 +81,7 @@ async function sendMessage() {
     chatArea.value.scrollTop = chatArea.value.scrollHeight;
   } else {
     const txt = typingArea.value.value;
-    await conversationStore.sendMail(props.at, 'Offline', txt);
+    await conversationStore.sendMail('Offline', txt);
 
     typingArea.value.value = '';
     contentLength.value = 0;
@@ -80,7 +93,7 @@ function onInputText(str) {
 async function onLoadConvo(challenge) {
   const txt = await mycrypto.resolve(authStore.pem, JSON.parse(challenge));
   const conversation = JSON.parse(txt);
-  if (conversation.at !== props.at) return;
+  if (conversation.at !== current.value.target.at) return;
 
   current.value.messages = conversation.messages;
   await nextTick();
@@ -104,7 +117,7 @@ async function onFilePicked(evt) {
         style="font-size: 1.4rem; color: grey;"
       />
     </router-link>
-    <span translate="no">Conversation with {{ props.at }}</span>
+    <span translate="no">Conversation with {{ current.target.group ? current.target.id : current.target.at }}</span>
   </h4>
   <hr>
   <div
@@ -156,7 +169,7 @@ async function onFilePicked(evt) {
           ref="typingArea"
           class="form-control m-0"
           :placeholder="connectionState === 0 ? 'Chat away' :
-            connectionState === 1 ? `Type here, ${props.at} is not connected but you can still send them a message` : 'Type your message or connect to chat'"
+            connectionState === 1 ? `Type here, ${current.target.group ? current.target.id : current.target.at} is not connected but you can still send them a message` : 'Type your message or connect to chat'"
           :disabled="!canWrite"
           @input="event => onInputText(event.target.value)"
         />
@@ -182,8 +195,8 @@ async function onFilePicked(evt) {
       <button
         class="btn btn-secondary btn-sm float-end mt-1"
         type="button"
-        @click="downloadConversation()"
         :disabled="current.messages.length <= 0"
+        @click="downloadConversation()"
       >
         <i
           class="bi bi-download"

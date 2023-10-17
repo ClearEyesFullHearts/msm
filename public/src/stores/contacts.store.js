@@ -9,9 +9,11 @@ import {
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
 import Config from '@/lib/config';
+import TimeLogger from '@/lib/timeLogger';
 
 const mycrypto = new CryptoHelper();
 const myvalidator = new ChainHelper();
+const logger = new TimeLogger('Contacts');
 
 const baseUrl = Config.API_URL;
 
@@ -83,6 +85,7 @@ export const useContactsStore = defineStore({
       return checking;
     },
     async setContactList(pem, contacts) {
+      // logger.logTime(`setContactList ${this.list.length}`);
       const groupStore = useGroupStore();
       if (!contacts) {
         this.list = [];
@@ -99,6 +102,7 @@ export const useContactsStore = defineStore({
       } = contacts;
 
       const listStr = await mycrypto.resolve(pem, { token, passphrase, iv });
+      console.log('listStr', listStr)
       const myList = JSON.parse(listStr);
 
       const userAts = myList.reduce((acc, l) => {
@@ -129,17 +133,18 @@ export const useContactsStore = defineStore({
               .then(() => this.autoValidation(checkingUser));
           }
         } else {
-          const groupContact = groupStore.list.find((g) => g.id === id);
+          const groupContact = groupStore.list.find((g) => g.at === id);
           if (groupContact) {
             this.list.push(groupContact);
           }
         }
       });
 
-      const newGroups = groupStore.list.filter((g) => myList.findIndex((l) => l.id === g.id) < 0);
+      const newGroups = groupStore.list.filter((g) => myList.findIndex((l) => l.id === g.at) < 0);
       this.list.unshift(...newGroups);
     },
     async saveContactList(pem) {
+      // logger.logTime(`saveContactList ${this.list.length}`);
       const saveList = this.list.map(({
         id,
         at,
@@ -157,6 +162,7 @@ export const useContactsStore = defineStore({
         },
         group,
       }));
+      console.log('saveList', saveList)
       const listChallenge = await mycrypto.challenge(pem, JSON.stringify(saveList));
       await fetchWrapper.put(`${baseUrl}/contacts`, listChallenge);
       this.dirty = false;
@@ -167,21 +173,29 @@ export const useContactsStore = defineStore({
       this.dirty = true;
     },
     async manualAdd(name) {
+      // logger.logTime(`manualAdd ${this.list.length}`);
       const [knownUser] = this.list.filter((u) => u.at === name);
       if (knownUser) return;
 
-      const user = await fetchWrapper.get(`${baseUrl}/user/${name}`);
+      // const user = await fetchWrapper.get(`${baseUrl}/user/${name}`);
       const checkingUser = this.getCheckingUser({ at: name });
       this.list.unshift(checkingUser);
 
-      if (!user) {
-        const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
-        checkingUser.alert = alertMsg;
-      } else {
-        this.setContactDetail(checkingUser, user)
-          .then(() => this.autoValidation(checkingUser));
-      }
-      this.dirty = true;
+      // logger.logTime(`manualAdd list updated ${this.list.length}`);
+
+      fetchWrapper.get(`${baseUrl}/user/${name}`)
+        .then((user) => {
+          // logger.logTime(`manualAdd user obtained ${this.list.length}`);
+          if (!user) {
+            const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
+            checkingUser.alert = alertMsg;
+          } else {
+            this.setContactDetail(checkingUser, user)
+              // .then(() => // logger.logTime(`manualAdd detail set ${this.list.length}`))
+              .then(() => this.autoValidation(checkingUser));
+          }
+          this.dirty = true;
+        });
     },
     async fileAdd({
       id, at, hash, signature,
@@ -229,9 +243,12 @@ export const useContactsStore = defineStore({
       }
     },
     async getHeaders() {
+      // logger.logTime(`getHeaders ${this.list.length}`);
       const headers = [];
       try {
         const challenges = await fetchWrapper.get(`${baseUrl}/inbox`);
+
+        // logger.logTime(`getHeaders inbox ${challenges.length}`);
 
         const authStore = useAuthStore();
         const { pem } = authStore;
@@ -239,24 +256,44 @@ export const useContactsStore = defineStore({
         for (let i = 0; i < challenges.length; i += 1) {
           const { id, challenge } = challenges[i];
           const objStr = await mycrypto.resolve(pem, challenge);
-          console.log('header', objStr);
+          // console.log('header', objStr);
           const {
             from,
             sentAt,
             title: cryptedTitle,
+            groupId,
           } = JSON.parse(objStr);
 
-          const titleBuff = await mycrypto.privateDecrypt(pem, cryptedTitle);
-          const dec = new TextDecoder();
-          const title = dec.decode(titleBuff);
-
-          const conversationStore = useConversationStore();
           const header = {
             id,
             from,
             sentAt,
-            title: conversationStore.decodeText(title),
+            groupId,
           };
+
+          if (!groupId) {
+            const titleBuff = await mycrypto.privateDecrypt(pem, cryptedTitle);
+            const dec = new TextDecoder();
+            const title = dec.decode(titleBuff);
+
+            const conversationStore = useConversationStore();
+            header.title = conversationStore.decodeText(title);
+          } else {
+            const groupStore = useGroupStore();
+            const group = groupStore.list.find((g) => g.at === groupId);
+            if (!group) break;
+
+            const {
+              iv,
+              token,
+            } = cryptedTitle;
+            const titleBuff = await mycrypto.symmetricDecrypt(group.secret, iv, token);
+            const dec = new TextDecoder();
+            const title = dec.decode(titleBuff);
+
+            const conversationStore = useConversationStore();
+            header.title = conversationStore.decodeText(title);
+          }
           headers.push(header);
         }
       } catch (error) {
@@ -265,14 +302,20 @@ export const useContactsStore = defineStore({
       return headers;
     },
     async fillConversations(headers) {
+      // logger.logTime(`fillConversations start ${this.list.length}`);
       headers.sort((a, b) => a.sentAt - b.sentAt);
 
       const promises = [];
       for (let i = 0; i < headers.length; i += 1) {
-        promises.push(this.addMissedMessage(headers[i]));
+        if (headers[i].groupId) {
+          promises.push(this.addGroupMessage(headers[i]));
+        } else {
+          promises.push(this.addMissedMessage(headers[i]));
+        }
       }
 
       await Promise.all(promises);
+      // logger.logTime(`fillConversations end ${this.list.length}`);
 
       this.list.sort((a, b) => {
         const s = b.messages.length - a.messages.length;
@@ -281,6 +324,7 @@ export const useContactsStore = defineStore({
       document.title = `ySyPyA (${this.messageCount})`;
     },
     async addMissedMessage(header) {
+      // logger.logTime(`addMissedMessage ${this.list.length}`);
       const from = header.from.substring(1);
       const conversationStore = useConversationStore();
       const { current, conversations } = conversationStore;
@@ -306,9 +350,40 @@ export const useContactsStore = defineStore({
         const newContact = this.list.find((c) => c.at === from);
         newContact.messages.push(header);
       }
+      // logger.logTime(`addMissedMessage end from ${from} : ${this.list.length}`);
       document.title = `ySyPyA (${this.messageCount})`;
       const toasterStore = useToasterStore();
       toasterStore.success({ text: `New message from @${from}` });
+    },
+    async addGroupMessage(header) {
+      // logger.logTime(`addGroupMessage start ${header.groupId}`);
+      const { groupId } = header;
+      const conversationStore = useConversationStore();
+      const { current, conversations } = conversationStore;
+
+      if (current.target && current.target.at === groupId) {
+        if (current.messages.find((m) => m.id === header.id)) return;
+        const msg = await conversationStore.getMissedMessage(header.id);
+        current.messages.push(msg);
+        return;
+      }
+
+      const group = this.list.find((c) => c.at === groupId);
+      // logger.logTime(`addGroupMessage end ${!!group}`);
+      if (!group) {
+        // should delete message from groups we're no longer a member
+        console.log('Message from unknown group')
+      }
+      const convo = conversations[group.at];
+
+      if (convo && convo.messages.find((m) => m.id === header.id)) return;
+
+      if (group.messages.find((m) => m.id === header.id)) return;
+
+      group.messages.push(header);
+      document.title = `ySyPyA (${this.messageCount})`;
+      const toasterStore = useToasterStore();
+      toasterStore.success({ text: `New message from @${group.from}` });
     },
     async addFallBackMessage(header) {
       const from = header.from.substring(1);
@@ -325,6 +400,7 @@ export const useContactsStore = defineStore({
       toasterStore.success({ text: `New message from @${from}` });
     },
     updateMessages(loop = true) {
+      // logger.logTime(`updateMessages ${this.list.length}`);
       const authStore = useAuthStore();
       this.getHeaders().then((headers) => this.fillConversations(headers))
         .then(() => {

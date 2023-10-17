@@ -1,21 +1,27 @@
 /* eslint-disable import/prefer-default-export */
 import { defineStore } from 'pinia';
 import {
-  useContactsStore, useAuthStore, useConnectionStore, useWorkerStore,
+  useContactsStore, useAuthStore, useConnectionStore, useWorkerStore, useGroupStore,
 } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import FileHelper from '@/lib/fileHelper';
 import { fetchWrapper } from '@/helpers';
 import Config from '@/lib/config';
+import TimeLogger from '@/lib/timeLogger';
 
 const baseUrl = Config.API_URL;
 const mycrypto = new CryptoHelper();
+const logger = new TimeLogger('Conversation');
 
 export const useConversationStore = defineStore({
   id: 'conversation',
   state: () => ({
     conversations: {},
     current: {
+      target: {
+        at: '',
+        group: false,
+      },
       messages: [],
     },
   }),
@@ -67,14 +73,40 @@ export const useConversationStore = defineStore({
           sentAt,
           title: cryptedTitle,
           content: cryptedContent,
+          groupId,
         } = JSON.parse(objStr);
 
-        const titleBuff = await mycrypto.privateDecrypt(pem, cryptedTitle);
-        const contentBuff = await mycrypto.privateDecrypt(pem, cryptedContent);
-        let dec = new TextDecoder();
-        const title = dec.decode(titleBuff);
-        dec = new TextDecoder();
-        const content = dec.decode(contentBuff);
+        let title;
+        let content;
+        if (!groupId) {
+          const titleBuff = await mycrypto.privateDecrypt(pem, cryptedTitle);
+          const contentBuff = await mycrypto.privateDecrypt(pem, cryptedContent);
+          let dec = new TextDecoder();
+          title = dec.decode(titleBuff);
+          dec = new TextDecoder();
+          content = dec.decode(contentBuff);
+        } else {
+          const groupStore = useGroupStore();
+          const group = groupStore.list.find((g) => g.at === groupId);
+          if (!group) return;
+
+          const {
+            iv: titleIV,
+            token: titleToken,
+          } = cryptedTitle;
+          const titleBuff = await mycrypto.symmetricDecrypt(group.secret, titleIV, titleToken);
+
+          const {
+            iv: contentIV,
+            token: contentToken,
+          } = cryptedContent;
+          const contentBuff = await mycrypto.symmetricDecrypt(group.secret, contentIV, contentToken);
+
+          let dec = new TextDecoder();
+          title = dec.decode(titleBuff);
+          dec = new TextDecoder();
+          content = dec.decode(contentBuff);
+        }
 
         authStore.onChainVerification();
         return {
@@ -138,14 +170,14 @@ export const useConversationStore = defineStore({
           });
       });
     },
-    async sendMail(at, title, text) {
+    async sendMail(title, text) {
       const message = {
         from: 'me',
         title,
         sentAt: Date.now(),
         content: text,
       };
-      const { key: targetPem } = this.current.target;
+      const { at, key: targetPem } = this.current.target;
       const b64Title = await mycrypto.publicEncrypt(targetPem, this.encodeText('Missed'));
       const b64Content = await mycrypto.publicEncrypt(targetPem, this.encodeText(text));
 
@@ -157,6 +189,45 @@ export const useConversationStore = defineStore({
 
       await fetchWrapper.post(`${baseUrl}/message`, reqBody);
       this.current.messages.push(message);
+    },
+    async sendGroupMail(text) {
+      const message = {
+        from: 'me',
+        title: '',
+        sentAt: Date.now(),
+        content: text,
+      };
+      this.current.messages.push(message);
+      try {
+        const { secret } = this.current.target;
+
+        const authStore = useAuthStore();
+        const from = authStore.user.user.username;
+        const {
+          iv: titleIV,
+          token: titleToken,
+        } = await mycrypto.symmetricEncrypt(this.encodeText(`From ${from}`), secret, false);
+        const {
+          iv: contentIV,
+          token: contentToken,
+        } = await mycrypto.symmetricEncrypt(this.encodeText(text), secret, false);
+
+        const reqBody = {
+          title: {
+            iv: titleIV,
+            token: titleToken,
+          },
+          content: {
+            iv: contentIV,
+            token: contentToken,
+          },
+        };
+
+        await fetchWrapper.post(`${baseUrl}/group/${this.current.target.at}/message`, reqBody);
+      } catch (err) {
+        this.current.messages.pop();
+        throw err;
+      }
     },
     async downloadConversation() {
       if (!this.current || this.current.messages.length < 1) return;

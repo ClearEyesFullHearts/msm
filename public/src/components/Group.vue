@@ -19,8 +19,8 @@ function showDetail(groupId) {
         title="Messages waiting"
       >{{ group.messages.length }}</span>
       <span>
-        <router-link :to="`/conversations/${group.id}`">
-          <span><b translate="no">{{ group.at }}</b></span>
+        <router-link :to="`/conversations/${group.at}`">
+          <span><b translate="no">{{ group.id }}</b></span>
           <i
             class="bi bi-arrow-right-circle-fill ms-2 float-end"
             style="font-size: 1.2rem; color: grey;"
@@ -58,7 +58,7 @@ function showDetail(groupId) {
       <button
         class="btn btn-primary btn-sm"
         type="button"
-        @click="showDetail(group.id)"
+        @click="showDetail(group.at)"
       >
         <i
           class="bi bi-eye"

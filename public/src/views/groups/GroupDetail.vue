@@ -70,7 +70,7 @@ async function deleteGroup() {
             style="font-size: 1.4rem; color: grey;"
           />
         </router-link>
-        <span translate="no">{{ current.at }}</span>
+        <span translate="no">{{ current.id }}</span>
       </h4>
       <span
         v-if="current.isAdmin"
@@ -96,7 +96,7 @@ async function deleteGroup() {
       >
         <div
           v-for="contact in current.members"
-          :key="contact.id"
+          :key="contact.at"
         >
           <div class="row mb-1">
             <div class="col-6 mt-2">
