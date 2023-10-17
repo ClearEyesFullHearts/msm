@@ -99,10 +99,10 @@ function addGroup() {
       <div class="col-lg-6 col-md-12">
         <Autocomplete @user-selected="addUser" />
       </div>
-      <div class="col-lg-4 col-md-6 text-end d-flex flex-column">
+      <div class="col-lg-4 col-md-6 text-end d-flex flex-column mt-lg-1 mt-0">
         <button
           ref="verifyUploadBtn"
-          class="btn btn-primary mb-2"
+          class="btn btn-primary btn-sm mb-2"
           @click="onUploadVerify()"
         >
           <span class="d-none d-lg-inline">Add a contact by uploading its security file</span>
@@ -116,10 +116,10 @@ function addGroup() {
           @change="onVerifyFilePicked"
         >
       </div>
-      <div class="col-lg-2 col-md-6 text-end d-flex flex-column">
+      <div class="col-lg-2 col-md-6 text-end d-flex flex-column  mt-lg-1 mt-0">
         <button
           ref="verifyUploadBtn"
-          class="btn btn-primary mb-2"
+          class="btn btn-primary btn-sm mb-2"
           @click="addGroup()"
         >
           New group

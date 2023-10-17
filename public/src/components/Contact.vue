@@ -1,16 +1,22 @@
 <script setup>
+import { router } from '@/router';
+
 defineProps(['contact']);
 const emit = defineEmits(['deleteContact', 'contactVerified']);
 
-function removeUser(c){
-    emit('deleteContact', c);
+function removeUser(c) {
+  emit('deleteContact', c);
 }
-function onVerify(c){
-    emit('contactVerified', c);
+function onVerify(c) {
+  emit('contactVerified', c);
+}
+
+function goTalk(at) {
+  router.push(`/conversations/${at}`);
 }
 </script>
 <template>
-  <div class="row">
+  <div class="row mt-3">
     <div class="col-12 col-lg-4 text-truncate mt-2">
       <span
         class="badge me-1 mb-1"
@@ -20,15 +26,17 @@ function onVerify(c){
         data-bs-toggle="tooltip"
         title="Messages waiting"
       >{{ contact.messages.length }}</span>
-      <span>
-        <router-link :to="`/conversations/${contact.at}`">
-          <b translate="no">{{ contact.at }}</b>
-          <i
-            class="bi bi-arrow-right-circle-fill ms-2 float-end"
-            style="font-size: 1.2rem; color: grey;"
-          />
-        </router-link>
+      <span
+        style="cursor: pointer"
+        @click="goTalk(contact.at)"
+      >
+        <b translate="no">{{ contact.at }}</b>
       </span>
+      <i
+        class="bi bi-arrow-right-circle-fill ms-2 float-end"
+        style="font-size: 1.2rem; color: grey; cursor: pointer;"
+        @click="goTalk(contact.at)"
+      />
     </div>
     <div class="col-8 col-lg-4 d-flex align-items-center">
       <div
@@ -44,7 +52,7 @@ function onVerify(c){
           :class="contact.auto !== 0
             ? 'bi-shield-fill-check'
             : 'bi-shield-slash-fill'"
-          style="font-size: 1.8rem;"
+          style="font-size: 1.2rem;"
           :style="{ color: contact.auto !== 0 ? '#0d6efd' : 'grey' }"
           data-bs-toggle="tooltip"
           :title="contact.auto !== 0
@@ -54,7 +62,7 @@ function onVerify(c){
         <i
           v-if="contact.verified && contact.store.signature !== null"
           class="bi bi-fingerprint me-1"
-          style="font-size: 1.8rem; color: #198754;"
+          style="font-size: 1.2rem; color: #198754;"
           data-bs-toggle="tooltip"
           title="Signed and Trusted"
         />
@@ -63,14 +71,14 @@ function onVerify(c){
             && contact.store.signature === null
             && contact.store.hash !== null"
           class="bi bi-people me-1"
-          style="font-size: 1.8rem; color: #198754;"
+          style="font-size: 1.2rem; color: #198754;"
           data-bs-toggle="tooltip"
           title="Manually trusted"
         />
         <i
           v-if="!contact.verified"
           class="bi bi-question-circle me-1"
-          style="font-size: 1.8rem; color: grey"
+          style="font-size: 1.2rem; color: grey"
           data-bs-toggle="tooltip"
           data-bs-html="true"
           title="Status unknown<br>Make sure that the hash displayed here
@@ -81,7 +89,7 @@ function onVerify(c){
           :class="contact.connected
             ? 'bi-wifi'
             : 'bi-wifi-off'"
-          style="font-size: 1.8rem;"
+          style="font-size: 1.2rem;"
           :style="{ color: contact.connected ? '#0d6efd' : 'grey' }"
           data-bs-toggle="tooltip"
           :title="contact.connected
@@ -91,21 +99,13 @@ function onVerify(c){
       </span>
     </div>
     <div class="col-4 col-lg-4 d-flex align-items-center justify-content-end">
-      <button
-        class="btn btn-primary btn-sm"
-        type="button"
+      <i
         data-bs-toggle="collapse"
         :data-bs-target="`#profileCollapse-${contact.at.replaceAll(' ', '_')}`"
-        aria-expanded="false"
-        aria-controls="profileCollapse"
-      >
-        <i
-          class="bi bi-eye"
-          style="font-size: 1rem; color: white"
-          data-bs-toggle="tooltip"
-          title="Show contact's profile"
-        />
-      </button>
+        class="bi bi-info-circle-fill"
+        style="font-size: 1.2rem; color: #0d6efd; cursor: pointer;"
+        title="Show contact's profile"
+      />
     </div>
   </div>
   <div

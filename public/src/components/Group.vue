@@ -6,9 +6,12 @@ defineProps(['group']);
 function showDetail(groupId) {
   router.push(`/group/${groupId}`);
 }
+function goTalk(at) {
+  router.push(`/conversations/${at}`);
+}
 </script>
 <template>
-  <div class="row">
+  <div class="row mt-3">
     <div class="col-12 col-lg-4 text-truncate mt-2">
       <span
         class="badge me-1 mb-1"
@@ -18,17 +21,19 @@ function showDetail(groupId) {
         data-bs-toggle="tooltip"
         title="Messages waiting"
       >{{ group.messages.length }}</span>
-      <span>
-        <router-link :to="`/conversations/${group.at}`">
-          <span><b translate="no">{{ group.id }}</b></span>
-          <i
-            class="bi bi-arrow-right-circle-fill ms-2 float-end"
-            style="font-size: 1.2rem; color: grey;"
-          />
-        </router-link>
+      <span
+        style="cursor: pointer"
+        @click="goTalk(group.at)"
+      >
+        <b translate="no">{{ group.id }}</b>
       </span>
+      <i
+        class="bi bi-arrow-right-circle-fill ms-2 float-end"
+        style="font-size: 1.2rem; color: grey; cursor: pointer;"
+        @click="goTalk(group.at)"
+      />
     </div>
-    <div class="col-8 col-lg-4">
+    <div class="col-8 col-lg-4 d-flex align-items-center">
       <div
         v-if="group.alert"
         class="alert alert-danger"
@@ -43,29 +48,24 @@ function showDetail(groupId) {
             :class="group.isAdmin
               ? 'bi bi-star-fill'
               : 'bi bi-star'"
-            style="font-size: 1.8rem;"
+            style="font-size: 1.2rem;"
             :style="{ color: group.isAdmin ? '#FFD700' : 'grey' }"
             data-bs-toggle="tooltip"
             :title="group.isAdmin
               ? 'You\'re an admin'
               : 'You\'re just a member'"
           />
-          You and {{ group.members.length }} members
+          <span style="font-size: 0.8rem; color: grey;">You and {{ group.members.length }} members</span>
         </div>
       </div>
     </div>
     <div class="col-4 col-lg-4 d-flex align-items-center justify-content-end">
-      <button
-        class="btn btn-primary btn-sm"
-        type="button"
+      <i
+        class="bi bi-info-circle-fill"
+        style="font-size: 1.2rem; color: #0d6efd; cursor: pointer;"
+        title="Show group's detail"
         @click="showDetail(group.at)"
-      >
-        <i
-          class="bi bi-eye"
-          style="font-size: 1rem; color: white"
-          title="Show group's detail"
-        />
-      </button>
+      />
     </div>
   </div>
 </template>
