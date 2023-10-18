@@ -20,10 +20,7 @@ const props = defineProps({
   },
 });
 onMounted(() => {
-  groupStore.getCurrentGroup(props.id)
-    .then((group) => {
-      console.log('current group mounted');
-    });
+  groupStore.getCurrentGroup(props.id);
 });
 onUnmounted(() => {
   groupStore.current = {
@@ -100,7 +97,10 @@ async function deleteGroup() {
         >
           <div class="row mb-1">
             <div class="col-8 mt-2">
-              <h5 class="text-break" translate="no">
+              <h5
+                class="text-break"
+                translate="no"
+              >
                 {{ contact.at }}
               </h5>
               <span
@@ -156,8 +156,8 @@ async function deleteGroup() {
       <hr v-if="current.members.length">
       <div class="text-end d-flex flex-column">
         <button
+          v-if="groupStore.canQuit"
           class="btn btn-dark mt-1"
-          :disabled="!groupStore.canQuit"
           @click="quit()"
         >
           Quit group

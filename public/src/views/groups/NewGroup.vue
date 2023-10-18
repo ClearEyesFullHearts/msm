@@ -38,7 +38,13 @@ async function onSubmit(values) {
     @submit="onSubmit"
   >
     <div class="form-group">
-      <label>New Group Name</label>
+      <router-link :to="`/conversations`">
+        <i
+          class="bi bi-arrow-left-circle-fill me-2"
+          style="font-size: 1.4rem; color: grey;"
+        />
+      </router-link>
+      <label><h4>New Group Name</h4></label>
 
       <Field
         name="groupName"

@@ -206,7 +206,7 @@ async function onFilePicked(evt) {
       <button
         class="btn btn-secondary btn-sm float-end mt-1"
         type="button"
-        :disabled="current.messages.length <= 0"
+        v-if="current.messages.length > 0"
         @click="downloadConversation()"
       >
         <i

@@ -73,30 +73,31 @@ async function signHash() {
           class="card-body"
         >
           <p>
-            To mitigate the risk of a man-in-the-middle attack (someone controlling our server
-            and replacing user's public keys by its own to be able to read all the messages) we
-            display here a hash of your own public keys.
+            In order to minimize the risk of a man-in-the-middle attack,
+            where an unauthorized entity controls our server and replaces users'
+            public keys with their own to intercept messages,
+            we provide a hash of your public keys here.
           </p>
           <p>
-            This hash is computed from your public keys, which are re-extracted
-            from your private keys, each time you login.
+            This hash is derived from your public keys, which are extracted
+            from your private keys each time you log in.
+            If someone shares their hash with you and it matches the computed hash
+            of the public keys from the server, you can be confident that your
+            communication remains secure, even if the server is compromised.
           </p>
           <p>
-            If someone share its hash with you and it matches the computed hash of
-            the public keys coming from the server you can be sure that your communication is secured,
-            even if the server is compromised.
+            The contact list displays the hash (computed from the server's keys)
+            of users, enabling you to verify that it matches the hash a known user
+            has shared with you.
           </p>
           <p>
-            The contact list let's you see the hash (computed from the server's keys) of users
-            so you can verify that it matches the one that a user you know has shared with you.
+            You also have the option to create a verification file,
+            containing a signed version of this hash, which can be used
+            in the contact list to add a user and simultaneously verify their authenticity.
           </p>
           <p>
-            You can also create a verifying file. This file contains a signed version of this hash and
-            can be used in the contact list to add a user and verify them at the same time.
-          </p>
-          <p>
-            Since the risk we try to mitigate assumes that the server is malicious, it follows
-            that you need to share the verifying information through any other (safe) channel.
+            Given that the risk we are addressing assumes a potentially malicious server,
+            it is crucial to share verifying information through an alternative and secure channel.
           </p>
         </div>
       </div>
