@@ -63,7 +63,7 @@ function goTalk(at) {
             : 'Waiting for on-chain validation'"
         />
         <i
-          v-if="contact.verified && contact.store.signature !== null"
+          v-if="contact.verified && !!contact.store.signature"
           class="bi bi-fingerprint me-1"
           style="font-size: 1.2rem; color: #198754;"
           data-bs-toggle="tooltip"
@@ -71,8 +71,8 @@ function goTalk(at) {
         />
         <i
           v-if="contact.verified
-            && contact.store.signature === null
-            && contact.store.hash !== null"
+            && !contact.store.signature
+            && !!contact.store.hash"
           class="bi bi-people me-1"
           style="font-size: 1.2rem; color: #198754;"
           data-bs-toggle="tooltip"
