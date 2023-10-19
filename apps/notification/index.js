@@ -85,7 +85,7 @@ async function webPushNotification({ to, from, action }) {
         action, from, to, unread: waitingMessages.length,
       }),
       {
-        topic: 'mail',
+        topic: action,
         vapidDetails: {
           subject: `mailto:${config.get('vapid.subject')}`,
           publicKey: config.get('vapid.publicKey'),

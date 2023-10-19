@@ -173,7 +173,7 @@ class Group {
 
     // change group notif
     const members = await db.groups.findAllMembers(groupId);
-    await AsyncAction.notifyGroup(groupId, admin, members, 'group-add');
+    await AsyncAction.notifyGroup(groupId, admin, members, AsyncAction.ACTION_TYPE.GROUP_ADD);
     debug('group notified');
   }
 
@@ -202,7 +202,7 @@ class Group {
 
     // change group notif
     const members = await db.groups.findAllMembers(groupId);
-    await AsyncAction.notifyGroup(groupId, member, members, 'group-remove');
+    await AsyncAction.notifyGroup(groupId, member, members, AsyncAction.ACTION_TYPE.GROUP_REMOVE);
     debug('group notified');
   }
 
@@ -297,7 +297,7 @@ class Group {
     debug('Keys changed');
 
     // change group notif
-    await AsyncAction.notifyGroup(groupId, admin, members, 'group-revokation');
+    await AsyncAction.notifyGroup(groupId, admin, members, AsyncAction.ACTION_TYPE.GROUP_REVOKE);
     debug('group notified');
   }
 

@@ -1,27 +1,26 @@
 {
-    "name": "@msm/fallback",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
-    "scripts": {
-      "test": "jest"
-    },
-    "author": "MFT",
-    "license": "MIT",
-    "dependencies": {
-      "@shared/dynamolayer": "*",
-      "@aws-sdk/client-apigatewaymanagementapi": "^3.405.0",
-      "@shared/tracing": "*",
-      "config": "3.3.9",
-      "ajv": "8.12.0",
-      "ajv-formats": "2.1.1",
-      "debug": "4.3.4"
-    },
-    "devDependencies": {
-      "eslint": "^6.7.1",
-      "eslint-config-airbnb-base": "^14.0.0",
-      "eslint-plugin-import": "^2.18.2",
-      "jest": "^29.4.3"
-    }
+  "name": "@msm/fallback",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "MFT",
+  "license": "MIT",
+  "dependencies": {
+    "@shared/dynamolayer": "*",
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.405.0",
+    "@shared/tracing": "*",
+    "config": "3.3.9",
+    "ajv": "8.12.0",
+    "ajv-formats": "2.1.1",
+    "debug": "4.3.4"
+  },
+  "devDependencies": {
+    "eslint": "8.51.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.28.1",
+    "jest": "^29.4.3"
   }
-  
+}
