@@ -32,8 +32,8 @@ Scenario: Invalid user cannot create a group
   And I set body to { "name": "my new group", "key": "`GK.USER`"}
   And I set signature header
   When I POST to /groups
-  Then response code should be 403
-  And response body path $.code should be FORBIDDEN
+  Then response code should be 501
+  And response body path $.code should be NOT_IMPLEMENTED
 
 Scenario: Add a member to a group
   Given I am existing `RANDOM_USER.2`
@@ -68,15 +68,15 @@ Scenario: Only admin can add a member
   And I set body to { "username": "`RANDOM_USER.4`", "key": "`GK.4`"}
   And I set signature header
   When I POST to /group/`GROUP_ID.0`/member
-  Then response code should be 401
+  Then response code should be 403
   And response body path $.code should be BAD_ROLE
   Given I am existing `RANDOM_USER.10`
   And I generate my group key for `RANDOM_USER.4`
   And I set body to { "username": "`RANDOM_USER.4`", "key": "`GK.4`"}
   And I set signature header
   When I POST to /group/`GROUP_ID.0`/member
-  Then response code should be 403
-  And response body path $.code should be FORBIDDEN
+  Then response code should be 404
+  And response body path $.code should be UNKNOWN_GROUP
 
 Scenario: Cannot add an inactive user
   Given I am a new invalidated user
@@ -97,8 +97,8 @@ Scenario: Cannot add an invalidated user
   And I set body to { "username": "batmat", "key": "`GK.USER`"}
   And I set signature header
   When I POST to /group/`GROUP_ID.0`/member
-  Then response code should be 403
-  And response body path $.code should be FORBIDDEN
+  Then response code should be 501
+  And response body path $.code should be NOT_IMPLEMENTED
 
 Scenario: Writing to a group
   Given `RANDOM_USER.1` creates a group best group for ["`RANDOM_USER.2`", "`RANDOM_USER.3`", "`RANDOM_USER.4`"] with index 0
@@ -158,8 +158,8 @@ Scenario: Cannot write to a group if you're not a member
   And I set group message body to { "title": "Write one group message" , "content": "My group message content" }
   And I set signature header
   When I POST to /group/`GROUP_ID.0`/message
-  Then response code should be 403
-  And response body path $.code should be FORBIDDEN
+  Then response code should be 404
+  And response body path $.code should be UNKNOWN_GROUP
 
 Scenario: Can get membership information
   Given `RANDOM_USER.1` creates a group groupDataGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.4`"] with index 0
@@ -173,15 +173,17 @@ Scenario: Can get membership information
   And response body should contain key
   And response body path $.key should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
   And response body path $.members should be of type array with length 2
-  And response body path $.members.0 should be `RANDOM_USER.1`
-  And response body path $.members.1 should be `RANDOM_USER.4`
+  And response body path $.members.0.at should be `RANDOM_USER.1`
+  And response body path $.members.0.isAdmin should be true
+  And response body path $.members.1.at should be `RANDOM_USER.4`
+  And response body path $.members.1.isAdmin should be false
 
 Scenario: Cannot get membership information if you're not a member
   Given `RANDOM_USER.1` creates a group groupDataGroup for [] with index 0
   And I am existing `RANDOM_USER.2`
   When I GET /group/`GROUP_ID.0`
-  Then response code should be 403
-  And response body path $.code should be FORBIDDEN
+  Then response code should be 404
+  And response body path $.code should be UNKNOWN_GROUP
 
 Scenario: Member can read group message
   Given `RANDOM_USER.8` creates a group readingGroup for ["`RANDOM_USER.9`"] with index 0
@@ -248,8 +250,8 @@ Scenario: Admin can't quit a group if its the last
   And I am existing `RANDOM_USER.1`
   And I set signature header
   When I DELETE /group/`GROUP_ID.0`/member
-  Then response code should be 403
-  And response body path $.code should be FORBIDDEN
+  Then response code should be 409
+  And response body path $.code should be LAST_ADMIN
 
 Scenario: Admin can delete a group
   Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.3`", "`RANDOM_USER.4`"] with index 0
@@ -266,7 +268,7 @@ Scenario: Member cannot delete a group
   And I am existing `RANDOM_USER.2`
   And I set signature header
   When I DELETE /group/`GROUP_ID.0`
-  Then response code should be 401
+  Then response code should be 403
   And response body path $.code should be BAD_ROLE
 
 Scenario: Admin can revoke a member
@@ -306,8 +308,8 @@ Scenario: Can't revoke if you're not a member
   And I set body to [{ "username": "`RANDOM_USER.2`", "key": "`GK.2`"}]
   And I set signature header
   When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.1`
-  Then response code should be 403
-  And response body path $.code should be FORBIDDEN
+  Then response code should be 404
+  And response body path $.code should be UNKNOWN_GROUP
 
 Scenario: Can't revoke if you're not an admin
   Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`"] with index 0
@@ -362,7 +364,7 @@ Scenario: Can't revoke yourself
   And I set body to [{ "username": "`RANDOM_USER.2`", "key": "`GK.2`"}]
   And I set signature header
   When I POST to /group/`GROUP_ID.0`/revoke/`RANDOM_USER.1`
-  Then response code should be 401
+  Then response code should be 403
   And response body path $.code should be UNAUTHORIZED
 
 Scenario: An Admin can raise a member to admin status
@@ -389,8 +391,8 @@ Scenario: An Admin cannot lower another admin status
   And I set body to { "isAdmin": false }
   And I set signature header
   When I PUT /group/`GROUP_ID.0`/member/`RANDOM_USER.1`
-  Then response code should be 403
-  And response body path $.code should be FORBIDDEN
+  Then response code should be 400
+  And response body path $.code should be BAD_REQUEST_FORMAT
 
 Scenario: An Admin can lower its own status
   Given `RANDOM_USER.1` creates a group firstGroup for ["`RANDOM_USER.2`"] with index 0
@@ -414,8 +416,8 @@ Scenario: An Admin cannot lower its own status if they are the last one
   And I set body to { "isAdmin": false }
   And I set signature header
   When I PUT /group/`GROUP_ID.0`/member/`RANDOM_USER.1`
-  Then response code should be 403
-  And response body path $.code should be FORBIDDEN
+  Then response code should be 409
+  And response body path $.code should be LAST_ADMIN
 
 Scenario: An Admin can change the name of a group
   Given `RANDOM_USER.1` creates a group firstNameGroup for ["`RANDOM_USER.2`", "`RANDOM_USER.3`", "`RANDOM_USER.4`"] with index 0
@@ -454,4 +456,4 @@ Scenario: A member cannot change the name of a group
   And I set body to { "name": "secondNameGroup" }
   And I set signature header
   When I PUT /group/`GROUP_ID.0`
-  Then response code should be 401
+  Then response code should be 403

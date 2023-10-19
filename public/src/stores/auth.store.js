@@ -260,7 +260,8 @@ export const useAuthStore = defineStore({
         connectionStore.disconnect(true);
       }
       if (workersStore.channel) {
-        workersStore.channel.close();
+        if (workersStore.channel.mail) workersStore.channel.mail.close();
+        if (workersStore.channel.group) workersStore.channel.group.close();
       }
       const pinia = getActivePinia();
       pinia._s.forEach((store) => store.$reset());

@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import Config from '@/lib/config';
 import CryptoHelper from '@/lib/cryptoHelper';
 import {
-  useAuthStore, useContactsStore, useConversationStore, useAlertStore,
+  useAuthStore, useContactsStore, useConversationStore, useAlertStore, useGroupStore,
 } from '@/stores';
 
 const mycrypto = new CryptoHelper();
@@ -79,6 +79,11 @@ export const useConnectionStore = defineStore({
             break;
           case 'mail':
             this.onMail(message);
+            break;
+          case 'group-add':
+          case 'group-remove':
+          case 'group-revokation':
+            this.onGroupChange(message);
             break;
           default:
             console.log('default', event.data);
@@ -179,6 +184,10 @@ export const useConnectionStore = defineStore({
     onMail() {
       const contactsStore = useContactsStore();
       contactsStore.updateMessages(false);
+    },
+    onGroupChange(message) {
+      const groupStore = useGroupStore();
+      groupStore.updateGroup(message.from);
     },
     disconnect(logout = false) {
       const contactsStore = useContactsStore();

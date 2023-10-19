@@ -36,7 +36,7 @@ onMounted(() => {
   conversationStore.loadConvo(props.at)
     .then(async () => {
       canWrite.value = current.value.target.alert === null;
-      if(current.value.target.group){
+      if (current.value.target.group) {
         canWrite.value = current.value.target.members.length > 0;
       }
       stopWatch = watch(current.value.messages, async () => {
@@ -74,10 +74,11 @@ async function sendMessage() {
       content: txt,
       title: 'Sending...',
     });
-    conversationStore.sendFallbackMessage(current.value.target.at, txt, requestId).then(async () => {
-      const i = waitingMessages.value.findIndex((m) => m.requestId === requestId);
-      waitingMessages.value.splice(i, 1);
-    });
+    conversationStore.sendFallbackMessage(current.value.target.at, txt, requestId)
+      .then(async () => {
+        const i = waitingMessages.value.findIndex((m) => m.requestId === requestId);
+        waitingMessages.value.splice(i, 1);
+      });
     typingArea.value.value = '';
     contentLength.value = 0;
     await nextTick();

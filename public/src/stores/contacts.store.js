@@ -110,7 +110,11 @@ export const useContactsStore = defineStore({
           return acc;
         }, []);
 
-        const users = await fetchWrapper.get(`${baseUrl}/users?list=${encodeURIComponent(userAts.join(','))}`);
+        let users = [];
+        if (userAts.length > 0) {
+          users = await fetchWrapper.get(`${baseUrl}/users?list=${encodeURIComponent(userAts.join(','))}`);
+        }
+
         myList.forEach(({
           id,
           at,
@@ -351,7 +355,6 @@ export const useContactsStore = defineStore({
       // logger.logTime(`addGroupMessage end ${!!group}`);
       if (!group) {
         // should delete message from groups we're no longer a member
-        console.log('Message from unknown group');
         fetchWrapper.delete(`${baseUrl}/message/${header.id}`);
         return;
       }
@@ -364,7 +367,7 @@ export const useContactsStore = defineStore({
       group.messages.push(header);
       document.title = `ySyPyA (${this.messageCount})`;
       const toasterStore = useToasterStore();
-      toasterStore.success({ text: `New message from @${group.from}` });
+      toasterStore.success({ text: `New message from ${group.id}` });
     },
     async addFallBackMessage(header) {
       const from = header.from.substring(1);

@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import { reactive } from 'vue';
 import { fetchWrapper } from '@/helpers';
 import {
-  useAuthStore,
+  useAuthStore, useContactsStore,
 } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import Config from '@/lib/config';
@@ -124,7 +124,7 @@ export const useGroupStore = defineStore({
     },
     async getCurrentGroup(id) {
       this.current = this.list.find((l) => l.at === id);
-      fetchWrapper.get(`${baseUrl}/group/${id}`)
+      return fetchWrapper.get(`${baseUrl}/group/${id}`)
         .then(async (challenge) => {
           const authStore = useAuthStore();
           const groupStr = await mycrypto.resolve(authStore.pem, challenge);
@@ -136,6 +136,66 @@ export const useGroupStore = defineStore({
             .then((keyBuff) => {
               this.current.secret = new TextDecoder().decode(keyBuff);
             });
+        })
+        .catch((err) => {
+          if (err === 'Group unknown') {
+            const contactsStore = useContactsStore();
+            this.current = { id: 'This group no longer exists', members: [] };
+            let index = this.list.findIndex((l) => l.at === id);
+            this.list.splice(index, 1);
+            index = contactsStore.list.findIndex((l) => l.at === id);
+            contactsStore.list.splice(index, 1);
+          }
+        });
+    },
+    async updateGroup(id) {
+      const authStore = useAuthStore();
+      let updating = this.list.find((l) => l.at === id);
+      if (!updating) {
+        const contactsStore = useContactsStore();
+        updating = reactive({
+          id: '',
+          at: id,
+          store: {
+            hash: null,
+            signature: null,
+          },
+          isAdmin: false,
+          userKey: null,
+          secret: null,
+          group: true,
+          alert: null,
+          members: [],
+          messages: [],
+        });
+
+        this.list.unshift(updating);
+        contactsStore.list.unshift(updating);
+      }
+      return fetchWrapper.get(`${baseUrl}/group/${id}`)
+        .then(async (challenge) => {
+          if (challenge) {
+            const groupStr = await mycrypto.resolve(authStore.pem, challenge);
+            const currentGroup = JSON.parse(groupStr);
+
+            updating.userKey = currentGroup.key;
+            updating.id = currentGroup.groupName;
+            updating.members = currentGroup.members.sort(sortMembers);
+            mycrypto.privateDecrypt(authStore.pem, currentGroup.key)
+              .then((keyBuff) => {
+                updating.secret = new TextDecoder().decode(keyBuff);
+              });
+          }
+        })
+        .catch((err) => {
+          if (err === 'Group unknown') {
+            const contactsStore = useContactsStore();
+            this.current = { id: 'This group no longer exists', members: [] };
+            let index = this.list.findIndex((l) => l.at === id);
+            this.list.splice(index, 1);
+            index = contactsStore.list.findIndex((l) => l.at === id);
+            contactsStore.list.splice(index, 1);
+          }
         });
     },
     async addMember(at) {

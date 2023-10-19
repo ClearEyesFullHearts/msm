@@ -11,7 +11,7 @@ async function formatGroup(db, groupId, user) {
   debug('group exists');
   const askerIndex = members.findIndex((m) => m.username === `G#${user.username}`);
   if (askerIndex < 0) {
-    throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+    throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_GROUP, 'Group unknown');
   }
   debug('is a member');
 
@@ -85,7 +85,7 @@ class Group {
     debug('admin is active');
 
     if (user.validation !== 'VALIDATED') {
-      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'only validated users can be create a group');
+      throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'only validated users can create a group');
     }
     debug('admin is validated');
 
@@ -103,11 +103,11 @@ class Group {
     const admin = await db.groups.findMember(groupId, user.username);
 
     if (!admin) {
-      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_GROUP, 'Group unknown');
     }
     debug('asking member found');
     if (admin.isAdmin < 1) {
-      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin can delete the group');
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin can delete the group');
     }
     debug('asking member is an admin');
 
@@ -121,11 +121,11 @@ class Group {
     const admin = await db.groups.findMember(groupId, user.username);
 
     if (!admin) {
-      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_GROUP, 'Group unknown');
     }
     debug('asking member found');
     if (admin.isAdmin < 1) {
-      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin can rename the group');
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin can rename the group');
     }
     debug('asking member is an admin');
 
@@ -139,14 +139,13 @@ class Group {
     const admin = await db.groups.findMember(groupId, user.username);
 
     if (!admin) {
-      debug('asking member is not an member');
-      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_GROUP, 'Group unknown');
     }
     debug('asking member found');
     if (admin.isAdmin < 1) {
-      debug('asking member is not an admin');
-      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin cann add a member');
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin cann add a member');
     }
+    debug('asking member is admin');
 
     const targetUser = await db.users.findByName(username);
     if (!targetUser || targetUser.lastActivity < 0) {
@@ -155,7 +154,7 @@ class Group {
     debug('new member is a known active user');
 
     if (targetUser.validation !== 'VALIDATED') {
-      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'only validated users can be added to a group');
+      throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'only validated users can be added to a group');
     }
     debug('new member is validated');
 
@@ -183,8 +182,7 @@ class Group {
     const member = await db.groups.findMember(groupId, user.username);
 
     if (!member) {
-      debug('asking member is not an member');
-      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_GROUP, 'Group unknown');
     }
     debug('asking member found');
 
@@ -192,7 +190,7 @@ class Group {
       debug('member is admin');
       const allMembers = await db.groups.findAllMembers(groupId);
       if (!allMembers.some((m) => m.isAdmin > 0 && m.username !== member.username)) {
-        throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re the last admin you cannot quit');
+        throw ErrorHelper.getCustomError(409, ErrorHelper.CODE.LAST_ADMIN, 'You\'re the last admin you cannot quit');
       }
       debug('someone else is too');
     }
@@ -211,11 +209,11 @@ class Group {
     const admin = await db.groups.findMember(groupId, user.username);
 
     if (!admin) {
-      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_GROUP, 'Group unknown');
     }
     debug('asking member found');
     if (admin.isAdmin < 1) {
-      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin can change member\'s status');
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.BAD_ROLE, 'Only the group admin can change member\'s status');
     }
     debug('asking member is an admin');
 
@@ -238,13 +236,13 @@ class Group {
     }
     if (target.isAdmin > 0) {
       if (target.username !== admin.username) {
-        throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You cannot change another admin status');
+        throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'You cannot change another admin status');
       }
       debug('self status update');
 
       const allMembers = await db.groups.findAllMembers(groupId);
       if (!allMembers.some((m) => m.isAdmin > 0 && m.username !== admin.username)) {
-        throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re the last admin you cannot quit');
+        throw ErrorHelper.getCustomError(409, ErrorHelper.CODE.LAST_ADMIN, 'You\'re the last admin you cannot quit');
       }
       debug('someone else is admin');
       await db.groups.setAdminStatus(groupId, username, isAdmin);
@@ -259,7 +257,7 @@ class Group {
     const admin = members.find((m) => m.username === `G#${user.username}`);
 
     if (!admin) {
-      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_GROUP, 'Group unknown');
     }
     debug('asking member found');
 
@@ -269,7 +267,7 @@ class Group {
     debug('asking member is admin');
 
     if (admin.username === `G#${revoked}`) {
-      throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.UNAUTHORIZED, 'You can\'t revoke yourself');
+      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.UNAUTHORIZED, 'You can\'t revoke yourself');
     }
     debug('asking member is not revokation target');
 
@@ -305,7 +303,7 @@ class Group {
     // usual checks
     const writer = await db.groups.findMember(groupId, user.username);
     if (!writer) {
-      throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.FORBIDDEN, 'You\'re not part of this group');
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_GROUP, 'Group unknown');
     }
     debug('writing member found');
 
