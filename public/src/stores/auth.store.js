@@ -239,7 +239,6 @@ export const useAuthStore = defineStore({
           }
         }
       } catch (err) {
-        console.log('error on validation', err);
         alertStore.error(`${err.message || err}.\nYour on chain validation is wrong, do not use this account.\nReport the problem to an admin ASAP!`);
       }
 

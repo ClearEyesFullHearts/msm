@@ -144,7 +144,6 @@ export const useWorkerStore = defineStore({
       const group = new BroadcastChannel('group_change');
       group.onmessage = (event) => {
         const { data } = event;
-        console.log('receive group change', event)
         if (data.to === authStore.user.user.username) {
           groupStore.updateGroup(data.from);
         }
