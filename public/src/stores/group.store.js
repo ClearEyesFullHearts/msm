@@ -21,6 +21,8 @@ export const useGroupStore = defineStore({
   state: () => ({
     list: [],
     current: {
+      id: '',
+      isAdmin: false,
       members: [],
     },
   }),
@@ -225,6 +227,15 @@ export const useGroupStore = defineStore({
         await fetchWrapper.put(`${baseUrl}/group/${this.current.at}/member/${member.at}`, { isAdmin: true });
         this.current.members[mIndex].isAdmin = true;
         this.current.members.sort(sortMembers);
+      }
+    },
+    async setName(newName) {
+      const oldName = this.current.id;
+      this.current.id = newName;
+      try {
+        await fetchWrapper.put(`${baseUrl}/group/${this.current.at}`, { name: newName });
+      } catch (err) {
+        this.current.id = oldName;
       }
     },
     async revoke(member) {

@@ -27,7 +27,9 @@ const fileInput = ref(null);
 const waitingMessages = ref([]);
 const contentLength = ref(0);
 
-const connectionState = computed(() => (connectionStore.isConnected ? 0 : 2) + (current.value?.target?.connected ? 0 : 1));
+const connectionState = computed(
+  () => (connectionStore.isConnected ? 0 : 2) + (current.value?.target?.connected ? 0 : 1),
+);
 
 const canWrite = ref(false);
 
@@ -124,12 +126,12 @@ async function onFilePicked(evt) {
     <span translate="no">Conversation with {{ current.target.group ? current.target.id : current.target.at }}</span>
   </h4>
   <div class="text-truncate">
-  <span
-    v-if="current.target.group"
-    style="font-size: 0.8rem; color: grey;"
-  >
-    Members: {{ current.target.members.map((m) => m.at).join(', ') }}
-  </span>
+    <span
+      v-if="current.target.group"
+      style="font-size: 0.8rem; color: grey;"
+    >
+      Members: {{ current.target.members.map((m) => m.at).join(', ') }}
+    </span>
   </div>
   <hr>
   <div
@@ -205,9 +207,9 @@ async function onFilePicked(evt) {
   <div class="row">
     <div class="col-md-1 d-flex flex-column">
       <button
+        v-if="current.messages.length > 0"
         class="btn btn-secondary btn-sm float-end mt-1"
         type="button"
-        v-if="current.messages.length > 0"
         @click="downloadConversation()"
       >
         <i

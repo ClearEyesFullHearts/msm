@@ -5,7 +5,8 @@ module.exports = {
   },
   extends: [
     'airbnb-base',
-    'plugin:vue/vue3-essential',
+    'eslint:recommended',
+    'plugin:vue/vue3-recommended',
   ],
   overrides: [
     {

@@ -4,3 +4,4 @@ export { default as Autocomplete } from './Autocomplete.vue';
 export { default as Toaster } from './Toaster.vue';
 export { default as Contact } from './Contact.vue';
 export { default as Group } from './Group.vue';
+export { default as ClickAndEdit } from './ClickAndEdit.vue';

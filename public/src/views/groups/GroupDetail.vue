@@ -1,10 +1,10 @@
 <script setup>
 import { storeToRefs } from 'pinia';
 import {
-  ref, nextTick, defineProps, onMounted, onUnmounted, watch, computed,
+  ref, defineProps, onMounted, onUnmounted,
 } from 'vue';
 import { useGroupStore, useContactsStore, useAuthStore } from '@/stores';
-import { Autocomplete } from '@/components';
+import { Autocomplete, ClickAndEdit } from '@/components';
 import { router } from '@/router';
 
 const groupStore = useGroupStore();
@@ -13,17 +13,36 @@ const authStore = useAuthStore();
 
 const { current } = storeToRefs(groupStore);
 
+const isEditing = ref(false);
+const editableGroupName = ref(null);
+
 const props = defineProps({
   id: {
     type: String,
     required: true,
   },
 });
+
+function stopEditing(event) {
+  if (event.target.id !== 'editableTextInput') {
+    isEditing.value = false;
+    editableGroupName.value.cancelEditing();
+  }
+}
+
 onMounted(() => {
-  groupStore.getCurrentGroup(props.id);
+  groupStore.getCurrentGroup(props.id)
+    .then(() => {
+      if (current.value.isAdmin) {
+        window.addEventListener('click', stopEditing);
+      }
+    });
 });
 onUnmounted(() => {
+  window.removeEventListener('click', stopEditing);
   groupStore.current = {
+    id: '',
+    isAdmin: false,
     members: [],
   };
 });
@@ -56,6 +75,14 @@ async function deleteGroup() {
   }
 }
 
+function onChangeName(newName) {
+  isEditing.value = false;
+  groupStore.setName(newName);
+}
+function onNameEdit() {
+  isEditing.value = true;
+}
+
 </script>
 <template>
   <div class="row justify-content-center">
@@ -63,11 +90,18 @@ async function deleteGroup() {
       <h4>
         <router-link :to="`/conversations`">
           <i
+            v-if="!isEditing"
             class="bi bi-arrow-left-circle-fill me-2"
             style="font-size: 1.4rem; color: grey;"
           />
         </router-link>
-        <span translate="no">{{ current.id }}</span>
+        <ClickAndEdit
+          ref="editableGroupName"
+          :text-value="current.id"
+          :editable="current.isAdmin"
+          @save-edit="onChangeName"
+          @is-editing="onNameEdit"
+        />
       </h4>
       <span
         v-if="current.isAdmin"
