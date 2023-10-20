@@ -136,6 +136,40 @@ class User {
     }) => (at));
   }
 
+  static async getList({ db }, { list }) {
+    debug('search for users with @ in:', list);
+    for (let i = 0; i < list.length; i += 1) {
+      const at = list[i];
+      if (at.length < 3) {
+        throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should should have at least 3 character');
+      }
+      if (at.length > 35) {
+        throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have more than 35 character');
+      }
+      if (at.length !== encodeURIComponent(at).length) {
+        throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have any special character');
+      }
+    }
+    debug('the list is correct');
+    const promises = list.map((name) => db.users.findByName(name)
+      .then((user) => {
+        if (user) {
+          const {
+            username: at, key, id, signature,
+          } = user;
+          return {
+            at, key, id, signature,
+          };
+        }
+        return null;
+      }));
+
+    const all = await Promise.all(promises);
+    const result = all.filter((u) => !!u);
+    debug(`found ${result.length} users on ${list.length}`);
+    return result;
+  }
+
   static async getUserByName({ db }, name) {
     debug('search for user with exact @ :', name);
     const knownUser = await db.users.findByName(name);

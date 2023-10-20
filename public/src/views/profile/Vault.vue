@@ -48,6 +48,11 @@ function onDownloadSK() {
 <template>
   <div class="row justify-content-center">
     <div class="col-md-8">
+      <p>
+        <router-link to="/conversations">
+          Go to your conversations
+        </router-link>
+      </p>
       <div class="card m-3">
         <h4 class="card-header">
           TL/DR
@@ -173,32 +178,35 @@ function onDownloadSK() {
         </h4>
         <div class="card-body">
           <p>
-            The vault let's you entrust us with your secret key in as safe a manner as possible
-            so that you don't have to manage it yourself.
+            The vault provides you with a secure method to entrust us with your secret key,
+            relieving you of the responsibility of managing it independently.
           </p>
           <p>
-            For that we encrypt your private key through symmetric encryption
-            with a hash of your pass phrase as a password and store the result.<br>
-            We do the same with the kill switch if provided.<br>
-            On login, instead of uploading your secret key
-            you open your vault with your passphrase, get your secret key and process as usual.<br>
-            If this doesn't work we then try to open the kill switch, if it works we get your secret
-            key and use it to delete the account.
+            To achieve this, we employ symmetric encryption to encrypt your private key,
+            using a hash of your passphrase as the password, and store the encrypted result.
+            This same process is applied to the kill switch if provided.
           </p>
           <p>
-            The kill switch is a trick in this client, do not try to use it if you're not sure
-            to be on this site.
+            Upon logging in, instead of uploading your secret key,
+            you open your vault with your passphrase, retrieve your secret key,
+            and proceed as usual. In the event that this process fails,
+            we attempt to activate the kill switch.
+            If successful, we obtain your secret key and use it to delete your account.
           </p>
           <p>
-            Once your vault is set up you theorically can get rid of your secret key file but
-            you should know that since your secret key encryption (with your passphrase)
-            is entirely done on the client side, there can be no retrieval mechanism.
-            If you forget your pass phrase the only way to connect to your account is
-            with your secret key file.
+            It's important to note that the kill switch is a feature unique to this client,
+            so it should not be used unless you are certain you are on this site.
           </p>
           <p>
-            You can always empty your vault, but be sure to have a copy of your secret key file
-            before doing so.
+            Once your vault is set up, you can theoretically discard your secret key file.
+            However, please be aware that because the encryption of your secret key
+            (using your passphrase) is entirely performed on the client side,
+            there is no recovery mechanism. If you forget your passphrase,
+            the sole means of accessing your account will be through your secret key file.
+          </p>
+          <p>
+            You have the option to empty your vault at any time,
+            but make sure to retain a copy of your secret key file before doing so.
           </p>
         </div>
       </div>

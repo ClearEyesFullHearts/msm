@@ -27,13 +27,43 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
     get:
-      summary: Get users' list
-      operationId: getUsers
+      summary: Get detailed users' list
+      operationId: getUsersList
       x-eov-operation-handler: api
       security:
         - bearerAuth: []
       parameters:
-        - name: search
+        - name: list
+          in: query
+          description: list of usernames
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetailedUsersList"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  
+  /search:
+    get:
+      summary: Get users' list
+      operationId: searchUsers
+      x-eov-operation-handler: api
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user
           in: query
           description: Start of users name
           required: true
@@ -639,8 +669,8 @@ paths:
           required: true
           schema:
             type: string
-            minLength: 5
-            maxLength: 125
+            minLength: 3
+            maxLength: 35
       requestBody:
         content:
           application/json:
@@ -831,6 +861,10 @@ components:
         type: string
         minLength: 3
         maxLength: 35
+    DetailedUsersList:
+      type: array
+      items:
+        $ref: "#/components/schemas/User"
     Inbox:
       type: array
       items:

@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
-import Config from '@/lib/config'
+import Config from '@/lib/config';
 
 const mycrypto = new CryptoHelper();
 
@@ -30,7 +30,7 @@ function request(method, isRetry = false) {
       requestOptions.body = JSON.stringify(body);
     }
     return fetch(url, requestOptions).then((resp) => {
-      if(isRetry) {
+      if (isRetry) {
         return handleRetryResponse(resp);
       }
       return handleResponse(resp);
@@ -93,7 +93,6 @@ async function handleResponse(response) {
 
   return data;
 }
-
 
 async function handleRetryResponse(response) {
   const isJson = response.headers?.get('content-type')?.includes('application/json');

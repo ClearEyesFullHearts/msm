@@ -5,6 +5,13 @@ const { SchedulerClient, CreateScheduleCommand } = require('@aws-sdk/client-sche
 const debug = require('debug')('msm-main:async');
 
 class Async {
+  static ACTION_TYPE = {
+    MAIL: 'mail',
+    GROUP_ADD: 'group-add',
+    GROUP_REMOVE: 'group-remove',
+    GROUP_REVOKE: 'group-revokation',
+  }
+  
   static async autoUserRemoval(db, username) {
     debug('Schedule Auto User removal');
     const scheduleAt = new Date(Date.now() + config.get('timer.removal.user'));

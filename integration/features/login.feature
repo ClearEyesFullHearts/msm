@@ -58,7 +58,7 @@ Scenario: Authenticated user has access to its inbox
     And response body path $.0 should match a challenge
 
 Scenario: Authentication is mandatory to search user's list
-    When I GET /users?search=mat
+    When I GET /search?user=mat
     Then response code should be 401
 
 Scenario: Authentication is mandatory to get user's detail

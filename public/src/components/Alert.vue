@@ -21,7 +21,7 @@ const { alert } = storeToRefs(alertStore);
           class="btn btn-close float-end"
           @click="alertStore.clear()"
         />
-        <pre>{{ alert.message }}</pre>
+        <pre class="text-wrap">{{ alert.message }}</pre>
       </div>
     </div>
   </div>

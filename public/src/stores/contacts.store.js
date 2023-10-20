@@ -3,7 +3,7 @@ import { reactive } from 'vue';
 import { defineStore } from 'pinia';
 import { fetchWrapper } from '@/helpers';
 import {
-  useAuthStore, useConversationStore, useToasterStore, useWorkerStore,
+  useAuthStore, useConversationStore, useToasterStore, useWorkerStore, useGroupStore,
 } from '@/stores';
 
 import CryptoHelper from '@/lib/cryptoHelper';
@@ -26,15 +26,16 @@ export const useContactsStore = defineStore({
     messageCount: (state) => state.list.reduce((nb, contact) => nb + contact.messages.length, 0),
   },
   actions: {
-    userToContact({
-      id,
-      at,
-      store,
+    getCheckingUser({
+      id, at, hash, signature,
     }) {
-      const checkingUser = reactive({
+      return reactive({
         id,
         at,
-        store,
+        store: {
+          hash,
+          signature,
+        },
         key: null,
         verified: false,
         connected: false,
@@ -43,53 +44,51 @@ export const useContactsStore = defineStore({
           signingKey: null,
         },
         auto: 0,
+        group: false,
         alert: null,
         messages: [],
       });
-      fetchWrapper.get(`${baseUrl}/user/${at}`)
-        .then(async ({ id: userId, key, signature }) => {
-          if (!checkingUser.id) checkingUser.id = userId;
-          checkingUser.key = key;
-          const hash = await mycrypto.hash(`${key}\n${signature}`);
-          checkingUser.server.hash = hash;
-          checkingUser.server.signingKey = signature;
-          if (store.signature) {
-            try {
-              const result = await mycrypto.verify(signature, hash, store.signature, true);
-              if (result) {
-                checkingUser.verified = true;
-              } else {
-                checkingUser.alert = 'The stored signature failed to verify. This is very alarming.\nPlease report the problem to an admin.';
-              }
-            } catch (exc) {
-              checkingUser.alert = 'A problem happened while trying to validate this contact.\nIt may just be a temporary problem but you\'d be safer by not using this @';
-            }
-            return;
-          }
-          if (store.hash) {
-            const result = store.hash === hash;
-            if (result) {
-              checkingUser.verified = true;
-            } else {
-              checkingUser.alert = 'There is a mismatch between the server\'s hash and the stored one. This is very alarming.\nPlease report the problem to an admin.';
-            }
-          }
-        })
-        .catch((err) => {
-          if (err === '@ unknown') {
-            const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
-            checkingUser.alert = alertMsg;
-          }
-        })
-        .then(() =>
-          // check if user is verified in ether blockchain
-          this.autoValidation(checkingUser));
+    },
+    async setContactDetail(checking, detail) {
+      const { id: userId, key, signature } = detail;
 
-      return checkingUser;
+      if (!checking.id) checking.id = userId;
+
+      checking.key = key;
+      const hash = await mycrypto.hash(`${key}\n${signature}`);
+      checking.server.hash = hash;
+      checking.server.signingKey = signature;
+
+      if (checking.store.signature) {
+        try {
+          const result = await mycrypto.verify(signature, hash, checking.store.signature, true);
+          if (result) {
+            checking.verified = true;
+          } else {
+            checking.alert = 'The stored signature failed to verify. This is very alarming.\nPlease report the problem to an admin.';
+          }
+        } catch (exc) {
+          checking.alert = 'A problem happened while trying to validate this contact.\nIt may just be a temporary problem but you\'d be safer by not using this @';
+        }
+        return checking;
+      }
+      if (checking.store.hash) {
+        const result = checking.store.hash === hash;
+        if (result) {
+          checking.verified = true;
+        } else {
+          checking.alert = 'There is a mismatch between the server\'s hash and the stored one. This is very alarming.\nPlease report the problem to an admin.';
+        }
+      }
+      return checking;
     },
     async setContactList(pem, contacts) {
+      const groupStore = useGroupStore();
       if (!contacts) {
         this.list = [];
+        if (groupStore.list.length > 0) {
+          this.list.unshift(...groupStore.list);
+        }
         return;
       }
 
@@ -102,29 +101,69 @@ export const useContactsStore = defineStore({
       const listStr = await mycrypto.resolve(pem, { token, passphrase, iv });
       const myList = JSON.parse(listStr);
 
-      myList.forEach(({
-        id,
-        at,
-        store,
-      }) => {
-        const contact = this.userToContact({
+      if (myList.length > 0) {
+        const userAts = myList.reduce((acc, l) => {
+          if (!l.group) acc.push(l.at);
+          return acc;
+        }, []);
+
+        let users = [];
+        if (userAts.length > 0) {
+          users = await fetchWrapper.get(`${baseUrl}/users?list=${encodeURIComponent(userAts.join(','))}`);
+        }
+
+        myList.forEach(({
           id,
           at,
-          store,
+          store: {
+            hash,
+            signature,
+          },
+          group,
+        }) => {
+          if (!group) {
+            const checkingUser = this.getCheckingUser({
+              id, at, hash, signature,
+            });
+            this.list.push(checkingUser);
+            const detail = users.find((u) => u.at === at);
+            if (!detail) {
+              checkingUser.alert = 'This user does not exists anymore.\nPlease remove it from your list.';
+            } else {
+              this.setContactDetail(checkingUser, detail)
+                .then(() => this.autoValidation(checkingUser));
+            }
+          } else {
+            const groupContact = groupStore.list.find((g) => g.at === id);
+            if (groupContact) {
+              this.list.push(groupContact);
+            }
+          }
         });
-        this.list.push(contact);
-      });
+      }
+
+      const newGroups = groupStore.list.filter((g) => myList.findIndex((l) => l.id === g.at) < 0);
+      this.list.unshift(...newGroups);
     },
     async saveContactList(pem) {
       const saveList = this.list.map(({
         id,
         at,
-        store,
+        store: {
+          hash,
+          signature,
+        },
+        group,
       }) => ({
         id,
         at,
-        store,
+        store: {
+          hash,
+          signature,
+        },
+        group,
       }));
+
       const listChallenge = await mycrypto.challenge(pem, JSON.stringify(saveList));
       await fetchWrapper.put(`${baseUrl}/contacts`, listChallenge);
       this.dirty = false;
@@ -138,16 +177,21 @@ export const useContactsStore = defineStore({
       const [knownUser] = this.list.filter((u) => u.at === name);
       if (knownUser) return;
 
-      const contact = this.userToContact({
-        id: false,
-        at: name,
-        store: {
-          hash: null,
-          signature: null,
-        },
-      });
-      this.list.unshift(contact);
-      this.dirty = true;
+      const checkingUser = this.getCheckingUser({ at: name });
+      this.list.unshift(checkingUser);
+
+      fetchWrapper.get(`${baseUrl}/user/${name}`)
+        .then((user) => {
+          this.setContactDetail(checkingUser, user)
+            .then(() => this.autoValidation(checkingUser));
+          this.dirty = true;
+        })
+        .catch((err) => {
+          if (err === '@ unknown') {
+            const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
+            checkingUser.alert = alertMsg;
+          }
+        });
     },
     async fileAdd({
       id, at, hash, signature,
@@ -156,10 +200,26 @@ export const useContactsStore = defineStore({
       if (knownUserIndex >= 0) {
         this.list.splice(knownUserIndex, 1);
       }
-      const contact = this.userToContact({
-        id, at, store: { hash, signature },
+
+      const checkingUser = this.getCheckingUser({
+        id, at, hash, signature,
       });
-      this.list.unshift(contact);
+      this.list.unshift(checkingUser);
+
+      try {
+        const user = await fetchWrapper.get(`${baseUrl}/user/${at}`);
+
+        this.setContactDetail(checkingUser, user)
+          .then(() => this.autoValidation(checkingUser));
+      } catch (err) {
+        if (err === '@ unknown') {
+          const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
+          checkingUser.alert = alertMsg;
+          return;
+        }
+        throw err;
+      }
+
       this.dirty = true;
     },
     verifyUser(id) {
@@ -168,56 +228,14 @@ export const useContactsStore = defineStore({
       knownUser.verified = true;
       this.dirty = true;
     },
-    async checkUser(user) {
-      // check if user is verified in contact list
-      const [knownUser] = this.list.filter((u) => u.id === user.id);
-      if (knownUser) {
-        if (knownUser.verified) {
-          const {
-            store: {
-              hash,
-              signature,
-            },
-          } = knownUser;
-          if (signature) {
-            const result = await mycrypto.verify(user.signature, user.security.hash, signature, true);
-
-            user.security.verification = result ? 1 : 4;
-            return;
-          }
-          user.security.verification = user.security.hash === hash ? 2 : 4;
-          return;
-        }
-        if (knownUser.auto) {
-          const result = await mycrypto.verify(user.signature, user.security.hash, knownUser.auto, true);
-          user.security.verification = result ? 3 : 4;
-          return;
-        }
-      }
-      // check if user is verified in ether blockchain
-      // if the hash checks out => user.security.verification = 3;
-      try {
-        const isValidatedOnChain = await myvalidator.isValidated(user.id);
-        if (!isValidatedOnChain) return;
-
-        const { signature } = isValidatedOnChain;
-        const result = await mycrypto.verify(user.signature, user.security.hash, signature, true);
-        if (result) {
-          user.security.verification = 3;
-        } else {
-          user.security.verification = 4;
-        }
-      } catch (err) {
-        user.security.verification = 4;
-      }
-    },
     async autoValidation(user) {
       try {
         const isValidatedOnChain = await myvalidator.isValidated(user.id);
         if (!isValidatedOnChain) return;
 
         const { signature } = isValidatedOnChain;
-        const result = await mycrypto.verify(user.server.signingKey, user.server.hash, signature, true);
+        const { server: { signingKey, hash } } = user;
+        const result = await mycrypto.verify(signingKey, hash, signature, true);
         if (!result) {
           throw new Error('Signature mismatch on chain');
         }
@@ -237,24 +255,22 @@ export const useContactsStore = defineStore({
         for (let i = 0; i < challenges.length; i += 1) {
           const { id, challenge } = challenges[i];
           const objStr = await mycrypto.resolve(pem, challenge);
-          console.log('header', objStr);
+
           const {
             from,
             sentAt,
-            title: cryptedTitle,
+            title,
+            groupId,
           } = JSON.parse(objStr);
 
-          const titleBuff = await mycrypto.privateDecrypt(pem, cryptedTitle);
-          const dec = new TextDecoder();
-          const title = dec.decode(titleBuff);
-
-          const conversationStore = useConversationStore();
           const header = {
             id,
             from,
             sentAt,
-            title: conversationStore.decodeText(title),
+            title,
+            groupId,
           };
+
           headers.push(header);
         }
       } catch (error) {
@@ -267,7 +283,11 @@ export const useContactsStore = defineStore({
 
       const promises = [];
       for (let i = 0; i < headers.length; i += 1) {
-        promises.push(this.addMissedMessage(headers[i]));
+        if (headers[i].groupId) {
+          promises.push(this.addGroupMessage(headers[i]));
+        } else {
+          promises.push(this.addMissedMessage(headers[i]));
+        }
       }
 
       await Promise.all(promises);
@@ -300,19 +320,50 @@ export const useContactsStore = defineStore({
 
         contact.messages.push(header);
       } else {
-        await this.manualAdd(from);
+        this.manualAdd(from);
         const newContact = this.list.find((c) => c.at === from);
         newContact.messages.push(header);
       }
+
       document.title = `ySyPyA (${this.messageCount})`;
       const toasterStore = useToasterStore();
       toasterStore.success({ text: `New message from @${from}` });
+    },
+    async addGroupMessage(header) {
+      const { groupId } = header;
+      const conversationStore = useConversationStore();
+      const { current, conversations } = conversationStore;
+
+      if (current.target && current.target.at === groupId) {
+        if (current.messages.find((m) => m.id === header.id)) return;
+        const msg = await conversationStore.getMissedMessage(header.id);
+        current.messages.push(msg);
+        return;
+      }
+
+      const group = this.list.find((c) => c.at === groupId);
+
+      if (!group) {
+        // should delete message from groups we're no longer a member
+        fetchWrapper.delete(`${baseUrl}/message/${header.id}`);
+        return;
+      }
+      const convo = conversations[group.at];
+
+      if (convo && convo.messages.find((m) => m.id === header.id)) return;
+
+      if (group.messages.find((m) => m.id === header.id)) return;
+
+      group.messages.push(header);
+      document.title = `ySyPyA (${this.messageCount})`;
+      const toasterStore = useToasterStore();
+      toasterStore.success({ text: `New message from ${group.id}` });
     },
     async addFallBackMessage(header) {
       const from = header.from.substring(1);
       let contact = this.list.find((c) => c.at === from);
       if (!contact) {
-        await this.manualAdd(from);
+        this.manualAdd(from);
         contact = this.list.find((c) => c.at === from);
       }
 

@@ -2,7 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { Tooltip } from 'bootstrap';
-import { Autocomplete } from '@/components';
+import { Autocomplete, Contact, Group } from '@/components';
+import { router } from '@/router';
 import { useContactsStore, useAuthStore, useConnectionStore } from '@/stores';
 import FileHelper from '@/lib/fileHelper';
 
@@ -22,7 +23,7 @@ onMounted(() => {
   });
 });
 
-function addUser(user) {
+async function addUser(user) {
   contactsStore.manualAdd(user)
     .then(() => {
       contactsStore.saveContactList(authStore.pem);
@@ -46,6 +47,9 @@ async function onVerifyFilePicked(evt) {
     .then(() => {
       contactsStore.saveContactList(authStore.pem);
     });
+}
+function addGroup() {
+  router.push('/groups');
 }
 
 </script>
@@ -92,16 +96,17 @@ async function onVerifyFilePicked(evt) {
       </div>
     </div>
     <div class="row">
-      <div class="col-lg-8 col-md-12">
+      <div class="col-lg-6 col-md-12">
         <Autocomplete @user-selected="addUser" />
       </div>
-      <div class="col-lg-4 col-md-12 text-end d-flex flex-column">
+      <div class="col-lg-4 col-md-6 text-end d-flex flex-column mt-lg-1 mt-0">
         <button
           ref="verifyUploadBtn"
-          class="btn btn-primary mb-2"
+          class="btn btn-primary btn-sm mb-2"
           @click="onUploadVerify()"
         >
-          Add a contact by uploading its security file
+          <span class="d-none d-lg-inline">Add a contact by uploading its security file</span>
+          <span class="d-inline d-lg-none">Upload security file</span>
         </button>
         <input
           ref="verifyKeyInput"
@@ -110,6 +115,15 @@ async function onVerifyFilePicked(evt) {
           style="opacity: none;"
           @change="onVerifyFilePicked"
         >
+      </div>
+      <div class="col-lg-2 col-md-6 text-end d-flex flex-column  mt-lg-1 mt-0">
+        <button
+          ref="verifyUploadBtn"
+          class="btn btn-primary btn-sm mb-2"
+          @click="addGroup()"
+        >
+          New group
+        </button>
       </div>
     </div>
   </div>
@@ -122,173 +136,16 @@ async function onVerifyFilePicked(evt) {
       v-for="contact in list"
       :key="contact.id"
     >
-      <div class="row">
-        <div class="col-8 col-lg-4 mt-2">
-          <span
-            class="badge me-1 mb-1"
-            :class="contact.messages.length > 0
-              ? 'bg-warning'
-              : 'bg-secondary'"
-            data-bs-toggle="tooltip"
-            title="Messages waiting"
-          >{{ contact.messages.length }}</span>
-          <span>
-            <router-link :to="`/conversations/${contact.at}`">
-              <b translate="no">{{ contact.at }}</b>
-              <i
-                class="bi bi-arrow-right-circle-fill ms-2 float-end"
-                style="font-size: 1.2rem; color: grey;"
-              />
-            </router-link>
-          </span>
-        </div>
-        <div class="col-8 col-lg-4">
-          <div
-            v-if="contact.alert"
-            class="alert alert-danger"
-            role="alert"
-          >
-            <pre>{{ contact.alert }}</pre>
-          </div>
-          <span v-if="!contact.alert">
-            <i
-              class="bi me-1"
-              :class="contact.auto !== 0
-                ? 'bi-shield-fill-check'
-                : 'bi-shield-slash-fill'"
-              style="font-size: 1.8rem;"
-              :style="{ color: contact.auto !== 0 ? '#0d6efd' : 'grey' }"
-              data-bs-toggle="tooltip"
-              :title="contact.auto !== 0
-                ? 'On-chain validation confirmed'
-                : 'Waiting for on-chain validation'"
-            />
-            <i
-              v-if="contact.verified && contact.store.signature !== null"
-              class="bi bi-fingerprint me-1"
-              style="font-size: 1.8rem; color: #198754;"
-              data-bs-toggle="tooltip"
-              title="Signed and Trusted"
-            />
-            <i
-              v-if="contact.verified
-                && contact.store.signature === null
-                && contact.store.hash !== null"
-              class="bi bi-people me-1"
-              style="font-size: 1.8rem; color: #198754;"
-              data-bs-toggle="tooltip"
-              title="Manually trusted"
-            />
-            <i
-              v-if="!contact.verified"
-              class="bi bi-question-circle me-1"
-              style="font-size: 1.8rem; color: grey"
-              data-bs-toggle="tooltip"
-              data-bs-html="true"
-              title="Status unknown<br>Make sure that the hash displayed here
-              match your contact's profile page's hash before trusting them"
-            />
-            <i
-              class="bi me-1"
-              :class="contact.connected
-                ? 'bi-wifi'
-                : 'bi-wifi-off'"
-              style="font-size: 1.8rem;"
-              :style="{ color: contact.connected ? '#0d6efd' : 'grey' }"
-              data-bs-toggle="tooltip"
-              :title="contact.connected
-                ? 'online'
-                : 'offline'"
-            />
-          </span>
-        </div>
-        <div class="col-4 col-lg-4 text-end">
-          <button
-            class="btn btn-primary btn-sm me-2"
-            type="button"
-            data-bs-toggle="collapse"
-            :data-bs-target="`#profileCollapse-${contact.at.replaceAll(' ', '_')}`"
-            aria-expanded="false"
-            aria-controls="profileCollapse"
-          >
-            <i
-              class="bi bi-eye"
-              style="font-size: 1rem; color: white"
-              data-bs-toggle="tooltip"
-              title="Show contact's profile"
-            />
-          </button>
-        </div>
-      </div>
-      <div
-        :id="`profileCollapse-${contact.at.replaceAll(' ', '_')}`"
-        class="row collapse text-center"
-      >
-        <div class="col">
-          <div class="card m-3">
-            <h4 class="card-header">
-              {{ contact.at }}'s profile
-            </h4>
-            <div class="card-body text-center">
-              <button
-                class="btn btn-danger btn-sm mb-2"
-                @click="removeUser(contact)"
-              >
-                Delete this conversation
-              </button>
-              <br>
-              <label translate="no">Username:</label>
-              <h4>@{{ contact.at }}</h4>
-              <label>Security Hash:</label>
-              <h4>{{ contact.store.hash || contact.server.hash }}</h4>
-              <br><button
-                v-if="!contact.verified && !contact.alert"
-                class="btn btn-success btn-sm mb-2"
-                @click="onVerify(contact)"
-              >
-                Validate this contact's security hash
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card m-3">
-            <h4 class="card-header">
-              Informations
-            </h4>
-            <div class="card-body text-start">
-              <p>
-                <i
-                  class="bi me-1 bi-shield-fill-check"
-                  style="font-size: 1.4rem; color: #0d6efd;"
-                />
-                appears if the user is validated through the blockchain
-              </p>
-              <p>
-                <i
-                  class="bi bi-people me-1"
-                  style="font-size: 1.4rem; color: #198754;"
-                />
-                appears if the user has been manually validated by comparing the security hash
-              </p>
-              <p>
-                <i
-                  class="bi bi-fingerprint me-1"
-                  style="font-size: 1.4rem; color: #198754;"
-                />
-                appears if the user has been validated through its security file
-              </p>
-              <p>
-                <i
-                  class="bi bi-wifi me-1"
-                  style="font-size: 1.4rem; color: #0d6efd;"
-                />
-                appears if the user is connected and ready to chat
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Contact
+        v-if="!contact.group"
+        :contact="contact"
+        @delete-contact="removeUser"
+        @contact-verified="onVerify"
+      />
+      <Group
+        v-if="contact.group"
+        :group="contact"
+      />
     </div>
   </div>
 </template>

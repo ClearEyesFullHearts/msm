@@ -3,7 +3,7 @@
 import { defineStore } from 'pinia';
 import Config from '@/lib/config';
 import { fetchWrapper } from '@/helpers';
-import { useAuthStore, useContactsStore } from '@/stores';
+import { useAuthStore, useContactsStore, useGroupStore } from '@/stores';
 
 const {
   VAPID_KEY, API_URL,
@@ -80,19 +80,7 @@ export const useWorkerStore = defineStore({
 
       this.permission = !!window.Notification ? window.Notification.permission : 'denied';
       if (this.permission === 'granted') {
-        const authStore = useAuthStore();
-        this.channel = new BroadcastChannel('new_mail');
-        this.channel.onmessage = (event) => {
-          const { data } = event;
-          if (data.to === authStore.user.user.username) {
-            const contactsStore = useContactsStore();
-            contactsStore.updateMessages(false);
-            this.notifOk = false;
-            notifTimeout = setTimeout(() => {
-              this.notifOk = true;
-            }, 1000);
-          }
-        };
+        this.listenBroadcast();
       }
 
       return true;
@@ -133,6 +121,36 @@ export const useWorkerStore = defineStore({
         return true;
       }
       return false;
+    },
+    listenBroadcast() {
+      const authStore = useAuthStore();
+      const contactsStore = useContactsStore();
+      const groupStore = useGroupStore();
+
+      // mail channel
+      const mail = new BroadcastChannel('new_mail');
+      mail.onmessage = (event) => {
+        const { data } = event;
+        if (data.to === authStore.user.user.username) {
+          contactsStore.updateMessages(false);
+          this.notifOk = false;
+          notifTimeout = setTimeout(() => {
+            this.notifOk = true;
+          }, 1000);
+        }
+      };
+
+      // group channel
+      const group = new BroadcastChannel('group_change');
+      group.onmessage = (event) => {
+        const { data } = event;
+        if (data.to === authStore.user.user.username) {
+          groupStore.updateGroup(data.from);
+        }
+      };
+      this.channel = {
+        mail,
+      };
     },
   },
 });

@@ -3,10 +3,12 @@ import { Form, Field } from 'vee-validate';
 import { ref } from 'vue';
 import * as Yup from 'yup';
 
-import { useUsersStore, useAlertStore, useAuthStore } from '@/stores';
+import { useAlertStore, useAuthStore } from '@/stores';
 import { router } from '@/router';
 import CryptoHelper from '@/lib/cryptoHelper';
 import FileHelper from '@/lib/fileHelper';
+// temporary
+// import TimeLogger from '@/lib/timeLogger';
 
 const alertStore = useAlertStore();
 const authStore = useAuthStore();
@@ -36,10 +38,13 @@ async function onFilePicked(evt) {
 async function onKeyFileNeeded() {
   fileInput.value.click();
 }
+
 async function onSubmit(values) {
+  // TimeLogger.start();
   isSubmitting.value = true;
   try {
     await authStore.getIdentity(values.username);
+    // TimeLogger.logTime('1 getIdentity');
   } catch (error) {
     alertStore.error(error);
     isSubmitting.value = false;
@@ -47,8 +52,10 @@ async function onSubmit(values) {
   }
   try {
     const keyFile = await authStore.openVault(values.passphrase);
+    // TimeLogger.logTime('2 openVault');
     const [key, signKey] = keyFile.split(CryptoHelper.SEPARATOR);
     await authStore.login(key, signKey);
+    // TimeLogger.logTime('3 login');
 
     router.push('/conversations');
   } catch (err) {

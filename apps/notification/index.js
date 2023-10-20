@@ -63,7 +63,17 @@ async function webPushNotification({ to, from, action }) {
   debug(`${subs.length} subscription for ${to}`);
   if (subs.length < 1) return;
 
-  const waitingMessages = await data.messages.getUserMessages(to);
+  let message = {
+    action, from, to,
+  };
+  if (action === 'mail') {
+    const waitingMessages = await data.messages.getUserMessages(to);
+
+    message = {
+      ...message,
+      unread: waitingMessages.length,
+    };
+  }
 
   const promises = [];
   subs.forEach((sub) => {
@@ -81,11 +91,9 @@ async function webPushNotification({ to, from, action }) {
     };
     const result = AWSXRay.captureAsyncFunc('WebPush', webpush.sendNotification(
       subscription,
-      JSON.stringify({
-        action, from, to, unread: waitingMessages.length,
-      }),
+      JSON.stringify(message),
       {
-        topic: 'mail',
+        topic: action,
         vapidDetails: {
           subject: `mailto:${config.get('vapid.subject')}`,
           publicKey: config.get('vapid.publicKey'),

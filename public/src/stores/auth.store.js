@@ -4,11 +4,13 @@ import { defineStore, getActivePinia } from 'pinia';
 import { fetchWrapper } from '@/helpers';
 import { router } from '@/router';
 import {
-  useAlertStore, useUsersStore, useContactsStore, useConnectionStore, useWorkerStore,
+  useAlertStore, useUsersStore, useContactsStore, useConnectionStore, useWorkerStore, useGroupStore,
 } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
 import Config from '@/lib/config';
+// temporary
+// import TimeLogger from '@/lib/timeLogger';
 
 const baseUrl = Config.API_URL;
 const mycrypto = new CryptoHelper();
@@ -31,6 +33,7 @@ export const useAuthStore = defineStore({
     countDownMsg: null,
     isValidatedOnChain: false,
     autoConnect: false,
+    idIsSet: false,
   }),
   actions: {
     async getIdentity(username) {
@@ -87,33 +90,43 @@ export const useAuthStore = defineStore({
       }
     },
     async login(key, signKey, firstTime = false) {
+      // TimeLogger.start();
       const alertStore = useAlertStore();
       try {
         await this.setIdentityUp(key, signKey, myChallenge);
+        // TimeLogger.logTime('a - setIdentityUp');
 
         const epk = await mycrypto.getPublicKey(this.pem);
         const spk = await mycrypto.getSigningPublicKey(this.signing);
+        // TimeLogger.logTime('b - get public key');
 
         this.publicHash = await mycrypto.hash(`${epk}\n${spk}`);
+        // TimeLogger.logTime('c - get hash');
 
+        const groupStore = useGroupStore();
+        await groupStore.setGroupList(this.pem);
+        // TimeLogger.logTime('d - setGroupList');
         const contactsStore = useContactsStore();
-        await contactsStore.setContactList(this.pem, this.user.contacts);
-
-        let isSubscribed = false;
-        if (!!window.Notification && window.Notification.permission === 'granted') {
-          const workerStore = useWorkerStore();
-          isSubscribed = await workerStore.subscribe();
-        }
-        if (!isSubscribed) {
-          await contactsStore.updateMessages();
-        } else {
-          await contactsStore.updateMessages(false);
-        }
+        contactsStore.setContactList(this.pem, this.user.contacts)
+          .then(() => {
+            contactsStore.updateMessages();
+            if (!!window.Notification && window.Notification.permission === 'granted') {
+              const workerStore = useWorkerStore();
+              workerStore.subscribe().then((isSubscribed) => {
+                if (isSubscribed) {
+                  clearTimeout(contactsStore.timeout);
+                  // TimeLogger.logTime('f1 - subscribe');
+                }
+              });
+            }
+            // TimeLogger.logTime('e - setContactList');
+          });
 
         if (!firstTime) {
           this.onChainVerification();
         }
 
+        this.idIsSet = true;
         myVault = undefined;
         myKillSwitch = undefined;
         myChallenge = undefined;
@@ -226,7 +239,6 @@ export const useAuthStore = defineStore({
           }
         }
       } catch (err) {
-        console.log('error on validation', err);
         alertStore.error(`${err.message || err}.\nYour on chain validation is wrong, do not use this account.\nReport the problem to an admin ASAP!`);
       }
 
@@ -247,7 +259,8 @@ export const useAuthStore = defineStore({
         connectionStore.disconnect(true);
       }
       if (workersStore.channel) {
-        workersStore.channel.close();
+        if (workersStore.channel.mail) workersStore.channel.mail.close();
+        if (workersStore.channel.group) workersStore.channel.group.close();
       }
       const pinia = getActivePinia();
       pinia._s.forEach((store) => store.$reset());

@@ -69,13 +69,12 @@ module.exports = {
     });
   },
   // Use only auth
-  getUsers: [
+  searchUsers: [
     AuthMiddleware.verify(),
     (req, res, next) => {
       const {
-        auth,
         query: {
-          search,
+          user,
         },
         app: {
           locals: {
@@ -85,7 +84,7 @@ module.exports = {
       } = req;
 
       AWSXRay.captureAsyncFunc('User.getUsers', (subsegment) => {
-        User.getUsers({ db, auth }, { search })
+        User.getUsers({ db }, { search: user })
           .then((users) => {
             res.json(users);
             subsegment.close();
@@ -116,6 +115,34 @@ module.exports = {
         User.getUserByName({ db, auth }, at)
           .then((user) => {
             res.json(user);
+            subsegment.close();
+          })
+          .catch((err) => {
+            next(err);
+            subsegment.close(err);
+          });
+      });
+    },
+  ],
+  getUsersList: [
+    AuthMiddleware.verify(),
+    (req, res, next) => {
+      const {
+        query: {
+          list,
+        },
+        app: {
+          locals: {
+            db,
+          },
+        },
+      } = req;
+
+      AWSXRay.captureAsyncFunc('User.getList', (subsegment) => {
+        const users = list[0].split(',').map((u) => u.trim());
+        User.getList({ db }, { list: [...new Set(users)] })
+          .then((result) => {
+            res.json(result);
             subsegment.close();
           })
           .catch((err) => {
