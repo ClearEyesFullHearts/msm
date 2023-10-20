@@ -55,7 +55,7 @@ async function onSubmit(values) {
       <div class="invalid-feedback">
         {{ errors.groupName }}
       </div>
-      <div class="form-group mt-2">
+      <div class="form-group mt-3 mb-1">
         <button
           class="btn btn-primary"
           :disabled="isSubmitting"
@@ -69,4 +69,36 @@ async function onSubmit(values) {
       </div>
     </div>
   </Form>
+  <div class="card mt-3">
+    <h4 class="card-header">
+      What's happening
+    </h4>
+    <div
+      class="card-body"
+    >
+      <p>
+        When you create a group, a randomly generated secret key is produced.
+        This key is shared among all members of the group.
+      </p>
+      <p>
+        The secret key is stored in an encrypted form, along with your group membership,
+        using your public key.
+      </p>
+      <p>
+        When you send a message to the group, you decrypt the group key using your personal
+        secret key and then use that group key to encrypt your message.<br>
+        Reading messages from the group follows the same process,
+        involving the decryption of the group key and the subsequent decryption of the message.
+      </p>
+      <p>
+        Whenever you, or another group administrator, adds a new member,
+        the group key is encrypted with that user's public key to securely provide access to them.
+      </p>
+      <p>
+        In cases where you, or another group administrator, remove a member from the group,
+        a new group key is generated. This new key is encrypted with the public keys
+        of all remaining members and then shared accordingly.
+      </p>
+    </div>
+  </div>
 </template>

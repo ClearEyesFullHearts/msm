@@ -94,39 +94,13 @@ async function acceptNotification() {
     v-if="authStore.idIsSet"
     class="navbar navbar-expand-lg navbar-dark bg-dark"
   >
-    <button
-      class="navbar-toggler"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarSupportedContent"
-      aria-controls="navbarSupportedContent"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
-      <span class="navbar-toggler-icon" />
-    </button>
-    <div
-      id="navbarSupportedContent"
-      class="collapse navbar-collapse"
-    >
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item active">
-          <router-link
-            to="/conversations"
-            class="nav-item nav-link"
-          >
-            Home
-          </router-link>
-        </li>
-      </ul>
-      <div class="navbar-nav m-1 me-auto">
-        <button
-          class="btn btn-outline-light"
-          @click="authStore.logout()"
-        >
-          Logout
-        </button>
-      </div>
+    <div class="navbar-nav mx-lg-auto mx-2">
+      <button
+        class="btn btn-outline-light"
+        @click="authStore.logout()"
+      >
+        Logout
+      </button>
     </div>
     <ul class="navbar-nav">
       <li class="nav-item dropdown">

@@ -9,11 +9,9 @@ import {
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
 import Config from '@/lib/config';
-import TimeLogger from '@/lib/timeLogger';
 
 const mycrypto = new CryptoHelper();
 const myvalidator = new ChainHelper();
-const logger = new TimeLogger('Contacts');
 
 const baseUrl = Config.API_URL;
 
@@ -85,7 +83,6 @@ export const useContactsStore = defineStore({
       return checking;
     },
     async setContactList(pem, contacts) {
-      // logger.logTime(`setContactList ${this.list.length}`);
       const groupStore = useGroupStore();
       if (!contacts) {
         this.list = [];
@@ -149,7 +146,6 @@ export const useContactsStore = defineStore({
       this.list.unshift(...newGroups);
     },
     async saveContactList(pem) {
-      // logger.logTime(`saveContactList ${this.list.length}`);
       const saveList = this.list.map(({
         id,
         at,
@@ -178,28 +174,23 @@ export const useContactsStore = defineStore({
       this.dirty = true;
     },
     async manualAdd(name) {
-      // logger.logTime(`manualAdd ${this.list.length}`);
       const [knownUser] = this.list.filter((u) => u.at === name);
       if (knownUser) return;
 
-      // const user = await fetchWrapper.get(`${baseUrl}/user/${name}`);
       const checkingUser = this.getCheckingUser({ at: name });
       this.list.unshift(checkingUser);
 
-      // logger.logTime(`manualAdd list updated ${this.list.length}`);
-
       fetchWrapper.get(`${baseUrl}/user/${name}`)
         .then((user) => {
-          // logger.logTime(`manualAdd user obtained ${this.list.length}`);
-          if (!user) {
+          this.setContactDetail(checkingUser, user)
+            .then(() => this.autoValidation(checkingUser));
+          this.dirty = true;
+        })
+        .catch((err) => {
+          if (err === '@ unknown') {
             const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
             checkingUser.alert = alertMsg;
-          } else {
-            this.setContactDetail(checkingUser, user)
-              // .then(() => // logger.logTime(`manualAdd detail set ${this.list.length}`))
-              .then(() => this.autoValidation(checkingUser));
           }
-          this.dirty = true;
         });
     },
     async fileAdd({
@@ -210,19 +201,25 @@ export const useContactsStore = defineStore({
         this.list.splice(knownUserIndex, 1);
       }
 
-      const user = await fetchWrapper.get(`${baseUrl}/user/${at}`);
       const checkingUser = this.getCheckingUser({
         id, at, hash, signature,
       });
       this.list.unshift(checkingUser);
 
-      if (!user) {
-        const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
-        checkingUser.alert = alertMsg;
-      } else {
+      try {
+        const user = await fetchWrapper.get(`${baseUrl}/user/${at}`);
+
         this.setContactDetail(checkingUser, user)
           .then(() => this.autoValidation(checkingUser));
+      } catch (err) {
+        if (err === '@ unknown') {
+          const alertMsg = 'This user does not exists anymore.\nPlease remove it from your list.';
+          checkingUser.alert = alertMsg;
+          return;
+        }
+        throw err;
       }
+
       this.dirty = true;
     },
     verifyUser(id) {
@@ -248,12 +245,9 @@ export const useContactsStore = defineStore({
       }
     },
     async getHeaders() {
-      // logger.logTime(`getHeaders ${this.list.length}`);
       const headers = [];
       try {
         const challenges = await fetchWrapper.get(`${baseUrl}/inbox`);
-
-        // logger.logTime(`getHeaders inbox ${challenges.length}`);
 
         const authStore = useAuthStore();
         const { pem } = authStore;
@@ -285,7 +279,6 @@ export const useContactsStore = defineStore({
       return headers;
     },
     async fillConversations(headers) {
-      // logger.logTime(`fillConversations start ${this.list.length}`);
       headers.sort((a, b) => a.sentAt - b.sentAt);
 
       const promises = [];
@@ -298,7 +291,6 @@ export const useContactsStore = defineStore({
       }
 
       await Promise.all(promises);
-      // logger.logTime(`fillConversations end ${this.list.length}`);
 
       this.list.sort((a, b) => {
         const s = b.messages.length - a.messages.length;
@@ -307,7 +299,6 @@ export const useContactsStore = defineStore({
       document.title = `ySyPyA (${this.messageCount})`;
     },
     async addMissedMessage(header) {
-      // logger.logTime(`addMissedMessage ${this.list.length}`);
       const from = header.from.substring(1);
       const conversationStore = useConversationStore();
       const { current, conversations } = conversationStore;
@@ -333,13 +324,12 @@ export const useContactsStore = defineStore({
         const newContact = this.list.find((c) => c.at === from);
         newContact.messages.push(header);
       }
-      // logger.logTime(`addMissedMessage end from ${from} : ${this.list.length}`);
+
       document.title = `ySyPyA (${this.messageCount})`;
       const toasterStore = useToasterStore();
       toasterStore.success({ text: `New message from @${from}` });
     },
     async addGroupMessage(header) {
-      // logger.logTime(`addGroupMessage start ${header.groupId}`);
       const { groupId } = header;
       const conversationStore = useConversationStore();
       const { current, conversations } = conversationStore;
@@ -352,7 +342,7 @@ export const useContactsStore = defineStore({
       }
 
       const group = this.list.find((c) => c.at === groupId);
-      // logger.logTime(`addGroupMessage end ${!!group}`);
+
       if (!group) {
         // should delete message from groups we're no longer a member
         fetchWrapper.delete(`${baseUrl}/message/${header.id}`);
@@ -384,7 +374,6 @@ export const useContactsStore = defineStore({
       toasterStore.success({ text: `New message from @${from}` });
     },
     updateMessages(loop = true) {
-      // logger.logTime(`updateMessages ${this.list.length}`);
       const authStore = useAuthStore();
       this.getHeaders().then((headers) => this.fillConversations(headers))
         .then(() => {
@@ -429,49 +418,3 @@ export const useContactsStore = defineStore({
     },
   },
 });
-
-/*
-async checkUser(user) {
-      // check if user is verified in contact list
-      const [knownUser] = this.list.filter((u) => u.id === user.id);
-      if (knownUser) {
-        if (knownUser.verified) {
-          const {
-            store: {
-              hash,
-              signature,
-            },
-          } = knownUser;
-          if (signature) {
-            const result = await mycrypto.verify(user.signature, user.security.hash, signature, true);
-
-            user.security.verification = result ? 1 : 4;
-            return;
-          }
-          user.security.verification = user.security.hash === hash ? 2 : 4;
-          return;
-        }
-        if (knownUser.auto) {
-          const result = await mycrypto.verify(user.signature, user.security.hash, knownUser.auto, true);
-          user.security.verification = result ? 3 : 4;
-          return;
-        }
-      }
-      // check if user is verified in ether blockchain
-      // if the hash checks out => user.security.verification = 3;
-      try {
-        const isValidatedOnChain = await myvalidator.isValidated(user.id);
-        if (!isValidatedOnChain) return;
-
-        const { signature } = isValidatedOnChain;
-        const result = await mycrypto.verify(user.signature, user.security.hash, signature, true);
-        if (result) {
-          user.security.verification = 3;
-        } else {
-          user.security.verification = 4;
-        }
-      } catch (err) {
-        user.security.verification = 4;
-      }
-    },
-*/

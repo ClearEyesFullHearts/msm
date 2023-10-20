@@ -85,129 +85,125 @@ function onNameEdit() {
 
 </script>
 <template>
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <h4>
-        <router-link :to="`/conversations`">
-          <i
-            v-if="!isEditing"
-            class="bi bi-arrow-left-circle-fill me-2"
-            style="font-size: 1.4rem; color: grey;"
-          />
-        </router-link>
-        <ClickAndEdit
-          ref="editableGroupName"
-          :text-value="current.id"
-          :editable="current.isAdmin"
-          @save-edit="onChangeName"
-          @is-editing="onNameEdit"
-        />
-      </h4>
-      <span
-        v-if="current.isAdmin"
-        style="font-size: 0.8rem; color: grey;"
-      ><i
-        class="bi me-1 bi bi-star-fill"
-        style="color: #FFD700;font-size: 0.8rem;"
-      />Group admin</span>
-      <span
-        v-if="!current.isAdmin"
-        style="font-size: 0.8rem; color: grey;"
-      >Member</span>
-      <hr>
-      <div v-if="current.isAdmin">
-        <Autocomplete
-          @user-selected="groupAdd"
-        />
-        <hr>
-      </div>
-      <div
-        v-if="current.members.length"
-        class="container-fluid"
-      >
-        <div
-          v-for="contact in current.members"
-          :key="contact.at"
-        >
-          <div class="row mb-1">
-            <div class="col-8 mt-2">
-              <h5
-                class="text-break"
-                translate="no"
-              >
-                {{ contact.at }}
-              </h5>
-              <span
-                v-if="contact.isAdmin"
-                style="font-size: 0.8rem; color: grey;"
-              ><i
-                class="bi me-1 bi bi-star-fill"
-                style="color: #FFD700;font-size: 0.8rem;"
-              />Group admin</span>
-              <span
-                v-if="!contact.isAdmin"
-                style="font-size: 0.8rem; color: grey;"
-              >Member</span>
-            </div>
-            <div class="col-4">
-              <div
-                v-if="contact.alert"
-                class="alert alert-danger"
-                role="alert"
-              >
-                <pre>{{ contact.alert }}</pre>
-              </div>
-              <span v-if="!contact.alert && !contact.isAdmin && current.isAdmin">
-                <button
-                  class="btn btn-danger btn-sm me-2 float-end"
-                  type="button"
-                  @click="revoke(contact)"
-                >
-                  <i
-                    class="bi bi-person-dash"
-                    style="font-size: 1rem; color: white"
-                    title="Remove that contact from the group"
-                  />
-                </button>
-              </span>
-              <span v-if="!contact.alert && !contact.isAdmin && current.isAdmin">
-                <button
-                  class="btn btn-warning btn-sm me-2 float-end"
-                  type="button"
-                  @click="setAdmin(contact)"
-                >
-                  <i
-                    class="bi bi-star"
-                    style="font-size: 1rem; color: white"
-                    title="Make them an admin"
-                  />
-                </button>
-              </span>
-            </div>
+  <h4>
+    <router-link :to="`/conversations`">
+      <i
+        v-if="!isEditing"
+        class="bi bi-arrow-left-circle-fill me-2"
+        style="font-size: 1.4rem; color: grey;"
+      />
+    </router-link>
+    <ClickAndEdit
+      ref="editableGroupName"
+      :text-value="current.id"
+      :editable="current.isAdmin"
+      @save-edit="onChangeName"
+      @is-editing="onNameEdit"
+    />
+  </h4>
+  <span
+    v-if="current.isAdmin"
+    style="font-size: 0.8rem; color: grey;"
+  ><i
+    class="bi me-1 bi bi-star-fill"
+    style="color: #FFD700;font-size: 0.8rem;"
+  />Group admin</span>
+  <span
+    v-if="!current.isAdmin"
+    style="font-size: 0.8rem; color: grey;"
+  >Member</span>
+  <hr>
+  <div v-if="current.isAdmin">
+    <Autocomplete
+      @user-selected="groupAdd"
+    />
+    <hr>
+  </div>
+  <div
+    v-if="current.members.length"
+    class="container-fluid"
+  >
+    <div
+      v-for="contact in current.members"
+      :key="contact.at"
+    >
+      <div class="row mb-1">
+        <div class="col-8 mt-2">
+          <h5
+            class="text-break"
+            translate="no"
+          >
+            {{ contact.at }}
+          </h5>
+          <span
+            v-if="contact.isAdmin"
+            style="font-size: 0.8rem; color: grey;"
+          ><i
+            class="bi me-1 bi bi-star-fill"
+            style="color: #FFD700;font-size: 0.8rem;"
+          />Group admin</span>
+          <span
+            v-if="!contact.isAdmin"
+            style="font-size: 0.8rem; color: grey;"
+          >Member</span>
+        </div>
+        <div class="col-4">
+          <div
+            v-if="contact.alert"
+            class="alert alert-danger"
+            role="alert"
+          >
+            <pre>{{ contact.alert }}</pre>
           </div>
+          <span v-if="!contact.alert && !contact.isAdmin && current.isAdmin">
+            <button
+              class="btn btn-danger btn-sm me-2 float-end"
+              type="button"
+              @click="revoke(contact)"
+            >
+              <i
+                class="bi bi-person-dash"
+                style="font-size: 1rem; color: white"
+                title="Remove that contact from the group"
+              />
+            </button>
+          </span>
+          <span v-if="!contact.alert && !contact.isAdmin && current.isAdmin">
+            <button
+              class="btn btn-warning btn-sm me-2 float-end"
+              type="button"
+              @click="setAdmin(contact)"
+            >
+              <i
+                class="bi bi-star"
+                style="font-size: 1rem; color: white"
+                title="Make them an admin"
+              />
+            </button>
+          </span>
         </div>
       </div>
-      <hr v-if="current.members.length">
-      <div class="text-end d-flex flex-column">
-        <button
-          v-if="groupStore.canQuit"
-          class="btn btn-dark mt-1"
-          @click="quit()"
-        >
-          Quit group
-        </button>
-      </div>
-
-      <div class="text-end d-flex flex-column mt-2">
-        <button
-          v-if="current.isAdmin"
-          ref="verifyUploadBtn"
-          class="btn btn-danger mt-1"
-          @click="deleteGroup()"
-        >
-          Delete group
-        </button>
-      </div>
     </div>
+  </div>
+  <hr v-if="current.members.length">
+  <div class="text-end d-flex flex-column">
+    <button
+      v-if="groupStore.canQuit"
+      class="btn btn-dark mt-1"
+      @click="quit()"
+    >
+      Quit group
+    </button>
+  </div>
+
+  <div class="text-end d-flex flex-column mt-2">
+    <button
+      v-if="current.isAdmin"
+      ref="verifyUploadBtn"
+      class="btn btn-danger mt-1"
+      @click="deleteGroup()"
+    >
+      Delete group
+    </button>
   </div>
 </template>

@@ -23,6 +23,11 @@ async function signHash() {
 <template>
   <div class="row justify-content-center">
     <div class="col-md-8">
+      <p>
+        <router-link to="/conversations">
+          Go to your conversations
+        </router-link>
+      </p>
       <div class="card m-3">
         <h4 class="card-header">
           TL/DR

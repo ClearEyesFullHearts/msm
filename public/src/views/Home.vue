@@ -87,39 +87,43 @@ function installApp() {
           <p>
             <ul>
               <li>
-                In the top right corner are all pages related to your account.<br>
-                There you'll find your own profile data to be verified by others
-                and your vault.<br>
-                Start by visiting your profile, download your own security file,
-                go back to the home page and upload it to verify yourself.<br>
-                The Incinerate button deletes your account.
+                At the upper right corner of the screen, you'll find
+                all the pages relevant to your account.
+                Here, you can access your personal profile data
+                for verification by others, as well as your vault.<br>
+                Begin by visiting your profile, download your personal security file,
+                return to the homepage, and upload it to confirm your identity.<br>
+                Should you ever wish to delete your account,
+                the 'Incinerate' button is available for that purpose.
               </li>
               <li>
-                In your vault you can download your secret key as a file, this file can be used
-                instead of your password.
-                (you'll be prompted to upload this file if you fail to write the right password)<br>
-                If you empty your vault you'll be able to change your password and set
-                a password killswitch up.<br>
-                If you empty your vault without replacing your password
-                the secret key file is the only way to connect.<br>
+                Inside your vault, you have the option to download your secret key as a file,
+                which can be used in place of your password.
+                (If you enter an incorrect password, you will be prompted to upload this file.)<br>
+                When you choose to empty your vault, you can change your password
+                and establish a password kill switch.
+                However, if you empty your vault without setting a new password,
+                the secret key file becomes the sole means of accessing your account.
               </li>
               <li>
-                The "Connect" button on the home page allows you to receive
-                and send instant messages to other connected users.<br>
-                You need to be validated on-chain to be able to connect.<br>
-                If you are not connected you can only send or receive "mail" messages.
+                The "Connect" button on the home page enables you to send and receive
+                instant messages with other users who are currently connected.
+                To access this feature, you must have on-chain validation<br>
+                If you are not connected, your communication options are limited to sending
+                or receiving "mail" messages.
               </li>
               <li>
-                The "Accept Notifications" switch enables us to send you notifications even
+                The "Accept Notifications" switch allows us to send you notifications even
                 if you're not connected or even logged in. When enabled it will prompt you
                 to block or allow notifications for this site, click "Allow".
               </li>
               <li>
-                All conversations are temporary and are lost as soon as you log out.<br>
-                "Mail" messages are kept encrypted on our side until you read them after which
-                they are deleted (after 30 seconds),
-                instant messages are never kept on our side.<br>
-                No message information is transported or stored in clear text.
+                All conversations are ephemeral and will be deleted as soon as you log out.<br>
+                "Mail" messages are securely stored on our side in encrypted form
+                until you read them, at which point they are automatically deleted
+                (usually within 30 seconds). Instant messages are never retained on our servers.<br>
+                It's important to note that no message information is transmitted
+                or stored in plaintext.
               </li>
             </ul>
           </p>
@@ -133,30 +137,30 @@ function installApp() {
               </li>
               <li>
                 You can download an entire conversation in an encrypted format by clicking
-                on the grey button in the top right of any conversation.<br>
+                on the grey button under the message box of any conversation.<br>
                 You'll then be able to reload it by clicking on the green button next to it.
               </li>
               <li>
                 On log-in your credentials are only valid for 15 minutes after which you will be
                 logged out.<br>
-                You can reset the time by clicking on the countdown in the top right menu or
-                directly activate the auto-reconnection.
+                You can reset the time by clicking on the countdown in the upper right corner
+                of the screen or directly activate the auto-reconnection.
               </li>
               <li>
-                We've put in place an automatic verification system by leveraging
-                the Ethereum blockchain.<br>
-                By engraving a signed hash of your public keys on the blockchain
-                everyone can easily check that you are the only one that can read messages
-                sent to you using these keys.<br>
-                The small shield next to your @ in the top right corner will appear in green once
-                it is done.<br>
-                Don't panic if it is not green, this process can be long or fail.
-                As long as it is not successful, it will be retried each time you
-                open a message.<br>
+                We've established an automatic verification system using the Ethereum blockchain.
+                <br>
+                By embedding a digitally signed hash of your public keys into the blockchain,
+                everyone can easily confirm that only you can decrypt messages sent to you
+                using these keys.<br>
+                You'll notice a small shield icon next to your '@' symbol in the top right corner,
+                which will turn green once the verification is completed.<br>
+                There's no need to worry if it's not green, as this process can take some time or
+                encounter occasional failures. It will be automatically retried each time you open
+                a message until successful.<br>
                 If the shield is red, <b>do panic and contact an admin</b>.
               </li>
               <li>
-                Your contacts will have a blue shield once they are validated.
+                Your contacts will have a blue shield once their verification is completed.
               </li>
               <li>
                 You can also validate the integrity of this website thanks to a Chrome Extension.
@@ -178,6 +182,26 @@ function installApp() {
           <br>
           <h1>FAQ</h1>
           <hr>
+          <h4>Why should I use ySyPyA instead of Signal or WhatsApp?</h4>
+          <p>
+            Both of these apps offer robust end-to-end encryption and
+            are reasonable choices for keeping your conversations private.
+            They are also more user-friendly, to be honest.
+          </p>
+          <p>
+            However, there is a notable difference. Signal and WhatsApp are installed applications
+            on your device,making them easily accessible to anyone with control of your phone.
+            These apps may store recorded messages and your contact list.
+          </p>
+          <p>
+            On the other hand, ySyPyA, as an online website,
+            strives to minimize its impact on your data and digital footprint.
+            No plaintext messages are stored anywhere when you're not logged in.
+          </p>
+          <p>
+            Moreover, you always have the option to delete your account using your
+            kill switch password if the need arises.
+          </p>
           <h4>Why do you insist that my security is my responsibility?</h4>
           <p>
             RSA encryption is <i>as far as we know</i> unbreakable, and we do not retain
@@ -231,21 +255,38 @@ function installApp() {
             On Firefox go to "Settings > Privacy & security > Permissions:Notifications",
             click on settings, find beta.ysypya.com and change the setting to what you want.
           </p>
+          <h4>The notifications don't work?</h4>
+          <p>
+            The notification system we employ here is known as Web Push, but its functionality
+            is heavily reliant on the specific browser and operating system you use.
+          </p>
+          <p>
+            It operates as a protocol designed for web browsers, and as a result, you should expect
+            to receive notifications primarily when the browser in which you permitted notifications
+            is active and running (no need to be connected though).
+          </p>
+          <p>
+            However, the effectiveness of this system can still vary based on your particular
+            configuration, ranging from Windows/Edge, which offers native-like notifications,
+            to iOS, which appears to restrict or forbid notifications to some extent.
+          </p>
           <h4>What kind of data do you keep?</h4>
           <p>
-            Someone with full access to our database can only know your @,
-            the last day you read a message, your public keys, the number of messages in your Inbox,
-            the number of "mail" messages you ever received and if you're online.
-            We keep no other information.
+            Someone with complete access to our database would have access to limited information,
+            including your '@' (username), the most recent day you read a message, your public keys,
+            the count of messages in your Inbox, the total number of "mail" messages you've
+            received, the groups you are a part of, their participants, and your online status.
+            We do not retain any other personal information.<br>
+            Please note that these informations may potentially be associated with an IP address.
           </p>
           <h4>What next?</h4>
           <p>
             <ul>
               <li>
-                Peer to peer chat
+                Server side kill switch
               </li>
               <li>
-                Group chat
+                Peer to peer chat
               </li>
             </ul>
           </p>

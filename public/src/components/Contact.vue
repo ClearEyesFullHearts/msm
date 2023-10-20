@@ -41,13 +41,13 @@ function goTalk(at) {
         @click="goTalk(contact.at)"
       />
     </div>
-    <div class="col-8 col-lg-4 d-flex align-items-center">
+    <div class="col-10 col-lg-4 d-flex align-items-center">
       <div
         v-if="contact.alert"
         class="alert alert-danger"
         role="alert"
       >
-        <pre>{{ contact.alert }}</pre>
+        <pre class="text-wrap">{{ contact.alert }}</pre>
       </div>
       <span v-if="!contact.alert">
         <i
@@ -101,7 +101,7 @@ function goTalk(at) {
         />
       </span>
     </div>
-    <div class="col-4 col-lg-4 d-flex align-items-center justify-content-end">
+    <div class="col-2 col-lg-4 d-flex align-items-center justify-content-end">
       <i
         class="bi bi-info-circle-fill"
         style="font-size: 1.2rem; color: #0d6efd; cursor: pointer;"

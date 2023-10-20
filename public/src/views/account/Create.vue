@@ -12,7 +12,7 @@ const authStore = useAuthStore();
 const schema = Yup.object().shape({
   username: Yup.string()
     .required('User @ is required')
-    .min(3, 'Your @ should be at least 3 characters long')
+    .min(4, 'Your @ should be at least 4 characters long')
     .max(35, 'Your @ should not be longer than 35 characters'),
   passphrase: Yup.string()
     .min(8, 'Passphrase must be at least 8 characters')
