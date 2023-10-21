@@ -10,7 +10,6 @@
   "license": "MIT",
   "dependencies": {
     "@shared/dynamolayer": "*",
-    "@shared/encryption": "*",
     "@shared/secrets": "*",
     "@shared/tracing": "*",
     "@aws-sdk/client-scheduler": "^3.420.0",

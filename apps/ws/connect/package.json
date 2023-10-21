@@ -13,8 +13,8 @@
     "@shared/auth": "*",
     "@shared/secrets": "*",
     "@shared/error": "*",
-    "@aws-sdk/client-apigatewaymanagementapi": "^3.405.0",
     "@shared/tracing": "*",
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.405.0",
     "config": "3.3.9",
     "debug": "4.3.4"
   },

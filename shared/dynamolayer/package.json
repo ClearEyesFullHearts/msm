@@ -10,7 +10,6 @@
   "license": "MIT",
   "dependencies": {
     "@shared/tracing": "*",
-    "@shared/encryption": "*",
     "debug": "4.3.4",
     "dynamoose": "3.2.0",
     "uuid": "^8.3.2"

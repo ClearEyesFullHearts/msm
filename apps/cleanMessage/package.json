@@ -10,7 +10,6 @@
   "license": "MIT",
   "dependencies": {
     "@shared/dynamolayer": "*",
-    "@shared/encryption": "*",
     "config": "3.3.9",
     "debug": "4.3.4"
   },

@@ -10,8 +10,8 @@
   "license": "MIT",
   "dependencies": {
     "@shared/dynamolayer": "*",
-    "@aws-sdk/client-apigatewaymanagementapi": "^3.405.0",
     "@shared/tracing": "*",
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.405.0",
     "config": "3.3.9",
     "ajv": "8.12.0",
     "ajv-formats": "2.1.1",

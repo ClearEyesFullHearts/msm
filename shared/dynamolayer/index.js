@@ -1,7 +1,6 @@
 const dynamoose = require('dynamoose');
 const AWSXRay = require('@shared/tracing');
 const debug = require('debug')('dynamolayer:data');
-const Encryption = require('@shared/encryption');
 const UserData = require('./model/user');
 const MessageData = require('./model/message');
 const UnicityData = require('./model/unicity');
@@ -81,8 +80,10 @@ class Data {
     username, key, signature, id,
   }, frozenTime, freeze = true) {
     if (!freeze) {
-      const keyHash = Encryption.hash(key).toString('base64');
-      const sigHash = Encryption.hash(signature).toString('base64');
+      // const keyHash = Encryption.hash(key).toString('base64');
+      // const sigHash = Encryption.hash(signature).toString('base64');
+      const keyHash = UserData.base64Hash(key);
+      const sigHash = UserData.base64Hash(signature);
       await dynamoose.transaction([
         this.users.Entity.transaction.delete({ pk: `U#${username}`, sk: username }),
         this.unicityData.KeyEntity.transaction.delete({ sk: keyHash, pk: keyHash }),

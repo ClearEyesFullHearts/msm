@@ -11,7 +11,6 @@
   "dependencies": {
     "@aws-sdk/client-apigatewaymanagementapi": "^3.405.0",
     "@shared/dynamolayer": "*",
-    "@shared/encryption": "*",
     "@shared/secrets": "*",
     "@shared/tracing": "*",
     "config": "3.3.9",

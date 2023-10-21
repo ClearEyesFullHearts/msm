@@ -1,6 +1,6 @@
+const crypto = require('crypto');
 const dynamoose = require('dynamoose');
 const { v4: uuidv4 } = require('uuid');
-const Encryption = require('@shared/encryption');
 const challengeSchema = require('./schemas/challenge');
 const vaultItemSchema = require('./schemas/vaultItem');
 
@@ -104,6 +104,13 @@ class UserData {
     return dayMs + (addDays * daysInMs);
   }
 
+  static base64Hash(txt) {
+    const hash = crypto.createHash('sha256');
+    hash.update(txt);
+    const digest = hash.digest();
+    return digest.toString('base64');
+  }
+
   init(options, {
     unicity,
     search,
@@ -120,8 +127,10 @@ class UserData {
     hash,
   }, isRetry = false) {
     const id = uuidv4();
-    const keyHash = Encryption.hash(key).toString('base64');
-    const sigHash = Encryption.hash(signature).toString('base64');
+    // const keyHash = Encryption.hash(key).toString('base64');
+    // const sigHash = Encryption.hash(signature).toString('base64');
+    const keyHash = UserData.base64Hash(key);
+    const sigHash = UserData.base64Hash(signature);
 
     const newUser = {
       pk: `U#${username}`,
