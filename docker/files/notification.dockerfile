@@ -5,7 +5,7 @@ RUN apk add --no-cache python3 make g++
 
 COPY ./package*.json ./
 COPY ./shared/tracing/package*.json ./shared/tracing/
-COPY ./apps/notification/package*.json ./apps/notification/
+COPY ./apps/sns/notification/package*.json ./apps/sns/notification/
 COPY ./shared/dynamolayer/package*.json ./shared/dynamolayer/
 COPY ./shared/secrets/package*.json ./shared/secrets/
 RUN npm install
@@ -18,7 +18,7 @@ COPY --from=build-stage node_modules ${LAMBDA_TASK_ROOT}/node_modules
 COPY ./shared/tracing/ ${LAMBDA_TASK_ROOT}/shared/tracing/
 COPY ./shared/secrets/ ${LAMBDA_TASK_ROOT}/shared/secrets/
 COPY ./shared/dynamolayer/ ${LAMBDA_TASK_ROOT}/shared/dynamolayer/
-COPY ./apps/notification/config ${LAMBDA_TASK_ROOT}/config
-COPY ./apps/notification/index.js ${LAMBDA_TASK_ROOT}/index.js
+COPY ./apps/sns/notification/config ${LAMBDA_TASK_ROOT}/config
+COPY ./apps/sns/notification/index.js ${LAMBDA_TASK_ROOT}/index.js
 
 CMD [ "index.handler" ]

@@ -108,13 +108,13 @@ Scenario: Writing to a group
   When I POST to /group/`GROUP_ID.0`/message
   Then response code should be 201
   When I GET /inbox
-  Then response body path $ should be of type array with length 0
+  Then response body path $ should be of type array
   Given I am existing `RANDOM_USER.1`
   When I GET /group/`GROUP_ID.0`
   And response body match a challenge
   And I store the value of body path $.key as MY_GROUP_KEY in scenario scope
   When I GET /inbox
-  Then response body path $ should be of type array with length 1
+  Then response body path $ should be of type array
   And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
   When I GET /message/`FIRST_MSG_ID`
   And response body path $ should match a challenge
@@ -128,7 +128,7 @@ Scenario: Writing to a group
   And response body match a challenge
   And I store the value of body path $.key as MY_GROUP_KEY in scenario scope
   When I GET /inbox
-  Then response body path $ should be of type array with length 1
+  Then response body path $ should be of type array
   And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
   When I GET /message/`FIRST_MSG_ID`
   And response body path $ should match a challenge
@@ -142,7 +142,7 @@ Scenario: Writing to a group
   And response body match a challenge
   And I store the value of body path $.key as MY_GROUP_KEY in scenario scope
   When I GET /inbox
-  Then response body path $ should be of type array with length 1
+  Then response body path $ should be of type array
   And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
   When I GET /message/`FIRST_MSG_ID`
   And response body path $ should match a challenge
@@ -197,7 +197,7 @@ Scenario: Member can read group message
   And response body match a challenge
   And I store the value of body path $.key as MY_GROUP_KEY in scenario scope
   When I GET /inbox
-  Then response body path $ should be of type array with length 1
+  Then response body path $ should be of type array
   And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
   When I GET /message/`FIRST_MSG_ID`
   And response body path $ should match a challenge

@@ -5,6 +5,7 @@
     "apps/*",
     "apps/ws/*",
     "apps/clean/*",
+    "apps/sns/*",
     "shared/*"
   ],
   "author": "MFT",
