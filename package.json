@@ -4,6 +4,7 @@
   "workspaces": [
     "apps/*",
     "apps/ws/*",
+    "apps/clean/*",
     "shared/*"
   ],
   "author": "MFT",

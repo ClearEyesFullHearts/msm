@@ -23,7 +23,7 @@ Parameters:
 
   DailyCleanupImageName:
     Type: String
-    Default: mft-msm-cleanup.latest
+    Default: mft-msm-clean-daily.latest
     Description: Tag of the image to deploy.
 
   AccountCleanupImageName:

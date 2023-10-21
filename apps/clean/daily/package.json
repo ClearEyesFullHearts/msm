@@ -1,5 +1,5 @@
 {
-  "name": "@msm/cleanaccount",
+  "name": "@msm/clean-daily",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "@shared/dynamolayer": "*",
+    "@shared/encryption": "*",
     "config": "3.3.9",
     "debug": "4.3.4"
   },

@@ -26,9 +26,9 @@ docker build -f docker/files/main-api-lambda.dockerfile -t mft-msm-main.${STACK_
 docker image tag mft-msm-main.${STACK_STAGE}.${IMAGE_TAG} ${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/cantlose:mft-msm-main.${STACK_STAGE}.${IMAGE_TAG}
 docker push ${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/cantlose:mft-msm-main.${STACK_STAGE}.${IMAGE_TAG}
 
-docker build -f docker/files/cleanup.dockerfile -t mft-msm-cleanup.${STACK_STAGE}.${IMAGE_TAG} .
-docker image tag mft-msm-cleanup.${STACK_STAGE}.${IMAGE_TAG} ${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/cantlose:mft-msm-cleanup.${STACK_STAGE}.${IMAGE_TAG}
-docker push ${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/cantlose:mft-msm-cleanup.${STACK_STAGE}.${IMAGE_TAG}
+docker build -f docker/files/clean-daily.dockerfile -t mft-msm-clean-daily.${STACK_STAGE}.${IMAGE_TAG} .
+docker image tag mft-msm-clean-daily.${STACK_STAGE}.${IMAGE_TAG} ${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/cantlose:mft-msm-clean-daily.${STACK_STAGE}.${IMAGE_TAG}
+docker push ${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/cantlose:mft-msm-clean-daily.${STACK_STAGE}.${IMAGE_TAG}
 
 docker build -f docker/files/clean-account.dockerfile -t mft-msm-clean-account.${STACK_STAGE}.${IMAGE_TAG} .
 docker image tag mft-msm-clean-account.${STACK_STAGE}.${IMAGE_TAG} ${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/cantlose:mft-msm-clean-account.${STACK_STAGE}.${IMAGE_TAG}

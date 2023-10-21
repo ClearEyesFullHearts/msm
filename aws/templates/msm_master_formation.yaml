@@ -63,7 +63,7 @@ Resources:
       Parameters:
         MSMStageName: !Ref MSMStageName
         MSMTableName: !Ref MSMTableName
-        DailyCleanupImageName: !Sub 'mft-msm-cleanup.${MSMStageName}.${MSMImageTag}'
+        DailyCleanupImageName: !Sub 'mft-msm-clean-daily.${MSMStageName}.${MSMImageTag}'
         AccountCleanupImageName: !Sub 'mft-msm-clean-account.${MSMStageName}.${MSMImageTag}'
         MessageCleanupImageName: !Sub 'mft-msm-clean-message.${MSMStageName}.${MSMImageTag}'
         SchedulerGroupName: !Sub '${MSMStageName}-MSM-Cleanup-Group'

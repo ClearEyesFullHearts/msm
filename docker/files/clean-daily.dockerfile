@@ -4,7 +4,7 @@ FROM node:18-alpine as build-stage
 RUN apk add --no-cache python3 make g++
 
 COPY ./package*.json ./
-COPY ./apps/cleanup/package*.json ./apps/cleanup/
+COPY ./apps/clean/daily/package*.json ./apps/clean/daily/
 COPY ./shared/tracing/package*.json ./shared/tracing/
 COPY ./shared/dynamolayer/package*.json ./shared/dynamolayer/
 COPY ./shared/encryption/package*.json ./shared/encryption/
@@ -18,7 +18,7 @@ COPY --from=build-stage node_modules ${LAMBDA_TASK_ROOT}/node_modules
 COPY ./shared/tracing/ ${LAMBDA_TASK_ROOT}/shared/tracing/
 COPY ./shared/encryption/ ${LAMBDA_TASK_ROOT}/shared/encryption/
 COPY ./shared/dynamolayer/ ${LAMBDA_TASK_ROOT}/shared/dynamolayer/
-COPY ./apps/cleanup/config ${LAMBDA_TASK_ROOT}/config
-COPY ./apps/cleanup/index.js ${LAMBDA_TASK_ROOT}/index.js
+COPY ./apps/clean/daily/config ${LAMBDA_TASK_ROOT}/config
+COPY ./apps/clean/daily/index.js ${LAMBDA_TASK_ROOT}/index.js
 
 CMD [ "index.handler" ]

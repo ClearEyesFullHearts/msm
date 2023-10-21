@@ -4,7 +4,7 @@ FROM node:18-alpine as build-stage
 RUN apk add --no-cache python3 make g++
 
 COPY ./package*.json ./
-COPY ./apps/cleanAccount/package*.json ./apps/cleanAccount/
+COPY ./apps/clean/account/package*.json ./apps/clean/account/
 COPY ./shared/tracing/package*.json ./shared/tracing/
 COPY ./shared/dynamolayer/package*.json ./shared/dynamolayer/
 RUN npm install
@@ -16,7 +16,7 @@ COPY --from=build-stage node_modules ${LAMBDA_TASK_ROOT}/node_modules
 
 COPY ./shared/tracing/ ${LAMBDA_TASK_ROOT}/shared/tracing/
 COPY ./shared/dynamolayer/ ${LAMBDA_TASK_ROOT}/shared/dynamolayer/
-COPY ./apps/cleanAccount/config ${LAMBDA_TASK_ROOT}/config
-COPY ./apps/cleanAccount/index.js ${LAMBDA_TASK_ROOT}/index.js
+COPY ./apps/clean/account/config ${LAMBDA_TASK_ROOT}/config
+COPY ./apps/clean/account/index.js ${LAMBDA_TASK_ROOT}/index.js
 
 CMD [ "index.handler" ]
