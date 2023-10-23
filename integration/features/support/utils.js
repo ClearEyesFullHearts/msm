@@ -73,6 +73,10 @@ class Util {
         encrypt: formatSK(privateKey),
         signature: formatSK(sigSK),
       },
+      random: {
+        password: crypto.randomBytes(32).toString('base64'),
+        killSwitch: crypto.randomBytes(32).toString('base64'),
+      },
     };
   }
 
@@ -151,9 +155,7 @@ class Util {
     const pass = crypto.randomBytes(PASS_SIZE);
     const iv = crypto.randomBytes(IV_SIZE);
 
-    const cipher = crypto.createCipheriv(
-      ALGORITHM, pass, iv,
-    );
+    const cipher = crypto.createCipheriv(ALGORITHM, pass, iv);
     const encrypted = cipher.update(txt);
     const cypheredText = Buffer.concat([encrypted, cipher.final(), cipher.getAuthTag()]);
 
@@ -188,9 +190,7 @@ class Util {
 
     const iv = crypto.randomBytes(IV_SIZE);
 
-    const cipher = crypto.createCipheriv(
-      ALGORITHM, pass, iv,
-    );
+    const cipher = crypto.createCipheriv(ALGORITHM, pass, iv);
     const encrypted = cipher.update(txt);
     const cypheredText = Buffer.concat([encrypted, cipher.final(), cipher.getAuthTag()]);
 

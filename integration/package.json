@@ -6,7 +6,7 @@
     "scripts": {
         "single": "./node_modules/.bin/cucumber-js features/single.feature",
         "test": "./node_modules/.bin/cucumber-js",
-        "local": "RESET_FIXTURE=1 NODE_ENV=dev ./node_modules/.bin/cucumber-js features/group.feature",
+        "local": "RESET_FIXTURE=1 NODE_ENV=dev ./node_modules/.bin/cucumber-js features/single.feature",
         "win-test": ".\\node_modules\\.bin\\cucumber-js"
     },
     "author": "MFT",

@@ -150,6 +150,13 @@ paths:
       operationId: login
       x-eov-operation-handler: api
       parameters:
+        - in: header
+          name: X-msm-Pass
+          required: true
+          description: Password hash
+          schema:
+            type: string
+            format: byte
         - name: at
           in: path
           description: Start of users name
@@ -784,6 +791,8 @@ components:
         - key
         - signature
         - hash
+        - pass
+        - kill
       properties:
         at:
           type: string
@@ -798,6 +807,16 @@ components:
           minLength: 268
           maxLength: 268
         hash:
+          type: string
+          format: byte
+          minLength: 172
+          maxLength: 172
+        pass:
+          type: string
+          format: byte
+          minLength: 172
+          maxLength: 172
+        kill:
           type: string
           format: byte
           minLength: 172
@@ -828,10 +847,6 @@ components:
         - type: object
           properties:
             vault:
-              $ref: "#/components/schemas/VaultItem"
-        - type: object
-          properties:
-            switch:
               $ref: "#/components/schemas/VaultItem"
     User:
       type: object
@@ -914,12 +929,21 @@ components:
       type: object
       required:
         - vault
-        - switch
+        - pass
+        - kill
       properties:
         vault:
           $ref: "#/components/schemas/VaultItem"
-        switch:
-          $ref: "#/components/schemas/VaultItem"
+        pass:
+          type: string
+          format: byte
+          minLength: 172
+          maxLength: 172
+        kill:
+          type: string
+          format: byte
+          minLength: 172
+          maxLength: 172
     VaultItem:
       type: object
       required:

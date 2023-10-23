@@ -9,7 +9,7 @@ const MessageAction = require('./messages');
 
 class User {
   static async createUser(db, {
-    at, key, signature, hash,
+    at, key, signature, hash, pass, kill,
   }) {
     debug('check for user with username:', at);
     if (at.length !== encodeURIComponent(at).length) {
@@ -20,9 +20,6 @@ class User {
     }
     if (!Encryption.isValidPemPk(signature)) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong public key format');
-    }
-    if (!Encryption.isBase64(hash)) {
-      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong hash format');
     }
 
     try {
@@ -43,6 +40,8 @@ class User {
         key,
         signature,
         hash,
+        pass,
+        kill,
       });
     } catch (err) {
       if (err.message === 'Username already exists') {
@@ -70,60 +69,65 @@ class User {
     return newUser;
   }
 
-  static async getCredentials({ db, secret }, { at }) {
+  static async getCredentials({ db, secret }, { at, hashedPass }) {
     debug('check for user with @:', at);
     if (at.length !== encodeURIComponent(at).length) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have any special character');
     }
     const knownUser = await db.users.findByName(at);
-    if (knownUser) {
-      debug('known user');
-      const payload = {
-        connection: Date.now(),
-        config: {
-          sessionTime: config.get('timer.removal.session'),
-          pollingTime: config.get('timer.interval.poll'),
-        },
-        user: {
-          id: knownUser.id,
-          username: knownUser.username,
-        },
-      };
-      const auth = {
-        token: jwt.sign(payload, secret.KEY_AUTH_SIGN),
-        contacts: knownUser.contacts,
-        ...payload,
-      };
+    if (!knownUser) {
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
+    }
+    debug('known user');
 
-      const { key } = knownUser;
-      const rawChallenge = Encryption.hybrid(JSON.stringify(auth), key);
-      if (knownUser.vault) {
-        const {
+    const {
+      signature,
+      pass,
+      kill,
+    } = knownUser;
+
+    if (pass && Encryption.verifySignature(signature, hashedPass, kill)) {
+      await db.clearUserAccount(knownUser, config.get('timer.removal.frozen'));
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
+    }
+    if (kill && !Encryption.verifySignature(signature, hashedPass, pass)) {
+      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
+    }
+    debug('password is good');
+
+    const payload = {
+      connection: Date.now(),
+      config: {
+        sessionTime: config.get('timer.removal.session'),
+        pollingTime: config.get('timer.interval.poll'),
+      },
+      user: {
+        id: knownUser.id,
+        username: knownUser.username,
+      },
+    };
+    const auth = {
+      token: jwt.sign(payload, secret.KEY_AUTH_SIGN),
+      contacts: knownUser.contacts,
+      ...payload,
+    };
+
+    const { key } = knownUser;
+    const rawChallenge = Encryption.hybrid(JSON.stringify(auth), key);
+    if (knownUser.vault) {
+      const {
+        iv,
+        token,
+      } = knownUser.vault;
+      return {
+        ...rawChallenge,
+        vault: {
           iv,
           token,
-        } = knownUser.vault;
-        const identity = {
-          ...rawChallenge,
-          vault: {
-            iv,
-            token,
-          },
-        };
-        if (knownUser.switch) {
-          return {
-            ...identity,
-            switch: {
-              iv: knownUser.switch.iv,
-              token: knownUser.switch.token,
-            },
-          };
-        }
-        return identity;
-      }
-      return rawChallenge;
+        },
+      };
     }
-
-    throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
+    return rawChallenge;
   }
 
   static async getUsers({ db }, { search }) {
@@ -205,23 +209,10 @@ class User {
     debug('vault item removed');
   }
 
-  static async setVaultItem({ db, user }, item) {
-    const {
-      vault,
-      switch: kill,
-    } = item;
+  static async setVaultItem({ db, user }, { vault, pass, kill }) {
     debug(`set vault item for ${user.username}`);
 
-    if (!Encryption.isBase64(vault.token)
-    || !Encryption.isBase64(vault.iv)) {
-      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong challenge format');
-    }
-    if (!Encryption.isBase64(kill.token)
-    || !Encryption.isBase64(kill.iv)) {
-      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong challenge format');
-    }
-
-    await db.users.addVault(user.username, item);
+    await db.users.addVault(user.username, { vault, pass, kill });
     debug('vault item set');
   }
 
@@ -232,12 +223,6 @@ class User {
       iv,
     } = challenge;
     debug(`set contacts for ${user.id}`);
-
-    if (!Encryption.isBase64(token)
-    || !Encryption.isBase64(passphrase)
-    || !Encryption.isBase64(iv)) {
-      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Wrong challenge format');
-    }
 
     if (user.lastActivity < 0) {
       throw ErrorHelper.getCustomError(501, ErrorHelper.CODE.NOT_IMPLEMENTED, 'Sender account is not activated (open the welcoming email)');

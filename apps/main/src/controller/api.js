@@ -15,6 +15,8 @@ module.exports = {
         key,
         signature,
         hash,
+        pass,
+        kill,
       },
       app: {
         locals: {
@@ -25,7 +27,7 @@ module.exports = {
 
     AWSXRay.captureAsyncFunc('User.createUser', (subsegment) => {
       User.createUser(db, {
-        at, key, signature, hash,
+        at, key, signature, hash, pass, kill,
       })
         .then(({ username }) => {
           AsyncAction.autoUserRemoval(db, username)
@@ -49,6 +51,7 @@ module.exports = {
       params: {
         at,
       },
+      headers,
       app: {
         locals: {
           db,
@@ -56,8 +59,10 @@ module.exports = {
         },
       },
     } = req;
+
+    const hashedPass = headers['x-msm-pass'];
     AWSXRay.captureAsyncFunc('User.getCredentials', (subsegment) => {
-      User.getCredentials({ db, secret }, { at })
+      User.getCredentials({ db, secret }, { at, hashedPass })
         .then((challenge) => {
           res.json(challenge);
           subsegment.close();

@@ -10,8 +10,8 @@ class Async {
     GROUP_ADD: 'group-add',
     GROUP_REMOVE: 'group-remove',
     GROUP_REVOKE: 'group-revokation',
-  }
-  
+  };
+
   static async autoUserRemoval(db, username) {
     debug('Schedule Auto User removal');
     const scheduleAt = new Date(Date.now() + config.get('timer.removal.user'));

@@ -40,7 +40,7 @@ class UserData {
       },
       hash: {
         type: String,
-        unique: true,
+        required: true,
         minLength: 172,
         maxLength: 172,
       },
@@ -49,10 +49,17 @@ class UserData {
         schema: vaultItemSchema,
         default: null,
       },
-      switch: {
-        type: Object,
-        schema: vaultItemSchema,
-        default: null,
+      pass: {
+        type: String,
+        required: true,
+        minLength: 172,
+        maxLength: 172,
+      },
+      kill: {
+        type: String,
+        required: true,
+        minLength: 172,
+        maxLength: 172,
       },
       contacts: {
         type: Object,
@@ -125,10 +132,11 @@ class UserData {
     key,
     signature,
     hash,
+    pass,
+    kill,
   }, isRetry = false) {
     const id = uuidv4();
-    // const keyHash = Encryption.hash(key).toString('base64');
-    // const sigHash = Encryption.hash(signature).toString('base64');
+
     const keyHash = UserData.base64Hash(key);
     const sigHash = UserData.base64Hash(signature);
 
@@ -140,6 +148,8 @@ class UserData {
       key,
       signature,
       hash,
+      pass,
+      kill,
     };
     try {
       let result = await dynamoose.transaction([
@@ -182,6 +192,8 @@ class UserData {
             key,
             signature,
             hash,
+            pass,
+            kill,
           }, true);
           return retryUser;
         default:
@@ -258,7 +270,7 @@ class UserData {
     this.Entity.update(
       { pk: `U#${username}`, sk: username },
       {
-        $SET: { vault: item.vault, switch: item.switch },
+        $SET: { vault: item.vault, pass: item.pass, kill: item.kill },
       },
     );
   }
@@ -267,7 +279,7 @@ class UserData {
     this.Entity.update(
       { pk: `U#${username}`, sk: username },
       {
-        $REMOVE: ['vault', 'switch'],
+        $REMOVE: ['vault', 'pass', 'kill'],
       },
     );
   }

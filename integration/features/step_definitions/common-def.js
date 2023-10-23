@@ -12,11 +12,20 @@ Given(/^I load up (.*) public keys$/, async function (folder) {
         signature: formattedSPK,
         signedHash,
       },
+      private: {
+        signature: ssk,
+      },
+      random: {
+        password,
+        killSwitch,
+      },
     } = await Util.generateKeyPair();
 
     this.apickli.storeValueInScenarioScope('EPK', JSON.stringify(formattedPK));
     this.apickli.storeValueInScenarioScope('SPK', JSON.stringify(formattedSPK));
     this.apickli.storeValueInScenarioScope('SHA', signedHash);
+    this.apickli.storeValueInScenarioScope('PASS', Util.sign(ssk, password));
+    this.apickli.storeValueInScenarioScope('KILL', Util.sign(ssk, killSwitch));
   } else {
     const file = fs.readFileSync(`./data/users/${folder}/public.pem`).toString();
     const [publicK, hash] = file.split('\n----- HASH -----\n');
@@ -40,7 +49,11 @@ Given(/^I set var (.*) to a (.*) characters long (.*)string$/, function (varName
   const isBase64 = format === 'base64 ';
   let str = Util.getRandomString(length, isBase64);
   if (format === 'hex ') {
-    str = Buffer.from(str).toString('hex');
+    str = Buffer.from(str).toString('utf16le').substring(0, length);
+  }
+  if (format === 'not base64 ') {
+    str = Util.getRandomString(2 * length, false);
+    str = Buffer.from(str).toString('utf16le');
   }
   this.apickli.storeValueInScenarioScope(varName, str);
 });
@@ -89,6 +102,18 @@ Given(/^I hash and sign (.*) and (.*) into (.*) with (.*)$/, async function (pkV
   const pkHash = hash.digest();
 
   const signedHash = Util.sign(ssk, pkHash);
+  this.apickli.storeValueInScenarioScope(varName, signedHash);
+});
+
+Given(/^I sign hashed (.*) into (.*) with (.*)$/, async function (valueToHash, varName, sskVarName) {
+  const val = this.apickli.replaceVariables(valueToHash);
+  const ssk = this.apickli.scenarioVariables[sskVarName];
+
+  const hash = crypto.createHash('sha256');
+  hash.update(val);
+  const myHash = hash.digest();
+
+  const signedHash = Util.sign(ssk, myHash);
   this.apickli.storeValueInScenarioScope(varName, signedHash);
 });
 
