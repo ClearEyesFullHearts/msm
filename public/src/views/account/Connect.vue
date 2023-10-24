@@ -43,7 +43,7 @@ async function onSubmit(values) {
   // TimeLogger.start();
   isSubmitting.value = true;
   try {
-    await authStore.getIdentity(values.username);
+    await authStore.getIdentity(values.username, values.passphrase);
     // TimeLogger.logTime('1 getIdentity');
   } catch (error) {
     alertStore.error(error);
@@ -59,17 +59,7 @@ async function onSubmit(values) {
 
     router.push('/conversations');
   } catch (err) {
-    if (err.message === 'WRONG_PASSWORD') {
-      try {
-        const keyFile = await authStore.openKillSwitch(values.passphrase);
-        const [key, signKey] = keyFile.split(CryptoHelper.SEPARATOR);
-        await authStore.kill(key, signKey);
-      } catch (exc) {
-        onKeyFileNeeded();
-      }
-    } else {
-      onKeyFileNeeded();
-    }
+    onKeyFileNeeded();
   }
 }
 

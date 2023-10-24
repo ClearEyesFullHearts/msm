@@ -4,39 +4,9 @@ import Config from '@/lib/config';
 
 const mycrypto = new CryptoHelper();
 
-export const fetchWrapper = {
-  get: request('GET'),
-  post: request('POST'),
-  put: request('PUT'),
-  delete: request('DELETE'),
-};
-
 const lastRequest = {
   url: null, method: null, body: null,
 };
-
-function request(method, isRetry = false) {
-  return async (url, body) => {
-    lastRequest.method = method;
-    lastRequest.url = url;
-    lastRequest.body = body;
-    const headers = await authHeader(url, method, body);
-    const requestOptions = {
-      method,
-      headers,
-    };
-    if (body) {
-      requestOptions.headers['Content-Type'] = 'application/json';
-      requestOptions.body = JSON.stringify(body);
-    }
-    return fetch(url, requestOptions).then((resp) => {
-      if (isRetry) {
-        return handleRetryResponse(resp);
-      }
-      return handleResponse(resp);
-    });
-  };
-}
 
 // helper functions
 
@@ -63,6 +33,32 @@ async function authHeader(url, method, body) {
     return headers;
   }
   return {};
+}
+
+function request(method, isRetry = false) {
+  return async (url, body, forceHeaders = {}) => {
+    lastRequest.method = method;
+    lastRequest.url = url;
+    lastRequest.body = body;
+    const authHeaders = await authHeader(url, method, body);
+    const requestOptions = {
+      method,
+      headers: {
+        ...authHeaders,
+        ...forceHeaders,
+      },
+    };
+    if (body) {
+      requestOptions.headers['Content-Type'] = 'application/json';
+      requestOptions.body = JSON.stringify(body);
+    }
+    return fetch(url, requestOptions).then((resp) => {
+      if (isRetry) {
+        return handleRetryResponse(resp);
+      }
+      return handleResponse(resp);
+    });
+  };
 }
 
 async function handleResponse(response) {
@@ -115,3 +111,10 @@ async function handleRetryResponse(response) {
 
   return data;
 }
+
+export const fetchWrapper = {
+  get: request('GET'),
+  post: request('POST'),
+  put: request('PUT'),
+  delete: request('DELETE'),
+};

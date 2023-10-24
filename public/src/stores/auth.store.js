@@ -4,7 +4,7 @@ import { defineStore, getActivePinia } from 'pinia';
 import { fetchWrapper } from '@/helpers';
 import { router } from '@/router';
 import {
-  useAlertStore, useUsersStore, useContactsStore, useConnectionStore, useWorkerStore, useGroupStore,
+  useAlertStore, useContactsStore, useConnectionStore, useWorkerStore, useGroupStore,
 } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
@@ -17,7 +17,6 @@ const mycrypto = new CryptoHelper();
 const myvalidator = new ChainHelper();
 let interval;
 let myVault;
-let myKillSwitch;
 let myChallenge;
 let verificationTimeoutID;
 
@@ -28,6 +27,7 @@ export const useAuthStore = defineStore({
     pem: null,
     signing: null,
     publicHash: null,
+    privateHash: null,
     hasVault: false,
     returnUrl: null,
     countDownMsg: null,
@@ -36,8 +36,12 @@ export const useAuthStore = defineStore({
     idIsSet: false,
   }),
   actions: {
-    async getIdentity(username) {
-      const { vault, switch: killSwitch, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${username}`);
+    async getIdentity(username, passphrase) {
+      this.privateHash = await mycrypto.hash(passphrase);
+      const passHeader = {
+        'X-msm-Pass': this.privateHash,
+      };
+      const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${username}`, false, passHeader);
       myChallenge = challenge;
       if (vault) {
         this.hasVault = true;
@@ -45,11 +49,6 @@ export const useAuthStore = defineStore({
       } else {
         this.hasVault = false;
         myVault = undefined;
-      }
-      if (killSwitch) {
-        myKillSwitch = killSwitch;
-      } else {
-        myKillSwitch = undefined;
       }
     },
     async openVault(passphrase) {
@@ -60,25 +59,6 @@ export const useAuthStore = defineStore({
         iv,
         token,
       } = myVault;
-      const hashPass = await mycrypto.hash(passphrase);
-      try {
-        const decryptedVault = await mycrypto.symmetricDecrypt(hashPass, iv, token);
-
-        const dec = new TextDecoder();
-        return dec.decode(decryptedVault);
-      } catch (err) {
-        throw new Error('WRONG_PASSWORD');
-      }
-    },
-    async openKillSwitch(passphrase) {
-      if (!myKillSwitch || !myKillSwitch.iv || !myKillSwitch.token) {
-        throw new Error('No vault recorded');
-      }
-
-      const {
-        iv,
-        token,
-      } = myKillSwitch;
       const hashPass = await mycrypto.hash(passphrase);
       try {
         const decryptedVault = await mycrypto.symmetricDecrypt(hashPass, iv, token);
@@ -128,19 +108,7 @@ export const useAuthStore = defineStore({
 
         this.idIsSet = true;
         myVault = undefined;
-        myKillSwitch = undefined;
         myChallenge = undefined;
-      } catch (error) {
-        alertStore.error(error);
-      }
-    },
-    async kill(key, signKey) {
-      const alertStore = useAlertStore();
-      const usersStore = useUsersStore();
-      try {
-        await this.setIdentityUp(key, signKey, myChallenge);
-        await usersStore.destroy(this.user.user.username);
-        this.logout();
       } catch (error) {
         alertStore.error(error);
       }
@@ -159,7 +127,10 @@ export const useAuthStore = defineStore({
       }
       try {
         clearInterval(interval);
-        const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${this.user.user.username}`);
+        const passHeader = {
+          'X-msm-Pass': this.privateHash,
+        };
+        const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${this.user.user.username}`, false, passHeader);
         await this.setIdentityUp(this.pem, this.signing, challenge);
       } catch (err) {
         this.logout();
@@ -200,17 +171,20 @@ export const useAuthStore = defineStore({
       const itemValue = `${this.pem}${CryptoHelper.SEPARATOR}${this.signing}`;
       const { token, iv } = await mycrypto.symmetricEncrypt(itemValue, passphrase);
       const vault = { token, iv };
+      const passHash = await mycrypto.hash(passphrase);
+      const pass = await mycrypto.sign(this.signing, passHash);
 
       let kill;
       if (killSwitch && killSwitch.length && killSwitch.length > 7) {
-        const switchEnc = await mycrypto.symmetricEncrypt(itemValue, killSwitch);
-        kill = { token: switchEnc.token, iv: switchEnc.iv };
+        const killHash = await mycrypto.hash(killSwitch);
+        kill = await mycrypto.sign(this.signing, killHash);
       } else {
-        const switchEnc = await mycrypto.symmetricEncrypt(itemValue);
-        kill = { token: switchEnc.token, iv: switchEnc.iv };
+        const randKill = window.crypto.getRandomValues(new Uint8Array(32));
+        const b64Kill = mycrypto.ArBuffToBase64(randKill);
+        kill = await mycrypto.sign(this.signing, b64Kill);
       }
 
-      await fetchWrapper.put(`${baseUrl}/vault`, { vault, switch: kill });
+      await fetchWrapper.put(`${baseUrl}/vault`, { vault, pass, kill });
 
       this.hasVault = true;
     },

@@ -39,6 +39,7 @@ export const useUsersStore = defineStore({
     async createUser(user) {
       const {
         username,
+        passphrase,
       } = user;
       const { PK, SK } = await mycrypto.generateKeyPair();
       const { PK: signPK, SK: signSK } = await mycrypto.generateSignatureKeyPair();
@@ -46,54 +47,24 @@ export const useUsersStore = defineStore({
       const clearHash = await mycrypto.hash(`${PK}\n${signPK}`);
       const signedHash = await mycrypto.sign(signSK, clearHash, true);
 
+      const passHash = await mycrypto.hash(passphrase);
+      const pass = await mycrypto.sign(signSK, passHash);
+
+      const randKill = window.crypto.getRandomValues(new Uint8Array(32));
+      const b64Kill = mycrypto.ArBuffToBase64(randKill);
+      const kill = await mycrypto.sign(signSK, b64Kill);
+
       const send = {
         at: username,
         key: PK,
         signature: signPK,
         hash: signedHash,
+        pass,
+        kill,
       };
       await fetchWrapper.post(`${baseUrl}/users`, send);
 
       return { ESK: SK, SSK: signSK };
-    },
-    async register(user) {
-      const {
-        username,
-        publicKey,
-        sigPublicKey,
-        sigSk,
-      } = user;
-
-      if (!publicKey || !publicKey.length || !sigPublicKey || !sigPublicKey.length) {
-        const { PK, SK } = await mycrypto.generateKeyPair();
-        const { PK: signPK, SK: signSK } = await mycrypto.generateSignatureKeyPair();
-
-        const clearHash = await mycrypto.hash(`${PK}\n${signPK}`);
-        const signedHash = await mycrypto.sign(signSK, clearHash, true);
-
-        const send = {
-          at: username,
-          key: PK,
-          signature: signPK,
-          hash: signedHash,
-        };
-        await fetchWrapper.post(`${baseUrl}/users`, send);
-        const skFileContent = `${SK}${CryptoHelper.SEPARATOR}${signSK}`;
-        FileHelper.download(`@${user.username}.pem`, skFileContent);
-      } else {
-        const PK = formatPK(publicKey, 788);
-        const signPK = formatPK(sigPublicKey, 268);
-        const clearHash = await mycrypto.hash(`${PK}\n${signPK}`);
-        const signedHash = await mycrypto.sign(sigSk, clearHash, true);
-        const send = {
-          at: username,
-          key: PK,
-          signature: signPK,
-          hash: signedHash,
-        };
-        await fetchWrapper.post(`${baseUrl}/users`, send);
-      }
-      this.newUsername = username;
     },
     async getAll(search) {
       if (search.length < 3) return;
