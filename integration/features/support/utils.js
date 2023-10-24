@@ -265,7 +265,7 @@ class Util {
     return true;
   }
 
-  static getEverythingModel() {
+  static getEverythingModel(tableName = false) {
     const Everything = dynamoose.model('Everything', new dynamoose.Schema({
       pk: {
         type: String,
@@ -288,6 +288,17 @@ class Util {
         type: String,
       },
       vault: {
+        type: Object,
+        schema: {
+          token: {
+            type: String,
+          },
+          iv: {
+            type: String,
+          },
+        },
+      },
+      switch: {
         type: Object,
         schema: {
           token: {
@@ -385,7 +396,7 @@ class Util {
       p256dh: {
         type: String,
       },
-    }), { tableName: TABLE_NAME, create: config.get('dynamo.createTable') });
+    }), { tableName: tableName || TABLE_NAME, create: config.get('dynamo.createTable') });
     const ddb = new dynamoose.aws.ddb.DynamoDB({});
 
     // Set DynamoDB instance to the Dynamoose DDB instance
@@ -395,15 +406,15 @@ class Util {
     return Everything;
   }
 
-  static async backupTable(fileName = 'backupdb') {
-    const Everything = Util.getEverythingModel();
+  static async backupTable(fileName = 'backupdb', tableName = false) {
+    const Everything = Util.getEverythingModel(tableName);
 
     const result = await Everything.scan().exec();
 
     fs.writeFileSync(`./data/msm/${fileName}.json`, JSON.stringify(result));
   }
 
-  static async emptyTable() {
+  static async emptyTable(tableName = false) {
     const Keys = dynamoose.model('Keys', new dynamoose.Schema({
       pk: {
         type: String,
@@ -413,7 +424,7 @@ class Util {
         type: String,
         rangeKey: true,
       },
-    }), { tableName: TABLE_NAME, create: config.get('dynamo.createTable') });
+    }), { tableName: tableName || TABLE_NAME, create: config.get('dynamo.createTable') });
     const ddb = new dynamoose.aws.ddb.DynamoDB({});
 
     // Set DynamoDB instance to the Dynamoose DDB instance
@@ -429,9 +440,9 @@ class Util {
     }
   }
 
-  static async restoreTable(fileName = 'dynamodb') {
+  static async restoreTable(fileName = 'dynamodb', tableName = false) {
     const dynamoTable = JSON.parse(fs.readFileSync(`./data/msm/${fileName}.json`));
-    const Everything = Util.getEverythingModel();
+    const Everything = Util.getEverythingModel(tableName);
 
     const size = 24;
     for (let i = 0; i < dynamoTable.length; i += size) {
@@ -479,7 +490,7 @@ class Util {
     await e.save();
   }
 
-  static async removeGroup(groupId) {
+  static async removeGroup(groupId, tableName = false) {
     const Keys = dynamoose.model('Keys', new dynamoose.Schema({
       pk: {
         type: String,
@@ -489,7 +500,7 @@ class Util {
         type: String,
         rangeKey: true,
       },
-    }), { tableName: TABLE_NAME, create: config.get('dynamo.createTable') });
+    }), { tableName: tableName || TABLE_NAME, create: config.get('dynamo.createTable') });
     const ddb = new dynamoose.aws.ddb.DynamoDB({});
 
     // Set DynamoDB instance to the Dynamoose DDB instance

@@ -203,15 +203,14 @@ class UserData {
   async confirmUser(username) {
     const searchTerms = UserData.createSearchTerms(username);
     const baseSearch = {
-      pk: `S#${username}`,
       size: username.length,
-      at: username,
+      sk: username,
     };
 
     // create all transactions
     const allTransactions = searchTerms.map((term) => this.search.Entity.transaction.create({
       ...baseSearch,
-      sk: term,
+      pk: term,
     }));
 
     allTransactions.push(
@@ -241,7 +240,7 @@ class UserData {
   }
 
   async searchUsername(search) {
-    const users = await this.search.Entity.query('sk').eq(search).limit(15).using('SearchUserIndex')
+    const users = await this.search.Entity.query('pk').eq(search).limit(15).using('SearchUserIndex')
       .exec();
     return users || [];
   }

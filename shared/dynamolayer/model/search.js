@@ -8,23 +8,20 @@ class SearchData {
         type: String,
         required: true,
         hashKey: true,
+        index: {
+          name: 'SearchUserIndex',
+          global: false,
+          project: true,
+          rangeKey: 'size',
+        },
       },
       sk: {
         type: String,
         required: true,
         rangeKey: true,
-        index: {
-          name: 'SearchUserIndex',
-          global: true,
-          rangeKey: 'size',
-        },
       },
       size: {
         type: Number,
-        required: true,
-      },
-      at: {
-        type: String,
         required: true,
       },
     });

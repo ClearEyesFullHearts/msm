@@ -12,7 +12,7 @@ Parameters:
 
   MSMTableName:
     Type: String
-    Default: MyTestTable
+    Default: TestTableMSM
     Description: The name of the table to be created.
 
   MSMSecretName:

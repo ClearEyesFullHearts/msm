@@ -1,7 +1,7 @@
 {
     "dynamo": {
       "local": false,
-      "tableName": "MyTestTable",
+      "tableName": "TestTableMSM",
       "createTable": false
     }
   }

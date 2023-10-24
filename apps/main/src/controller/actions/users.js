@@ -136,8 +136,8 @@ class User {
 
     debug('found', users.length);
     return users.map(({
-      at,
-    }) => (at));
+      sk,
+    }) => (sk));
   }
 
   static async getList({ db }, { list }) {

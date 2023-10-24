@@ -51,6 +51,14 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
+        - IndexName: SearchUserIndex
+          KeySchema:
+            - AttributeName: pk
+              KeyType: HASH
+            - AttributeName: size
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
       GlobalSecondaryIndexes:
         - IndexName: LastActivityIndex
           KeySchema:
@@ -68,14 +76,6 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: KEYS_ONLY
-        - IndexName: SearchUserIndex
-          KeySchema:
-            - AttributeName: sk
-              KeyType: HASH
-            - AttributeName: size
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
         - IndexName: UserValidationIndex
           KeySchema:
             - AttributeName: validation
