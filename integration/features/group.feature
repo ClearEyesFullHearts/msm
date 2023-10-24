@@ -14,6 +14,7 @@ Scenario: Creates a group
 
 Scenario: Inactive user cannot create a group
   Given I am a new invalidated user
+  And I set X-msm-Pass header to `PASS_HASH`
   And I GET /identity/`MY_AT`
   And response body match a challenge
   And I store the value of body path $ as AUTH in scenario scope

@@ -24,6 +24,8 @@ Given(/^I load up (.*) public keys$/, async function (folder) {
     this.apickli.storeValueInScenarioScope('EPK', JSON.stringify(formattedPK));
     this.apickli.storeValueInScenarioScope('SPK', JSON.stringify(formattedSPK));
     this.apickli.storeValueInScenarioScope('SHA', signedHash);
+    this.apickli.storeValueInScenarioScope('PASS_HASH', password);
+    this.apickli.storeValueInScenarioScope('KILL_HASH', killSwitch);
     this.apickli.storeValueInScenarioScope('PASS', Util.sign(ssk, password));
     this.apickli.storeValueInScenarioScope('KILL', Util.sign(ssk, killSwitch));
   } else {
@@ -62,6 +64,8 @@ Given('I generate a false encryption key', async function () {
   const keys = await Util.generateKeyPair();
   const spk = keys.public.signature;
   const ssk = keys.private.signature;
+  const pass = Util.sign(ssk, keys.random.password);
+  const kill = Util.sign(ssk, keys.random.killSwitch);
   const pair = Util.generateFalseKeyPair();
   const epk = pair.public.encrypt;
 
@@ -74,6 +78,10 @@ Given('I generate a false encryption key', async function () {
   this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(epk));
   this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(spk));
   this.apickli.storeValueInScenarioScope('NEW_SHA', signedHash);
+  this.apickli.storeValueInScenarioScope('PASS_HASH', pass);
+  this.apickli.storeValueInScenarioScope('KILL_HASH', kill);
+  this.apickli.storeValueInScenarioScope('PASS', pass);
+  this.apickli.storeValueInScenarioScope('KILL', kill);
   const username = Util.getRandomString(25);
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 });
@@ -83,11 +91,18 @@ Given('I generate a false signature key', async function () {
   // const [epkFile] = publicK.split('\n----- SIGNATURE -----\n');
   const keys = await Util.generateKeyPair();
   const epk = keys.public.encrypt;
+  const ssk = keys.private.signature;
+  const pass = Util.sign(ssk, keys.random.password);
+  const kill = Util.sign(ssk, keys.random.killSwitch);
   const pair = Util.generateFalseKeyPair();
   const spk = pair.public.signature;
   this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(epk));
   this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(spk));
   this.apickli.storeValueInScenarioScope('NEW_SHA', pair.public.signedHash);
+  this.apickli.storeValueInScenarioScope('PASS_HASH', pass);
+  this.apickli.storeValueInScenarioScope('KILL_HASH', kill);
+  this.apickli.storeValueInScenarioScope('PASS', pass);
+  this.apickli.storeValueInScenarioScope('KILL', kill);
   const username = Util.getRandomString(25);
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 });
@@ -133,6 +148,13 @@ Given('I set signature header', function () {
   this.apickli.addRequestHeader('x-msm-sig', sig);
 });
 
+Given(/^I set Pass header with (.*)$/, function (password) {
+  const val = this.apickli.replaceVariables(password);
+
+  const myHash = Util.hashToBase64(val);
+  this.apickli.addRequestHeader('x-msm-pass', myHash);
+});
+
 Given('I set false signature header', function () {
   const falseSig = Util.getRandomString(129, true);
   this.apickli.addRequestHeader('x-msm-sig', falseSig);
@@ -144,11 +166,19 @@ Given(/^I set my vault item (.*) with password (.*) and (.*)$/, function (varNam
   const sskVal = this.apickli.scenarioVariables.SSK || this.apickli.scenarioVariables.NEW_SSK;
   const keys = `${eskVal}\n----- SIGNATURE -----\n${sskVal}`;
   const vault = Util.symmetricEncrypt(keys, passphrase);
-  const kill = Util.symmetricEncrypt(keys, killswitch);
+
+  const passHash = Util.hashToBase64(passphrase);
+  const signedPass = Util.sign(sskVal, passHash);
+  this.apickli.storeValueInScenarioScope('NEW_PASS_HASH', passHash);
+
+  const killHash = Util.hashToBase64(killswitch);
+  const signedKill = Util.sign(sskVal, killHash);
+  this.apickli.storeValueInScenarioScope('NEW_KILL_HASH', killHash);
 
   this.apickli.storeValueInScenarioScope(varName, JSON.stringify({
     vault,
-    switch: kill,
+    pass: signedPass,
+    kill: signedKill,
   }));
 });
 

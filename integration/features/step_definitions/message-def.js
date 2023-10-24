@@ -1,4 +1,5 @@
 const fs = require('fs');
+const crypto = require('crypto');
 const assert = require('assert');
 const { Given, Then } = require('@cucumber/cucumber');
 const Util = require('../support/utils');
@@ -51,6 +52,7 @@ Then('resolved challenge should match a message', function () {
 
 Given(/^(.*) write a message as (.*)$/, async function (from, messageBody) {
   this.apickli.removeRequestHeader('x-msm-sig');
+  this.apickli.removeRequestHeader('x-msm-pass');
   // load keys
   const file = fs.readFileSync(`./data/users/${from}/public.pem`).toString();
   const [publicK, hash] = file.split('\n----- HASH -----\n');
@@ -64,6 +66,8 @@ Given(/^(.*) write a message as (.*)$/, async function (from, messageBody) {
   this.apickli.storeValueInScenarioScope('ESK', eskFile);
   this.apickli.storeValueInScenarioScope('SSK', sskFile);
 
+  const falseHash = crypto.randomBytes(32).toString('base64');
+  this.apickli.addRequestHeader('x-msm-pass', falseHash);
   // get identity challenge
   await this.get(`/identity/${from}`);
 

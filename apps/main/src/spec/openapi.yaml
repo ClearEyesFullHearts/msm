@@ -157,6 +157,8 @@ paths:
           schema:
             type: string
             format: byte
+            minLength: 44
+            maxLength: 44
         - name: at
           in: path
           description: Start of users name

@@ -31,8 +31,11 @@ Given('I generate new shared key', async function () {
 
 Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (admin, group, members, index) {
   this.apickli.removeRequestHeader('x-msm-sig');
+  this.apickli.removeRequestHeader('x-msm-pass');
   const creator = this.apickli.replaceVariables(admin);
 
+  const passHeader = Util.hashToBase64(creator);
+  this.apickli.addRequestHeader('x-msm-pass', passHeader);
   await this.get(`/identity/${creator}`);
 
   const respBody = JSON.parse(this.apickli.httpResponse.body);
@@ -89,8 +92,11 @@ Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (ad
 
   for (let i = 0; i < membersArray.length; i += 1) {
     this.apickli.removeRequestHeader('x-msm-sig');
+    this.apickli.removeRequestHeader('x-msm-pass');
     const member = this.apickli.replaceVariables(membersArray[i]);
 
+    const memberHeader = Util.hashToBase64(member);
+    this.apickli.addRequestHeader('x-msm-pass', memberHeader);
     await this.get(`/identity/${member}`);
 
     const mBody = JSON.parse(this.apickli.httpResponse.body);

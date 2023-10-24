@@ -4,6 +4,7 @@ Feature: Login
 
 Scenario: Get our user authentication data
     Given I am a new invalidated user
+    And I set X-msm-Pass header to `PASS_HASH`
     When I GET /identity/`MY_AT`
     Then response code should be 200
     And response body should not contain vault
@@ -13,7 +14,8 @@ Scenario: Get our user authentication data
     And response body path $.contacts should be null
 
 Scenario: Get our user authentication data using the vault
-    Given I GET /identity/vaultUser
+    Given I set Pass header with iamapoorlonesomecowboy
+    And I GET /identity/vaultUser
     And response code should be 200
     And response body path $.vault.token should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
     And response body path $.vault.iv should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
@@ -25,28 +27,37 @@ Scenario: Get our user authentication data using the vault
     And response body path $.contacts should be null
 
 Scenario: Unknown username returns an error
+    Given I set var FALSE_PASS to a 33 characters long base64 string
+    And I set X-msm-Pass header to `FALSE_PASS`
     When I GET /identity/Unknown
     Then response code should be 404
     And response body path $.code should be UNKNOWN_USER
 
 Scenario: Username should be at least 3 characters long
+    Given I set var FALSE_PASS to a 33 characters long base64 string
+    And I set X-msm-Pass header to `FALSE_PASS`
     When I GET /identity/us
     Then response code should be 400
     And response body path $.code should be BAD_REQUEST_FORMAT
 
 Scenario: Username should be less than 125 characters long
     Given I set var AT_TOO_LONG to a 126 characters long string
+    And I set var FALSE_PASS to a 33 characters long base64 string
+    And I set X-msm-Pass header to `FALSE_PASS`
     When I GET /identity/`AT_TOO_LONG`
     Then response code should be 400
     And response body path $.code should be BAD_REQUEST_FORMAT
 
 Scenario: Username should not contain any special character
+    And I set var FALSE_PASS to a 33 characters long base64 string
+    And I set X-msm-Pass header to `FALSE_PASS`
     When I GET /identity/<script>
     Then response code should be 400
     And response body path $.code should be BAD_REQUEST_FORMAT
 
 Scenario: Authenticated user has access to its inbox
     Given I am a new invalidated user
+    And I set X-msm-Pass header to `PASS_HASH`
     And I GET /identity/`MY_AT`
     And response body match a challenge
     And I store the value of body path $.token as access token
@@ -99,7 +110,9 @@ Scenario: Signature header is mandatory to set up the vault
     Given I am authenticated user batmat
     And I set var TOKEN to a 4164 characters long base64 string
     And I set var IV to a 18 characters long base64 string
-    And I set body to { "vault": { "token": "`TOKEN`", "iv": "`IV`" }, "switch": { "token": "`TOKEN`", "iv": "`IV`" } }
+    And I sign hashed mycomplicatedpassword into PASS with SSK
+    And I sign hashed pasword1234 into KILL with SSK
+    And I set body to { "vault": { "token": "`TOKEN`", "iv": "`IV`" }, "pass": "`PASS`", "kill": "`KILL`" }
     And I set false signature header
     When I PUT /vault
     Then response code should be 403

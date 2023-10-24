@@ -183,6 +183,14 @@ class Util {
     return Buffer.from(signature).toString('base64');
   }
 
+  static hashToBase64(txt) {
+    const hash = crypto.createHash('sha256');
+    hash.update(txt);
+    const pass = hash.digest();
+
+    return pass.toString('base64');
+  }
+
   static symmetricEncrypt(txt, passphrase) {
     const hash = crypto.createHash('sha256');
     hash.update(passphrase);
@@ -237,7 +245,7 @@ class Util {
       str += chars[Math.floor(Math.random() * chars.length)];
     }
     if (base64) {
-      return Buffer.from(str).toString('base64');
+      str = Buffer.from(str).toString('base64');
     }
     return str;
   }
@@ -290,16 +298,11 @@ class Util {
           },
         },
       },
-      switch: {
-        type: Object,
-        schema: {
-          token: {
-            type: String,
-          },
-          iv: {
-            type: String,
-          },
-        },
+      pass: {
+        type: String,
+      },
+      kill: {
+        type: String,
       },
       contacts: {
         type: Object,

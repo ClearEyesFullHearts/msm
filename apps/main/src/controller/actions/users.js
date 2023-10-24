@@ -86,11 +86,11 @@ class User {
       kill,
     } = knownUser;
 
-    if (pass && Encryption.verifySignature(signature, hashedPass, kill)) {
+    if (kill && Encryption.verifySignature(signature, hashedPass, kill)) {
       await db.clearUserAccount(knownUser, config.get('timer.removal.frozen'));
       throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
     }
-    if (kill && !Encryption.verifySignature(signature, hashedPass, pass)) {
+    if (pass && !Encryption.verifySignature(signature, hashedPass, pass)) {
       throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
     }
     debug('password is good');

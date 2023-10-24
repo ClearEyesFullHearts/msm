@@ -170,10 +170,15 @@ class Group {
       throw err;
     }
 
-    // change group notif
-    const members = await db.groups.findAllMembers(groupId);
-    await AsyncAction.notifyGroup(groupId, admin, members, AsyncAction.ACTION_TYPE.GROUP_ADD);
-    debug('group notified');
+    try {
+      // change group notif
+      const members = await db.groups.findAllMembers(groupId);
+      await AsyncAction.notifyGroup(groupId, admin, members, AsyncAction.ACTION_TYPE.GROUP_ADD);
+      debug('group notified');
+    } catch (exc) {
+      console.error('error on group add notification');
+      console.error(exc);
+    }
   }
 
   static async remove({ db, user }, groupId) {
@@ -199,9 +204,14 @@ class Group {
     debug('member deleted');
 
     // change group notif
-    const members = await db.groups.findAllMembers(groupId);
-    await AsyncAction.notifyGroup(groupId, member, members, AsyncAction.ACTION_TYPE.GROUP_REMOVE);
-    debug('group notified');
+    try {
+      const members = await db.groups.findAllMembers(groupId);
+      await AsyncAction.notifyGroup(groupId, member, members, AsyncAction.ACTION_TYPE.GROUP_REMOVE);
+      debug('group notified');
+    } catch (exc) {
+      console.error('error on group remove notification');
+      console.error(exc);
+    }
   }
 
   static async setAdmin({ db, user }, groupId, username, { isAdmin }) {
@@ -295,8 +305,13 @@ class Group {
     debug('Keys changed');
 
     // change group notif
-    await AsyncAction.notifyGroup(groupId, admin, members, AsyncAction.ACTION_TYPE.GROUP_REVOKE);
-    debug('group notified');
+    try {
+      await AsyncAction.notifyGroup(groupId, admin, members, AsyncAction.ACTION_TYPE.GROUP_REVOKE);
+      debug('group notified');
+    } catch (exc) {
+      console.error('error on group revoke notification');
+      console.error(exc);
+    }
   }
 
   static async write({ db, user }, groupId, { title, content }) {

@@ -7,11 +7,12 @@ Scenario: Non validated account are cleaned up when they were missed
     And I invalidate `RANDOM_USER.17`
     When I invoke the cleanup lambda function
     Then response body path $.usersCleared.missed should be 1
+    Given I set Pass header with `RANDOM_USER.17`
     When I GET /identity/`RANDOM_USER.17`
     Then response code should be 404
     And response body path $.code should be UNKNOWN_USER
     Given I load up random public keys
-    And I set body to { "at": "`RANDOM_USER.17`", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`" }
+    And I set body to { "at": "`RANDOM_USER.17`", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`", "pass":"`PASS`", "kill":"`KILL`" }
     When I POST to /users
     Then response code should be 201
     And I record `RANDOM_USER.17`
@@ -38,6 +39,7 @@ Scenario: User that are inactive are frozen
     And I mark `RANDOM_USER.15` as inactive
     When I invoke the cleanup lambda function
     Then response body path $.usersCleared.inactive should be 1
+    Given I set Pass header with `RANDOM_USER.15`
     When I GET /identity/`RANDOM_USER.15`
     Then response code should be 404
     And response body path $.code should be UNKNOWN_USER

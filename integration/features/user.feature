@@ -98,7 +98,7 @@ Scenario: Signature should be in a PK format
     And response body path $.code should be BAD_REQUEST_FORMAT
 
 Scenario: Hash should not be less than 172 characters
-    Given I set var SHA_TOO_SHORT to a 171 characters long base64 string
+    Given I set var SHA_TOO_SHORT to a 126 characters long base64 string
     And I load up random public keys
     And I set body to { "at": "testuser9", "key":`EPK`, "signature":`SPK`, "hash":"`SHA_TOO_SHORT`", "pass":"`PASS`", "kill":"`KILL`" }
     When I POST to /users
@@ -122,7 +122,7 @@ Scenario: Hash should be a base64 string
     And response body path $.code should be BAD_REQUEST_FORMAT
 
 Scenario: Pass should not be less than 172 characters
-    Given I set var PASS_TOO_SHORT to a 171 characters long base64 string
+    Given I set var PASS_TOO_SHORT to a 126 characters long base64 string
     And I load up random public keys
     And I set body to { "at": "testuser9", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`", "pass":"`PASS_TOO_SHORT`", "kill":"`KILL`" }
     When I POST to /users
@@ -146,7 +146,7 @@ Scenario: Pass should be a base64 string
     And response body path $.code should be BAD_REQUEST_FORMAT
 
 Scenario: Kill should not be less than 172 characters
-    Given I set var KILL_TOO_SHORT to a 171 characters long base64 string
+    Given I set var KILL_TOO_SHORT to a 126 characters long base64 string
     And I load up random public keys
     And I set body to { "at": "testuser9", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`", "pass":"`PASS`", "kill":"`KILL_TOO_SHORT`" }
     When I POST to /users
@@ -174,8 +174,8 @@ Scenario: I cannot register 2 users with the same encryption key
     And I load up user1 public keys
     And I load up user1 private keys
     And I hash and sign NEW_EPK and SPK into COMPUTED_SHA with NEW_SSK
-    And I hash and sign MyPassword into PASS with NEW_SSK
-    And I hash and sign MyKillSwitch into KILL with NEW_SSK
+    And I sign hashed MyPassword into PASS with NEW_SSK
+    And I sign hashed MyKillSwitch into KILL with NEW_SSK
     And I set body to { "at": "testuser12", "key":`NEW_EPK`, "signature":`SPK`, "hash":"`COMPUTED_SHA`", "pass":"`PASS`", "kill":"`KILL`" }
     When I POST to /users
     Then response code should be 403
@@ -185,7 +185,9 @@ Scenario: I cannot register 2 users with the same signature key
     Given I am a new invalidated user
     And I load up user1 public keys
     And I hash and sign EPK and NEW_SPK into COMPUTED_SHA with NEW_SSK
-    And I set body to { "at": "testuser13", "key":`EPK`, "signature":`NEW_SPK`, "hash":"`COMPUTED_SHA`" }
+    And I sign hashed MyPassword into PASS with NEW_SSK
+    And I sign hashed MyKillSwitch into KILL with NEW_SSK
+    And I set body to { "at": "testuser13", "key":`EPK`, "signature":`NEW_SPK`, "hash":"`COMPUTED_SHA`", "pass":"`PASS`", "kill":"`KILL`" }
     When I POST to /users
     Then response code should be 403
     And response body path $.code should be USER_EXISTS
@@ -196,26 +198,27 @@ Scenario: Inactivate user is removed after a time
     Then user removal is scheduled
     And response body path $.username should be `MY_AT`
     When I invoke the clean user lambda function
-    Then I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`" }
+    Then I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`", "pass":"`PASS`", "kill":"`KILL`" }
     And I POST to /users
     Then response code should be 201
 
 Scenario: You cannot create a user with a false encryption key
     Given I generate a false encryption key
-    And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`" }
+    And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`", "pass":"`PASS`", "kill":"`KILL`" }
     When I POST to /users
     Then response code should be 500
     And response body path $.code should be SERVER_ERROR
 
 Scenario: You cannot create a user with a false signature key
     Given I generate a false signature key
-    And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`" }
+    And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`", "pass":"`PASS`", "kill":"`KILL`" }
     When I POST to /users
     Then response code should be 500
     And response body path $.code should be SERVER_ERROR
 
 Scenario: A new user should validate its account by requesting the first message
     Given I am a new invalidated user
+    And I set X-msm-Pass header to `PASS_HASH`
     And I GET /identity/`MY_AT`
     And response body match a challenge
     And I store the value of body path $.token as access token
@@ -229,13 +232,14 @@ Scenario: A new user should validate its account by requesting the first message
     And response body path $ should match a challenge
     And resolved challenge path $.from should match @do not reply to this message
     And I wait for 5 seconds
-    And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`" }
+    And I set body to { "at": "`MY_AT`", "key":`NEW_EPK`, "signature":`NEW_SPK`, "hash":"`NEW_SHA`", "pass":"`PASS`", "kill":"`KILL`" }
     When I POST to /users
     Then response code should be 403
     And response body path $.code should be USER_EXISTS
 
 Scenario: A user can delete its account
     Given I am a new invalidated user
+    And I set X-msm-Pass header to `PASS_HASH`
     And I GET /identity/`MY_AT`
     And response body match a challenge
     And I store the value of body path $ as AUTH in scenario scope
@@ -248,7 +252,7 @@ Scenario: A user can delete its account
 
 Scenario: A frozen username cannot be used again
     Given I load up random public keys
-    And I set body to { "at": "baby", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`" }
+    And I set body to { "at": "baby", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`", "pass":"`PASS`", "kill":"`KILL`" }
     And I POST to /users
     Then response code should be 403
     And response body path $.code should be USER_EXISTS

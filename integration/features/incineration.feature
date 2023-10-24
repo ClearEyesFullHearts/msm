@@ -7,6 +7,7 @@ Scenario: Delete one's account
   And I set signature header
   When I DELETE /user/`MY_AT`
   Then response code should be 200
+  And I set X-msm-Pass header to `PASS_HASH`
   And I GET /identity/`MY_AT`
   Then response code should be 404
     
@@ -41,6 +42,7 @@ Scenario: Delete one's account with messages
   And I set signature header
   And I DELETE /user/`RANDOM_USER.13`
   Then response code should be 200
+  And I set X-msm-Pass header to `PASS_HASH`
   And I GET /identity/`RANDOM_USER.13`
   Then response code should be 404
   And I record `RANDOM_USER.13`

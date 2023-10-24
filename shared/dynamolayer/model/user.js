@@ -51,13 +51,11 @@ class UserData {
       },
       pass: {
         type: String,
-        required: true,
         minLength: 172,
         maxLength: 172,
       },
       kill: {
         type: String,
-        required: true,
         minLength: 172,
         maxLength: 172,
       },
