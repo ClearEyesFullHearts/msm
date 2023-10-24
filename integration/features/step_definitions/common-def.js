@@ -192,16 +192,6 @@ Then(/^I open the vault (.*) with (.*)$/, function (vaultName, passphrase) {
   this.apickli.storeValueInScenarioScope('SSK', sskFile);
 });
 
-Then(/^I open the switch (.*) with (.*)$/, function (vaultName, passphrase) {
-  const kill = this.apickli.scenarioVariables[vaultName];
-
-  const privateK = Util.symmetricDecrypt(kill, passphrase);
-
-  const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
-  this.apickli.storeValueInScenarioScope('ESK', eskFile);
-  this.apickli.storeValueInScenarioScope('SSK', sskFile);
-});
-
 Then('response body match a challenge', async function () {
   const respBody = JSON.parse(this.apickli.httpResponse.body);
   assert.ok(respBody.token);

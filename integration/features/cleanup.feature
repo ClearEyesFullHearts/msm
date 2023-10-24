@@ -31,8 +31,8 @@ Scenario: Message that have been read are cleaned up when they were missed
     When I invoke the cleanup lambda function
     Then response body path $.messagesCleared should be 1
     And I am existing `RANDOM_USER.3`
-    And I GET /inbox
-    Then response body path $ should be of type array with length 0
+    And I GET /message/`FIRST_MSG_ID`
+    Then response code should be 404
 
 Scenario: User that are inactive are frozen
     Given I save `RANDOM_USER.15`
@@ -44,7 +44,7 @@ Scenario: User that are inactive are frozen
     Then response code should be 404
     And response body path $.code should be UNKNOWN_USER
     Given I load up random public keys
-    And I set body to { "at": "`RANDOM_USER.15`", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`" }
+    And I set body to { "at": "`RANDOM_USER.15`", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`", "pass":"`PASS`", "kill":"`KILL`" }
     When I POST to /users
     Then response code should be 403
     And response body path $.code should be USER_EXISTS
