@@ -1,11 +1,11 @@
 const fs = require('fs');
 const Util = require('../features/support/utils');
 
-const ORIGIN_TABLE = 'MyTestTable';
-const TARGET_TABLE = 'TestTableMSM';
+const ORIGIN_TABLE = 'MSMBetaTable';
+const TARGET_TABLE = 'BetaTableMSM';
 
 (async function () {
-  await Util.backupTable(ORIGIN_TABLE);
+  await Util.backupTable(ORIGIN_TABLE, ORIGIN_TABLE);
   console.log('Util.backupTable ok');
   const dynamoTable = JSON.parse(fs.readFileSync(`./data/msm/${ORIGIN_TABLE}.json`));
   const l = dynamoTable.length;

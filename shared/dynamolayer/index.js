@@ -92,7 +92,7 @@ class Data {
       ]);
     } else {
       const searchTerms = UserData.createSearchTerms(username);
-      const keys = searchTerms.map((term) => ({ pk: `S#${username}`, sk: term }));
+      const keys = searchTerms.map((term) => ({ sk: username, pk: term }));
 
       await Data.batchDelete(keys, this.searchData);
 

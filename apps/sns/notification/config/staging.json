@@ -1,7 +1,7 @@
 {
   "dynamo": {
     "local": false,
-    "tableName": "MSMBetaTable",
+    "tableName": "BetaTableMSM",
     "createTable": false
   },
   "wss" : {

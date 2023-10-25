@@ -2,7 +2,7 @@ Feature: Ws connection function Test
 
     Lambda called when there is a websocket connection to the API Getaway
 
-Scenario: `RANDOM_USER.7` and `RANDOM_USER.9` connects and disconnect
+Scenario: `RANDOM_USER.16` and `RANDOM_USER.19` connects and disconnect
     Given I am existing `RANDOM_USER.16`
     And I am existing `RANDOM_USER.19`
     And `RANDOM_USER.16` is connected
