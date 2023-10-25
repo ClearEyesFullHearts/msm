@@ -8,15 +8,15 @@ const {
 class Secret {
   constructor(choice = ['*']) {
     this.choice = choice;
-    try {
-      this.client = AWSXRay.captureAWSv3Client(new SecretsManagerClient());
-    } catch (err) {
-      debug('No secret client');
-    }
+    this.client = new SecretsManagerClient();
     this.KEY_AUTH_SIGN = 'supersecret';
     this.PRIVATE_VAPID_KEY = 'N/A';
     this.KEY_WALLET_SECRET = 'N/A';
     this.loaded = false;
+  }
+
+  async getTracedSecretValue() {
+    await AWSXRay.segmentAsyncFunc('GetMSMSecret', this.getSecretValue());
   }
 
   async getSecretValue() {

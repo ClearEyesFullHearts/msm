@@ -9,10 +9,8 @@ const Auth = require('@shared/auth');
 const ErrorHelper = require('@shared/error');
 const Secret = require('@shared/secrets');
 
-const data = new Data(config.get('dynamo'));
-data.init();
-
-const tokenSecret = new Secret(['KEY_AUTH_SIGN']);
+let data;
+let tokenSecret;
 
 function toLowerCaseProperties(obj) {
   const wrapper = {};
@@ -87,7 +85,7 @@ async function asyncCleanSocket({
   }
 }
 
-exports.handler = async function lambdaHandler(event) {
+const handler = async (event) => {
   try {
     if (event.headers !== undefined) {
       const {
@@ -113,18 +111,20 @@ exports.handler = async function lambdaHandler(event) {
         debug('both auth headers present');
 
         const [protToken, protSignature] = identifiers;
-        if (!tokenSecret.loaded) {
-          await tokenSecret.getSecretValue();
-        }
-        debug('secret is set');
 
         const token = Buffer.from(protToken, 'hex').toString();
         const signature = Buffer.from(protSignature.trimStart(), 'hex').toString();
 
-        const payload = await Auth.verifyToken(token, tokenSecret.KEY_AUTH_SIGN, config.get('timer.removal.session'));
+        const payload = await AWSXRay.captureAsyncFunc(
+          'Auth.verifyToken',
+          Auth.verifyToken(token, tokenSecret.KEY_AUTH_SIGN, config.get('timer.removal.session')),
+        );
         debug('token is verified, we have payload');
 
-        const author = await Auth.verifyIdentity(data.users, signature, payload, { action: 'WSS' });
+        const author = await AWSXRay.captureAsyncFunc(
+          'Auth.verifyIdentity',
+          Auth.verifyIdentity(data.users, signature, payload, { action: 'WSS' }),
+        );
         debug('signature is verified, we have author');
 
         if (author.lastActivity < 0 || author.validation !== 'VALIDATED') {
@@ -194,3 +194,14 @@ exports.handler = async function lambdaHandler(event) {
     };
   }
 };
+const main = async () => {
+  data = new Data(config.get('dynamo'));
+  data.init();
+
+  tokenSecret = new Secret(['KEY_AUTH_SIGN']);
+  await tokenSecret.getTracedSecretValue();
+
+  return { handler };
+};
+
+module.exports = main();

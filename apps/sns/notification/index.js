@@ -6,10 +6,8 @@ const { ApiGatewayManagementApiClient, PostToConnectionCommand, GoneException } 
 const Data = require('@shared/dynamolayer');
 const Secret = require('@shared/secrets');
 
-const data = new Data(config.get('dynamo'));
-data.init();
-
-const secret = new Secret(['PRIVATE_VAPID_KEY']);
+let data;
+let secret;
 
 async function wssNotification({ to, from, action }) {
   debug(`Notify ${to} that ${from} sent a message`);
@@ -56,9 +54,6 @@ async function wssNotification({ to, from, action }) {
 }
 
 async function webPushNotification({ to, from, action }) {
-  if (!secret.loaded) {
-    await secret.getSecretValue();
-  }
   const subs = await data.subscriptions.findAll(to);
   debug(`${subs.length} subscription for ${to}`);
   if (subs.length < 1) return;
@@ -115,7 +110,7 @@ async function webPushNotification({ to, from, action }) {
   debug('all sent');
 }
 
-exports.handler = async (event) => {
+const handler = async (event) => {
   debug('event received');
   try {
     const { to, from, action } = JSON.parse(event.Records[0].Sns.Message);
@@ -130,3 +125,14 @@ exports.handler = async (event) => {
     throw err;
   }
 };
+const main = async () => {
+  data = new Data(config.get('dynamo'));
+  data.init();
+
+  secret = new Secret(['PRIVATE_VAPID_KEY']);
+  await secret.getTracedSecretValue();
+
+  return { handler };
+};
+
+module.exports = main();

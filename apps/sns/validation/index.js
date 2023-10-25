@@ -6,12 +6,9 @@ const Data = require('@shared/dynamolayer');
 const Secret = require('@shared/secrets');
 const Validator = require('./src/validator');
 
-const data = new Data(config.get('dynamo'));
-data.init();
-
-const secret = new Secret(['KEY_WALLET_SECRET']);
-const client = AWSXRay.captureAWSv3Client(new SchedulerClient());
-
+let data;
+let secret;
+let client;
 let validator;
 
 async function askConfirmation(username, tries, invokedFunctionArn) {
@@ -43,7 +40,7 @@ async function initValidation(user, invokedFunctionArn) {
   await data.users.updateValidation(user.username, 'IS_VALIDATING');
 
   try {
-    await AWSXRay.captureAsyncFunc('EtherValidation', validator.validateUser({ userId: user.id, signature: user.hash }));
+    await AWSXRay.captureAsyncFunc('Ether.validation', validator.validateUser({ userId: user.id, signature: user.hash }));
     debug('Validation sent');
     await askConfirmation(user.username, 1, invokedFunctionArn);
     debug('Confirmation asked');
@@ -56,7 +53,7 @@ async function initValidation(user, invokedFunctionArn) {
 async function confirmValidation(user, tries, invokedFunctionArn) {
   debug(`Confirming user ${user.username}, time ${tries}`);
 
-  const isValid = await AWSXRay.captureAsyncFunc('EtherConfirmation', validator.isValidated(user.id));
+  const isValid = await AWSXRay.captureAsyncFunc('Ether.confirmation', validator.isValidated(user.id));
   if (isValid) {
     debug('Validation confirmed');
     await data.users.updateValidation(user.username, 'VALIDATED');
@@ -69,18 +66,8 @@ async function confirmValidation(user, tries, invokedFunctionArn) {
   }
 }
 
-exports.handler = async (event, context) => {
-  if (!secret.loaded) {
-    await secret.getSecretValue();
-
-    validator = new Validator({
-      network: config.get('ether.network'),
-      apiKey: config.get('ether.api'),
-      privateKey: secret.KEY_WALLET_SECRET,
-      address: config.get('ether.contract'),
-    });
-  }
-
+const handler = async (event, context) => {
+  // called for the first time by SNS
   if (event.Records && event.Records.length > 0) {
     const { name } = JSON.parse(event.Records[0].Sns.Message);
     debug('Auto User Validation', name);
@@ -96,6 +83,7 @@ exports.handler = async (event, context) => {
     }
   }
 
+  // subsequent call by the scheduler
   const { username, tries } = event;
   if (username && tries) {
     debug('Auto User Confirmation', username);
@@ -110,3 +98,23 @@ exports.handler = async (event, context) => {
     }
   }
 };
+const main = async () => {
+  data = new Data(config.get('dynamo'));
+  data.init();
+
+  secret = new Secret(['KEY_WALLET_SECRET']);
+  await secret.getTracedSecretValue();
+
+  client = AWSXRay.captureAWSv3Client(new SchedulerClient());
+
+  validator = new Validator({
+    network: config.get('ether.network'),
+    apiKey: config.get('ether.api'),
+    privateKey: secret.KEY_WALLET_SECRET,
+    address: config.get('ether.contract'),
+  });
+
+  return { handler };
+};
+
+module.exports = main();

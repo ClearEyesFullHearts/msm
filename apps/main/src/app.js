@@ -7,7 +7,7 @@ const Data = require('@shared/dynamolayer');
 const Secret = require('@shared/secrets');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const AWSXRay = require('aws-xray-sdk');
+const xrayExpress = require('aws-xray-sdk-express');
 const ErrorHelper = require('@shared/error');
 const CORS = require('./lib/cors');
 
@@ -37,14 +37,14 @@ class MSMMain {
     debug('data is added');
 
     const secret = new Secret(['KEY_AUTH_SIGN']);
-    await secret.getSecretValue();
+    await secret.getTracedSecretValue();
     this.app.locals.secret = secret;
     debug('secret is added');
   }
 
   start() {
     debug('start server');
-    this.app.use(AWSXRay.express.openSegment(APP_ID));
+    this.app.use(xrayExpress.openSegment(APP_ID));
 
     this.app.get('/health', (req, res) => {
       res.status(200).send();
@@ -65,9 +65,9 @@ class MSMMain {
       res.status(404).send("Sorry can't find that!");
     });
 
-    this.app.use(ErrorHelper.catchMiddleware());
+    this.app.use(xrayExpress.closeSegment());
 
-    this.app.use(AWSXRay.express.closeSegment());
+    this.app.use(ErrorHelper.catchMiddleware());
     debug('all middlewares added');
 
     return this.app;

@@ -1,5 +1,5 @@
 const config = require('config');
-const AWSXRay = require('aws-xray-sdk');
+const AWSXRay = require('@shared/tracing');
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 const { SchedulerClient, CreateScheduleCommand } = require('@aws-sdk/client-scheduler');
 const debug = require('debug')('msm-main:async');
