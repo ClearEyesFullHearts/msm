@@ -110,6 +110,19 @@ Resources:
         SchedulerGroupName: !Sub '${MSMStageName}-MSM-Confirmation-Group'
         MSMSecretID: !Ref MSMSecretID
 
+  MSMMarkReadStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://msm-cloudformation-template.s3.eu-west-3.amazonaws.com/msm_message_read_formation.yaml
+      Parameters:
+        MSMStageName: !Ref MSMStageName
+        MSMTableName: !Ref MSMTableName
+        MarkReadLambdaImageName: !Sub 'mft-msm-mark-read.${MSMStageName}.${MSMImageTag}'
+        MSMValidateTopicName: !GetAtt MSMValidateStack.Outputs.ValidateTopicEndpoint
+        MSMSchedulerGroupName: !GetAtt MSMCleanupStack.Outputs.GroupName
+        MSMCleanMessageLambda: !GetAtt MSMCleanupStack.Outputs.MessageCleanupName
+        MSMCleanupSchedulerRole: !GetAtt MSMCleanupStack.Outputs.SchedulerRoleName
+
   MSMMainStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -129,3 +142,5 @@ Resources:
         MSMCleanMessageLambda: !GetAtt MSMCleanupStack.Outputs.MessageCleanupName
         MSMCleanupSchedulerRole: !GetAtt MSMCleanupStack.Outputs.SchedulerRoleName
         MSMSecretID: !Ref MSMSecretID
+        MSMMarkReadQueueName: !GetAtt MSMMarkReadStack.Outputs.MarkReadQueueName
+        MSMMarkReadQueueURL: !GetAtt MSMMarkReadStack.Outputs.MarkReadQueueURL

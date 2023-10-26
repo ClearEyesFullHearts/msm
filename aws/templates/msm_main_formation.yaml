@@ -68,6 +68,14 @@ Parameters:
     Type: String
     Description: The name of the role assumed by the scheduler
 
+  MSMMarkReadQueueName:
+    Type: String
+    Description: The name of the queue to post read message messages
+
+  MSMMarkReadQueueURL:
+    Type: String
+    Description: The URL of the queue to post read message messages
+
 ####################################################################################
 Resources:
 ####################################################################################
@@ -104,6 +112,12 @@ Resources:
               - secretsmanager:GetSecretValue
             Resource:
               - !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${MSMSecretID}'
+          - Sid: AllowSqsPush
+            Effect: Allow
+            Action:
+              - sqs:SendMessage
+            Resource:
+              - !Sub 'arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${MSMMarkReadQueueName}'
           - Sid: DynamoDBIndexAndStreamAccess
             Effect: Allow
             Action:
@@ -162,13 +176,14 @@ Resources:
         Variables:
           NODE_ENV: !Ref MSMStageName
           SECRET_LOCATION: !Ref MSMSecretName
-          DEBUG: 'msm-main:*,dynamolayer:*,secrets:*,validator:*,msm-error:*'
+          DEBUG: 'msm-main:*,dynamolayer:*,secrets:*,msm-error:*'
           NOTIF_TOPIC: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMNotifTopicName}'
           VALIDATION_TOPIC: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMValidateTopicName}'
           SCHEDULER_GROUP: !Ref MSMSchedulerGroupName
           CLEAN_ACCOUNT_TARGET: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanAccountLambda}'
           CLEAN_MESSAGE_TARGET: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanMessageLambda}'
           SCHEDULER_ROLE: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${MSMCleanupSchedulerRole}'
+          MARK_READ_QUEUE: !Ref MSMMarkReadQueueURL
   
   MSMMainExpressAPI:
     Type: AWS::ApiGatewayV2::Api

@@ -22,7 +22,6 @@
     "removal": {
       "session": 900000,
       "user": 600000,
-      "message": 30000,
       "frozen": 7776000000
     },
     "interval": {

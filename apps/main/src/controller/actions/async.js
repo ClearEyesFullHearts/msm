@@ -2,6 +2,7 @@ const config = require('config');
 const AWSXRay = require('@shared/tracing');
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 const { SchedulerClient, CreateScheduleCommand } = require('@aws-sdk/client-scheduler');
+const { SendMessageCommand, SQSClient } = require('@aws-sdk/client-sqs');
 const debug = require('debug')('msm-main:async');
 
 class Async {
@@ -37,27 +38,36 @@ class Async {
   }
 
   static async autoMessageRemoval(db, username, msgId) {
-    debug('Schedule Auto Message removal');
-    const scheduleAt = new Date(Date.now() + config.get('timer.removal.message'));
+    debug(`${username} has read message ${msgId}`);
+    const client = AWSXRay.captureAWSv3Client(new SQSClient({}));
 
-    const client = AWSXRay.captureAWSv3Client(new SchedulerClient());
-    const input = {
-      Name: `AutoMessageRemovalSchedule-${username}-${msgId}`,
-      GroupName: process.env.SCHEDULER_GROUP,
-      ScheduleExpression: `at(${scheduleAt.toISOString().substring(0, 19)})`,
-      FlexibleTimeWindow: {
-        Mode: 'OFF',
-      },
-      Target: {
-        Arn: process.env.CLEAN_MESSAGE_TARGET,
-        RoleArn: process.env.SCHEDULER_ROLE,
-        Input: JSON.stringify({ username, messageId: msgId }),
-      },
-      ActionAfterCompletion: 'DELETE',
-    };
-    const command = new CreateScheduleCommand(input);
+    const command = new SendMessageCommand({
+      QueueUrl: process.env.MARK_READ_QUEUE,
+      MessageBody: JSON.stringify({ username, messageId: msgId }),
+    });
+
     await client.send(command);
-    debug('Auto Message removal is scheduled');
+    // debug('Schedule Auto Message removal');
+    // const scheduleAt = new Date(Date.now() + config.get('timer.removal.message'));
+
+    // const client = AWSXRay.captureAWSv3Client(new SchedulerClient());
+    // const input = {
+    //   Name: `AutoMessageRemovalSchedule-${username}-${msgId}`,
+    //   GroupName: process.env.SCHEDULER_GROUP,
+    //   ScheduleExpression: `at(${scheduleAt.toISOString().substring(0, 19)})`,
+    //   FlexibleTimeWindow: {
+    //     Mode: 'OFF',
+    //   },
+    //   Target: {
+    //     Arn: process.env.CLEAN_MESSAGE_TARGET,
+    //     RoleArn: process.env.SCHEDULER_ROLE,
+    //     Input: JSON.stringify({ username, messageId: msgId }),
+    //   },
+    //   ActionAfterCompletion: 'DELETE',
+    // };
+    // const command = new CreateScheduleCommand(input);
+    // await client.send(command);
+    // debug('Auto Message removal is scheduled');
   }
 
   static async autoValidation(name) {

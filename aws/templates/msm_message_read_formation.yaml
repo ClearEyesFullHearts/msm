@@ -1,0 +1,154 @@
+AWSTemplateFormatVersion : 2010-09-09
+Description: >
+  Resources needed to deploy the mark message read lambda function.
+
+####################################################################################
+Parameters:
+####################################################################################
+
+  MSMStageName:
+    Type: String
+    Default: test
+    Description: The name of the stage to be created, also used as NODE_ENV
+
+  MSMTableName:
+    Type: String
+    Default: MyTestTable
+    Description: The name of the table to be created.
+
+  MarkReadLambdaImageName:
+    Type: String
+    Default: mft-msm-mark-read.test.1
+    Description: Tag of the image to deploy.
+
+  MSMValidateTopicName:
+    Type: String
+    Description: The name of the validation topic
+
+  MSMSchedulerGroupName:
+    Type: String
+    Default: MSMCleanupGroup
+    Description: Name of the scheduler group for cleanup.
+
+  MSMCleanMessageLambda:
+    Type: String
+    Description: The name of the message cleanup lambda
+
+  MSMCleanupSchedulerRole:
+    Type: String
+    Description: The name of the role assumed by the scheduler
+
+####################################################################################
+Resources:
+####################################################################################
+
+  MSMMarkReadManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: CreateCleanupSchedule
+            Effect: Allow
+            Action:
+              - scheduler:CreateSchedule
+            Resource:
+              - !Sub 'arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/${MSMSchedulerGroupName}/*'
+          - Sid: AllowSchedulerToAssumeRole
+            Effect: Allow
+            Action:
+              - iam:GetRole
+              - iam:PassRole
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${MSMCleanupSchedulerRole}'
+          - Sid: SnsPushNotification
+            Effect: Allow
+            Action:
+              - sns:Publish
+            Resource:
+              - !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMValidateTopicName}'
+          - Sid: DynamoDBTableAccess
+            Effect: Allow
+            Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:PutItem
+              - dynamodb:DescribeTable
+              - dynamodb:DeleteItem
+              - dynamodb:GetItem
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:UpdateItem
+            Resource: 
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MSMTableName}'
+          - Sid: AllowSqsListen
+            Effect: Allow
+            Action:
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:ChangeMessageVisibility
+            Resource:
+              - !GetAtt MSMMarkReadQueue.Arn
+
+  MSMMarkReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref MSMMarkReadManagedPolicy
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess'
+
+  MSMMarkReadLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      PackageType: Image
+      Code:
+        ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${MarkReadLambdaImageName}'
+      MemorySize: 512
+      Timeout: 10
+      Role: !Sub ${MSMMarkReadRole.Arn}
+      TracingConfig:
+        Mode: Active
+      Environment:
+        Variables:
+          NODE_ENV: !Ref MSMStageName
+          DEBUG: 'msm-message-read:*,dynamolayer:*,msm-error:*'
+          VALIDATION_TOPIC: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${MSMValidateTopicName}'
+          SCHEDULER_GROUP: !Ref MSMSchedulerGroupName
+          CLEAN_MESSAGE_TARGET: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanMessageLambda}'
+          SCHEDULER_ROLE: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${MSMCleanupSchedulerRole}'
+
+  MSMMarkReadLambdaFunctionEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      Enabled: true
+      EventSourceArn: !GetAtt MSMMarkReadQueue.Arn
+      FunctionName: !GetAtt MSMMarkReadLambdaFunction.Arn
+
+  MSMMarkReadQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      DelaySeconds: 0
+      VisibilityTimeout: 40
+
+Outputs:
+
+  MarkReadQueueName:
+    Value: !GetAtt MSMMarkReadQueue.QueueName
+    Description: Name of the queue
+
+  MarkReadQueueURL:
+    Value: !Ref MSMMarkReadQueue
+    Description: Url of the queue

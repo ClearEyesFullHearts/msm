@@ -100,17 +100,17 @@ class Message {
         },
       } = message;
 
-      if (reader.lastActivity < 0) {
-        await db.users.confirmUser(reader.username);
-        debug('reader confirmed');
-      } else {
-        await db.users.updateLastActivity(auth.username);
-        debug('reader updated');
-      }
+      // if (reader.lastActivity < 0) {
+      //   await db.users.confirmUser(reader.username);
+      //   debug('reader confirmed');
+      // } else {
+      //   await db.users.updateLastActivity(auth.username);
+      //   debug('reader updated');
+      // }
 
-      if (reader.validation === 'NO_VALIDATION' && !process.env.NO_CHAIN) {
-        await AsyncAction.autoValidation(reader.username);
-      }
+      // if (reader.validation === 'NO_VALIDATION' && !process.env.NO_CHAIN) {
+      //   await AsyncAction.autoValidation(reader.username);
+      // }
 
       const id = Number(sk.split('#')[1]);
 

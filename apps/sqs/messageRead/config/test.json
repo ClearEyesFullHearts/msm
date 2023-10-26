@@ -6,7 +6,7 @@
   },
   "timer": {
     "removal": {
-      "user": 1000
+      "message": 1000
     }
   }
 }
