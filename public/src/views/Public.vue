@@ -61,11 +61,20 @@ import config from '@/lib/config';
             </p>
           </li>
           <li>
+            <b>Password kill switch</b>
+            <p>
+              Enter your kill switch password on login and destroy all traces of your account.
+            </p>
+          </li>
+          <li>
             <b>Site integrity</b>
             <p>
               A Chrome Extension is available for you to be sure that this website is what it claims
               to be, without external tampering.<br>
-              You can find it in <a target="_blank" href="https://chrome.google.com/webstore/category/extensions?hl=fr">Chrome Web Store</a>
+              You can find it in <a
+                target="_blank"
+                href="https://chrome.google.com/webstore/category/extensions?hl=fr"
+              >Chrome Web Store</a>
               under the name "ySyPyA Verification Tool".
             </p>
           </li>

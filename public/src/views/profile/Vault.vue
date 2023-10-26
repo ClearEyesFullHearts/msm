@@ -60,21 +60,19 @@ function onDownloadSK() {
         <div class="card-body">
           <ul>
             <li>
-              Enter a pass phrase (minimum 8 characters) to encrypt your secret key
-              and send it to us.
-              You'll then be able to login with that pass phrase instead of your secret key file
+              Download your Secret Key file and empty your vault to be able to change your password
+              and set up your optional password kill switch.
             </li>
             <li>
-              You can also add a "Kill Switch" pass phrase that will burn your account
-              if you use it to login. This is optional.
+              Your password should be as strong as possible and your
+              kill switch password should be simpler than your actual password.
             </li>
             <li>
-              You can get rid of your secret key file but be aware that there is no retrieval
-              mechanism if you forget your pass phrase, except for this file.
+              If you don't set up your password again you will only be able to connect directly
+              with your Secret Key file.
             </li>
             <li>
-              You'll always be able to connect with your secret key file
-              and you can download it here again if you need to
+              There is no retrieval mechanism if you forget your password.
             </li>
           </ul>
         </div>
@@ -96,7 +94,8 @@ function onDownloadSK() {
               Download SK
             </button>
             <p>
-              Empty your vault to get back to managing your secret key yourself:
+              Empty your vault to change your password or use your
+              Secret Key file as a loggin mechanism:
             </p>
             <button
               class="btn btn-danger"
@@ -112,7 +111,7 @@ function onDownloadSK() {
               @submit="onSetUpVault"
             >
               <div class="form-row">
-                <label class="starlabel">Pass phrase</label>
+                <label class="starlabel">Password</label>
                 <Field
                   name="passphrase"
                   type="password"
@@ -124,7 +123,7 @@ function onDownloadSK() {
                 </div>
               </div>
               <div class="form-row mt-2">
-                <label class="starlabel">Confirm pass phrase</label>
+                <label class="starlabel">Confirm password</label>
                 <Field
                   name="confirmPassphrase"
                   type="password"
@@ -148,7 +147,7 @@ function onDownloadSK() {
                 </div>
               </div>
               <div class="form-row mt-2">
-                <label>Confirm Kill switch</label>
+                <label>Confirm kill switch</label>
                 <Field
                   name="confirmKillswitch"
                   type="password"
@@ -178,35 +177,35 @@ function onDownloadSK() {
         </h4>
         <div class="card-body">
           <p>
-            The vault provides you with a secure method to entrust us with your secret key,
-            relieving you of the responsibility of managing it independently.
+            Your vault securely stores your secret key,
+            which is encrypted using a hash of your password.
           </p>
           <p>
-            To achieve this, we employ symmetric encryption to encrypt your private key,
-            using a hash of your passphrase as the password, and store the encrypted result.
-            This same process is applied to the kill switch if provided.
+            Upon creating your account or setting up your vault, we calculate a hash of your
+            password and password kill switch. Your secret key is then encrypted with the former,
+            and both your encrypted secret key
+            and the signatures of both hashes are stored in your vault.
           </p>
           <p>
-            Upon logging in, instead of uploading your secret key,
-            you open your vault with your passphrase, retrieve your secret key,
-            and proceed as usual. In the event that this process fails,
-            we attempt to activate the kill switch.
-            If successful, we obtain your secret key and use it to delete your account.
+            When you log in, you transmit the computed hash of your password to us, which is
+            cross-verified against the signatures of your kill switch and password.<br>
+            If you provide your kill switch password, your account is immediately deleted.<br>
+            If you provide your connection password,
+            we respond by sending your vault and connection data, which is encrypted.
           </p>
           <p>
-            It's important to note that the kill switch is a feature unique to this client,
-            so it should not be used unless you are certain you are on this site.
+            Upon receiving your encrypted connection information, you can decrypt your vault using
+            the hashed password to access your secret key.
+            You can also decrypt your connection data with that key, allowing you to log in.
           </p>
           <p>
-            Once your vault is set up, you can theoretically discard your secret key file.
-            However, please be aware that because the encryption of your secret key
-            (using your passphrase) is entirely performed on the client side,
-            there is no recovery mechanism. If you forget your passphrase,
-            the sole means of accessing your account will be through your secret key file.
+            In the event that your vault is empty, you will be prompted to upload your
+            Secret Key file, which will be used directly for decrypting your connection data.
           </p>
           <p>
-            You have the option to empty your vault at any time,
-            but make sure to retain a copy of your secret key file before doing so.
+            To enhance the chances of discovering your kill switch password in the event
+            of a brute force attack on our password store, it is advisable for your kill switch
+            passwordto be simpler than your main password.
           </p>
         </div>
       </div>

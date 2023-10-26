@@ -11,11 +11,11 @@ The front-end is hosted in a public AWS S3 bucket as a static website.
   
 The back-end (powered by Node.JS) mostly manage users and their public key as well as encrypted messages delivery and some specific behaviors.  
 The back-end code is in the `./apps/` and `./shared/` folder.  
-`./apps/main` contains the REST API as the main entry point.  
-`./apps/notification` is a lambda triggered by an SNS event that try to notify users when they received a message, through web socket or web push.  
-`./apps/validation` is a lambda triggered by an SNS event that start the on-chain user validation.  
-`./apps/cleanup` contains cleanup code triggered once a day to removed dead data from the datalayer.  
-`./apps/cleanAccount` and `./apps/cleanMessage` are lambdas triggered by the EventBridge scheduler to remove inactive account and read messages respectively.  
+`./apps/main` contains the REST API as the main entry point. The OpenAPI file describing the API is in `./apps/main/src/spec/`.  
+`./apps/sns/notification` is a lambda triggered by an SNS event that try to notify users when they received a message, through web socket or web push.  
+`./apps/sns/validation` is a lambda triggered by an SNS event that start the on-chain user validation.  
+`./apps/clean/daily` contains cleanup code triggered once a day to removed dead data from the datalayer.  
+`./apps/clean/account` and `./apps/clean/message` are lambdas triggered by the EventBridge scheduler to remove inactive account and read messages respectively.  
 `./apps/ws` contains the lambdas that manage the web socket server.  
 The datalayer uses DynamoDB with Single Table Design and [Dynamoose](https://www.npmjs.com/package/dynamoose), the code is in the `./shared/dynamolayer` folder.  
 The docker files for the back-end are in `./docker/files`.  
@@ -25,9 +25,10 @@ What is not created by the templates are:
 - The secrets managed by AWS Secret Manager and used in `./shared/secrets`
 - The Docker containers in the AWS container registry.
 - The hosted zone and the certificates used to create the domain names  
+  
 The deployment script is in `./aws/scripts`.  
   
-Everything is traced through X-Ray.
+Everything is traced through X-Ray, using a small wrapper in `./shared/tracing`.  
 
 The smart contract (written in Solidity) used for automatic validation is in `./trust/chainValidation`. It is still using the Sepolia testnet for the moment and not the Ethereum mainnet.  
   
@@ -60,9 +61,9 @@ The secret used for that computation is the only secret really managed on the ba
 We mitigate that risk by verifying the user signature for all actions on its account (all PUT, POST and DELETE request.) to be sure that regardless of our authentication mechanism the user has access to the secret key relative to its account.  
 
 ### User account
-A user is created with its username, its encryption public key and its verifying public key.  
-The user creation is easy and the login mechanism is not intuitive for first timer as such we expect a lot of lost account, so users are created as inactive and deleted after 10 minutes of inactivity.  
-The only activity we keep on an account is the last time it opened a message which is why the new users have to open the first system message to activate their account.  
+A user is created with its username, its encryption public key, its verifying public key and their vault i.e. their Secret Key encrypted with a hash of their password, the signed hash of their password and the signed hash of a randomly generated kill switch password.  
+Users are created as inactive and deleted after 10 minutes of inactivity.  
+The only activity we keep on an account is the last time it opened a message or opened a web socket connection, which is why the new users have to open the first system message to activate their account.  
 The only metadata available on an account are related to the messages it receives, we don't keep any informations on messages sent.  
 Once a day every account that has never been activated or without activity for the last 30 days are destroyed with every data related to it.  
 When an activated account is destroyed its username is unusable for 90 days, just to avoid too many username collisions and mistaken identity.  
@@ -121,5 +122,5 @@ Chrome on mobile doesn't let you install extensions so you'll need to use the [K
 For the truly paranoid, you can always copy the reader and writer code available in `./public/offline` to encrypt your messages on an air-gapped computer. ;)  
   
 ## What's next
-- Group conversation
+- performance improvements
 - Enable peer-to-peer chat with WebRTC
