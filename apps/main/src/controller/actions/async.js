@@ -47,40 +47,6 @@ class Async {
     });
 
     await client.send(command);
-    // debug('Schedule Auto Message removal');
-    // const scheduleAt = new Date(Date.now() + config.get('timer.removal.message'));
-
-    // const client = AWSXRay.captureAWSv3Client(new SchedulerClient());
-    // const input = {
-    //   Name: `AutoMessageRemovalSchedule-${username}-${msgId}`,
-    //   GroupName: process.env.SCHEDULER_GROUP,
-    //   ScheduleExpression: `at(${scheduleAt.toISOString().substring(0, 19)})`,
-    //   FlexibleTimeWindow: {
-    //     Mode: 'OFF',
-    //   },
-    //   Target: {
-    //     Arn: process.env.CLEAN_MESSAGE_TARGET,
-    //     RoleArn: process.env.SCHEDULER_ROLE,
-    //     Input: JSON.stringify({ username, messageId: msgId }),
-    //   },
-    //   ActionAfterCompletion: 'DELETE',
-    // };
-    // const command = new CreateScheduleCommand(input);
-    // await client.send(command);
-    // debug('Auto Message removal is scheduled');
-  }
-
-  static async autoValidation(name) {
-    debug(`${name} auto validation is asked`);
-    const snsClient = AWSXRay.captureAWSv3Client(new SNSClient({}));
-    await snsClient.send(
-      new PublishCommand({
-        Message: JSON.stringify({
-          name,
-        }),
-        TopicArn: process.env.VALIDATION_TOPIC,
-      }),
-    );
   }
 
   static async notifyMessage(from, to) {

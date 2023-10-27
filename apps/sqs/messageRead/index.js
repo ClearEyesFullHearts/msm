@@ -50,7 +50,7 @@ async function recordMessageRead(username, messageId) {
   const reader = await data.users.findByName(username);
   if (!reader) return;
 
-  debug(`get message ${messageId}`);
+  debug(`user found, get message ${messageId}`);
   const message = await data.messages.findByID(reader.username, `M#${messageId}`);
   if (!message) return;
 

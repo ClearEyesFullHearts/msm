@@ -80,13 +80,9 @@ class Message {
 
   static async getMessage({ db, auth }, msgId) {
     debug(`get user ${auth.username}`);
-    const reader = await db.users.findByName(auth.username);
-    if (!reader) {
-      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.NOT_FOUND, 'User not found');
-    }
 
     debug(`get message ${msgId}`);
-    const message = await db.messages.findByID(reader.username, `M#${msgId}`);
+    const message = await db.messages.findByID(auth.username, `M#${msgId}`);
     if (message) {
       debug('message found');
       await db.messages.updateReadStatus(auth.username, `M#${msgId}`);
@@ -99,18 +95,6 @@ class Message {
           iv,
         },
       } = message;
-
-      // if (reader.lastActivity < 0) {
-      //   await db.users.confirmUser(reader.username);
-      //   debug('reader confirmed');
-      // } else {
-      //   await db.users.updateLastActivity(auth.username);
-      //   debug('reader updated');
-      // }
-
-      // if (reader.validation === 'NO_VALIDATION' && !process.env.NO_CHAIN) {
-      //   await AsyncAction.autoValidation(reader.username);
-      // }
 
       const id = Number(sk.split('#')[1]);
 

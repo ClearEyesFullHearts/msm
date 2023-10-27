@@ -136,10 +136,8 @@ Resources:
         MSMHostedZoneID: !Ref MSMHostedZoneID
         MSMLambdaImageName: !Sub 'mft-msm-main.${MSMStageName}.${MSMImageTag}'
         MSMNotifTopicName: !GetAtt MSMNotifiedStack.Outputs.NotifyTopicEndpoint
-        MSMValidateTopicName: !GetAtt MSMValidateStack.Outputs.ValidateTopicEndpoint
         MSMSchedulerGroupName: !GetAtt MSMCleanupStack.Outputs.GroupName
         MSMCleanAccountLambda: !GetAtt MSMCleanupStack.Outputs.AccountCleanupName
-        MSMCleanMessageLambda: !GetAtt MSMCleanupStack.Outputs.MessageCleanupName
         MSMCleanupSchedulerRole: !GetAtt MSMCleanupStack.Outputs.SchedulerRoleName
         MSMSecretID: !Ref MSMSecretID
         MSMMarkReadQueueName: !GetAtt MSMMarkReadStack.Outputs.MarkReadQueueName
