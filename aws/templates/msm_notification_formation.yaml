@@ -101,7 +101,7 @@ Resources:
       PackageType: Image
       Code:
         ImageUri: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cantlose:${NotificationImageName}'
-      MemorySize: 128
+      MemorySize: 512
       Timeout: 5
       Role: !Sub ${NotifLambdaMSMRole.Arn}
       TracingConfig:

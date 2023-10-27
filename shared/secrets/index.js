@@ -16,7 +16,7 @@ class Secret {
   }
 
   async getTracedSecretValue() {
-    await AWSXRay.segmentAsyncFunc('GetMSMSecret', this.getSecretValue());
+    await AWSXRay.captureInitializationFunc('GetMSMSecret', this.getSecretValue());
   }
 
   async getSecretValue() {

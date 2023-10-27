@@ -12,10 +12,16 @@ class XRayWrapper {
           if (i === 0) {
             subsegment.addAnnotation('domain', d);
           } else {
-            subsegment.addAnnotation(`subdomain-${i}`, d);
+            subsegment.addAnnotation(`subdomain_${i}`, d);
           }
         });
-        Object.keys(monitoring).forEach((p) => subsegment.addAnnotation(p, monitoring[p]));
+        const { annotations, metadatas } = monitoring;
+        if (annotations) {
+          Object.keys(annotations).forEach((p) => subsegment.addAnnotation(p, annotations[p]));
+        }
+        if (metadatas) {
+          Object.keys(metadatas).forEach((p) => subsegment.addMetadata(p, metadatas[p]));
+        }
 
         func
           .then((result) => {
@@ -30,7 +36,7 @@ class XRayWrapper {
     });
   }
 
-  static async segmentAsyncFunc(segmentName, func) {
+  static async captureInitializationFunc(segmentName, func) {
     return new Promise((resolve, reject) => {
       const segment = new AWSXRay.Segment(segmentName);
       const ns = AWSXRay.getNamespace();
