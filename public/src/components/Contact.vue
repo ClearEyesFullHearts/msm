@@ -1,7 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 import { router } from '@/router';
+import { useConversationStore } from '@/stores';
 
+const conversationStore = useConversationStore();
 const isShow = ref(false);
 
 defineProps(['contact']);
@@ -15,6 +17,7 @@ function onVerify(c) {
 }
 
 function goTalk(at) {
+  conversationStore.loadConvo(at);
   router.push(`/conversations/${at}`);
 }
 </script>

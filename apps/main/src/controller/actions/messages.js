@@ -2,7 +2,6 @@ const debug = require('debug')('msm-main:message');
 
 const Encryption = require('@shared/encryption');
 const ErrorHelper = require('@shared/error');
-const AsyncAction = require('./async');
 
 class Message {
   static async getInbox({ db, auth }) {

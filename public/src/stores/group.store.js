@@ -217,7 +217,7 @@ export const useGroupStore = defineStore({
 
         await fetchWrapper.post(`${baseUrl}/group/${this.current.at}/member`, { username: at, key: targetSecret });
       } catch (err) {
-        this.current.member.shift();
+        if (this.current && this.current.member) this.current.member.shift();
         throw err;
       }
     },

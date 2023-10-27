@@ -35,18 +35,15 @@ const canWrite = ref(false);
 
 let stopWatch;
 onMounted(() => {
-  conversationStore.loadConvo(props.at)
-    .then(async () => {
-      canWrite.value = current.value.target.alert === null;
-      if (current.value.target.group) {
-        canWrite.value = current.value.target.members.length > 0;
-      }
-      stopWatch = watch(current.value.messages, async () => {
-        await nextTick();
-        chatArea.value.scrollTop = chatArea.value.scrollHeight;
-      });
-      chatArea.value.scrollTop = chatArea.value.scrollHeight;
-    });
+  canWrite.value = current.value.target.alert === null;
+  if (current.value.target.group) {
+    canWrite.value = current.value.target.members.length > 0;
+  }
+  stopWatch = watch(current.value.messages, async () => {
+    await nextTick();
+    chatArea.value.scrollTop = chatArea.value.scrollHeight;
+  });
+  chatArea.value.scrollTop = chatArea.value.scrollHeight;
 });
 
 onUnmounted(() => {

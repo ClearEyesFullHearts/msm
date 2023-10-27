@@ -1,5 +1,8 @@
 <script setup>
 import { router } from '@/router';
+import { useConversationStore } from '@/stores';
+
+const conversationStore = useConversationStore();
 
 defineProps(['group']);
 
@@ -7,6 +10,7 @@ function showDetail(groupId) {
   router.push(`/group/${groupId}`);
 }
 function goTalk(at) {
+  conversationStore.loadConvo(at);
   router.push(`/conversations/${at}`);
 }
 </script>
