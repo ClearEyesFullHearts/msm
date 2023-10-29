@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const AWSXRay = require('@shared/tracing');
 
 const ALGORITHM = 'aes-256-gcm';
 const PASS_SIZE = 32;
@@ -11,9 +12,7 @@ class Encryption {
     const pass = crypto.randomBytes(PASS_SIZE);
     const iv = crypto.randomBytes(IV_SIZE);
 
-    const cipher = crypto.createCipheriv(
-      ALGORITHM, pass, iv,
-    );
+    const cipher = crypto.createCipheriv(ALGORITHM, pass, iv);
     const encrypted = cipher.update(txt);
     const cypheredText = Buffer.concat([encrypted, cipher.final(), cipher.getAuthTag()]);
 
@@ -83,4 +82,4 @@ class Encryption {
   }
 }
 
-module.exports = Encryption;
+module.exports = AWSXRay.captureClass(Encryption, { ignoreList: ['isValidPemPk', 'isBase64'] });

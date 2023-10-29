@@ -45,7 +45,7 @@ function getProxy(obj, methods) {
               return AWSXRay.captureFunc(`${domain}.${prop}`, (subsegment) => {
                 subsegment.addAnnotation('domain', domain);
                 subsegment.addAnnotation('subdomain_1', prop);
-                t2.apply(thisArg, argumentsList);
+                return t2.apply(thisArg, argumentsList);
               });
             }
             return XRayWrapper.captureAsyncFunc(`${domain}.${prop}`, t2.apply(thisArg, argumentsList));
@@ -87,6 +87,7 @@ class XRayWrapper {
             resolve(result);
           })
           .catch((err) => {
+            subsegment.addMetadata('error', JSON.stringify(err));
             subsegment.close(err);
             reject(err);
           });
@@ -121,7 +122,7 @@ class XRayWrapper {
     return getProxy(customClass, classMethods);
   }
 
-  static captureClassInstance(instance, config = {}) {
+  static captureInstance(instance, config = {}) {
     const { ignoreList = [] } = config;
     const classMethods = getAllMethodNames(instance, ignoreList);
     return getProxy(instance, classMethods);

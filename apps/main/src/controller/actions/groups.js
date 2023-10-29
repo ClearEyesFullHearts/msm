@@ -1,5 +1,6 @@
 const debug = require('debug')('msm-main:group');
 const ErrorHelper = require('@shared/error');
+const AWSXRay = require('@shared/tracing');
 const Encryption = require('@shared/encryption');
 const AsyncAction = require('./async');
 
@@ -376,4 +377,4 @@ class Group {
   }
 }
 
-module.exports = Group;
+module.exports = AWSXRay.captureClass(Group);

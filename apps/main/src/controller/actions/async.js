@@ -87,4 +87,4 @@ class Async {
   }
 }
 
-module.exports = Async;
+module.exports = AWSXRay.captureClass(Async);

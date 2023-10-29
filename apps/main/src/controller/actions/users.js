@@ -2,7 +2,7 @@
 const jwt = require('jsonwebtoken');
 const config = require('config');
 const debug = require('debug')('msm-main:user');
-
+const AWSXRay = require('@shared/tracing');
 const Encryption = require('@shared/encryption');
 const ErrorHelper = require('@shared/error');
 const MessageAction = require('./messages');
@@ -252,4 +252,4 @@ class User {
   }
 }
 
-module.exports = User;
+module.exports = AWSXRay.captureClass(User);

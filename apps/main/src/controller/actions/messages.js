@@ -1,5 +1,5 @@
 const debug = require('debug')('msm-main:message');
-
+const AWSXRay = require('@shared/tracing');
 const Encryption = require('@shared/encryption');
 const ErrorHelper = require('@shared/error');
 
@@ -126,4 +126,4 @@ class Message {
   }
 }
 
-module.exports = Message;
+module.exports = AWSXRay.captureClass(Message);

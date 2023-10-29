@@ -1,4 +1,5 @@
 const debug = require('debug')('msm-main:connection');
+const AWSXRay = require('@shared/tracing');
 
 class Connection {
   static async getConnectedUsers({ db }, { list }) {
@@ -12,4 +13,4 @@ class Connection {
   }
 }
 
-module.exports = Connection;
+module.exports = AWSXRay.captureClass(Connection);

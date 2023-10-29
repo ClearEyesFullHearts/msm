@@ -25,11 +25,11 @@ module.exports = {
       },
     } = req;
 
-    AWSXRay.captureAsyncFunc('User.createUser', User.createUser(db, {
+    User.createUser(db, {
       at, key, signature, hash, pass, kill,
-    }))
+    })
       .then(({ username }) => {
-        AWSXRay.captureAsyncFunc('AsyncAction.autoUserRemoval', AsyncAction.autoUserRemoval(db, username))
+        AsyncAction.autoUserRemoval(db, username)
           .catch((err) => {
             console.error('error on user auto removal');
             console.error(err);
@@ -57,7 +57,7 @@ module.exports = {
     } = req;
 
     const hashedPass = headers['x-msm-pass'];
-    AWSXRay.captureAsyncFunc('User.getCredentials', User.getCredentials({ db, secret }, { at, hashedPass }))
+    User.getCredentials({ db, secret }, { at, hashedPass })
       .then((challenge) => {
         res.json(challenge);
       })
@@ -80,7 +80,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('User.getUsers', User.getUsers({ db }, { search: user }))
+      User.getUsers({ db }, { search: user })
         .then((users) => {
           res.json(users);
         })
@@ -104,7 +104,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('User.getUserByName', User.getUserByName({ db, auth }, at))
+      User.getUserByName({ db, auth }, at)
         .then((user) => {
           res.json(user);
         })
@@ -128,7 +128,7 @@ module.exports = {
       } = req;
 
       const users = list[0].split(',').map((u) => u.trim());
-      AWSXRay.captureAsyncFunc('User.getList', User.getList({ db }, { list: [...new Set(users)] }))
+      User.getList({ db }, { list: [...new Set(users)] })
         .then((result) => {
           res.json(result);
         })
@@ -152,7 +152,7 @@ module.exports = {
       } = req;
 
       const users = list[0].split(',').map((u) => u.trim());
-      AWSXRay.captureAsyncFunc('Connection.getConnectedUsers', Connection.getConnectedUsers({ db }, { list: [...new Set(users)] }))
+      Connection.getConnectedUsers({ db }, { list: [...new Set(users)] })
         .then((result) => {
           res.json(result);
         })
@@ -173,7 +173,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Message.getInbox', Message.getInbox({ db, auth }))
+      Message.getInbox({ db, auth })
         .then((inbox) => {
           res.json(inbox);
         })
@@ -197,9 +197,9 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Message.getMessage', Message.getMessage({ db, auth }, Number(msgId)))
+      Message.getMessage({ db, auth }, Number(msgId))
         .then((fullMessage) => {
-          AWSXRay.captureAsyncFunc('AsyncAction.autoMessageRemoval', AsyncAction.autoMessageRemoval(db, auth.username, Number(msgId)))
+          AsyncAction.autoMessageRemoval(db, auth.username, Number(msgId))
             .catch((err) => {
               console.error('error on message auto removal');
               console.error(err);
@@ -225,7 +225,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Group.getAll', Group.getAll({ db, auth }))
+      Group.getAll({ db, auth })
         .then((groups) => {
           res.json(groups);
         })
@@ -249,7 +249,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Group.getOne', Group.getOne({ db, auth }, id))
+      Group.getOne({ db, auth }, id)
         .then((member) => {
           res.json(member);
         })
@@ -274,7 +274,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('User.removeUser', User.removeUser({ db, user: auth }, at))
+      User.removeUser({ db, user: auth }, at)
         .then(() => {
           res.status(200).send();
         })
@@ -296,7 +296,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('User.setContacts', User.setContacts({ db, user: auth }, body))
+      User.setContacts({ db, user: auth }, body)
         .then(() => {
           res.status(200).send();
         })
@@ -318,7 +318,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('User.setVaultItem', User.setVaultItem({ db, user: auth }, body))
+      User.setVaultItem({ db, user: auth }, body)
         .then(() => {
           res.status(200).send();
         })
@@ -339,7 +339,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('User.removeVaultItem', User.removeVaultItem({ db, user: auth }))
+      User.removeVaultItem({ db, user: auth })
         .then(() => {
           res.status(200).send();
         })
@@ -361,9 +361,9 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Message.writeMessage', Message.writeMessage({ db, user: auth }, body))
+      Message.writeMessage({ db, user: auth }, body)
         .then(() => {
-          AWSXRay.captureAsyncFunc('AsyncAction.notifyMessage', AsyncAction.notifyMessage(auth.username, body.to))
+          AsyncAction.notifyMessage(auth.username, body.to)
             .catch((err) => {
               console.error('error on message notification');
               console.error(err);
@@ -392,7 +392,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Message.removeMessage', Message.removeMessage({ db, user: auth }, Number(msgId)))
+      Message.removeMessage({ db, user: auth }, Number(msgId))
         .then(() => {
           res.status(200).send();
         })
@@ -414,7 +414,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('User.addSubscription', User.addSubscription({ db, user: auth }, body))
+      User.addSubscription({ db, user: auth }, body)
         .then(() => {
           res.status(201).send();
         })
@@ -436,7 +436,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Group.create', Group.create({ db, user: auth }, body))
+      Group.create({ db, user: auth }, body)
         .then((result) => {
           res.status(201).json(result);
         })
@@ -460,7 +460,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Group.delete', Group.delete({ db, user: auth }, id))
+      Group.delete({ db, user: auth }, id)
         .then(() => {
           res.status(204).send();
         })
@@ -485,7 +485,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Group.rename', Group.rename({ db, user: auth }, id, body))
+      Group.rename({ db, user: auth }, id, body)
         .then(() => {
           res.status(200).send();
         })
@@ -510,7 +510,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Group.add', Group.add({ db, user: auth }, id, body))
+      Group.add({ db, user: auth }, id, body)
         .then(() => {
           res.status(201).send();
         })
@@ -534,7 +534,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Group.remove', Group.remove({ db, user: auth }, id))
+      Group.remove({ db, user: auth }, id)
         .then(() => {
           res.status(204).send();
         })
@@ -560,7 +560,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Group.setAdmin', Group.setAdmin({ db, user: auth }, id, username, body))
+      Group.setAdmin({ db, user: auth }, id, username, body)
         .then(() => {
           res.status(200).send();
         })
@@ -586,7 +586,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Group.revoke', Group.revoke({ db, user: auth }, id, username, body))
+      Group.revoke({ db, user: auth }, id, username, body)
         .then(() => {
           res.status(200).send();
         })
@@ -611,7 +611,7 @@ module.exports = {
         },
       } = req;
 
-      AWSXRay.captureAsyncFunc('Group.write', Group.write({ db, user: auth }, id, body))
+      Group.write({ db, user: auth }, id, body)
         .then(() => {
           res.status(201).send();
         })
