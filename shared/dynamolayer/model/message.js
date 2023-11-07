@@ -88,7 +88,7 @@ class MessageData {
   }
 
   async updateReadStatus(username, msgId) {
-    this.Entity.update(
+    await this.Entity.update(
       { pk: `U#${username}`, sk: msgId },
       {
         $SET: { hasBeenRead: 1 },

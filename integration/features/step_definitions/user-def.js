@@ -43,37 +43,65 @@ Given('I am a new valid user', async function () {
   const epk = keys.public.encrypt;
   const spk = keys.public.signature;
   const sha = keys.public.signedHash;
-  const pass = Util.sign(keys.private.signature, keys.random.password);
-  const kill = Util.sign(keys.private.signature, keys.random.killSwitch);
+  const esk = keys.private.encrypt;
+  const ssk = keys.private.signature;
+
   this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(epk));
   this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(spk));
   this.apickli.storeValueInScenarioScope('NEW_SHA', sha);
   this.apickli.storeValueInScenarioScope('NEW_ESK', keys.private.encrypt);
   this.apickli.storeValueInScenarioScope('NEW_SSK', keys.private.signature);
-  this.apickli.storeValueInScenarioScope('PASS_HASH', keys.random.password);
-  this.apickli.storeValueInScenarioScope('KILL_HASH', keys.random.killSwitch);
-  this.apickli.storeValueInScenarioScope('PASS', pass);
-  this.apickli.storeValueInScenarioScope('KILL', kill);
+
   const username = Util.getRandomString(7);
   this.apickli.storeValueInScenarioScope('MY_AT', username);
+
+  const keyVal = `${esk}\n----- SIGNATURE -----\n${ssk}`;
+  const vaultValues = await Util.generateVaultValues(ssk, keyVal);
+  const {
+    esk: cypherKey,
+    eup,
+    euk,
+    rs1,
+    rs2,
+    iv1,
+    iv2,
+    rp,
+    sup,
+    suk,
+  } = vaultValues;
+
+  this.apickli.storeValueInScenarioScope('PASS_HASH', eup);
+  this.apickli.storeValueInScenarioScope('KILL_HASH', euk);
+  // this.apickli.storeValueInScenarioScope('PASS', eup);
+  // this.apickli.storeValueInScenarioScope('KILL', euk);
 
   this.apickli.setRequestBody(JSON.stringify({
     at: username,
     key: epk,
     signature: spk,
     hash: sha,
-    pass,
-    kill,
+    vault: {
+      token: cypherKey,
+      salt: rs1,
+      iv: iv1,
+      pass: sup,
+      kill: suk,
+    },
+    attic: {
+      iv: iv2,
+      salt: rs2,
+      proof: rp,
+    },
   }));
   await this.post('/users');
 
   // get identity challenge
-  this.apickli.addRequestHeader('x-msm-pass', keys.random.password);
+  this.apickli.addRequestHeader('x-msm-pass', vaultValues.eup);
   await this.get(`/identity/${username}`);
 
   // resolve it for body
   const respBody = JSON.parse(this.apickli.httpResponse.body);
-  const resolved = Util.resolve(keys.private.encrypt, respBody);
+  const resolved = Util.resolve(esk, respBody);
   this.apickli.storeValueInScenarioScope('AUTH', resolved);
   this.apickli.storeValueInScenarioScope('MY_ID', resolved.user.id);
   this.apickli.httpResponse.body = JSON.stringify(resolved);

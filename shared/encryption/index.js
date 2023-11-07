@@ -8,13 +8,34 @@ const PK_START = '-----BEGIN PUBLIC KEY-----';
 const PK_END = '-----END PUBLIC KEY-----';
 
 class Encryption {
+  static simpleEncrypt(txt, keyBuffer) {
+    const iv = crypto.randomBytes(IV_SIZE);
+    const cipher = crypto.createCipheriv(ALGORITHM, keyBuffer, iv);
+    const encrypted = cipher.update(txt);
+    const result = Buffer.concat([encrypted, cipher.final(), cipher.getAuthTag()]);
+
+    return {
+      value: result.toString('base64'),
+      vector: iv.toString('base64'),
+    };
+  }
+
+  static simpleDecrypt({ value, vector }, keyBuffer) {
+    const ivBuffer = Buffer.from(vector, 'base64');
+    const cipher = Buffer.from(value, 'base64');
+    const authTag = cipher.subarray(cipher.length - 16);
+    const crypted = cipher.subarray(0, cipher.length - 16);
+    const decipher = crypto.createDecipheriv(ALGORITHM, keyBuffer, ivBuffer);
+    decipher.setAuthTag(authTag);
+    return Buffer.concat([decipher.update(crypted), decipher.final()]);
+  }
+
   static hybrid(txt, key) {
     const pass = crypto.randomBytes(PASS_SIZE);
     const iv = crypto.randomBytes(IV_SIZE);
 
     const cipher = crypto.createCipheriv(ALGORITHM, pass, iv);
-    const encrypted = cipher.update(txt);
-    const cypheredText = Buffer.concat([encrypted, cipher.final(), cipher.getAuthTag()]);
+    const cypheredText = Buffer.concat([cipher.update(txt), cipher.final(), cipher.getAuthTag()]);
 
     const cypheredPass = crypto.publicEncrypt({
       key,
@@ -59,6 +80,42 @@ class Encryption {
     return Buffer.from(str, 'base64').toString('base64') === str;
   }
 
+  static encryptVault(key, {
+    token,
+    salt,
+    iv,
+    pass,
+    kill,
+  }) {
+    const keyBuffer = Buffer.from(key, 'base64');
+
+    return {
+      token: this.simpleEncrypt(token, keyBuffer),
+      salt: this.simpleEncrypt(salt, keyBuffer),
+      iv: this.simpleEncrypt(iv, keyBuffer),
+      pass: this.simpleEncrypt(pass, keyBuffer),
+      kill: this.simpleEncrypt(kill, keyBuffer),
+    };
+  }
+
+  static decryptVault(key, {
+    token,
+    salt,
+    iv,
+    pass,
+    kill,
+  }) {
+    const keyBuffer = Buffer.from(key, 'base64');
+
+    return {
+      token: token ? this.simpleDecrypt(token, keyBuffer).toString() : undefined,
+      salt: salt ? this.simpleDecrypt(salt, keyBuffer).toString() : undefined,
+      iv: iv ? this.simpleDecrypt(iv, keyBuffer).toString() : undefined,
+      pass: pass ? this.simpleDecrypt(pass, keyBuffer).toString() : undefined,
+      kill: kill ? this.simpleDecrypt(kill, keyBuffer).toString() : undefined,
+    };
+  }
+
   static encryptMessage(target, title, text) {
     const { username, key } = target;
 
@@ -82,4 +139,4 @@ class Encryption {
   }
 }
 
-module.exports = AWSXRay.captureClass(Encryption, { ignoreList: ['isValidPemPk', 'isBase64'] });
+module.exports = AWSXRay.captureClass(Encryption, { ignoreList: ['isValidPemPk', 'isBase64', 'simpleEncrypt', 'simpleDecrypt'] });

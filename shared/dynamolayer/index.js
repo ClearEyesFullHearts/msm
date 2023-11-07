@@ -101,7 +101,7 @@ class Data {
         { pk: `U#${username}`, sk: username },
         {
           $SET: { expirationDate: removalDate },
-          $REMOVE: ['id', 'key', 'signature', 'hash', 'vault', 'pass', 'kill', 'contacts', 'lastActivity', 'validation', 'msgCount'],
+          $REMOVE: ['id', 'key', 'signature', 'hash', 'vault', 'attic', 'pass', 'kill', 'contacts', 'lastActivity', 'validation', 'msgCount'],
         },
       );
     }

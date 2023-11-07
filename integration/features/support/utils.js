@@ -43,6 +43,9 @@ const TABLE_NAME = config.get('dynamo.table');
 const ALGORITHM = 'aes-256-gcm';
 const PASS_SIZE = 32;
 const IV_SIZE = 16;
+const PBDKF_HASH = 'sha512';
+const PBDKF_ITERATIONS = 600000;
+const PBDKF_KEY_LEN = 32;
 class Util {
   static async generateKeyPair() {
     const doubleKeyPair = await Promise.all([
@@ -73,11 +76,85 @@ class Util {
         encrypt: formatSK(privateKey),
         signature: formatSK(sigSK),
       },
-      random: {
-        password: crypto.randomBytes(32).toString('base64'),
-        killSwitch: crypto.randomBytes(32).toString('base64'),
-      },
     };
+  }
+
+  static generateVaultValues(signingKey, clearSK, password, killswitch) {
+    let rPass = crypto.randomBytes(32);
+    if (password) {
+      rPass = Buffer.from(password);
+    }
+    let rKill = crypto.randomBytes(32);
+    if (killswitch) {
+      rKill = Buffer.from(killswitch);
+    }
+    const rs1 = crypto.randomBytes(64);
+    const rs2 = crypto.randomBytes(64);
+
+    const hp1 = crypto.pbkdf2Sync(rPass, rs1, PBDKF_ITERATIONS, PBDKF_KEY_LEN, PBDKF_HASH);
+    const hp2 = crypto.pbkdf2Sync(rPass, rs2, PBDKF_ITERATIONS, PBDKF_KEY_LEN, PBDKF_HASH);
+    const hks = crypto.pbkdf2Sync(rKill, rs2, PBDKF_ITERATIONS, PBDKF_KEY_LEN, PBDKF_HASH);
+
+    const iv1 = crypto.randomBytes(IV_SIZE);
+    const iv2 = crypto.randomBytes(IV_SIZE);
+    const rp = crypto.randomBytes(64).toString('base64');
+
+    const cipherESK = crypto.createCipheriv(ALGORITHM, hp1, iv1);
+    const esk = Buffer.concat([
+      cipherESK.update(clearSK), cipherESK.final(), cipherESK.getAuthTag()
+    ]);
+
+    const cipherEUP = crypto.createCipheriv(ALGORITHM, hp2, iv2);
+    const eup = Buffer.concat([cipherEUP.update(rp), cipherEUP.final(), cipherEUP.getAuthTag()]);
+    const sup = crypto.sign('rsa-sha256', eup, {
+      key: signingKey,
+      padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+      saltLength: 32,
+    });
+
+    const cipherEUK = crypto.createCipheriv(ALGORITHM, hks, iv2);
+    const euk = Buffer.concat([cipherEUK.update(rp), cipherEUK.final(), cipherEUK.getAuthTag()]);
+    const suk = crypto.sign('rsa-sha256', euk, {
+      key: signingKey,
+      padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+      saltLength: 32,
+    });
+
+    return {
+      password: rPass.toString('base64'),
+      killswitch: rKill.toString('base64'),
+      esk: esk.toString('base64'),
+      rp,
+      eup: eup.toString('base64'),
+      sup: sup.toString('base64'),
+      euk: euk.toString('base64'),
+      suk: suk.toString('base64'),
+      rs1: rs1.toString('base64'),
+      rs2: rs2.toString('base64'),
+      iv1: iv1.toString('base64'),
+      iv2: iv2.toString('base64'),
+      hp1: hp1.toString('base64'),
+      hp2: hp2.toString('base64'),
+      hks: hks.toString('base64'),
+    };
+  }
+
+  static openVault({ token, salt, iv }, passphrase) {
+    const rPass = Buffer.from(passphrase);
+    const rs1 = Buffer.from(salt, 'base64');
+    const iv1 = Buffer.from(iv, 'base64');
+    const hp1 = crypto.pbkdf2Sync(rPass, rs1, PBDKF_ITERATIONS, PBDKF_KEY_LEN, PBDKF_HASH);
+
+    const algorithm = 'aes-256-gcm';
+    const cipher = Buffer.from(token, 'base64');
+    const authTag = cipher.subarray(cipher.length - 16);
+    const crypted = cipher.subarray(0, cipher.length - 16);
+
+    const decipher = crypto.createDecipheriv(algorithm, hp1, iv1);
+    decipher.setAuthTag(authTag);
+    const decData = Buffer.concat([decipher.update(crypted), decipher.final()]);
+
+    return decData.toString();
   }
 
   static generateFalseKeyPair() {

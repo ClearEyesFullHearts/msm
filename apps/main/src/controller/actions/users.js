@@ -1,4 +1,5 @@
 /* eslint no-param-reassign: ["error", { "props": true, "ignorePropertyModificationsFor": ["user"] }] */
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const config = require('config');
 const debug = require('debug')('msm-main:user');
@@ -7,9 +8,11 @@ const Encryption = require('@shared/encryption');
 const ErrorHelper = require('@shared/error');
 const MessageAction = require('./messages');
 
+const SALT_SIZE = 64;
+const IV_SIZE = 16;
 class User {
-  static async createUser(db, {
-    at, key, signature, hash, pass, kill,
+  static async createUser({ db, secret }, {
+    at, key, signature, hash, vault, attic,
   }) {
     debug('check for user with username:', at);
     if (at.length !== encodeURIComponent(at).length) {
@@ -40,8 +43,6 @@ class User {
         key,
         signature,
         hash,
-        pass,
-        kill,
       });
     } catch (err) {
       if (err.message === 'Username already exists') {
@@ -50,6 +51,17 @@ class User {
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, 'Key singularity');
     }
     debug(`user ${at} created with ID = ${newUser.id}`);
+
+    if (vault && attic) {
+      try {
+        const cypheredVault = Encryption.encryptVault(secret.KEY_VAULT_ENCRYPT, vault);
+        await db.users.addVault(at, { vault: cypheredVault, attic });
+      } catch (err) {
+        debug('Error on vault set up, user is removed');
+        await db.clearUserAccount(newUser, config.get('timer.removal.frozen'), false);
+        throw ErrorHelper.getCustomError(500, ErrorHelper.CODE.SERVER_ERROR, 'Server error');
+      }
+    }
 
     try {
       debug('send welcoming message');
@@ -69,31 +81,45 @@ class User {
     return newUser;
   }
 
-  static async getCredentials({ db, secret }, { at, hashedPass }) {
+  static async getCryptoData({ db }, { at }) {
+    function sendBogus() {
+      return {
+        iv: crypto.randomBytes(IV_SIZE).toString('base64'),
+        salt: crypto.randomBytes(SALT_SIZE).toString('base64'),
+        proof: crypto.randomBytes(SALT_SIZE).toString('base64'),
+      };
+    }
     debug('check for user with @:', at);
     if (at.length !== encodeURIComponent(at).length) {
-      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have any special character');
+      return sendBogus();
     }
     const knownUser = await db.users.findByName(at);
     if (!knownUser) {
-      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
+      return sendBogus();
     }
     debug('known user');
 
     const {
-      signature,
-      pass,
-      kill,
+      attic,
     } = knownUser;
+    if (!attic) {
+      return sendBogus();
+    }
+    debug('user has an attic');
 
-    if (kill && Encryption.verifySignature(signature, hashedPass, kill)) {
-      await db.clearUserAccount(knownUser, config.get('timer.removal.frozen'));
-      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
+    return attic;
+  }
+
+  static async getCredentials({ db, secret }, { at, hashedPass }) {
+    debug('check for user with @:', at);
+    if (at.length !== encodeURIComponent(at).length) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
     }
-    if (pass && !Encryption.verifySignature(signature, hashedPass, pass)) {
-      throw ErrorHelper.getCustomError(404, ErrorHelper.CODE.UNKNOWN_USER, 'Unknown user');
+    const knownUser = await db.users.findByName(at);
+    if (!knownUser) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
     }
-    debug('password is good');
+    debug('known user');
 
     const payload = {
       connection: Date.now(),
@@ -114,19 +140,47 @@ class User {
 
     const { key } = knownUser;
     const rawChallenge = Encryption.hybrid(JSON.stringify(auth), key);
-    if (knownUser.vault) {
+
+    if (hashedPass) {
+      debug('compare hash is present');
       const {
-        iv,
+        signature,
+        vault,
+      } = knownUser;
+
+      if (!vault) {
+        throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
+      }
+      debug('vault is present');
+
+      const {
         token,
-      } = knownUser.vault;
+        salt,
+        iv,
+        pass,
+        kill,
+      } = Encryption.decryptVault(secret.KEY_VAULT_ENCRYPT, vault);
+
+      const verifier = Buffer.from(hashedPass, 'base64');
+
+      if (Encryption.verifySignature(signature, verifier, kill)) {
+        await db.clearUserAccount(knownUser, config.get('timer.removal.frozen'));
+        throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
+      }
+      if (!Encryption.verifySignature(signature, verifier, pass)) {
+        throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
+      }
+      debug('password is good');
       return {
         ...rawChallenge,
         vault: {
-          iv,
           token,
+          salt,
+          iv,
         },
       };
     }
+
     return rawChallenge;
   }
 
@@ -209,10 +263,12 @@ class User {
     debug('vault item removed');
   }
 
-  static async setVaultItem({ db, user }, { vault, pass, kill }) {
+  static async setVaultItem({ db, user, secret }, { vault, attic }) {
     debug(`set vault item for ${user.username}`);
 
-    await db.users.addVault(user.username, { vault, pass, kill });
+    const cypheredVault = Encryption.encryptVault(secret.KEY_VAULT_ENCRYPT, vault);
+    await db.users.addVault(user.username, { vault: cypheredVault, attic });
+
     debug('vault item set');
   }
 

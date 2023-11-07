@@ -160,32 +160,50 @@ Given('I set false signature header', function () {
   this.apickli.addRequestHeader('x-msm-sig', falseSig);
 });
 
-Given(/^I set my vault item (.*) with password (.*) and (.*)$/, function (varName, passphrase, killswitch) {
+Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (varName, passphrase, killswitch) {
   this.apickli.storeValueInScenarioScope('VAULT_PASS', passphrase);
   const eskVal = this.apickli.scenarioVariables.ESK || this.apickli.scenarioVariables.NEW_ESK;
   const sskVal = this.apickli.scenarioVariables.SSK || this.apickli.scenarioVariables.NEW_SSK;
   const keys = `${eskVal}\n----- SIGNATURE -----\n${sskVal}`;
-  const vault = Util.symmetricEncrypt(keys, passphrase);
+  const vaultValues = await Util.generateVaultValues(sskVal, keys, passphrase, killswitch);
+  const {
+    esk: cypherKey,
+    eup,
+    euk,
+    rs1,
+    rs2,
+    iv1,
+    iv2,
+    rp,
+    sup,
+    suk,
+  } = vaultValues;
 
-  const passHash = Util.hashToBase64(passphrase);
-  const signedPass = Util.sign(sskVal, passHash);
-  this.apickli.storeValueInScenarioScope('NEW_PASS_HASH', passHash);
-
-  const killHash = Util.hashToBase64(killswitch);
-  const signedKill = Util.sign(sskVal, killHash);
-  this.apickli.storeValueInScenarioScope('NEW_KILL_HASH', killHash);
+  this.apickli.storeValueInScenarioScope('NEW_PASS_HASH', eup);
+  this.apickli.storeValueInScenarioScope('NEW_KILL_HASH', euk);
+  this.apickli.storeValueInScenarioScope('NEW_SALT', rs1);
+  this.apickli.storeValueInScenarioScope('NEW_IV', iv1);
 
   this.apickli.storeValueInScenarioScope(varName, JSON.stringify({
-    vault,
-    pass: signedPass,
-    kill: signedKill,
+    vault: {
+      token: cypherKey,
+      salt: rs1,
+      iv: iv1,
+      pass: sup,
+      kill: suk,
+    },
+    attic: {
+      iv: iv2,
+      salt: rs2,
+      proof: rp,
+    },
   }));
 });
 
 Then(/^I open the vault (.*) with (.*)$/, function (vaultName, passphrase) {
   const vault = this.apickli.scenarioVariables[vaultName];
 
-  const privateK = Util.symmetricDecrypt(vault, passphrase);
+  const privateK = Util.openVault(vault, passphrase);
 
   const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
   this.apickli.storeValueInScenarioScope('ESK', eskFile);

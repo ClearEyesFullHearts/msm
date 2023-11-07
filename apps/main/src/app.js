@@ -36,7 +36,7 @@ class MSMMain {
     this.app.locals.db = data;
     debug('data is added');
 
-    const secret = new Secret(['KEY_AUTH_SIGN']);
+    const secret = new Secret(['KEY_AUTH_SIGN', 'KEY_VAULT_ENCRYPT']);
     await secret.getTracedSecretValue();
     this.app.locals.secret = secret;
     debug('secret is added');

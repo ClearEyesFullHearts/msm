@@ -3,6 +3,7 @@ const dynamoose = require('dynamoose');
 const { v4: uuidv4 } = require('uuid');
 const challengeSchema = require('./schemas/challenge');
 const vaultItemSchema = require('./schemas/vaultItem');
+const atticItemSchema = require('./schemas/atticItem');
 
 class UserData {
   constructor() {
@@ -49,15 +50,10 @@ class UserData {
         schema: vaultItemSchema,
         default: null,
       },
-      pass: {
-        type: String,
-        minLength: 172,
-        maxLength: 172,
-      },
-      kill: {
-        type: String,
-        minLength: 172,
-        maxLength: 172,
+      attic: {
+        type: Object,
+        schema: atticItemSchema,
+        default: null,
       },
       contacts: {
         type: Object,
@@ -130,8 +126,6 @@ class UserData {
     key,
     signature,
     hash,
-    pass,
-    kill,
   }, isRetry = false) {
     const id = uuidv4();
 
@@ -146,8 +140,6 @@ class UserData {
       key,
       signature,
       hash,
-      pass,
-      kill,
     };
     try {
       let result = await dynamoose.transaction([
@@ -190,8 +182,6 @@ class UserData {
             key,
             signature,
             hash,
-            pass,
-            kill,
           }, true);
           return retryUser;
         default:
@@ -246,7 +236,7 @@ class UserData {
   }
 
   async updateLastActivity(username) {
-    this.Entity.update(
+    await this.Entity.update(
       { pk: `U#${username}`, sk: username },
       {
         $SET: { lastActivity: UserData.roundTimeToDays(Date.now()) },
@@ -255,7 +245,7 @@ class UserData {
   }
 
   async updateValidation(username, val) {
-    this.Entity.update(
+    await this.Entity.update(
       { pk: `U#${username}`, sk: username },
       {
         $SET: { validation: val },
@@ -264,25 +254,25 @@ class UserData {
   }
 
   async addVault(username, item) {
-    this.Entity.update(
+    await this.Entity.update(
       { pk: `U#${username}`, sk: username },
       {
-        $SET: { vault: item.vault, pass: item.pass, kill: item.kill },
+        $SET: { vault: item.vault, attic: item.attic },
       },
     );
   }
 
   async deleteVault(username) {
-    this.Entity.update(
+    await this.Entity.update(
       { pk: `U#${username}`, sk: username },
       {
-        $REMOVE: ['vault', 'pass', 'kill'],
+        $REMOVE: ['vault', 'attic'],
       },
     );
   }
 
   async setContacts(username, item) {
-    this.Entity.update(
+    await this.Entity.update(
       { pk: `U#${username}`, sk: username },
       {
         $SET: { contacts: item },

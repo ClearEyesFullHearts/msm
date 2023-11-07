@@ -9,7 +9,8 @@ class Secret {
   constructor(choice = ['*']) {
     this.choice = choice;
     this.client = new SecretsManagerClient();
-    this.KEY_AUTH_SIGN = 'supersecret';
+    this.KEY_AUTH_SIGN = 'xgcNGlHiShHnhM5qlyQXJLhJokbGWzHatLBwOgcTiE4=';
+    this.KEY_VAULT_ENCRYPT = 'oN/Yguy3Y1Y2O4zEWdxzib2rxt8aMRmGWu+p8DXsh1M=';
     this.PRIVATE_VAPID_KEY = 'N/A';
     this.KEY_WALLET_SECRET = 'N/A';
     this.loaded = false;

@@ -1,4 +1,3 @@
-const AWSXRay = require('@shared/tracing');
 const AuthMiddleware = require('../lib/auth');
 const User = require('./actions/users');
 const Message = require('./actions/messages');
@@ -15,18 +14,19 @@ module.exports = {
         key,
         signature,
         hash,
-        pass,
-        kill,
+        vault,
+        attic,
       },
       app: {
         locals: {
           db,
+          secret,
         },
       },
     } = req;
 
-    User.createUser(db, {
-      at, key, signature, hash, pass, kill,
+    User.createUser({ db, secret }, {
+      at, key, signature, hash, vault, attic,
     })
       .then(({ username }) => {
         AsyncAction.autoUserRemoval(db, username)
@@ -37,6 +37,26 @@ module.exports = {
           .finally(() => {
             res.status(201).send();
           });
+      })
+      .catch((err) => {
+        next(err);
+      });
+  },
+  attic: (req, res, next) => {
+    const {
+      params: {
+        at,
+      },
+      app: {
+        locals: {
+          db,
+        },
+      },
+    } = req;
+
+    User.getCryptoData({ db }, { at })
+      .then((attic) => {
+        res.json(attic);
       })
       .catch((err) => {
         next(err);
@@ -314,11 +334,12 @@ module.exports = {
         app: {
           locals: {
             db,
+            secret
           },
         },
       } = req;
 
-      User.setVaultItem({ db, user: auth }, body)
+      User.setVaultItem({ db, user: auth, secret }, body)
         .then(() => {
           res.status(200).send();
         })
