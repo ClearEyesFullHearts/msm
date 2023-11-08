@@ -12,22 +12,11 @@ Given(/^I load up (.*) public keys$/, async function (folder) {
         signature: formattedSPK,
         signedHash,
       },
-      private: {
-        signature: ssk,
-      },
-      random: {
-        password,
-        killSwitch,
-      },
     } = await Util.generateKeyPair();
 
     this.apickli.storeValueInScenarioScope('EPK', JSON.stringify(formattedPK));
     this.apickli.storeValueInScenarioScope('SPK', JSON.stringify(formattedSPK));
     this.apickli.storeValueInScenarioScope('SHA', signedHash);
-    this.apickli.storeValueInScenarioScope('PASS_HASH', password);
-    this.apickli.storeValueInScenarioScope('KILL_HASH', killSwitch);
-    this.apickli.storeValueInScenarioScope('PASS', Util.sign(ssk, password));
-    this.apickli.storeValueInScenarioScope('KILL', Util.sign(ssk, killSwitch));
   } else {
     const file = fs.readFileSync(`./data/users/${folder}/public.pem`).toString();
     const [publicK, hash] = file.split('\n----- HASH -----\n');
@@ -43,8 +32,6 @@ Given(/^I load up (.*) private keys$/, function (folder) {
   const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
   this.apickli.storeValueInScenarioScope('NEW_ESK', eskFile);
   this.apickli.storeValueInScenarioScope('NEW_SSK', sskFile);
-  // this.apickli.storeValueInScenarioScope('ESK', eskFile);
-  // this.apickli.storeValueInScenarioScope('SSK', sskFile);
 });
 
 Given(/^I set var (.*) to a (.*) characters long (.*)string$/, function (varName, length, format) {
@@ -64,8 +51,6 @@ Given('I generate a false encryption key', async function () {
   const keys = await Util.generateKeyPair();
   const spk = keys.public.signature;
   const ssk = keys.private.signature;
-  const pass = Util.sign(ssk, keys.random.password);
-  const kill = Util.sign(ssk, keys.random.killSwitch);
   const pair = Util.generateFalseKeyPair();
   const epk = pair.public.encrypt;
 
@@ -78,31 +63,18 @@ Given('I generate a false encryption key', async function () {
   this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(epk));
   this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(spk));
   this.apickli.storeValueInScenarioScope('NEW_SHA', signedHash);
-  this.apickli.storeValueInScenarioScope('PASS_HASH', pass);
-  this.apickli.storeValueInScenarioScope('KILL_HASH', kill);
-  this.apickli.storeValueInScenarioScope('PASS', pass);
-  this.apickli.storeValueInScenarioScope('KILL', kill);
   const username = Util.getRandomString(25);
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 });
 
 Given('I generate a false signature key', async function () {
-  // const publicK = fs.readFileSync('./data/users/user1/public.pem').toString();
-  // const [epkFile] = publicK.split('\n----- SIGNATURE -----\n');
   const keys = await Util.generateKeyPair();
   const epk = keys.public.encrypt;
-  const ssk = keys.private.signature;
-  const pass = Util.sign(ssk, keys.random.password);
-  const kill = Util.sign(ssk, keys.random.killSwitch);
   const pair = Util.generateFalseKeyPair();
   const spk = pair.public.signature;
   this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(epk));
   this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(spk));
   this.apickli.storeValueInScenarioScope('NEW_SHA', pair.public.signedHash);
-  this.apickli.storeValueInScenarioScope('PASS_HASH', pass);
-  this.apickli.storeValueInScenarioScope('KILL_HASH', kill);
-  this.apickli.storeValueInScenarioScope('PASS', pass);
-  this.apickli.storeValueInScenarioScope('KILL', kill);
   const username = Util.getRandomString(25);
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 });
@@ -149,10 +121,15 @@ Given('I set signature header', function () {
 });
 
 Given(/^I set Pass header with (.*)$/, function (password) {
+  this.apickli.removeRequestHeader('x-msm-pass');
   const val = this.apickli.replaceVariables(password);
 
-  const myHash = Util.hashToBase64(val);
-  this.apickli.addRequestHeader('x-msm-pass', myHash);
+  const {
+    iv, salt, proof,
+  } = this.apickli.scenarioVariables.ATTIC;
+
+  const myHeader = Util.getHeaderFromAttic({ iv, salt, proof }, val);
+  this.apickli.addRequestHeader('x-msm-pass', myHeader);
 });
 
 Given('I set false signature header', function () {
@@ -202,8 +179,8 @@ Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (
 
 Then(/^I open the vault (.*) with (.*)$/, function (vaultName, passphrase) {
   const vault = this.apickli.scenarioVariables[vaultName];
-
-  const privateK = Util.openVault(vault, passphrase);
+  const val = this.apickli.replaceVariables(passphrase);
+  const privateK = Util.openVault(vault, val);
 
   const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
   this.apickli.storeValueInScenarioScope('ESK', eskFile);

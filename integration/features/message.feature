@@ -23,7 +23,7 @@ Scenario: Only the target can read a message
   And I am existing `RANDOM_USER.7`
   And I GET /inbox
   And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
-  And I am existing `RANDOM_USER.9`
+  And I am existing `RANDOM_USER.10`
   When I GET /message/`FIRST_MSG_ID`
   Then response code should be 404
   And response body path $.code should be NOT_FOUND
@@ -72,7 +72,6 @@ Scenario: Message should have a valid content
 
 Scenario: Inactive user cannot write a message
   Given I am a new invalidated user
-  And I set X-msm-Pass header to `PASS_HASH`
   And I GET /identity/`MY_AT`
   And response body match a challenge
   And I store the value of body path $ as AUTH in scenario scope

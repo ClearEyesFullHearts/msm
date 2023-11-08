@@ -9,17 +9,12 @@ Given('I am a new invalidated user', async function () {
   const epk = keys.public.encrypt;
   const spk = keys.public.signature;
   const sha = keys.public.signedHash;
-  const pass = Util.sign(keys.private.signature, keys.random.password);
-  const kill = Util.sign(keys.private.signature, keys.random.killSwitch);
   this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(epk));
   this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(spk));
   this.apickli.storeValueInScenarioScope('NEW_SHA', sha);
   this.apickli.storeValueInScenarioScope('NEW_ESK', keys.private.encrypt);
   this.apickli.storeValueInScenarioScope('NEW_SSK', keys.private.signature);
-  this.apickli.storeValueInScenarioScope('PASS_HASH', keys.random.password);
-  this.apickli.storeValueInScenarioScope('KILL_HASH', keys.random.killSwitch);
-  this.apickli.storeValueInScenarioScope('PASS', pass);
-  this.apickli.storeValueInScenarioScope('KILL', kill);
+
   const username = Util.getRandomString(25);
 
   this.apickli.storeValueInScenarioScope('MY_AT', username);
@@ -30,8 +25,6 @@ Given('I am a new invalidated user', async function () {
     key: epk,
     signature: spk,
     hash: sha,
-    pass,
-    kill,
   }));
   await this.post('/users');
 });
@@ -58,6 +51,8 @@ Given('I am a new valid user', async function () {
   const keyVal = `${esk}\n----- SIGNATURE -----\n${ssk}`;
   const vaultValues = await Util.generateVaultValues(ssk, keyVal);
   const {
+    password,
+    killswitch,
     esk: cypherKey,
     eup,
     euk,
@@ -72,8 +67,8 @@ Given('I am a new valid user', async function () {
 
   this.apickli.storeValueInScenarioScope('PASS_HASH', eup);
   this.apickli.storeValueInScenarioScope('KILL_HASH', euk);
-  // this.apickli.storeValueInScenarioScope('PASS', eup);
-  // this.apickli.storeValueInScenarioScope('KILL', euk);
+  this.apickli.storeValueInScenarioScope('PASS', password);
+  this.apickli.storeValueInScenarioScope('KILL', killswitch);
 
   this.apickli.setRequestBody(JSON.stringify({
     at: username,
@@ -120,12 +115,20 @@ Given(/^I am existing (.*)$/, async function (varName) {
   this.apickli.removeRequestHeader('x-msm-pass');
   const username = this.apickli.replaceVariables(varName);
 
-  const passHash = Util.hashToBase64(username);
-  this.apickli.storeValueInScenarioScope('PASS_HASH', passHash);
-  this.apickli.addRequestHeader('x-msm-pass', passHash);
+  await this.get(`/attic/${username}`);
+
+  const attic = JSON.parse(this.apickli.httpResponse.body);
+  this.apickli.storeValueInScenarioScope('ATTIC', attic);
+  const {
+    iv, salt, proof,
+  } = attic;
+
+  const myHeader = Util.getHeaderFromAttic({ iv, salt, proof }, username);
+
+  this.apickli.addRequestHeader('x-msm-pass', myHeader);
   await this.get(`/identity/${username}`);
   const respBody = JSON.parse(this.apickli.httpResponse.body);
-  const privateK = Util.symmetricDecrypt(respBody.vault, username);
+  const privateK = Util.openVault(respBody.vault, username);
 
   const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
   this.apickli.storeValueInScenarioScope('ESK', eskFile);
@@ -149,6 +152,8 @@ Given(/^I am existing (.*)$/, async function (varName) {
   this.apickli.setBearerToken();
 
   this.apickli.setRequestBody(JSON.stringify({}));
+  this.apickli.removeRequestHeader('x-msm-sig');
+  this.apickli.removeRequestHeader('x-msm-pass');
 });
 
 Given(/^I am authenticated user (.*)$/, async function (folder) {
@@ -168,8 +173,6 @@ Given(/^I am authenticated user (.*)$/, async function (folder) {
   this.apickli.storeValueInScenarioScope('ESK', eskFile);
   this.apickli.storeValueInScenarioScope('SSK', sskFile);
 
-  const falseHash = crypto.randomBytes(32).toString('base64');
-  this.apickli.addRequestHeader('x-msm-pass', falseHash);
   // get identity challenge
   await this.get(`/identity/${folder}`);
 

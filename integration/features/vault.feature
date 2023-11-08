@@ -31,8 +31,8 @@ Scenario: Set the vault up and use the switch
   Then response code should be 200
   And I set X-msm-Pass header to `NEW_KILL_HASH`
   And I GET /identity/`MY_AT`
-  Then response code should be 404
-  And response body path $.code should be UNKNOWN_USER
+  Then response code should be 400
+  And response body path $.code should be BAD_REQUEST_FORMAT
   Given I am existing `RANDOM_USER.7`
   When I GET /search?user=`MY_AT`
   Then response code should be 200
@@ -44,8 +44,6 @@ Scenario: Delete the vault
   And I set signature header
   When I DELETE /vault
   Then response code should be 200
-  And I set var FALSE_PASS to a 33 characters long base64 string
-  And I set X-msm-Pass header to `FALSE_PASS`
   And I GET /identity/`RANDOM_USER.12`
   Then response code should be 200
   And response body should not contain vault

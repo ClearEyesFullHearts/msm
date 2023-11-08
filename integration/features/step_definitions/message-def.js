@@ -66,8 +66,6 @@ Given(/^(.*) write a message as (.*)$/, async function (from, messageBody) {
   this.apickli.storeValueInScenarioScope('ESK', eskFile);
   this.apickli.storeValueInScenarioScope('SSK', sskFile);
 
-  const falseHash = crypto.randomBytes(32).toString('base64');
-  this.apickli.addRequestHeader('x-msm-pass', falseHash);
   // get identity challenge
   await this.get(`/identity/${from}`);
 

@@ -58,6 +58,12 @@ class Util {
       { publicKey: sigPK, privateKey: sigSK },
     ] = doubleKeyPair;
 
+    if (formatSK(privateKey).length !== 3222 || formatSK(sigSK).length !== 902) {
+      console.log('wrong format, try again', formatSK(privateKey).length, formatSK(sigSK).length);
+      const res = await this.generateKeyPair();
+      return res;
+    }
+
     const formattedPK = formatPK(publicKey);
     const formattedSPK = formatPK(sigPK);
     const hash = crypto.createHash('sha256');
@@ -80,11 +86,11 @@ class Util {
   }
 
   static generateVaultValues(signingKey, clearSK, password, killswitch) {
-    let rPass = crypto.randomBytes(32);
+    let rPass = Buffer.from(crypto.randomBytes(32).toString('base64'));
     if (password) {
       rPass = Buffer.from(password);
     }
-    let rKill = crypto.randomBytes(32);
+    let rKill = Buffer.from(crypto.randomBytes(32).toString('base64'));
     if (killswitch) {
       rKill = Buffer.from(killswitch);
     }
@@ -101,7 +107,7 @@ class Util {
 
     const cipherESK = crypto.createCipheriv(ALGORITHM, hp1, iv1);
     const esk = Buffer.concat([
-      cipherESK.update(clearSK), cipherESK.final(), cipherESK.getAuthTag()
+      cipherESK.update(clearSK), cipherESK.final(), cipherESK.getAuthTag(),
     ]);
 
     const cipherEUP = crypto.createCipheriv(ALGORITHM, hp2, iv2);
@@ -121,8 +127,8 @@ class Util {
     });
 
     return {
-      password: rPass.toString('base64'),
-      killswitch: rKill.toString('base64'),
+      password: rPass.toString(),
+      killswitch: rKill.toString(),
       esk: esk.toString('base64'),
       rp,
       eup: eup.toString('base64'),
@@ -155,6 +161,20 @@ class Util {
     const decData = Buffer.concat([decipher.update(crypted), decipher.final()]);
 
     return decData.toString();
+  }
+
+  static getHeaderFromAttic({ proof, salt, iv }, passphrase) {
+    const rPass = Buffer.from(passphrase);
+    const rs2 = Buffer.from(salt, 'base64');
+    const iv2 = Buffer.from(iv, 'base64');
+    const hp2 = crypto.pbkdf2Sync(rPass, rs2, PBDKF_ITERATIONS, PBDKF_KEY_LEN, PBDKF_HASH);
+
+    const cipherEUP = crypto.createCipheriv(ALGORITHM, hp2, iv2);
+    const eupOreuk = Buffer.concat([
+      cipherEUP.update(proof), cipherEUP.final(), cipherEUP.getAuthTag(),
+    ]);
+
+    return eupOreuk.toString('base64');
   }
 
   static generateFalseKeyPair() {
@@ -368,6 +388,193 @@ class Util {
         type: Object,
         schema: {
           token: {
+            type: Object,
+            schema: {
+              value: {
+                type: String,
+              },
+              vector: {
+                type: String,
+              },
+            },
+          },
+          iv: {
+            type: Object,
+            schema: {
+              value: {
+                type: String,
+              },
+              vector: {
+                type: String,
+              },
+            },
+          },
+          salt: {
+            type: Object,
+            schema: {
+              value: {
+                type: String,
+              },
+              vector: {
+                type: String,
+              },
+            },
+          },
+          pass: {
+            type: Object,
+            schema: {
+              value: {
+                type: String,
+              },
+              vector: {
+                type: String,
+              },
+            },
+          },
+          kill: {
+            type: Object,
+            schema: {
+              value: {
+                type: String,
+              },
+              vector: {
+                type: String,
+              },
+            },
+          },
+        },
+      },
+      attic: {
+        type: Object,
+        schema: {
+          iv: {
+            type: String,
+          },
+          salt: {
+            type: String,
+          },
+          proof: {
+            type: String,
+          },
+        },
+      },
+      contacts: {
+        type: Object,
+        schema: {
+          token: {
+            type: String,
+          },
+          passphrase: {
+            type: String,
+          },
+          iv: {
+            type: String,
+          },
+        },
+      },
+      lastActivity: {
+        type: Number,
+      },
+      validation: {
+        type: String,
+      },
+      msgCount: {
+        type: Number,
+      },
+      expirationDate: {
+        type: Number,
+      },
+      hasBeenRead: {
+        type: Number,
+      },
+      header: {
+        type: Object,
+        schema: {
+          token: {
+            type: String,
+          },
+          passphrase: {
+            type: String,
+          },
+          iv: {
+            type: String,
+          },
+        },
+      },
+      full: {
+        type: Object,
+        schema: {
+          token: {
+            type: String,
+          },
+          passphrase: {
+            type: String,
+          },
+          iv: {
+            type: String,
+          },
+        },
+      },
+      size: {
+        type: Number,
+      },
+      at: {
+        type: String,
+      },
+      stage: {
+        type: String,
+      },
+      domainName: {
+        type: String,
+      },
+      groupName: {
+        type: String,
+      },
+      isAdmin: {
+        type: Number,
+      },
+      auth: {
+        type: String,
+      },
+      p256dh: {
+        type: String,
+      },
+    }), { tableName: tableName || TABLE_NAME, create: config.get('dynamo.createTable') });
+    const ddb = new dynamoose.aws.ddb.DynamoDB({});
+
+    // Set DynamoDB instance to the Dynamoose DDB instance
+    dynamoose.aws.ddb.set(ddb);
+    if (config.get('dynamo.local')) dynamoose.aws.ddb.local(config.get('dynamo.local.url'));
+
+    return Everything;
+  }
+
+  static getAllAttributesModel(tableName = false) {
+    const Everything = dynamoose.model('Everything', new dynamoose.Schema({
+      pk: {
+        type: String,
+        hashKey: true,
+      },
+      sk: {
+        type: String,
+        rangeKey: true,
+      },
+      id: {
+        type: String,
+      },
+      key: {
+        type: String,
+      },
+      signature: {
+        type: String,
+      },
+      hash: {
+        type: String,
+      },
+      vault: {
+        type: Object,
+        schema: {
+          token: {
             type: String,
           },
           iv: {
@@ -484,7 +691,7 @@ class Util {
   }
 
   static async backupTable(fileName = 'backupdb', tableName = false) {
-    const Everything = Util.getEverythingModel(tableName);
+    const Everything = Util.getAllAttributesModel(tableName);
 
     const result = await Everything.scan().exec();
 
@@ -542,6 +749,56 @@ class Util {
 
   static async setValueInDB(sk, pk, prop, val) {
     const Everything = Util.getEverythingModel();
+    // const Keys = dynamoose.model('Keys', new dynamoose.Schema({
+    //   pk: {
+    //     type: String,
+    //     hashKey: true,
+    //   },
+    //   sk: {
+    //     type: String,
+    //     rangeKey: true,
+    //   },
+    //   vault: {
+    //     type: Object,
+    //     schema: {
+    //       token: {
+    //         type: String,
+    //       },
+    //       iv: {
+    //         type: String,
+    //       },
+    //       salt: {
+    //         type: String,
+    //       },
+    //       pass: {
+    //         type: String,
+    //       },
+    //       kill: {
+    //         type: String,
+    //       },
+    //     },
+    //   },
+    //   attic: {
+    //     type: Object,
+    //     schema: {
+    //       iv: {
+    //         type: String,
+    //       },
+    //       salt: {
+    //         type: String,
+    //       },
+    //       proof: {
+    //         type: String,
+    //       },
+    //     },
+    //   },
+    // }), { tableName: TABLE_NAME, create: config.get('dynamo.createTable') });
+    // const ddb = new dynamoose.aws.ddb.DynamoDB({});
+
+    // // Set DynamoDB instance to the Dynamoose DDB instance
+    // dynamoose.aws.ddb.set(ddb);
+    // if (config.get('dynamo.local')) dynamoose.aws.ddb.local(config.get('dynamo.local.url'));
+
     await Everything.update(
       { pk, sk },
       {

@@ -63,7 +63,7 @@ Scenario: Get connection status of a list
   And I am existing `RANDOM_USER.8`
   And `RANDOM_USER.8` is connected
   And I am existing `RANDOM_USER.8`
-  When I GET /connections?list=`RANDOM_USER.7`,`RANDOM_USER.10`,`RANDOM_USER.8`,`RANDOM_USER.2`
+  When I GET /connections?list=`RANDOM_USER.7`,`RANDOM_USER.10`,`RANDOM_USER.8`,`RANDOM_USER.14`
   And response body path $ should be of type array with length 2
   And response body path $.0 should be `RANDOM_USER.7`
   And response body path $.1 should be `RANDOM_USER.8`

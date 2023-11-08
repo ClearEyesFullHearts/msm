@@ -34,12 +34,21 @@ Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (ad
   this.apickli.removeRequestHeader('x-msm-pass');
   const creator = this.apickli.replaceVariables(admin);
 
-  const passHeader = Util.hashToBase64(creator);
-  this.apickli.addRequestHeader('x-msm-pass', passHeader);
+  await this.get(`/attic/${creator}`);
+
+  const attic = JSON.parse(this.apickli.httpResponse.body);
+  this.apickli.storeValueInScenarioScope('ATTIC', attic);
+  const {
+    iv, salt, proof,
+  } = attic;
+
+  const myHeader = Util.getHeaderFromAttic({ iv, salt, proof }, creator);
+
+  this.apickli.addRequestHeader('x-msm-pass', myHeader);
   await this.get(`/identity/${creator}`);
 
   const respBody = JSON.parse(this.apickli.httpResponse.body);
-  const privateK = Util.symmetricDecrypt(respBody.vault, creator);
+  const privateK = Util.openVault(respBody.vault, creator);
 
   const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
   this.apickli.storeValueInScenarioScope(`ESK.${creator}`, eskFile);
@@ -95,12 +104,17 @@ Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (ad
     this.apickli.removeRequestHeader('x-msm-pass');
     const member = this.apickli.replaceVariables(membersArray[i]);
 
-    const memberHeader = Util.hashToBase64(member);
+    await this.get(`/attic/${member}`);
+
+    const memberAttic = JSON.parse(this.apickli.httpResponse.body);
+
+    const memberHeader = Util.getHeaderFromAttic(memberAttic, member);
+
     this.apickli.addRequestHeader('x-msm-pass', memberHeader);
     await this.get(`/identity/${member}`);
 
     const mBody = JSON.parse(this.apickli.httpResponse.body);
-    const pK = Util.symmetricDecrypt(mBody.vault, member);
+    const pK = Util.openVault(mBody.vault, member);
     const [mEsk] = pK.split('\n----- SIGNATURE -----\n');
     const mEpk = Util.extractPublicKey(mEsk);
 

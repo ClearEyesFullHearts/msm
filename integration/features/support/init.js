@@ -2,14 +2,14 @@ const fs = require('fs');
 const apickli = require('apickli');
 const config = require('config');
 const {
-  Before, BeforeAll, After,
+  Before, BeforeAll, After, AfterAll,
 } = require('@cucumber/cucumber');
 const Util = require('./utils');
 
 BeforeAll((cb) => {
   if (process.env.RESET_FIXTURE) {
     Util.emptyTable()
-      .then(() => Util.restoreTable())
+      .then(() => Util.restoreTable('backupdb'))
       // .then(() => Util.backupTable())
       .then(cb);
   } else {
@@ -88,3 +88,12 @@ After(async function () {
     await new Promise((resolve) => setTimeout(resolve, 700));
   }
 });
+
+// AfterAll((cb) => {
+//   if (process.env.RESET_FIXTURE) {
+//     Util.backupTable()
+//       .then(cb);
+//   } else {
+//     cb();
+//   }
+// });

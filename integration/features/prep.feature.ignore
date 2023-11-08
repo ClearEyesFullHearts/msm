@@ -127,9 +127,9 @@ Scenario: Put baby in the freezer
 #     Given I am existing `RANDOM_USER.1`
 #     And I set signature header
 #     And I DELETE /user/`RANDOM_USER.1`
-#     Given I am existing `RANDOM_USER.2`
+#     Given I am existing `RANDOM_USER.14`
 #     And I set signature header
-#     And I DELETE /user/`RANDOM_USER.2`
+#     And I DELETE /user/`RANDOM_USER.14`
 #     Given I am existing `RANDOM_USER.3`
 #     And I set signature header
 #     And I DELETE /user/`RANDOM_USER.3`
