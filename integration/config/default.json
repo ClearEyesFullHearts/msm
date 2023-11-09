@@ -12,5 +12,9 @@
     "cleanup": "TestMsmMasterStack-MSMCle-MSMCleanupLambdaFunction-cJ4OyzmUzLQo",
     "clean-user": "TestMsmMasterStack-MSMCle-MSMAccountCleanupLambdaF-3xv2rFzE7TgC",
     "clean-msg": "TestMsmMasterStack-MSMCle-MSMMessageCleanupLambdaF-zHXEqDvzjXbT"
+  },
+  "fixtures": {
+    "db": "backupdb",
+    "names": "randoms"
   }
 }

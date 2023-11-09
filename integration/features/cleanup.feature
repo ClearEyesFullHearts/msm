@@ -7,10 +7,13 @@ Scenario: Non validated account are cleaned up when they were missed
     And I invalidate `RANDOM_USER.17`
     When I invoke the cleanup lambda function
     Then response body path $.usersCleared.missed should be 1
-    Given I set Pass header with `RANDOM_USER.17`
+    Given I GET /attic/`RANDOM_USER.17`
+    And response code should be 200
+    And I store the value of body path $ as ATTIC in scenario scope
+    And I set Pass header with `RANDOM_USER.17`
     When I GET /identity/`RANDOM_USER.17`
-    Then response code should be 404
-    And response body path $.code should be UNKNOWN_USER
+    Then response code should be 400
+    And response body path $.code should be BAD_REQUEST_FORMAT
     Given I load up random public keys
     And I set body to { "at": "`RANDOM_USER.17`", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`", "pass":"`PASS`", "kill":"`KILL`" }
     When I POST to /users
@@ -39,10 +42,13 @@ Scenario: User that are inactive are frozen
     And I mark `RANDOM_USER.15` as inactive
     When I invoke the cleanup lambda function
     Then response body path $.usersCleared.inactive should be 1
-    Given I set Pass header with `RANDOM_USER.15`
+    Given I GET /attic/`RANDOM_USER.15`
+    And response code should be 200
+    And I store the value of body path $ as ATTIC in scenario scope
+    And I set Pass header with `RANDOM_USER.15`
     When I GET /identity/`RANDOM_USER.15`
-    Then response code should be 404
-    And response body path $.code should be UNKNOWN_USER
+    Then response code should be 400
+    And response body path $.code should be BAD_REQUEST_FORMAT
     Given I load up random public keys
     And I set body to { "at": "`RANDOM_USER.15`", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`", "pass":"`PASS`", "kill":"`KILL`" }
     When I POST to /users

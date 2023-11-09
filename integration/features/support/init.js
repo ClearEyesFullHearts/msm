@@ -9,7 +9,7 @@ const Util = require('./utils');
 BeforeAll((cb) => {
   if (process.env.RESET_FIXTURE) {
     Util.emptyTable()
-      .then(() => Util.restoreTable('backupdb'))
+      .then(() => Util.restoreTable(config.get('fixtures.db')))
       // .then(() => Util.backupTable())
       .then(cb);
   } else {
@@ -59,7 +59,7 @@ Before(function () {
     });
   });
 
-  const fileContent = fs.readFileSync(`${__dirname}/../../data/randoms.json`);
+  const fileContent = fs.readFileSync(`${__dirname}/../../data/${config.get('fixtures.names')}.json`);
   const arrUsers = JSON.parse(fileContent);
   for (let i = 0; i < arrUsers.length; i += 1) {
     this.apickli.setGlobalVariable(`RANDOM_USER.${i}`, arrUsers[i]);

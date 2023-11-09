@@ -173,10 +173,10 @@ Scenario: Can get membership information
   And response body should contain key
   And response body path $.key should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
   And response body path $.members should be of type array with length 2
-  And response body path $.members.0.at should be `RANDOM_USER.1`
-  And response body path $.members.0.isAdmin should be true
-  And response body path $.members.1.at should be `RANDOM_USER.4`
-  And response body path $.members.1.isAdmin should be false
+  And response body path $.members.0.at should be `RANDOM_USER.4`
+  And response body path $.members.0.isAdmin should be false
+  And response body path $.members.1.at should be `RANDOM_USER.1`
+  And response body path $.members.1.isAdmin should be true
 
 Scenario: Cannot get membership information if you're not a member
   Given `RANDOM_USER.1` creates a group groupDataGroup for [] with index 0

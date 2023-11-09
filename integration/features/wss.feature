@@ -11,25 +11,25 @@ Scenario: `RANDOM_USER.16` and `RANDOM_USER.19` connects and disconnect
     And `RANDOM_USER.19` is connected
     And `RANDOM_USER.19` disconnects
 
-Scenario: `RANDOM_USER.9` and `RANDOM_USER.7` are chatting
+Scenario: `RANDOM_USER.10` and `RANDOM_USER.7` are chatting
     Given I am existing `RANDOM_USER.7`
-    And I am existing `RANDOM_USER.9`
+    And I am existing `RANDOM_USER.10`
     And `RANDOM_USER.7` is connected
-    And `RANDOM_USER.9` is connected
-    And I prepare fallback message "Hello boy" for `RANDOM_USER.9`
-    When `RANDOM_USER.7` send next fallback message to `RANDOM_USER.9`
-    Then `RANDOM_USER.9` acknowledges reception to `RANDOM_USER.7`
-    And `RANDOM_USER.9` decrypt content of message 0 from route fallback
+    And `RANDOM_USER.10` is connected
+    And I prepare fallback message "Hello boy" for `RANDOM_USER.10`
+    When `RANDOM_USER.7` send next fallback message to `RANDOM_USER.10`
+    Then `RANDOM_USER.10` acknowledges reception to `RANDOM_USER.7`
+    And `RANDOM_USER.10` decrypt content of message 0 from route fallback
     And response body path $.content should be "Hello boy"
     And response body path $.from should be `RANDOM_USER.7`
     And response body path $.requestId should be `REQ.RANDOM_USER.7`
     And I prepare fallback message "Glad youre here" for `RANDOM_USER.7`
-    When `RANDOM_USER.9` send next fallback message to `RANDOM_USER.7`
-    Then `RANDOM_USER.7` acknowledges reception to `RANDOM_USER.9`
+    When `RANDOM_USER.10` send next fallback message to `RANDOM_USER.7`
+    Then `RANDOM_USER.7` acknowledges reception to `RANDOM_USER.10`
     And `RANDOM_USER.7` decrypt content of message 0 from route fallback
     And response body path $.content should be "Glad youre here"
-    And response body path $.from should be `RANDOM_USER.9`
-    And response body path $.requestId should be `REQ.RANDOM_USER.9`
+    And response body path $.from should be `RANDOM_USER.10`
+    And response body path $.requestId should be `REQ.RANDOM_USER.10`
 
 Scenario: Bad content send error
     Given I am existing `RANDOM_USER.7`
@@ -47,15 +47,15 @@ Scenario: Bad requestId send error
     Then `RANDOM_USER.7` last message action match error
 
 Scenario: Disconnected target send event
-    Given I am existing `RANDOM_USER.9`
+    Given I am existing `RANDOM_USER.10`
     Given I am existing `RANDOM_USER.7`
     And `RANDOM_USER.7` is connected
     And `RANDOM_USER.7` is listening
-    And I prepare fallback message "Glad youre here" for `RANDOM_USER.9`
-    When `RANDOM_USER.7` send next fallback message to `RANDOM_USER.9`
+    And I prepare fallback message "Glad youre here" for `RANDOM_USER.10`
+    When `RANDOM_USER.7` send next fallback message to `RANDOM_USER.10`
     Then I wait for 2 seconds
     Then `RANDOM_USER.7` last message action match disconnected
-    And response body path $.message.username should be `RANDOM_USER.9`
+    And response body path $.message.username should be `RANDOM_USER.10`
 
 Scenario: Get connection status of a list
   Given I am existing `RANDOM_USER.7`

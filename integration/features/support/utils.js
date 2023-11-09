@@ -59,7 +59,7 @@ class Util {
     ] = doubleKeyPair;
 
     if (formatSK(privateKey).length !== 3222 || formatSK(sigSK).length !== 902) {
-      console.log('wrong format, try again', formatSK(privateKey).length, formatSK(sigSK).length);
+      // console.log('wrong format, try again', formatSK(privateKey).length, formatSK(sigSK).length);
       const res = await this.generateKeyPair();
       return res;
     }
@@ -691,7 +691,7 @@ class Util {
   }
 
   static async backupTable(fileName = 'backupdb', tableName = false) {
-    const Everything = Util.getAllAttributesModel(tableName);
+    const Everything = Util.getEverythingModel(tableName);
 
     const result = await Everything.scan().exec();
 

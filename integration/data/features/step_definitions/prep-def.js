@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { Given, Then } = require('@cucumber/cucumber');
-const Util = require('../support/utils');
+const Util = require('../../../features/support/utils');
 
 Given(/^I create random user with length (.*)$/, async function (length) {
   const keys = await Util.generateKeyPair();
@@ -19,25 +19,49 @@ Given(/^I create random user with length (.*)$/, async function (length) {
   this.randomUsers.push(username);
   this.userCounter += 1;
 
+  const keyVal = `${pem}\n----- SIGNATURE -----\n${ssk}`;
+  const vaultValues = await Util.generateVaultValues(ssk, keyVal, username);
+  const {
+    esk: cypherKey,
+    eup,
+    rs1,
+    rs2,
+    iv1,
+    iv2,
+    rp,
+    sup,
+    suk,
+  } = vaultValues;
+
   this.apickli.setRequestBody(JSON.stringify({
     at: username,
     key: epk,
     signature: spk,
     hash: sha,
+    vault: {
+      token: cypherKey,
+      salt: rs1,
+      iv: iv1,
+      pass: sup,
+      kill: suk,
+    },
+    attic: {
+      iv: iv2,
+      salt: rs2,
+      proof: rp,
+    },
   }));
   await this.post('/users');
 
   // get identity challenge
+  this.apickli.addRequestHeader('x-msm-pass', eup);
   await this.get(`/identity/${username}`);
+  this.apickli.removeRequestHeader('x-msm-pass');
 
   // resolve it for body
   const respBody = JSON.parse(this.apickli.httpResponse.body);
   const resolved = Util.resolve(pem, respBody);
   this.apickli.httpResponse.body = JSON.stringify(resolved);
-
-  const {
-    token, contacts, ...restAuth
-  } = resolved;
 
   this.apickli.setAccessTokenFromResponseBodyPath('$.token');
   this.apickli.setBearerToken();
@@ -47,24 +71,28 @@ Given(/^I create random user with length (.*)$/, async function (length) {
 
   await this.get(`/message/${id}`);
 
-  const vaultItem = Util.symmetricEncrypt(`${pem}\n----- SIGNATURE -----\n${ssk}`, username);
+  // const {
+  //   token, contacts, ...restAuth
+  // } = resolved;
 
-  this.apickli.setRequestBody(JSON.stringify(vaultItem));
+  // const vaultItem = Util.symmetricEncrypt(`${pem}\n----- SIGNATURE -----\n${ssk}`, username);
 
-  const data = JSON.stringify({
-    ...restAuth,
-    ...vaultItem,
-  });
+  // this.apickli.setRequestBody(JSON.stringify(vaultItem));
 
-  const sig = Util.sign(ssk, data);
-  this.apickli.addRequestHeader('x-msm-sig', sig);
+  // const data = JSON.stringify({
+  //   ...restAuth,
+  //   ...vaultItem,
+  // });
 
-  await this.put('/vault');
+  // const sig = Util.sign(ssk, data);
+  // this.apickli.addRequestHeader('x-msm-sig', sig);
+
+  // await this.put('/vault');
   this.apickli.removeRequestHeader('x-msm-sig');
   this.apickli.removeRequestHeader('Authorization');
 });
 
-Then('I save random users name', function () {
+Then('I create random users file', function () {
   fs.writeFileSync(`${__dirname}/../../data/randoms.json`, JSON.stringify(this.randomUsers));
 });
 
