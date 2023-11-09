@@ -10,14 +10,16 @@ import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
 import Config from '@/lib/config';
 // temporary
-// import TimeLogger from '@/lib/timeLogger';
+import TimeLogger from '@/lib/timeLogger';
+
+const mylogger = new TimeLogger('auth store');
 
 const baseUrl = Config.API_URL;
 const mycrypto = new CryptoHelper();
 const myvalidator = new ChainHelper();
 let interval;
-let myVault;
-let myChallenge;
+// let myVault;
+// let myChallenge;
 let verificationTimeoutID;
 
 export const useAuthStore = defineStore({
@@ -27,65 +29,75 @@ export const useAuthStore = defineStore({
     pem: null,
     signing: null,
     publicHash: null,
-    privateHash: null,
     hasVault: false,
-    returnUrl: null,
     countDownMsg: null,
     isValidatedOnChain: false,
     autoConnect: false,
     idIsSet: false,
   }),
   actions: {
-    async getIdentity(username, passphrase) {
-      this.privateHash = await mycrypto.hash(passphrase);
+    async connect(username, key, signKey) {
+      mylogger.start();
+      const challenge = await fetchWrapper.get(`${baseUrl}/identity/${username}`);
+      mylogger.logTime('get identity challenge');
+
+      await this.login(key, signKey, challenge, true);
+      mylogger.logTime('login done');
+    },
+    async connectWithPassword(username, passphrase) {
+      mylogger.start();
+      const { proof, salt, iv } = await fetchWrapper.get(`${baseUrl}/attic/${username}`);
+      mylogger.logTime('get attic data');
+      const rs2 = mycrypto.base64ToArBuff(salt);
+      const iv2 = mycrypto.base64ToArBuff(iv);
+      const { key: hp2 } = await mycrypto.PBKDF2Hash(passphrase, rs2);
+      mylogger.logTime('password hashed');
+
+      const { token: eup } = await mycrypto.PBKDF2Encrypt(hp2, proof, iv2);
+      mylogger.logTime('proof encrypted');
+
       const passHeader = {
-        'X-msm-Pass': this.privateHash,
+        'X-msm-Pass': eup,
       };
       const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${username}`, false, passHeader);
-      myChallenge = challenge;
-      if (vault) {
-        this.hasVault = true;
-        myVault = vault;
-      } else {
-        this.hasVault = false;
-        myVault = undefined;
-      }
-    },
-    async openVault(passphrase) {
-      if (!myVault || !myVault.iv || !myVault.token) {
-        throw new Error('No vault recorded');
-      }
-      const {
-        iv,
-        token,
-      } = myVault;
-      const hashPass = await mycrypto.hash(passphrase);
-      try {
-        const decryptedVault = await mycrypto.symmetricDecrypt(hashPass, iv, token);
+      mylogger.logTime('get vault & identity challenge');
 
-        const dec = new TextDecoder();
-        return dec.decode(decryptedVault);
-      } catch (err) {
-        throw new Error('WRONG_PASSWORD');
-      }
+      const {
+        token,
+        salt: vaultSalt,
+        iv: iv1,
+      } = vault;
+      const rs1 = mycrypto.base64ToArBuff(vaultSalt);
+      const { key: hp1 } = await mycrypto.PBKDF2Hash(passphrase, rs1);
+      mylogger.logTime('password hashed for keys decryption');
+
+      const decryptedVault = await mycrypto.symmetricDecrypt(hp1, iv1, token);
+      mylogger.logTime('keys decrypted');
+      const dec = new TextDecoder();
+      const keyFile = dec.decode(decryptedVault);
+
+      const [key, signKey] = keyFile.split(CryptoHelper.SEPARATOR);
+
+      await this.login(key, signKey, challenge, false);
+      this.hasVault = true;
+      mylogger.logTime('login done');
     },
-    async login(key, signKey, firstTime = false) {
-      // TimeLogger.start();
+    async login(key, signKey, challenge, firstTime = false) {
       const alertStore = useAlertStore();
       try {
-        await this.setIdentityUp(key, signKey, myChallenge);
-        // TimeLogger.logTime('a - setIdentityUp');
+        await this.setIdentityUp(key, signKey, challenge);
+        mylogger.logTime('a - setIdentityUp');
 
         const epk = await mycrypto.getPublicKey(this.pem);
         const spk = await mycrypto.getSigningPublicKey(this.signing);
-        // TimeLogger.logTime('b - get public key');
+        mylogger.logTime('b - get public key');
 
         this.publicHash = await mycrypto.hash(`${epk}\n${spk}`);
-        // TimeLogger.logTime('c - get hash');
+        mylogger.logTime('c - get hash');
 
         const groupStore = useGroupStore();
         await groupStore.setGroupList(this.pem);
-        // TimeLogger.logTime('d - setGroupList');
+        mylogger.logTime('d - setGroupList');
         const contactsStore = useContactsStore();
         contactsStore.setContactList(this.pem, this.user.contacts)
           .then(() => {
@@ -95,11 +107,11 @@ export const useAuthStore = defineStore({
               workerStore.subscribe().then((isSubscribed) => {
                 if (isSubscribed) {
                   clearTimeout(contactsStore.timeout);
-                  // TimeLogger.logTime('f1 - subscribe');
+                  mylogger.logTime('f1 - subscribe');
                 }
               });
             }
-            // TimeLogger.logTime('e - setContactList');
+            mylogger.logTime('e - setContactList');
           });
 
         if (!firstTime) {
@@ -107,33 +119,8 @@ export const useAuthStore = defineStore({
         }
 
         this.idIsSet = true;
-        myVault = undefined;
-        myChallenge = undefined;
       } catch (error) {
         alertStore.error(error);
-      }
-    },
-    toggleAutoConnect() {
-      if (!this.autoConnect && this.countDownMsg === 'expired') {
-        this.logout();
-        return;
-      }
-      this.autoConnect = !this.autoConnect;
-    },
-    async relog() {
-      if (this.countDownMsg === 'expired' && !this.autoConnect) {
-        this.logout();
-        return;
-      }
-      try {
-        clearInterval(interval);
-        const passHeader = {
-          'X-msm-Pass': this.privateHash,
-        };
-        const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${this.user.user.username}`, false, passHeader);
-        await this.setIdentityUp(this.pem, this.signing, challenge);
-      } catch (err) {
-        this.logout();
       }
     },
     async setIdentityUp(key, signKey, challenge) {
@@ -167,32 +154,6 @@ export const useAuthStore = defineStore({
         }
       }, 1000);
     },
-    async setVault(passphrase, killSwitch) {
-      const itemValue = `${this.pem}${CryptoHelper.SEPARATOR}${this.signing}`;
-      const { token, iv } = await mycrypto.symmetricEncrypt(itemValue, passphrase);
-      const vault = { token, iv };
-      const passHash = await mycrypto.hash(passphrase);
-      const pass = await mycrypto.sign(this.signing, passHash);
-
-      let kill;
-      if (killSwitch && killSwitch.length && killSwitch.length > 7) {
-        const killHash = await mycrypto.hash(killSwitch);
-        kill = await mycrypto.sign(this.signing, killHash);
-      } else {
-        const randKill = window.crypto.getRandomValues(new Uint8Array(32));
-        const b64Kill = mycrypto.ArBuffToBase64(randKill);
-        kill = await mycrypto.sign(this.signing, b64Kill);
-      }
-
-      await fetchWrapper.put(`${baseUrl}/vault`, { vault, pass, kill });
-
-      this.hasVault = true;
-    },
-    async emptyVault() {
-      await fetchWrapper.delete(`${baseUrl}/vault`);
-
-      this.hasVault = false;
-    },
     async onChainVerification(timeout = 5000) {
       clearTimeout(verificationTimeoutID);
       if (this.isValidatedOnChain) {
@@ -220,6 +181,28 @@ export const useAuthStore = defineStore({
         verificationTimeoutID = setTimeout(() => {
           this.onChainVerification(timeout * 2);
         }, timeout);
+      }
+    },
+    toggleAutoConnect() {
+      if (!this.autoConnect && this.countDownMsg === 'expired') {
+        this.logout();
+        return;
+      }
+      this.autoConnect = !this.autoConnect;
+    },
+    async relog() {
+      if (this.countDownMsg === 'expired' && !this.autoConnect) {
+        this.logout();
+        return;
+      }
+      try {
+        clearInterval(interval);
+        const challenge = await fetchWrapper.get(`${baseUrl}/identity/${this.user.user.username}`);
+        mylogger.logTime('get identity challenge');
+
+        await this.login(this.pem, this.signing, challenge, true);
+      } catch (err) {
+        this.logout();
       }
     },
     logout() {

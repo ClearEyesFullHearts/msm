@@ -52,6 +52,13 @@ Scenario: Username should not contain any special character
     Then response code should be 400
     And response body path $.code should be BAD_REQUEST_FORMAT
 
+Scenario: Unknown user has an attic
+    When I GET /attic/Unknown
+    Then response code should be 200
+    And response body path $.iv should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+    And response body path $.salt should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+    And response body path $.proof should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+
 Scenario: Authenticated user has access to its inbox
     Given I am a new invalidated user
     And I GET /identity/`MY_AT`

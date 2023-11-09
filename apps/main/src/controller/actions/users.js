@@ -164,10 +164,12 @@ class User {
       const verifier = Buffer.from(hashedPass, 'base64');
 
       if (Encryption.verifySignature(signature, verifier, kill)) {
+        debug('kill switch activated');
         await db.clearUserAccount(knownUser, config.get('timer.removal.frozen'));
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
       }
       if (!Encryption.verifySignature(signature, verifier, pass)) {
+        debug('password do not match');
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
       }
       debug('password is good');

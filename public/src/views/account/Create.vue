@@ -24,14 +24,13 @@ const schema = Yup.object().shape({
 
 async function onSubmit(values) {
   try {
-    const { ESK, SSK } = await usersStore.createUser(values);
-    await authStore.getIdentity(values.username, values.passphrase);
-    await authStore.login(ESK, SSK, true);
-    await authStore.setVault(values.passphrase);
+    const { ESK, SSK } = await usersStore.createUserWithVault(values);
+
+    await authStore.connect(values.username, ESK, SSK);
 
     router.push('/conversations');
   } catch (error) {
-    console.log(error)
+    console.log(error);
     alertStore.error(error);
   }
 }

@@ -43,23 +43,14 @@ async function onSubmit(values) {
   // TimeLogger.start();
   isSubmitting.value = true;
   try {
-    await authStore.getIdentity(values.username, values.passphrase);
+    await authStore.connectWithPassword(values.username, values.passphrase);
     // TimeLogger.logTime('1 getIdentity');
-  } catch (error) {
-    alertStore.error(error);
-    isSubmitting.value = false;
-    return;
-  }
-  try {
-    const keyFile = await authStore.openVault(values.passphrase);
-    // TimeLogger.logTime('2 openVault');
-    const [key, signKey] = keyFile.split(CryptoHelper.SEPARATOR);
-    await authStore.login(key, signKey);
-    // TimeLogger.logTime('3 login');
 
     router.push('/conversations');
-  } catch (err) {
-    onKeyFileNeeded();
+  } catch (error) {
+    console.log(error);
+    alertStore.error(error);
+    isSubmitting.value = false;
   }
 }
 

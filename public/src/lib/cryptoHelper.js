@@ -1,6 +1,10 @@
 class CryptoHelper {
   static get SEPARATOR() { return '\n----- SIGNATURE -----\n'; }
 
+  static get PBDKF_HASH() { return 'SHA-512'; }
+
+  static get PBDKF_ITERATIONS() { return 600000; }
+
   constructor() {
     this.clearTextToArBuff = (txt) => {
       const buf = new ArrayBuffer(txt.length);
@@ -90,6 +94,12 @@ class CryptoHelper {
     const PK = await this.exportCryptoKey(keyPair.publicKey, 'spki', 'PUBLIC');
     const SK = await this.exportCryptoKey(keyPair.privateKey, 'pkcs8', 'PRIVATE');
 
+    if (SK.length !== 3222) {
+      console.log('wrong encryption key format, try again', SK.length);
+      const res = await this.generateKeyPair();
+      return res;
+    }
+
     return {
       PK,
       SK,
@@ -111,6 +121,12 @@ class CryptoHelper {
     const PK = await this.exportCryptoKey(keyPair.publicKey, 'spki', 'PUBLIC');
     const SK = await this.exportCryptoKey(keyPair.privateKey, 'pkcs8', 'PRIVATE');
 
+    if (SK.length !== 902) {
+      console.log('wrong signature key format, try again', SK.length);
+      const res = await this.generateSignatureKeyPair();
+      return res;
+    }
+
     return {
       PK,
       SK,
@@ -131,14 +147,18 @@ class CryptoHelper {
     jwk.key_ops = ['encrypt'];
 
     // import public key
-    const publicKeyBuff = await window.crypto.subtle.importKey('jwk', jwk,
+    const publicKeyBuff = await window.crypto.subtle.importKey(
+      'jwk',
+      jwk,
       {
         name: 'RSA-OAEP',
         modulusLength: 4096,
         publicExponent: new Uint8Array([1, 0, 1]),
         hash: 'SHA-256',
       },
-      true, ['encrypt']);
+      true,
+      ['encrypt'],
+    );
     const publicKey = await this.exportCryptoKey(publicKeyBuff, 'spki', 'PUBLIC');
     return publicKey;
   }
@@ -157,14 +177,18 @@ class CryptoHelper {
     jwk.key_ops = ['verify'];
 
     // import public key
-    const publicKeyBuff = await window.crypto.subtle.importKey('jwk', jwk,
+    const publicKeyBuff = await window.crypto.subtle.importKey(
+      'jwk',
+      jwk,
       {
         name: 'RSA-PSS',
         modulusLength: 1024,
         publicExponent: new Uint8Array([1, 0, 1]),
         hash: 'SHA-256',
       },
-      true, ['verify']);
+      true,
+      ['verify'],
+    );
     const publicKey = await this.exportCryptoKey(publicKeyBuff, 'spki', 'PUBLIC');
     return publicKey;
   }
@@ -326,6 +350,35 @@ class CryptoHelper {
     }, arrTxt);
 
     return this.ArBuffToBase64(digest);
+  }
+
+  async PBKDF2Hash(simpleKey, salt) {
+    const passwordBuffer = this.clearTextToArBuff(simpleKey);
+    const importedKey = await window.crypto.subtle.importKey('raw', passwordBuffer, 'PBKDF2', false, ['deriveBits']);
+
+    const params = {
+      name: 'PBKDF2', hash: CryptoHelper.PBDKF_HASH, salt, iterations: CryptoHelper.PBDKF_ITERATIONS,
+    };
+    const derivation = await window.crypto.subtle.deriveBits(params, importedKey, 256);
+
+    return {
+      key: this.ArBuffToBase64(derivation),
+    };
+  }
+
+  async PBKDF2Encrypt(b64Key, txt, iv) {
+    const derivation = this.base64ToArBuff(b64Key);
+    const importedEncryptionKey = await window.crypto.subtle.importKey('raw', derivation, { name: 'AES-GCM', iv }, true, ['encrypt', 'decrypt']);
+
+    const data = this.clearTextToArBuff(txt);
+    const ctBuffer = await window.crypto.subtle.encrypt({
+      name: 'AES-GCM',
+      iv,
+    }, importedEncryptionKey, data);
+
+    return {
+      token: this.ArBuffToBase64(ctBuffer),
+    };
   }
 
   getRandomBase64Password() {

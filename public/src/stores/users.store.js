@@ -1,32 +1,19 @@
 /* eslint-disable import/prefer-default-export */
-import { defineStore } from 'pinia';
+import { defineStore } from 'pinia'; import {
+  useAuthStore,
+} from '@/stores';
+// temporary
+import TimeLogger from '@/lib/timeLogger';
 
 import CryptoHelper from '@/lib/cryptoHelper';
 import FileHelper from '@/lib/fileHelper';
 import { fetchWrapper } from '@/helpers';
 import Config from '@/lib/config';
 
+const mylogger = new TimeLogger('user store');
+
 const baseUrl = Config.API_URL;
 const mycrypto = new CryptoHelper();
-
-function formatPK(publicKey, size) {
-  const pemHeader = '-----BEGIN PUBLIC KEY-----';
-  const pemFooter = '-----END PUBLIC KEY-----';
-  const trimmedPK = publicKey.replace(/\n/g, '');
-  const pemContents = trimmedPK.substring(pemHeader.length, trimmedPK.length - pemFooter.length);
-
-  const str = window.atob(pemContents);
-  const base64Key = window.btoa(str);
-  if (base64Key !== pemContents) {
-    throw new Error('Wrong public key format');
-  }
-
-  const key = `${pemHeader}\n${pemContents}\n${pemFooter}`;
-  if (key.length !== size) {
-    throw new Error('Wrong public key format');
-  }
-  return key;
-}
 
 export const useUsersStore = defineStore({
   id: 'users',
@@ -39,103 +26,59 @@ export const useUsersStore = defineStore({
     async createUser(user) {
       const {
         username,
-        passphrase,
       } = user;
       const { PK, SK } = await mycrypto.generateKeyPair();
       const { PK: signPK, SK: signSK } = await mycrypto.generateSignatureKeyPair();
 
       const clearHash = await mycrypto.hash(`${PK}\n${signPK}`);
       const signedHash = await mycrypto.sign(signSK, clearHash, true);
-
-      const passHash = await mycrypto.hash(passphrase);
-      const pass = await mycrypto.sign(signSK, passHash);
-
-      const randKill = window.crypto.getRandomValues(new Uint8Array(32));
-      const b64Kill = mycrypto.ArBuffToBase64(randKill);
-      const kill = await mycrypto.sign(signSK, b64Kill);
 
       const send = {
         at: username,
         key: PK,
         signature: signPK,
         hash: signedHash,
-        pass,
-        kill,
       };
       await fetchWrapper.post(`${baseUrl}/users`, send);
 
       return { ESK: SK, SSK: signSK };
     },
-    async createUserChallenge(user) {
+    async createUserWithVault(user) {
+      mylogger.start();
       const {
         username,
         passphrase,
       } = user;
 
       const { PK, SK } = await mycrypto.generateKeyPair();
+      mylogger.logTime('encryption keys generated');
       const { PK: signPK, SK: signSK } = await mycrypto.generateSignatureKeyPair();
+      mylogger.logTime('signature keys generated');
 
       const clearHash = await mycrypto.hash(`${PK}\n${signPK}`);
       const signedHash = await mycrypto.sign(signSK, clearHash, true);
+      mylogger.logTime('public hash signed');
 
-      const randKill = window.crypto.getRandomValues(new Uint8Array(32));
-      const b64Kill = mycrypto.ArBuffToBase64(randKill);
-
-      const iv1 = window.crypto.getRandomValues(new Uint8Array(16));
-      const iv2 = window.crypto.getRandomValues(new Uint8Array(16));
-      const rs1 = window.crypto.getRandomValues(new Uint8Array(64));
-      const rs2 = window.crypto.getRandomValues(new Uint8Array(64));
-
-      const results = await Promise.all([
-        mycrypto.PBKDF2Hash(passphrase, rs1),
-        mycrypto.PBKDF2Hash(passphrase, rs2),
-        mycrypto.PBKDF2Hash(b64Kill, rs2),
-      ]);
-      console.log(results);
-      const [{ key: hp1 }, { key: hp2 }, { key: hks }] = results;
-
-      const sk = `${SK}${CryptoHelper.SEPARATOR}${signSK}`;
-      const rp = mycrypto.ArBuffToBase64(window.crypto.getRandomValues(new Uint8Array(64)));
-
-      const encrypts = await Promise.all([
-        mycrypto.PBKDF2Encrypt(hp1, sk, iv1),
-        mycrypto.PBKDF2Encrypt(hp2, rp, iv2),
-        mycrypto.PBKDF2Encrypt(hks, rp, iv2),
-      ]);
-      console.log(encrypts);
-      const [{ token: esk }, { token: eup }, { token: euk }] = encrypts;
-
-      const signatures = await Promise.all([
-        mycrypto.sign(SK, eup, true),
-        mycrypto.sign(SK, euk, true),
-      ]);
-      console.log(signatures);
-
-      const [sup, suk] = signatures;
+      const {
+        vault,
+        attic,
+      } = await this.calculateVault(SK, signSK, passphrase);
+      mylogger.logTime('vault calculated');
 
       const data = {
         at: username,
         key: PK,
         signature: signPK,
         hash: signedHash,
-        vault: {
-          token: esk,
-          salt: mycrypto.ArBuffToBase64(rs1),
-          iv: mycrypto.ArBuffToBase64(iv1),
-          pass: suk,
-          kill: sup,
-        },
-        attic: {
-          salt: mycrypto.ArBuffToBase64(rs2),
-          iv: mycrypto.ArBuffToBase64(iv2),
-          proof: rp,
-        },
+        vault,
+        attic,
       };
 
       await fetchWrapper.post(`${baseUrl}/users`, data);
+      mylogger.logTime('user data posted');
 
       return {
-        ESK: SK, SSK: signSK, proof: eup,
+        ESK: SK, SSK: signSK,
       };
     },
     async getAll(search) {
@@ -151,8 +94,84 @@ export const useUsersStore = defineStore({
       const user = await fetchWrapper.get(`${baseUrl}/user/${at}`);
       return user;
     },
+    async setVault(passphrase, killSwitch) {
+      const authStore = useAuthStore();
+      const {
+        pem,
+        signing,
+      } = authStore;
+
+      const data = await this.calculateVault(pem, signing, passphrase, killSwitch);
+
+      await fetchWrapper.put(`${baseUrl}/vault`, data);
+
+      authStore.hasVault = true;
+    },
+    async emptyVault() {
+      const authStore = useAuthStore();
+      await fetchWrapper.delete(`${baseUrl}/vault`);
+
+      authStore.hasVault = false;
+    },
     async destroy(at) {
       await fetchWrapper.delete(`${baseUrl}/user/${at}`);
+    },
+    async calculateVault(SK, signSK, passphrase, killSwitch) {
+      let kill = killSwitch;
+      if (!killSwitch || !killSwitch.length || killSwitch.length < 8) {
+        const randKill = window.crypto.getRandomValues(new Uint8Array(32));
+        kill = mycrypto.ArBuffToBase64(randKill);
+      }
+
+      const iv1 = window.crypto.getRandomValues(new Uint8Array(16));
+      const iv2 = window.crypto.getRandomValues(new Uint8Array(16));
+      const rs1 = window.crypto.getRandomValues(new Uint8Array(64));
+      const rs2 = window.crypto.getRandomValues(new Uint8Array(64));
+      mylogger.logTime('randoms generated');
+
+      const results = await Promise.all([
+        mycrypto.PBKDF2Hash(passphrase, rs1),
+        mycrypto.PBKDF2Hash(passphrase, rs2),
+        mycrypto.PBKDF2Hash(kill, rs2),
+      ]);
+
+      const [{ key: hp1 }, { key: hp2 }, { key: hks }] = results;
+      mylogger.logTime('3 PBKDF2 hash done');
+
+      const sk = `${SK}${CryptoHelper.SEPARATOR}${signSK}`;
+      const rp = mycrypto.ArBuffToBase64(window.crypto.getRandomValues(new Uint8Array(64)));
+
+      const encrypts = await Promise.all([
+        mycrypto.PBKDF2Encrypt(hp1, sk, iv1),
+        mycrypto.PBKDF2Encrypt(hp2, rp, iv2),
+        mycrypto.PBKDF2Encrypt(hks, rp, iv2),
+      ]);
+
+      const [{ token: esk }, { token: eup }, { token: euk }] = encrypts;
+      mylogger.logTime('3 encryption done');
+
+      const signatures = await Promise.all([
+        mycrypto.sign(signSK, eup, true),
+        mycrypto.sign(signSK, euk, true),
+      ]);
+
+      const [sup, suk] = signatures;
+      mylogger.logTime('2 signatures done');
+
+      return {
+        vault: {
+          token: esk,
+          salt: mycrypto.ArBuffToBase64(rs1),
+          iv: mycrypto.ArBuffToBase64(iv1),
+          pass: sup,
+          kill: suk,
+        },
+        attic: {
+          salt: mycrypto.ArBuffToBase64(rs2),
+          iv: mycrypto.ArBuffToBase64(iv2),
+          proof: rp,
+        },
+      };
     },
   },
 });
