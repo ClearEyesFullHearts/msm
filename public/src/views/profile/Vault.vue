@@ -182,24 +182,25 @@ function onDownloadSK() {
 
       <div class="card m-3">
         <h4 class="card-header">
-          Full explanation (simplified)
+          Full explanation
         </h4>
         <div class="card-body">
           <p>
             Your vault securely stores your secret key,
-            which is encrypted using a hash of your password.
+            which is encrypted using a strong hash of your password.
           </p>
           <p>
-            Upon creating your account or setting up your vault, we calculate a strong hash of your
+            Upon creating your account or setting up your vault, we calculate a hash of your
             password and kill switch. Your secret key is then encrypted with the former,
             and both your encrypted secret key
-            and the signatures of both hashes are stored in your vault.
+            and the signatures of an encrypted random proof by both hashes are stored in your vault.
           </p>
           <p>
             Every piece of data in your vault is encrypted on the server side for storage.
           </p>
           <p>
-            When you log in, you transmit the computed hash of your password to us, which is
+            When you log in, you transmit the computed encrypted random proof by the hash of
+            your password to us, which is
             cross-verified against the signatures of your kill switch and password.<br>
             If you provide your kill switch password, your account is immediately deleted.<br>
             If you provide your connection password,
@@ -211,7 +212,8 @@ function onDownloadSK() {
             You can then decrypt your connection data with that key, allowing you to log in.
           </p>
           <p>
-            On login you can always connect with your username and your secret key file.
+            You can always connect with your username and your secret key file
+            through the login page.
           </p>
         </div>
       </div>
