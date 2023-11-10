@@ -76,33 +76,33 @@ The attic is the recipient of the public informations needed to allow this conne
 
 #### Setting up the Vault
 - We have a password (PSW) and a password kill switch (PKS) and our Secret Key
-- We hash [PSW] through a PBKDF2 algorithm with a random salt (RS1) to get our encryption hash (HP1)
-- We hash [PSW] through a PBKDF2 algorithm with a random salt (RS2) to get our comparison hash (HP2)
-- We hash [PKS] through a PBKDF2 algorithm with salt [RS2] to get our comparison kill switch hash (HKS)
-- We encrypt our Secret Key with [HP1] as key and a random initialization vector (IV1) resulting in (ESK)
+- We hash `PSW` through a PBKDF2 algorithm with a random salt (RS1) to get our encryption hash (HP1)
+- We hash `PSW` through a PBKDF2 algorithm with a random salt (RS2) to get our comparison hash (HP2)
+- We hash `PKS` through a PBKDF2 algorithm with salt `RS2` to get our comparison kill switch hash (HKS)
+- We encrypt our Secret Key with `HP1` as key and a random initialization vector (IV1) resulting in (ESK)
 - We generate a random proof (RP)
-- We encrypt [RP] with [HP2] as key and a random initialization vector (IV2) resulting in (EUP)
-- We encrypt [RP] with [HKS] as key and vector [IV2] resulting in (EUK)
-- We use our Secret Key to get the signature of [EUP] as (SUP)
-- We use our Secret Key to get the signature of [EUK] as (SUK)
-- We send [ESK], [RS1], [RS2], [IV1], [IV2], [RP], [SUP] and [SUK] to the server  
+- We encrypt `RP` with `HP2` as key and a random initialization vector (IV2) resulting in (EUP)
+- We encrypt `RP` with `HKS` as key and vector `IV2` resulting in (EUK)
+- We use our Secret Key to get the signature of `EUP` as (SUP)
+- We use our Secret Key to get the signature of `EUK` as (SUK)
+- We send `ESK`, `RS1`, `RS2`, `IV1`, `IV2`, `RP`, `SUP` and `SUK` to the server  
   
-The server stores [RS2], [IV2] and [RP] in clear in the attic.  
-The server stores [ESK], [RS1], [IV1], [SUP] and [SUK] in the vault. All data in the vault are encrypted server side with the other secret managed by the back end.  
+The server stores `RS2`, `IV2` and `RP` in clear in the attic.  
+The server stores `ESK`, `RS1`, `IV1`, `SUP` and `SUK` in the vault. All data in the vault are encrypted server side with the other secret managed by the back end.  
 
 #### Using the Vault
 - We have a username and a password (PSW)
-- We first ask the server for the username's attic, we get [RS2], [IV2] and [RP]
-- We hash [PSW] through a PBKDF2 algorithm with salt [RS2] to get our comparison hash (HPU)
-- We encrypt [RP] with [HPU] as key and vector [IV2] resulting in (EUU)
-- We ask for the username's connection information with [EUU] in a header
-- The server verifies [EUU] against the [SUK] signature using the user's Public Key
-- If it matches, [PSW] was the kill switch and the user's account is deleted, if not we continue
-- The server verifies [EUU] against [SUP] using the user's Public Key
-- If it matches, [PSW] was the password and we get [ESK], [RS1], and [IV1] and the connection information encrypted using the user's Public Key (JWT)
-- We hash [PSW] through a PBKDF2 algorithm with salt [RS1] to get our encryption hash (HP1)
-- Using [HP1] We decrypt [ESK] with vector [IV1] to get our Secret Key back
-- We then decrypt [JWT] with it to get our connection information  
+- We first ask the server for the username's attic, we get `RS2`, `IV2` and `RP`
+- We hash `PSW` through a PBKDF2 algorithm with salt `RS2` to get our comparison hash (HPU)
+- We encrypt `RP` with `HPU` as key and vector `IV2` resulting in (EUU)
+- We ask for the username's connection information with `EUU` in a header
+- The server verifies `EUU` against the `SUK` signature using the user's Public Key
+- If it matches, `PSW` was the kill switch and the user's account is deleted, if not we continue
+- The server verifies `EUU` against `SUP` using the user's Public Key
+- If it matches, `PSW` was the password and we get `ESK`, `RS1`, and `IV1` and the connection information encrypted using the user's Public Key (JWT)
+- We hash `PSW` through a PBKDF2 algorithm with salt `RS1` to get our encryption hash (HP1)
+- Using `HP1` We decrypt `ESK` with vector `IV1` to get our Secret Key back
+- We then decrypt `JWT` with it to get our connection information  
   
 ### Messages
 The client is supposed to send 3 pieces of information to send a message:
