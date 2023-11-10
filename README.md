@@ -55,19 +55,55 @@ To "resolve" the challenge you go through those steps in reverse:
 - decrypt the passphrase with your secret key, to get the password.
 - use this password (and the iv) to decrypt the token, to get the data.
 
-### Authentication
-Authentication is achieved through a simple bearer token mechanism that is computed on the server side and sent to anyone trying to log for a username as a challenge, ensuring that only the owner of the secret key can decrypt and use the token.  
-The secret used for that computation is the only secret really managed on the back-end side and as such is a big security risk.  
-We mitigate that risk by verifying the user signature for all actions on its account (all PUT, POST and DELETE request.) to be sure that regardless of our authentication mechanism the user has access to the secret key relative to its account.  
-
 ### User account
-A user is created with its username, its encryption public key, its verifying public key and their vault i.e. their Secret Key encrypted with a hash of their password, the signed hash of their password and the signed hash of a randomly generated kill switch password.  
+A user is created with its username, its encryption public key, its verifying public key and the signed hash of those keys.  
 Users are created as inactive and deleted after 10 minutes of inactivity.  
 The only activity we keep on an account is the last time it opened a message or opened a web socket connection, which is why the new users have to open the first system message to activate their account.  
-The only metadata available on an account are related to the messages it receives, we don't keep any informations on messages sent.  
+The only metadata available on an account are related to the messages it receives and the user groups membership, we don't keep any informations on messages sent.  
+The contact list is only stored as a challenge.  
+Those minimal data are completed by the content of the vault and the attic (see below).  
 Once a day every account that has never been activated or without activity for the last 30 days are destroyed with every data related to it.  
 When an activated account is destroyed its username is unusable for 90 days, just to avoid too many username collisions and mistaken identity.  
 
+### Authentication
+Authentication is achieved through a simple bearer token mechanism that is computed on the server side and sent to anyone trying to log for a username as a challenge, ensuring that only the owner of the secret key can decrypt and use the token.  
+The secret used for that computation is one of only two secrets really managed on the back-end side and as such is a big security risk.  
+We mitigate that risk by verifying the user signature for all actions on its account (all PUT, POST and DELETE request) to be sure that regardless of our authentication mechanism the user has access to the secret key relative to its account.  
+
+### The Vault & the Attic
+The vault is designed to offer the possibility to store a user's Secret Key as securely as possible and enable the possibility to connect through a simple username/password scheme. It is also designed to allow the use of a password kill switch.  
+The attic is the recipient of the public informations needed to allow this connection scheme.  
+
+#### Setting up the Vault
+- We have a password (PSW) and a password kill switch (PKS) and our Secret Key
+- We hash [PSW] through a PBKDF2 algorithm with a random salt (RS1) to get our encryption hash (HP1)
+- We hash [PSW] through a PBKDF2 algorithm with a random salt (RS2) to get our comparison hash (HP2)
+- We hash [PKS] through a PBKDF2 algorithm with salt [RS2] to get our comparison kill switch hash (HKS)
+- We encrypt our Secret Key with [HP1] as key and a random initialization vector (IV1) resulting in (ESK)
+- We generate a random proof (RP)
+- We encrypt [RP] with [HP2] as key and a random initialization vector (IV2) resulting in (EUP)
+- We encrypt [RP] with [HKS] as key and vector [IV2] resulting in (EUK)
+- We use our Secret Key to get the signature of [EUP] as (SUP)
+- We use our Secret Key to get the signature of [EUK] as (SUK)
+- We send [ESK], [RS1], [RS2], [IV1], [IV2], [RP], [SUP] and [SUK] to the server  
+  
+The server stores [RS2], [IV2] and [RP] in clear in the attic.  
+The server stores [ESK], [RS1], [IV1], [SUP] and [SUK] in the vault. All data in the vault are encrypted server side with the other secret managed by the back end.  
+
+#### Using the Vault
+- We have a username and a password (PSW)
+- We first ask the server for the username's attic, we get [RS2], [IV2] and [RP]
+- We hash [PSW] through a PBKDF2 algorithm with salt [RS2] to get our comparison hash (HPU)
+- We encrypt [RP] with [HPU] as key and vector [IV2] resulting in (EUU)
+- We ask for the username's connection information with [EUU] in a header
+- The server verifies [EUU] against the [SUK] signature using the user's Public Key
+- If it matches, [PSW] was the kill switch and the user's account is deleted, if not we continue
+- The server verifies [EUU] against [SUP] using the user's Public Key
+- If it matches, [PSW] was the password and we get [ESK], [RS1], and [IV1] and the connection information encrypted using the user's Public Key (JWT)
+- We hash [PSW] through a PBKDF2 algorithm with salt [RS1] to get our encryption hash (HP1)
+- Using [HP1] We decrypt [ESK] with vector [IV1] to get our Secret Key back
+- We then decrypt [JWT] with it to get our connection information  
+  
 ### Messages
 The client is supposed to send 3 pieces of information to send a message:
 - the target username in clear text
@@ -123,4 +159,5 @@ For the truly paranoid, you can always copy the reader and writer code available
   
 ## What's next
 - performance improvements
-- Enable peer-to-peer chat with WebRTC
+- security
+- easy spawning
