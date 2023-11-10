@@ -1,33 +1,37 @@
 <script setup>
 import { Form, Field } from 'vee-validate';
+import { ref, onMounted } from 'vue';
 import * as Yup from 'yup';
 
-import { useUsersStore, useAlertStore, useAuthStore } from '@/stores';
+import { useAlertStore, useAuthStore, useUsersStore } from '@/stores';
 import { router } from '@/router';
+import CryptoHelper from '@/lib/cryptoHelper';
+import FileHelper from '@/lib/fileHelper';
 
-const usersStore = useUsersStore();
 const alertStore = useAlertStore();
 const authStore = useAuthStore();
 
 const schema = Yup.object().shape({
   username: Yup.string()
     .required('User @ is required')
-    .min(4, 'Your @ should be at least 4 characters long')
+    .min(3, 'Your @ should be at least 3 characters long')
     .max(35, 'Your @ should not be longer than 35 characters'),
-  passphrase: Yup.string()
-    .min(8, 'Passphrase must be at least 8 characters')
-    .required('Passphrase is required'),
-  confirmPassphrase: Yup.string()
-    .oneOf([Yup.ref('passphrase'), null], 'Passphrases must match')
-    .required('Confirm Passphrase is required'),
+});
+let loginInput = '';
+const fileInput = ref(null);
+
+onMounted(() => {
+  const usersStore = useUsersStore();
+  if (usersStore.newUsername) {
+    loginInput = usersStore.newUsername;
+    usersStore.newUsername = null;
+  }
 });
 
-async function onSubmit(values) {
+async function onUpload(keys) {
+  const [key, signKey] = keys.split(CryptoHelper.SEPARATOR);
   try {
-    const { ESK, SSK } = await usersStore.createUserWithVault(values);
-
-    await authStore.connect(values.username, ESK, SSK, true);
-    authStore.hasVault = true;
+    await authStore.connect(loginInput, key, signKey);
 
     router.push('/conversations');
   } catch (error) {
@@ -36,12 +40,19 @@ async function onSubmit(values) {
   }
 }
 
-</script>
+async function onFilePicked(evt) {
+  FileHelper.onFilePicked(evt, onUpload);
+}
 
+async function onSubmit() {
+  fileInput.value.click();
+}
+
+</script>
 <template>
   <div class="card m-3">
     <h4 class="card-header">
-      Register
+      Login
     </h4>
     <div class="card-body">
       <Form
@@ -59,6 +70,7 @@ async function onSubmit(values) {
               >@</span>
             </div>
             <Field
+              v-model="loginInput"
               name="username"
               autocomplete="off"
               type="text"
@@ -70,30 +82,6 @@ async function onSubmit(values) {
             </div>
           </div>
         </div>
-        <div class="form-row">
-          <label>Password</label>
-          <Field
-            name="passphrase"
-            type="password"
-            class="form-control"
-            :class="{ 'is-invalid': errors.passphrase }"
-          />
-          <div class="invalid-feedback">
-            {{ errors.passphrase }}
-          </div>
-        </div>
-        <div class="form-row mt-2">
-          <label>Confirm password</label>
-          <Field
-            name="confirmPassphrase"
-            type="password"
-            class="form-control"
-            :class="{ 'is-invalid': errors.confirmPassphrase }"
-          />
-          <div class="invalid-feedback">
-            {{ errors.confirmPassphrase }}
-          </div>
-        </div>
         <div class="form-group mt-2">
           <button
             class="btn btn-primary"
@@ -103,24 +91,23 @@ async function onSubmit(values) {
               v-show="isSubmitting"
               class="spinner-border spinner-border-sm me-1"
             />
-            Register
+            Login
           </button>
           <router-link
             to="connect"
             class="btn btn-link"
           >
-            Login
-          </router-link>
-        </div>
-        <div class="form-row text-end">
-          <router-link
-            to="register"
-            class="btn btn-link"
-          >
-            Create an account with key file
+            Cancel
           </router-link>
         </div>
       </Form>
+      <input
+        ref="fileInput"
+        hidden
+        type="file"
+        style="opacity: none;"
+        @change="onFilePicked"
+      >
     </div>
   </div>
 
@@ -132,13 +119,13 @@ async function onSubmit(values) {
       class="card-body"
     >
       <p>
-        On account creation a key pair is generated and the public part is sent to the server.
+        Upon logging in, the server provides your encrypted identity.
       </p>
       <p>
-        The provided password is then used to encrypt the secret part.
+        When prompted you provide your secret key as a file.
       </p>
       <p>
-        The resulting encrypted secret is set in your vault.
+        This secret key then decrypts your identity, allowing you to successfully connect.
       </p>
     </div>
   </div>

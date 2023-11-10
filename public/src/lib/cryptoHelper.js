@@ -95,7 +95,7 @@ class CryptoHelper {
     const SK = await this.exportCryptoKey(keyPair.privateKey, 'pkcs8', 'PRIVATE');
 
     if (SK.length !== 3222) {
-      console.log('wrong encryption key format, try again', SK.length);
+      // console.log('wrong encryption key format, try again', SK.length);
       const res = await this.generateKeyPair();
       return res;
     }
@@ -122,7 +122,7 @@ class CryptoHelper {
     const SK = await this.exportCryptoKey(keyPair.privateKey, 'pkcs8', 'PRIVATE');
 
     if (SK.length !== 902) {
-      console.log('wrong signature key format, try again', SK.length);
+      // console.log('wrong signature key format, try again', SK.length);
       const res = await this.generateSignatureKeyPair();
       return res;
     }

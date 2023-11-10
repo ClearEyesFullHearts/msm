@@ -2,40 +2,34 @@
 import { Form, Field } from 'vee-validate';
 import * as Yup from 'yup';
 
-import { useUsersStore, useAlertStore, useAuthStore } from '@/stores';
+import { useUsersStore, useAlertStore } from '@/stores';
 import { router } from '@/router';
+import CryptoHelper from '@/lib/cryptoHelper';
+import FileHelper from '@/lib/fileHelper';
 
 const usersStore = useUsersStore();
 const alertStore = useAlertStore();
-const authStore = useAuthStore();
 
 const schema = Yup.object().shape({
   username: Yup.string()
     .required('User @ is required')
     .min(4, 'Your @ should be at least 4 characters long')
     .max(35, 'Your @ should not be longer than 35 characters'),
-  passphrase: Yup.string()
-    .min(8, 'Passphrase must be at least 8 characters')
-    .required('Passphrase is required'),
-  confirmPassphrase: Yup.string()
-    .oneOf([Yup.ref('passphrase'), null], 'Passphrases must match')
-    .required('Confirm Passphrase is required'),
 });
 
 async function onSubmit(values) {
   try {
-    const { ESK, SSK } = await usersStore.createUserWithVault(values);
+    const { ESK, SSK } = await usersStore.createUser(values);
+    const skFileContent = `${ESK}${CryptoHelper.SEPARATOR}${SSK}`;
+    FileHelper.download(`@${values.username}.pem`, skFileContent);
 
-    await authStore.connect(values.username, ESK, SSK, true);
-    authStore.hasVault = true;
-
-    router.push('/conversations');
+    usersStore.newUsername = values.username;
+    router.push('/login');
   } catch (error) {
     // console.log(error);
     alertStore.error(error);
   }
 }
-
 </script>
 
 <template>
@@ -70,30 +64,6 @@ async function onSubmit(values) {
             </div>
           </div>
         </div>
-        <div class="form-row">
-          <label>Password</label>
-          <Field
-            name="passphrase"
-            type="password"
-            class="form-control"
-            :class="{ 'is-invalid': errors.passphrase }"
-          />
-          <div class="invalid-feedback">
-            {{ errors.passphrase }}
-          </div>
-        </div>
-        <div class="form-row mt-2">
-          <label>Confirm password</label>
-          <Field
-            name="confirmPassphrase"
-            type="password"
-            class="form-control"
-            :class="{ 'is-invalid': errors.confirmPassphrase }"
-          />
-          <div class="invalid-feedback">
-            {{ errors.confirmPassphrase }}
-          </div>
-        </div>
         <div class="form-group mt-2">
           <button
             class="btn btn-primary"
@@ -106,18 +76,10 @@ async function onSubmit(values) {
             Register
           </button>
           <router-link
-            to="connect"
+            to="create"
             class="btn btn-link"
           >
-            Login
-          </router-link>
-        </div>
-        <div class="form-row text-end">
-          <router-link
-            to="register"
-            class="btn btn-link"
-          >
-            Create an account with key file
+            Cancel
           </router-link>
         </div>
       </Form>
@@ -135,10 +97,10 @@ async function onSubmit(values) {
         On account creation a key pair is generated and the public part is sent to the server.
       </p>
       <p>
-        The provided password is then used to encrypt the secret part.
+        The secret part is set into a file that is automatically downloaded on your device.
       </p>
       <p>
-        The resulting encrypted secret is set in your vault.
+        You'll use that file to connect.
       </p>
     </div>
   </div>

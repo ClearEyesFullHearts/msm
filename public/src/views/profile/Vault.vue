@@ -3,11 +3,12 @@ import { ref, onMounted } from 'vue';
 import { Form, Field } from 'vee-validate';
 import * as Yup from 'yup';
 
-import { useAuthStore } from '@/stores';
+import { useAuthStore, useUsersStore } from '@/stores';
 import CryptoHelper from '@/lib/cryptoHelper';
 import FileHelper from '@/lib/fileHelper';
 
 const authStore = useAuthStore();
+const usersStore = useUsersStore();
 
 const hasVault = ref(false);
 
@@ -30,13 +31,15 @@ onMounted(() => {
 });
 
 async function onSetUpVault(values) {
-  await authStore.setVault(values.passphrase, values.killswitch);
-  hasVault.value = authStore.hasVault;
+  await usersStore.setVault(values.passphrase, values.killswitch);
+  hasVault.value = true;
+  authStore.hasVault = true;
 }
 
 async function onEmptyVault() {
-  await authStore.emptyVault();
-  hasVault.value = authStore.hasVault;
+  await usersStore.emptyVault();
+  hasVault.value = false;
+  authStore.hasVault = false;
 }
 
 function onDownloadSK() {
@@ -64,15 +67,16 @@ function onDownloadSK() {
               and set up your optional password kill switch.
             </li>
             <li>
-              Your password should be as strong as possible and your
-              kill switch password should be simpler than your actual password.
+              Your password should be as strong as possible.
+              Your security will only be as strong as your password.
             </li>
             <li>
               If you don't set up your password again you will only be able to connect directly
               with your Secret Key file.
             </li>
             <li>
-              There is no retrieval mechanism if you forget your password.
+              There is no retrieval mechanism if you forget your password,
+              except for your Secret Key file.
             </li>
           </ul>
         </div>
@@ -106,7 +110,7 @@ function onDownloadSK() {
           </div>
           <div v-show="!hasVault">
             <Form
-              v-slot="{ errors }"
+              v-slot="{ values, errors, isSubmitting }"
               :validation-schema="schema"
               @submit="onSetUpVault"
             >
@@ -162,7 +166,12 @@ function onDownloadSK() {
                 <button
                   type="submit"
                   class="btn btn-primary me-1"
+                  :disabled="isSubmitting"
                 >
+                  <span
+                    v-show="isSubmitting"
+                    class="spinner-border spinner-border-sm me-1"
+                  />
                   Set keys in the vault
                 </button>
               </div>
@@ -173,7 +182,7 @@ function onDownloadSK() {
 
       <div class="card m-3">
         <h4 class="card-header">
-          Full explanation
+          Full explanation (simplified)
         </h4>
         <div class="card-body">
           <p>
@@ -181,10 +190,13 @@ function onDownloadSK() {
             which is encrypted using a hash of your password.
           </p>
           <p>
-            Upon creating your account or setting up your vault, we calculate a hash of your
-            password and password kill switch. Your secret key is then encrypted with the former,
+            Upon creating your account or setting up your vault, we calculate a strong hash of your
+            password and kill switch. Your secret key is then encrypted with the former,
             and both your encrypted secret key
             and the signatures of both hashes are stored in your vault.
+          </p>
+          <p>
+            Every piece of data in your vault is encrypted on the server side for storage.
           </p>
           <p>
             When you log in, you transmit the computed hash of your password to us, which is
@@ -196,16 +208,10 @@ function onDownloadSK() {
           <p>
             Upon receiving your encrypted connection information, you can decrypt your vault using
             the hashed password to access your secret key.
-            You can also decrypt your connection data with that key, allowing you to log in.
+            You can then decrypt your connection data with that key, allowing you to log in.
           </p>
           <p>
-            In the event that your vault is empty, you will be prompted to upload your
-            Secret Key file, which will be used directly for decrypting your connection data.
-          </p>
-          <p>
-            To enhance the chances of discovering your kill switch password in the event
-            of a brute force attack on our password store, it is advisable for your kill switch
-            passwordto be simpler than your main password.
+            On login you can always connect with your username and your secret key file.
           </p>
         </div>
       </div>

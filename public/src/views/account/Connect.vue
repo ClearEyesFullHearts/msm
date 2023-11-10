@@ -1,14 +1,9 @@
 <script setup>
 import { Form, Field } from 'vee-validate';
-import { ref } from 'vue';
 import * as Yup from 'yup';
 
 import { useAlertStore, useAuthStore } from '@/stores';
 import { router } from '@/router';
-import CryptoHelper from '@/lib/cryptoHelper';
-import FileHelper from '@/lib/fileHelper';
-// temporary
-// import TimeLogger from '@/lib/timeLogger';
 
 const alertStore = useAlertStore();
 const authStore = useAuthStore();
@@ -22,35 +17,15 @@ const schema = Yup.object().shape({
     .min(8, 'Passphrase must be at least 8 characters')
     .required('Passphrase is required'),
 });
-const fileInput = ref(null);
-const isSubmitting = ref(false);
-
-async function onUpload(keys) {
-  const [key, signKey] = keys.split(CryptoHelper.SEPARATOR);
-
-  await authStore.login(key, signKey);
-  router.push('/conversations');
-}
-
-async function onFilePicked(evt) {
-  FileHelper.onFilePicked(evt, onUpload);
-}
-async function onKeyFileNeeded() {
-  fileInput.value.click();
-}
 
 async function onSubmit(values) {
-  // TimeLogger.start();
-  isSubmitting.value = true;
   try {
-    await authStore.connectWithPassword(values.username, values.passphrase);
-    // TimeLogger.logTime('1 getIdentity');
+    await authStore.connectWithPassword(values.username, values.passphrase, false);
 
     router.push('/conversations');
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     alertStore.error(error);
-    isSubmitting.value = false;
   }
 }
 
@@ -111,20 +86,21 @@ async function onSubmit(values) {
             Login
           </button>
           <router-link
-            to="register"
+            to="create"
             class="btn btn-link"
           >
             Register
           </router-link>
         </div>
+        <div class="form-group text-end">
+          <router-link
+            to="login"
+            class="btn btn-link"
+          >
+            Connect with your key file
+          </router-link>
+        </div>
       </Form>
-      <input
-        ref="fileInput"
-        hidden
-        type="file"
-        style="opacity: none;"
-        @change="onFilePicked"
-      >
     </div>
   </div>
 

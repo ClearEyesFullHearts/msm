@@ -3,14 +3,13 @@ import { defineStore } from 'pinia'; import {
   useAuthStore,
 } from '@/stores';
 // temporary
-import TimeLogger from '@/lib/timeLogger';
+// import TimeLogger from '@/lib/timeLogger';
 
 import CryptoHelper from '@/lib/cryptoHelper';
-import FileHelper from '@/lib/fileHelper';
 import { fetchWrapper } from '@/helpers';
 import Config from '@/lib/config';
 
-const mylogger = new TimeLogger('user store');
+// const mylogger = new TimeLogger('user store');
 
 const baseUrl = Config.API_URL;
 const mycrypto = new CryptoHelper();
@@ -44,26 +43,26 @@ export const useUsersStore = defineStore({
       return { ESK: SK, SSK: signSK };
     },
     async createUserWithVault(user) {
-      mylogger.start();
+      // mylogger.start();
       const {
         username,
         passphrase,
       } = user;
 
       const { PK, SK } = await mycrypto.generateKeyPair();
-      mylogger.logTime('encryption keys generated');
+      // mylogger.logTime('encryption keys generated');
       const { PK: signPK, SK: signSK } = await mycrypto.generateSignatureKeyPair();
-      mylogger.logTime('signature keys generated');
+      // mylogger.logTime('signature keys generated');
 
       const clearHash = await mycrypto.hash(`${PK}\n${signPK}`);
       const signedHash = await mycrypto.sign(signSK, clearHash, true);
-      mylogger.logTime('public hash signed');
+      // mylogger.logTime('public hash signed');
 
       const {
         vault,
         attic,
       } = await this.calculateVault(SK, signSK, passphrase);
-      mylogger.logTime('vault calculated');
+      // mylogger.logTime('vault calculated');
 
       const data = {
         at: username,
@@ -75,7 +74,7 @@ export const useUsersStore = defineStore({
       };
 
       await fetchWrapper.post(`${baseUrl}/users`, data);
-      mylogger.logTime('user data posted');
+      // mylogger.logTime('user data posted');
 
       return {
         ESK: SK, SSK: signSK,
@@ -127,7 +126,7 @@ export const useUsersStore = defineStore({
       const iv2 = window.crypto.getRandomValues(new Uint8Array(16));
       const rs1 = window.crypto.getRandomValues(new Uint8Array(64));
       const rs2 = window.crypto.getRandomValues(new Uint8Array(64));
-      mylogger.logTime('randoms generated');
+      // mylogger.logTime('randoms generated');
 
       const results = await Promise.all([
         mycrypto.PBKDF2Hash(passphrase, rs1),
@@ -136,7 +135,7 @@ export const useUsersStore = defineStore({
       ]);
 
       const [{ key: hp1 }, { key: hp2 }, { key: hks }] = results;
-      mylogger.logTime('3 PBKDF2 hash done');
+      // mylogger.logTime('3 PBKDF2 hash done');
 
       const sk = `${SK}${CryptoHelper.SEPARATOR}${signSK}`;
       const rp = mycrypto.ArBuffToBase64(window.crypto.getRandomValues(new Uint8Array(64)));
@@ -148,7 +147,7 @@ export const useUsersStore = defineStore({
       ]);
 
       const [{ token: esk }, { token: eup }, { token: euk }] = encrypts;
-      mylogger.logTime('3 encryption done');
+      // mylogger.logTime('3 encryption done');
 
       const signatures = await Promise.all([
         mycrypto.sign(signSK, eup, true),
@@ -156,7 +155,7 @@ export const useUsersStore = defineStore({
       ]);
 
       const [sup, suk] = signatures;
-      mylogger.logTime('2 signatures done');
+      // mylogger.logTime('2 signatures done');
 
       return {
         vault: {

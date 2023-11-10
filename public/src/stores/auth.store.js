@@ -10,16 +10,14 @@ import CryptoHelper from '@/lib/cryptoHelper';
 import ChainHelper from '@/lib/chainHelper';
 import Config from '@/lib/config';
 // temporary
-import TimeLogger from '@/lib/timeLogger';
+// import TimeLogger from '@/lib/timeLogger';
 
-const mylogger = new TimeLogger('auth store');
+// const mylogger = new TimeLogger('auth store');
 
 const baseUrl = Config.API_URL;
 const mycrypto = new CryptoHelper();
 const myvalidator = new ChainHelper();
 let interval;
-// let myVault;
-// let myChallenge;
 let verificationTimeoutID;
 
 export const useAuthStore = defineStore({
@@ -36,31 +34,31 @@ export const useAuthStore = defineStore({
     idIsSet: false,
   }),
   actions: {
-    async connect(username, key, signKey) {
-      mylogger.start();
+    async connect(username, key, signKey, first = false) {
+      // mylogger.start();
       const challenge = await fetchWrapper.get(`${baseUrl}/identity/${username}`);
-      mylogger.logTime('get identity challenge');
+      // mylogger.logTime('get identity challenge');
 
-      await this.login(key, signKey, challenge, true);
-      mylogger.logTime('login done');
+      await this.login(key, signKey, challenge, first);
+      // mylogger.logTime('login done');
     },
-    async connectWithPassword(username, passphrase) {
-      mylogger.start();
+    async connectWithPassword(username, passphrase, first = false) {
+      // mylogger.start();
       const { proof, salt, iv } = await fetchWrapper.get(`${baseUrl}/attic/${username}`);
-      mylogger.logTime('get attic data');
+      // mylogger.logTime('get attic data');
       const rs2 = mycrypto.base64ToArBuff(salt);
       const iv2 = mycrypto.base64ToArBuff(iv);
       const { key: hp2 } = await mycrypto.PBKDF2Hash(passphrase, rs2);
-      mylogger.logTime('password hashed');
+      // mylogger.logTime('password hashed');
 
       const { token: eup } = await mycrypto.PBKDF2Encrypt(hp2, proof, iv2);
-      mylogger.logTime('proof encrypted');
+      // mylogger.logTime('proof encrypted');
 
       const passHeader = {
         'X-msm-Pass': eup,
       };
       const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${username}`, false, passHeader);
-      mylogger.logTime('get vault & identity challenge');
+      // mylogger.logTime('get vault & identity challenge');
 
       const {
         token,
@@ -69,35 +67,35 @@ export const useAuthStore = defineStore({
       } = vault;
       const rs1 = mycrypto.base64ToArBuff(vaultSalt);
       const { key: hp1 } = await mycrypto.PBKDF2Hash(passphrase, rs1);
-      mylogger.logTime('password hashed for keys decryption');
+      // mylogger.logTime('password hashed for keys decryption');
 
       const decryptedVault = await mycrypto.symmetricDecrypt(hp1, iv1, token);
-      mylogger.logTime('keys decrypted');
+      // mylogger.logTime('keys decrypted');
       const dec = new TextDecoder();
       const keyFile = dec.decode(decryptedVault);
 
       const [key, signKey] = keyFile.split(CryptoHelper.SEPARATOR);
 
-      await this.login(key, signKey, challenge, false);
+      await this.login(key, signKey, challenge, first);
       this.hasVault = true;
-      mylogger.logTime('login done');
+      // mylogger.logTime('login done');
     },
     async login(key, signKey, challenge, firstTime = false) {
       const alertStore = useAlertStore();
       try {
         await this.setIdentityUp(key, signKey, challenge);
-        mylogger.logTime('a - setIdentityUp');
+        // mylogger.logTime('a - setIdentityUp');
 
         const epk = await mycrypto.getPublicKey(this.pem);
         const spk = await mycrypto.getSigningPublicKey(this.signing);
-        mylogger.logTime('b - get public key');
+        // mylogger.logTime('b - get public key');
 
         this.publicHash = await mycrypto.hash(`${epk}\n${spk}`);
-        mylogger.logTime('c - get hash');
+        // mylogger.logTime('c - get hash');
 
         const groupStore = useGroupStore();
         await groupStore.setGroupList(this.pem);
-        mylogger.logTime('d - setGroupList');
+        // mylogger.logTime('d - setGroupList');
         const contactsStore = useContactsStore();
         contactsStore.setContactList(this.pem, this.user.contacts)
           .then(() => {
@@ -107,11 +105,11 @@ export const useAuthStore = defineStore({
               workerStore.subscribe().then((isSubscribed) => {
                 if (isSubscribed) {
                   clearTimeout(contactsStore.timeout);
-                  mylogger.logTime('f1 - subscribe');
+                  // mylogger.logTime('f - subscribe');
                 }
               });
             }
-            mylogger.logTime('e - setContactList');
+            // mylogger.logTime('e - setContactList');
           });
 
         if (!firstTime) {
@@ -198,7 +196,6 @@ export const useAuthStore = defineStore({
       try {
         clearInterval(interval);
         const challenge = await fetchWrapper.get(`${baseUrl}/identity/${this.user.user.username}`);
-        mylogger.logTime('get identity challenge');
 
         await this.login(this.pem, this.signing, challenge, true);
       } catch (err) {
@@ -221,7 +218,7 @@ export const useAuthStore = defineStore({
       }
       const pinia = getActivePinia();
       pinia._s.forEach((store) => store.$reset());
-      router.push('/login');
+      router.push('/connect');
       document.title = 'ySyPyA';
     },
   },

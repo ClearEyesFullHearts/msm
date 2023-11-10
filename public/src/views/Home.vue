@@ -98,8 +98,7 @@ function installApp() {
               </li>
               <li>
                 Inside your vault, you have the option to download your secret key as a file,
-                which can be used in place of your password.
-                (If you enter an incorrect password, you will be prompted to upload this file.)<br>
+                which can be used in place of your password.<br>
                 When you choose to empty your vault, you can change your password
                 and establish a password kill switch.
                 However, if you empty your vault without setting a new password,
@@ -283,10 +282,10 @@ function installApp() {
           <p>
             <ul>
               <li>
-                Server side kill switch
+                Infrastructure security
               </li>
               <li>
-                Peer to peer chat
+                Easy site spawning
               </li>
             </ul>
           </p>
