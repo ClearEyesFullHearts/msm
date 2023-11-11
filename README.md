@@ -137,7 +137,7 @@ Soon it will only be the fallback mechanism if a peer to peer connection is impo
   
 ## Trust issues
 If you have read everything up to here you probably have some trust issues and I can't blame you. You shouldn't trust me.  
-Like I said in the project description the heavy lifting is done on the client side, the Secret Key is never shared, never stored out of the memory and the messages are at no point sent in clear text, so I wrote a simple script for you to be able to use the client code directly from your machine:  
+Like I said in the project description the heavy lifting is done on the client side, the Secret Key does not have to be shared, is never stored out of the memory in clear text and neither are the messages, so I wrote a simple script for you to be able to use the client code directly from your machine:  
 - `git clone https://github.com/ClearEyesFullHearts/msm.git`
 - Get the commit hash of the online version in `./public/README.md`
 - At the root of the project, checkout the code with this hash

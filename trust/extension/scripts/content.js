@@ -1,4 +1,4 @@
-const COMMIT = 'e81201d551e23847d8e68aae9e1569f6d66cb6d6';
+const COMMIT = '9f099301a9f3ec6cf4c117be441ab35e6b336fa8';
 const commitHash = document.querySelector('#commitHash');
 
 if (commitHash) {
