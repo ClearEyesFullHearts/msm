@@ -230,7 +230,8 @@ export const useContactsStore = defineStore({
     },
     async autoValidation(user) {
       try {
-        const isValidatedOnChain = await myvalidator.isValidated(user.id);
+        const userId = mycrypto.hash(user.at);
+        const isValidatedOnChain = await myvalidator.isValidated(userId);
         if (!isValidatedOnChain) return;
 
         const { signature } = isValidatedOnChain;

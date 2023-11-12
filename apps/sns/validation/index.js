@@ -4,6 +4,7 @@ const { SchedulerClient, CreateScheduleCommand } = require('@aws-sdk/client-sche
 const AWSXRay = require('@shared/tracing');
 const Data = require('@shared/dynamolayer');
 const Secret = require('@shared/secrets');
+const Encryption = require('@shared/encryption');
 const Validator = require('./src/validator');
 
 let data;
@@ -40,7 +41,8 @@ async function initValidation(user, invokedFunctionArn) {
   await data.users.updateValidation(user.username, 'IS_VALIDATING');
 
   try {
-    await AWSXRay.captureAsyncFunc('Ether.validation', validator.validateUser({ userId: user.id, signature: user.hash }));
+    const userId = Encryption.hash(user.username).toString('base64');
+    await validator.validateUser({ userId, signature: user.hash });
     debug('Validation sent');
     await askConfirmation(user.username, 1, invokedFunctionArn);
     debug('Confirmation asked');
@@ -53,7 +55,8 @@ async function initValidation(user, invokedFunctionArn) {
 async function confirmValidation(user, tries, invokedFunctionArn) {
   debug(`Confirming user ${user.username}, time ${tries}`);
 
-  const isValid = await AWSXRay.captureAsyncFunc('Ether.confirmation', validator.isValidated(user.id));
+  const userId = Encryption.hash(user.username).toString('base64');
+  const isValid = await validator.isValidated(userId);
   if (isValid) {
     debug('Validation confirmed');
     await data.users.updateValidation(user.username, 'VALIDATED');
@@ -107,12 +110,12 @@ const main = async () => {
 
   client = AWSXRay.captureAWSv3Client(new SchedulerClient());
 
-  validator = new Validator({
+  validator = AWSXRay.captureInstance(new Validator({
     network: config.get('ether.network'),
     apiKey: config.get('ether.api'),
     privateKey: secret.KEY_WALLET_SECRET,
     address: config.get('ether.contract'),
-  });
+  }));
 
   return { handler };
 };

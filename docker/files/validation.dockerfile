@@ -8,6 +8,7 @@ COPY ./shared/tracing/package*.json ./shared/tracing/
 COPY ./apps/sns/validation/package*.json ./apps/sns/validation/
 COPY ./shared/dynamolayer/package*.json ./shared/dynamolayer/
 COPY ./shared/secrets/package*.json ./shared/secrets/
+COPY ./shared/encryption/package*.json ./shared/encryption/
 RUN npm install
 
 # The instructions for second stage
@@ -17,6 +18,7 @@ COPY --from=build-stage node_modules ${LAMBDA_TASK_ROOT}/node_modules
 
 COPY ./shared/tracing/ ${LAMBDA_TASK_ROOT}/shared/tracing/
 COPY ./shared/secrets/ ${LAMBDA_TASK_ROOT}/shared/secrets/
+COPY ./shared/encryption/ ${LAMBDA_TASK_ROOT}/shared/encryption/
 COPY ./shared/dynamolayer/ ${LAMBDA_TASK_ROOT}/shared/dynamolayer/
 COPY ./apps/sns/validation/config ${LAMBDA_TASK_ROOT}/config
 COPY ./apps/sns/validation/src ${LAMBDA_TASK_ROOT}/src

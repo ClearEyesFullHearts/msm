@@ -12,6 +12,7 @@
     "@shared/dynamolayer": "*",
     "@shared/secrets": "*",
     "@shared/tracing": "*",
+    "@shared/encryption": "*",
     "@aws-sdk/client-scheduler": "^3.420.0",
     "config": "3.3.9",
     "debug": "4.3.4",
