@@ -52,6 +52,11 @@ Parameters:
     Default: latest
     Description: The ID of the hosted zone
 
+  MSMMainProvisionedNumber:
+    Type: Number
+    Default: 0
+    Description: The number of provisioned lambda functions for main
+
 ####################################################################################
 Resources:
 ####################################################################################
@@ -134,6 +139,8 @@ Resources:
         MSMApiDomainName: !Ref MSMHttpApiDomainName
         MSMApiCertificateID: !Ref MSMHttpApiCertificateID
         MSMHostedZoneID: !Ref MSMHostedZoneID
+        MSMMainProvisionedNumber: !Ref MSMMainProvisionedNumber
+        MSMTagName: !Ref MSMImageTag
         MSMLambdaImageName: !Sub 'mft-msm-main.${MSMStageName}.${MSMImageTag}'
         MSMNotifTopicName: !GetAtt MSMNotifiedStack.Outputs.NotifyTopicEndpoint
         MSMSchedulerGroupName: !GetAtt MSMCleanupStack.Outputs.GroupName

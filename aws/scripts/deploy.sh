@@ -7,7 +7,7 @@ set +a
 cd ../..
 
 # Send all images to ECR
-# aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/q0f4v2r9
+aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/q0f4v2r9
 aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
 docker build -f docker/files/ws-connect.dockerfile -t mft-msm-ws-connect.${STACK_STAGE}.${IMAGE_TAG} .
@@ -74,3 +74,4 @@ aws cloudformation deploy \
         MSMWssApiCertificateID="$WSS_CERTIFICATE" \
         MSMHttpApiDomainName="$HTTP_DOMAIN" \
         MSMWssApiDomainName="$WSS_DOMAIN" \
+        MSMMainProvisionedNumber="$MAIN_PROVISION" \

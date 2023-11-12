@@ -68,6 +68,16 @@ Parameters:
     Type: String
     Description: The URL of the queue to post read message messages
 
+  MSMTagName:
+    Type: String
+    Default: latest
+    Description: The ID of the hosted zone
+
+  MSMMainProvisionedNumber:
+    Type: Number
+    Default: 0
+    Description: The number of provisioned lambda functions for main
+
 ####################################################################################
 Resources:
 ####################################################################################
@@ -173,6 +183,19 @@ Resources:
           CLEAN_ACCOUNT_TARGET: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanAccountLambda}'
           SCHEDULER_ROLE: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${MSMCleanupSchedulerRole}'
           MARK_READ_QUEUE: !Ref MSMMarkReadQueueURL
+  version:
+    Type: AWS::Lambda::Version
+    Properties:
+      FunctionName: !Ref MSMMainAPILambdaFunction
+      Description: !Sub 'v${MSMTagName}'
+  alias:
+    Type: AWS::Lambda::Alias
+    Properties:
+      FunctionName: !Ref MSMMainAPILambdaFunction
+      FunctionVersion: !GetAtt version.Version
+      Name: !Sub 'v${MSMTagName}'
+      ProvisionedConcurrencyConfig:
+        ProvisionedConcurrentExecutions: !Ref MSMMainProvisionedNumber
   
   MSMMainExpressAPI:
     Type: AWS::ApiGatewayV2::Api
@@ -187,7 +210,7 @@ Resources:
               x-amazon-apigateway-integration:
                 httpMethod: POST
                 type: aws_proxy
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMMainAPILambdaFunction.Arn}/invocations
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMMainAPILambdaFunction.Arn}:v${MSMLambdaImageName}/invocations
                 payloadFormatVersion: '2.0'
                 requestParameters:
                   "overwrite:path": "$request.path"
