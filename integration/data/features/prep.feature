@@ -1,6 +1,6 @@
-# Feature: Data preparation
+Feature: Data preparation
 
-#     Prepare datas
+    Prepare datas
 
 # Scenario: Validate "mat" user
 #     Given I load up mat public keys
@@ -47,28 +47,28 @@
 #     When I GET /message/`FIRST_MSG_ID`
 #     Then response code should be 200
 
-# Scenario: Create users
-#     Given I create random user with length 5
-#     And I create random user with length 31
-#     And I create random user with length 6
-#     And I create random user with length 7
-#     And I create random user with length 8
-#     And I create random user with length 9
-#     And I create random user with length 10
-#     And I create random user with length 11
-#     And I create random user with length 12
-#     And I create random user with length 13
-#     And I create random user with length 14
-#     And I create random user with length 15
-#     And I create random user with length 16
-#     And I create random user with length 17
-#     And I create random user with length 6
-#     And I create random user with length 7
-#     And I create random user with length 8
-#     And I create random user with length 9
-#     And I create random user with length 10
-#     And I create random user with length 11
-#     Then I create random users file
+Scenario: Create users
+    Given I create random user with length 5
+    And I create random user with length 31
+    And I create random user with length 6
+    And I create random user with length 7
+    And I create random user with length 8
+    And I create random user with length 9
+    And I create random user with length 10
+    And I create random user with length 11
+    And I create random user with length 12
+    And I create random user with length 13
+    And I create random user with length 14
+    And I create random user with length 15
+    And I create random user with length 16
+    And I create random user with length 17
+    And I create random user with length 6
+    And I create random user with length 7
+    And I create random user with length 8
+    And I create random user with length 9
+    And I create random user with length 10
+    And I create random user with length 11
+    Then I create random users file
     
 # Scenario: Put baby in the freezer
 #     Given I load up baby public keys
@@ -123,64 +123,64 @@
 # Scenario: I wait a bit before ending
 #     Given I wait for 10 seconds
 
-# # Scenario: Delete random users
-# #     Given I am existing `RANDOM_USER.0`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.0`
-# #     Given I am existing `RANDOM_USER.1`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.1`
-# #     Given I am existing `RANDOM_USER.14`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.14`
-# #     Given I am existing `RANDOM_USER.3`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.3`
-# #     Given I am existing `RANDOM_USER.4`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.4`
-# #     Given I am existing `RANDOM_USER.5`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.5`
-# #     Given I am existing `RANDOM_USER.6`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.6`
-# #     Given I am existing `RANDOM_USER.7`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.7`
-# #     Given I am existing `RANDOM_USER.8`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.8`
-# #     Given I am existing `RANDOM_USER.9`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.9`
-# #     Given I am existing `RANDOM_USER.10`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.10`
-# #     Given I am existing `RANDOM_USER.11`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.11`
-# #     Given I am existing `RANDOM_USER.12`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.12`
-# #     Given I am existing `RANDOM_USER.13`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.13`
-# #     Given I am existing `RANDOM_USER.14`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.14`
-# #     Given I am existing `RANDOM_USER.15`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.15`
-# #     Given I am existing `RANDOM_USER.16`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.16`
-# #     Given I am existing `RANDOM_USER.17`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.17`
-# #     Given I am existing `RANDOM_USER.18`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.18`
-# #     Given I am existing `RANDOM_USER.19`
-# #     And I set signature header
-# #     And I DELETE /user/`RANDOM_USER.19`
+# Scenario: Delete random users
+#     Given I am existing `RANDOM_USER.0`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.0`
+#     Given I am existing `RANDOM_USER.1`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.1`
+#     Given I am existing `RANDOM_USER.14`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.14`
+#     Given I am existing `RANDOM_USER.3`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.3`
+#     Given I am existing `RANDOM_USER.4`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.4`
+#     Given I am existing `RANDOM_USER.5`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.5`
+#     Given I am existing `RANDOM_USER.6`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.6`
+#     Given I am existing `RANDOM_USER.7`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.7`
+#     Given I am existing `RANDOM_USER.8`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.8`
+#     Given I am existing `RANDOM_USER.9`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.9`
+#     Given I am existing `RANDOM_USER.10`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.10`
+#     Given I am existing `RANDOM_USER.11`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.11`
+#     Given I am existing `RANDOM_USER.12`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.12`
+#     Given I am existing `RANDOM_USER.13`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.13`
+#     Given I am existing `RANDOM_USER.14`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.14`
+#     Given I am existing `RANDOM_USER.15`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.15`
+#     Given I am existing `RANDOM_USER.16`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.16`
+#     Given I am existing `RANDOM_USER.17`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.17`
+#     Given I am existing `RANDOM_USER.18`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.18`
+#     Given I am existing `RANDOM_USER.19`
+#     And I set signature header
+#     And I DELETE /user/`RANDOM_USER.19`

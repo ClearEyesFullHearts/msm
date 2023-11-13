@@ -85,7 +85,7 @@ class Util {
     };
   }
 
-  static generateVaultValues(signingKey, clearSK, password, killswitch) {
+  static async generateVaultValues(clearSK, password, killswitch) {
     let rPass = Buffer.from(crypto.randomBytes(32).toString('base64'));
     if (password) {
       rPass = Buffer.from(password);
@@ -110,31 +110,42 @@ class Util {
       cipherESK.update(clearSK), cipherESK.final(), cipherESK.getAuthTag(),
     ]);
 
+    let pemContents = '';
+    while (pemContents.length !== 848) {
+      const { privateKey } = await asyncGenerateKeyPair(1024);
+      const pemHeader = '-----BEGIN PRIVATE KEY-----';
+      const pemFooter = '-----END PRIVATE KEY-----';
+
+      const trimmedPK = privateKey.replace(/\n/g, '');
+      pemContents = trimmedPK.substring(pemHeader.length, trimmedPK.length - pemFooter.length);
+    }
+
     const cipherEUP = crypto.createCipheriv(ALGORITHM, hp2, iv2);
     const eup = Buffer.concat([cipherEUP.update(rp), cipherEUP.final(), cipherEUP.getAuthTag()]);
-    const sup = crypto.sign('rsa-sha256', eup, {
-      key: signingKey,
-      padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-      saltLength: 32,
-    });
+    // const sup = crypto.sign('rsa-sha256', eup, {
+    //   key: signingKey,
+    //   padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+    //   saltLength: 32,
+    // });
 
     const cipherEUK = crypto.createCipheriv(ALGORITHM, hks, iv2);
     const euk = Buffer.concat([cipherEUK.update(rp), cipherEUK.final(), cipherEUK.getAuthTag()]);
-    const suk = crypto.sign('rsa-sha256', euk, {
-      key: signingKey,
-      padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-      saltLength: 32,
-    });
+    // const suk = crypto.sign('rsa-sha256', euk, {
+    //   key: signingKey,
+    //   padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+    //   saltLength: 32,
+    // });
 
     return {
       password: rPass.toString(),
       killswitch: rKill.toString(),
       esk: esk.toString('base64'),
+      key: pemContents,
       rp,
       eup: eup.toString('base64'),
-      sup: sup.toString('base64'),
+      // sup: sup.toString('base64'),
       euk: euk.toString('base64'),
-      suk: suk.toString('base64'),
+      // suk: suk.toString('base64'),
       rs1: rs1.toString('base64'),
       rs2: rs2.toString('base64'),
       iv1: iv1.toString('base64'),
@@ -163,7 +174,9 @@ class Util {
     return decData.toString();
   }
 
-  static getHeaderFromAttic({ proof, salt, iv }, passphrase) {
+  static getHeaderFromAttic({
+    proof, salt, iv, key,
+  }, passphrase) {
     const rPass = Buffer.from(passphrase);
     const rs2 = Buffer.from(salt, 'base64');
     const iv2 = Buffer.from(iv, 'base64');
@@ -173,8 +186,14 @@ class Util {
     const eupOreuk = Buffer.concat([
       cipherEUP.update(proof), cipherEUP.final(), cipherEUP.getAuthTag(),
     ]);
+    const signingKey = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
+    const sup = crypto.sign('rsa-sha256', eupOreuk, {
+      key: signingKey,
+      padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+      saltLength: 32,
+    });
 
-    return eupOreuk.toString('base64');
+    return sup.toString('base64');
   }
 
   static generateFalseKeyPair() {

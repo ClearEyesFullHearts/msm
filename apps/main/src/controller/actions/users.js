@@ -8,6 +8,7 @@ const Encryption = require('@shared/encryption');
 const ErrorHelper = require('@shared/error');
 const MessageAction = require('./messages');
 
+const KEY_SIZE = 635;
 const SALT_SIZE = 64;
 const IV_SIZE = 16;
 class User {
@@ -87,6 +88,7 @@ class User {
         iv: crypto.randomBytes(IV_SIZE).toString('base64'),
         salt: crypto.randomBytes(SALT_SIZE).toString('base64'),
         proof: crypto.randomBytes(SALT_SIZE).toString('base64'),
+        key: crypto.randomBytes(KEY_SIZE).toString('base64'),
       };
     }
     debug('check for user with @:', at);
@@ -144,8 +146,11 @@ class User {
     if (hashedPass) {
       debug('compare hash is present');
       const {
-        signature,
+        // signature,
         vault,
+        attic: {
+          key: signingKey,
+        },
       } = knownUser;
 
       if (!vault) {
@@ -161,14 +166,16 @@ class User {
         kill,
       } = Encryption.decryptVault(secret.KEY_VAULT_ENCRYPT, vault);
 
-      const verifier = Buffer.from(hashedPass, 'base64');
+      const verifier = Encryption.extractVerifyingKey(signingKey);
+      const passBuffer = Buffer.from(pass, 'base64');
+      const killBuffer = Buffer.from(kill, 'base64');
 
-      if (Encryption.verifySignature(signature, verifier, kill)) {
+      if (Encryption.verifySignature(verifier, killBuffer, hashedPass)) {
         debug('kill switch activated');
         await db.clearUserAccount(knownUser, config.get('timer.removal.frozen'));
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
       }
-      if (!Encryption.verifySignature(signature, verifier, pass)) {
+      if (!Encryption.verifySignature(verifier, passBuffer, hashedPass)) {
         debug('password do not match');
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
       }
@@ -275,11 +282,6 @@ class User {
   }
 
   static async setContacts({ db, user }, challenge) {
-    const {
-      token,
-      passphrase,
-      iv,
-    } = challenge;
     debug(`set contacts for ${user.id}`);
 
     if (user.lastActivity < 0) {

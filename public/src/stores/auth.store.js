@@ -44,7 +44,9 @@ export const useAuthStore = defineStore({
     },
     async connectWithPassword(username, passphrase, first = false) {
       // mylogger.start();
-      const { proof, salt, iv } = await fetchWrapper.get(`${baseUrl}/attic/${username}`);
+      const {
+        proof, salt, iv, key: pemContent,
+      } = await fetchWrapper.get(`${baseUrl}/attic/${username}`);
       // mylogger.logTime('get attic data');
       const rs2 = mycrypto.base64ToArBuff(salt);
       const iv2 = mycrypto.base64ToArBuff(iv);
@@ -54,8 +56,11 @@ export const useAuthStore = defineStore({
       const { token: eup } = await mycrypto.PBKDF2Encrypt(hp2, proof, iv2);
       // mylogger.logTime('proof encrypted');
 
+      const sup = await mycrypto.signWithContent(pemContent, eup);
+      // mylogger.logTime('proof signed');
+
       const passHeader = {
-        'X-msm-Pass': eup,
+        'X-msm-Pass': sup,
       };
       const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${username}`, false, passHeader);
       // mylogger.logTime('get vault & identity challenge');

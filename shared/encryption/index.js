@@ -30,6 +30,21 @@ class Encryption {
     return Buffer.concat([decipher.update(crypted), decipher.final()]);
   }
 
+  static extractVerifyingKey(txt) {
+    const pem = `-----BEGIN PRIVATE KEY-----\n${txt}\n-----END PRIVATE KEY-----`;
+    const pubKeyObject = crypto.createPublicKey({
+      key: pem,
+      format: 'pem',
+    });
+
+    const publicKey = pubKeyObject.export({
+      format: 'pem',
+      type: 'spki',
+    });
+
+    return publicKey;
+  }
+
   static hybrid(txt, key) {
     const pass = crypto.randomBytes(PASS_SIZE);
     const iv = crypto.randomBytes(IV_SIZE);
@@ -139,4 +154,4 @@ class Encryption {
   }
 }
 
-module.exports = AWSXRay.captureClass(Encryption, { ignoreList: ['isValidPemPk', 'isBase64', 'simpleEncrypt', 'simpleDecrypt'] });
+module.exports = AWSXRay.captureClass(Encryption, { ignoreList: ['isValidPemPk', 'isBase64', 'simpleEncrypt', 'simpleDecrypt', 'extractVerifyingKey'] });

@@ -96,8 +96,8 @@ paths:
           schema:
             type: string
             format: byte
-            minLength: 140
-            maxLength: 140
+            minLength: 172
+            maxLength: 172
         - name: at
           in: path
           description: Start of users name
@@ -982,19 +982,20 @@ components:
         pass:
           type: string
           format: byte
-          minLength: 172
-          maxLength: 172
+          minLength: 140
+          maxLength: 140
         kill:
           type: string
           format: byte
-          minLength: 172
-          maxLength: 172
+          minLength: 140
+          maxLength: 140
     Attic:
       type: object
       required:
         - iv
         - salt
         - proof
+        - key
       properties:
         iv:
           type: string
@@ -1011,6 +1012,11 @@ components:
           format: byte
           minLength: 88
           maxLength: 88
+        key:
+          type: string
+          format: byte
+          minLength: 848
+          maxLength: 848
     VaultItem:
       type: object
       required:

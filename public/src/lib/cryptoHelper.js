@@ -51,6 +51,7 @@ class CryptoHelper {
     this.exportCryptoKey = async (key, format, keyType) => {
       const exported = await window.crypto.subtle.exportKey(format, key);
       const exportedAsBase64 = this.ArBuffToBase64(exported);
+
       const pemExported = `-----BEGIN ${keyType} KEY-----\n${exportedAsBase64}\n-----END ${keyType} KEY-----`;
 
       return pemExported;
@@ -131,6 +132,29 @@ class CryptoHelper {
       PK,
       SK,
     };
+  }
+
+  async generateSignatureSKContent() {
+    const keyPair = await window.crypto.subtle.generateKey(
+      {
+        name: 'RSA-PSS',
+        modulusLength: 1024,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: 'SHA-256',
+      },
+      true,
+      ['sign', 'verify'],
+    );
+    const exported = await window.crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+    const pemContent = this.ArBuffToBase64(exported);
+
+    if (pemContent.length !== 848) {
+      // console.log('wrong signature key format, try again', pemContent.length);
+      const res = await this.generateSignatureSKContent();
+      return res;
+    }
+
+    return pemContent;
   }
 
   async getPublicKey(pem) {
@@ -314,6 +338,32 @@ class CryptoHelper {
         saltLength: 32,
       },
       privateKey,
+      encoded,
+    );
+
+    return this.ArBuffToBase64(signature);
+  }
+
+  async signWithContent(pemContent, dataStr) {
+    const binaryDer = this.base64ToArBuff(pemContent);
+
+    const importedKey = await window.crypto.subtle.importKey(
+      'pkcs8',
+      binaryDer,
+      {
+        name: 'RSA-PSS',
+        hash: 'SHA-256',
+      },
+      false,
+      ['sign'],
+    );
+    const encoded = this.base64ToArBuff(dataStr);
+    const signature = await window.crypto.subtle.sign(
+      {
+        name: 'RSA-PSS',
+        saltLength: 32,
+      },
+      importedKey,
       encoded,
     );
 

@@ -49,7 +49,7 @@ Given('I am a new valid user', async function () {
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 
   const keyVal = `${esk}\n----- SIGNATURE -----\n${ssk}`;
-  const vaultValues = await Util.generateVaultValues(ssk, keyVal);
+  const vaultValues = await Util.generateVaultValues(keyVal);
   const {
     password,
     killswitch,
@@ -61,8 +61,9 @@ Given('I am a new valid user', async function () {
     iv1,
     iv2,
     rp,
-    sup,
-    suk,
+    key,
+    // sup,
+    // suk,
   } = vaultValues;
 
   this.apickli.storeValueInScenarioScope('PASS_HASH', eup);
@@ -79,19 +80,27 @@ Given('I am a new valid user', async function () {
       token: cypherKey,
       salt: rs1,
       iv: iv1,
-      pass: sup,
-      kill: suk,
+      pass: eup,
+      kill: euk,
     },
     attic: {
       iv: iv2,
       salt: rs2,
       proof: rp,
+      key,
     },
   }));
   await this.post('/users');
 
+  const signingKey = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
+  const sup = crypto.sign('rsa-sha256', Buffer.from(eup, 'base64'), {
+    key: signingKey,
+    padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+    saltLength: 32,
+  });
+
   // get identity challenge
-  this.apickli.addRequestHeader('x-msm-pass', vaultValues.eup);
+  this.apickli.addRequestHeader('x-msm-pass', sup.toString('base64'));
   await this.get(`/identity/${username}`);
 
   // resolve it for body
@@ -120,10 +129,12 @@ Given(/^I am existing (.*)$/, async function (varName) {
   const attic = JSON.parse(this.apickli.httpResponse.body);
   this.apickli.storeValueInScenarioScope('ATTIC', attic);
   const {
-    iv, salt, proof,
+    iv, salt, proof, key,
   } = attic;
 
-  const myHeader = Util.getHeaderFromAttic({ iv, salt, proof }, username);
+  const myHeader = Util.getHeaderFromAttic({
+    iv, salt, proof, key,
+  }, username);
 
   this.apickli.addRequestHeader('x-msm-pass', myHeader);
   await this.get(`/identity/${username}`);

@@ -142,7 +142,7 @@ Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (
   const eskVal = this.apickli.scenarioVariables.ESK || this.apickli.scenarioVariables.NEW_ESK;
   const sskVal = this.apickli.scenarioVariables.SSK || this.apickli.scenarioVariables.NEW_SSK;
   const keys = `${eskVal}\n----- SIGNATURE -----\n${sskVal}`;
-  const vaultValues = await Util.generateVaultValues(sskVal, keys, passphrase, killswitch);
+  const vaultValues = await Util.generateVaultValues(keys, passphrase, killswitch);
   const {
     esk: cypherKey,
     eup,
@@ -152,12 +152,25 @@ Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (
     iv1,
     iv2,
     rp,
-    sup,
-    suk,
+    key,
+    // sup,
+    // suk,
   } = vaultValues;
 
-  this.apickli.storeValueInScenarioScope('NEW_PASS_HASH', eup);
-  this.apickli.storeValueInScenarioScope('NEW_KILL_HASH', euk);
+  const signingKey = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
+  const sup = crypto.sign('rsa-sha256', Buffer.from(eup, 'base64'), {
+    key: signingKey,
+    padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+    saltLength: 32,
+  });
+  const suk = crypto.sign('rsa-sha256', Buffer.from(euk, 'base64'), {
+    key: signingKey,
+    padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+    saltLength: 32,
+  });
+
+  this.apickli.storeValueInScenarioScope('NEW_PASS_HASH', sup.toString('base64'));
+  this.apickli.storeValueInScenarioScope('NEW_KILL_HASH', suk.toString('base64'));
   this.apickli.storeValueInScenarioScope('NEW_SALT', rs1);
   this.apickli.storeValueInScenarioScope('NEW_IV', iv1);
 
@@ -166,13 +179,14 @@ Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (
       token: cypherKey,
       salt: rs1,
       iv: iv1,
-      pass: sup,
-      kill: suk,
+      pass: eup,
+      kill: euk,
     },
     attic: {
       iv: iv2,
       salt: rs2,
       proof: rp,
+      key,
     },
   }));
 });

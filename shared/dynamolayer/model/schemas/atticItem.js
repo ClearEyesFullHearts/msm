@@ -19,6 +19,12 @@ const itemSchema = new dynamoose.Schema({
     minLength: 88,
     maxLength: 88,
   },
+  key: {
+    type: String,
+    required: true,
+    minLength: 848,
+    maxLength: 848,
+  },
 });
 
 module.exports = itemSchema;

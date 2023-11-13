@@ -183,19 +183,21 @@ Resources:
           CLEAN_ACCOUNT_TARGET: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${MSMCleanAccountLambda}'
           SCHEDULER_ROLE: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${MSMCleanupSchedulerRole}'
           MARK_READ_QUEUE: !Ref MSMMarkReadQueueURL
-  version:
-    Type: AWS::Lambda::Version
-    Properties:
-      FunctionName: !Ref MSMMainAPILambdaFunction
-      Description: !Sub 'v${MSMTagName}'
-  alias:
-    Type: AWS::Lambda::Alias
-    Properties:
-      FunctionName: !Ref MSMMainAPILambdaFunction
-      FunctionVersion: !GetAtt version.Version
-      Name: !Sub 'v${MSMTagName}'
-      ProvisionedConcurrencyConfig:
-        ProvisionedConcurrentExecutions: !Ref MSMMainProvisionedNumber
+
+  # MSMMainAPILambdaVersion:
+  #   Type: AWS::Lambda::Version
+  #   Properties:
+  #     FunctionName: !Ref MSMMainAPILambdaFunction
+  #     Description: !Sub 'v${MSMTagName}'
+
+  # MSMMainAPILambdaAlias:
+  #   Type: AWS::Lambda::Alias
+  #   Properties:
+  #     FunctionName: !Ref MSMMainAPILambdaFunction
+  #     FunctionVersion: !GetAtt MSMMainAPILambdaVersion.Version
+  #     Name: !Sub 'v${MSMTagName}'
+  #     ProvisionedConcurrencyConfig:
+  #       ProvisionedConcurrentExecutions: !Ref MSMMainProvisionedNumber
   
   MSMMainExpressAPI:
     Type: AWS::ApiGatewayV2::Api

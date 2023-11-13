@@ -149,26 +149,22 @@ export const useUsersStore = defineStore({
       const [{ token: esk }, { token: eup }, { token: euk }] = encrypts;
       // mylogger.logTime('3 encryption done');
 
-      const signatures = await Promise.all([
-        mycrypto.sign(signSK, eup, true),
-        mycrypto.sign(signSK, euk, true),
-      ]);
-
-      const [sup, suk] = signatures;
-      // mylogger.logTime('2 signatures done');
+      const pemContents = await mycrypto.generateSignatureSKContent();
+      // mylogger.logTime('signing key generated');
 
       return {
         vault: {
           token: esk,
           salt: mycrypto.ArBuffToBase64(rs1),
           iv: mycrypto.ArBuffToBase64(iv1),
-          pass: sup,
-          kill: suk,
+          pass: eup,
+          kill: euk,
         },
         attic: {
           salt: mycrypto.ArBuffToBase64(rs2),
           iv: mycrypto.ArBuffToBase64(iv2),
           proof: rp,
+          key: pemContents,
         },
       };
     },
