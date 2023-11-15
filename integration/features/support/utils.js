@@ -85,6 +85,26 @@ class Util {
     };
   }
 
+  static getSKContent(ESK, SSK) {
+    const pemHeader = '-----BEGIN PRIVATE KEY-----';
+    const pemFooter = '-----END PRIVATE KEY-----';
+    let trimmedSK = ESK.replace(/\n/g, '');
+    const eskContent = trimmedSK
+      .substring(pemHeader.length, trimmedSK.length - pemFooter.length);
+    trimmedSK = SSK.replace(/\n/g, '');
+    const sskContent = trimmedSK
+      .substring(pemHeader.length, trimmedSK.length - pemFooter.length);
+
+    return `${eskContent}${sskContent}`;
+  }
+
+  static setContentAsSK(txt) {
+    return {
+      key: `-----BEGIN PRIVATE KEY-----\n${txt.substring(0, 3168)}\n-----END PRIVATE KEY-----`,
+      signKey: `-----BEGIN PRIVATE KEY-----\n${txt.substring(3168)}\n-----END PRIVATE KEY-----`,
+    };
+  }
+
   static async generateVaultValues(clearSK, password, killswitch) {
     let rPass = Buffer.from(crypto.randomBytes(32).toString('base64'));
     if (password) {
@@ -110,15 +130,22 @@ class Util {
       cipherESK.update(clearSK), cipherESK.final(), cipherESK.getAuthTag(),
     ]);
 
-    let pemContents = '';
-    while (pemContents.length !== 848) {
-      const { privateKey } = await asyncGenerateKeyPair(1024);
-      const pemHeader = '-----BEGIN PRIVATE KEY-----';
-      const pemFooter = '-----END PRIVATE KEY-----';
+    const { privateKey } = crypto.generateKeyPairSync('ec', {
+      namedCurve: 'secp521r1',
+      publicKeyEncoding: {
+        type: 'spki',
+        format: 'pem',
+      },
+      privateKeyEncoding: {
+        type: 'pkcs8',
+        format: 'pem',
+      },
+    });
+    const pemHeader = '-----BEGIN PRIVATE KEY-----';
+    const pemFooter = '-----END PRIVATE KEY-----';
 
-      const trimmedPK = privateKey.replace(/\n/g, '');
-      pemContents = trimmedPK.substring(pemHeader.length, trimmedPK.length - pemFooter.length);
-    }
+    const trimmedPK = privateKey.replace(/\n/g, '');
+    const pemContents = trimmedPK.substring(pemHeader.length, trimmedPK.length - pemFooter.length);
 
     const cipherEUP = crypto.createCipheriv(ALGORITHM, hp2, iv2);
     const eup = Buffer.concat([cipherEUP.update(rp), cipherEUP.final(), cipherEUP.getAuthTag()]);
@@ -186,12 +213,7 @@ class Util {
     const eupOreuk = Buffer.concat([
       cipherEUP.update(proof), cipherEUP.final(), cipherEUP.getAuthTag(),
     ]);
-    const signingKey = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
-    const sup = crypto.sign('rsa-sha256', eupOreuk, {
-      key: signingKey,
-      padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-      saltLength: 32,
-    });
+    const sup = Util.signECDSA(key, eupOreuk);
 
     return sup.toString('base64');
   }
@@ -294,6 +316,16 @@ class Util {
       key,
       padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
       saltLength: 32,
+    });
+
+    return Buffer.from(signature).toString('base64');
+  }
+
+  static signECDSA(key, data) {
+    const bufData = Buffer.from(data);
+    const signature = crypto.sign('sha512', bufData, {
+      key: `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`,
+      dsaEncoding: 'ieee-p1363',
     });
 
     return Buffer.from(signature).toString('base64');
@@ -473,6 +505,9 @@ class Util {
             type: String,
           },
           proof: {
+            type: String,
+          },
+          key: {
             type: String,
           },
         },

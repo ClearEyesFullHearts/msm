@@ -5,6 +5,28 @@ class CryptoHelper {
 
   static get PBDKF_ITERATIONS() { return 600000; }
 
+  static getSKContent(ESK, SSK) {
+    const pemHeader = '-----BEGIN PRIVATE KEY-----';
+    const pemFooter = '-----END PRIVATE KEY-----';
+    let trimmedSK = ESK.replace(/\n/g, '');
+    const eskContent = trimmedSK
+      .substring(pemHeader.length, trimmedSK.length - pemFooter.length);
+    trimmedSK = SSK.replace(/\n/g, '');
+    const sskContent = trimmedSK
+      .substring(pemHeader.length, trimmedSK.length - pemFooter.length);
+    console.log(eskContent.length);
+    console.log(sskContent.length);
+
+    return `${eskContent}${sskContent}`;
+  }
+
+  static setContentAsSK(txt) {
+    return {
+      key: `-----BEGIN PRIVATE KEY-----\n${txt.substring(0, 3168)}\n-----END PRIVATE KEY-----`,
+      signKey: `-----BEGIN PRIVATE KEY-----\n${txt.substring(3168)}\n-----END PRIVATE KEY-----`,
+    };
+  }
+
   constructor() {
     this.clearTextToArBuff = (txt) => {
       const buf = new ArrayBuffer(txt.length);
@@ -134,25 +156,17 @@ class CryptoHelper {
     };
   }
 
-  async generateSignatureSKContent() {
+  async generateECDSAKey() {
     const keyPair = await window.crypto.subtle.generateKey(
       {
-        name: 'RSA-PSS',
-        modulusLength: 1024,
-        publicExponent: new Uint8Array([1, 0, 1]),
-        hash: 'SHA-256',
+        name: 'ECDSA',
+        namedCurve: 'P-521',
       },
       true,
       ['sign', 'verify'],
     );
     const exported = await window.crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
     const pemContent = this.ArBuffToBase64(exported);
-
-    if (pemContent.length !== 848) {
-      // console.log('wrong signature key format, try again', pemContent.length);
-      const res = await this.generateSignatureSKContent();
-      return res;
-    }
 
     return pemContent;
   }
@@ -344,15 +358,15 @@ class CryptoHelper {
     return this.ArBuffToBase64(signature);
   }
 
-  async signWithContent(pemContent, dataStr) {
+  async signWithECDSA(pemContent, dataStr) {
     const binaryDer = this.base64ToArBuff(pemContent);
 
     const importedKey = await window.crypto.subtle.importKey(
       'pkcs8',
       binaryDer,
       {
-        name: 'RSA-PSS',
-        hash: 'SHA-256',
+        name: 'ECDSA',
+        hash: 'P-521',
       },
       false,
       ['sign'],
@@ -360,8 +374,8 @@ class CryptoHelper {
     const encoded = this.base64ToArBuff(dataStr);
     const signature = await window.crypto.subtle.sign(
       {
-        name: 'RSA-PSS',
-        saltLength: 32,
+        name: 'ECDSA',
+        hash: 'SHA-512',
       },
       importedKey,
       encoded,

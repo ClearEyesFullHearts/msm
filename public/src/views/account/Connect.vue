@@ -24,7 +24,7 @@ async function onSubmit(values) {
 
     router.push('/conversations');
   } catch (error) {
-    // console.log(error);
+    console.log(error);
     alertStore.error(error);
   }
 }

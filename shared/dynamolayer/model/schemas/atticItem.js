@@ -22,8 +22,8 @@ const itemSchema = new dynamoose.Schema({
   key: {
     type: String,
     required: true,
-    minLength: 848,
-    maxLength: 848,
+    minLength: 324,
+    maxLength: 324,
   },
 });
 

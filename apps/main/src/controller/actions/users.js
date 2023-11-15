@@ -8,9 +8,9 @@ const Encryption = require('@shared/encryption');
 const ErrorHelper = require('@shared/error');
 const MessageAction = require('./messages');
 
-const KEY_SIZE = 635;
 const SALT_SIZE = 64;
 const IV_SIZE = 16;
+
 class User {
   static async createUser({ db, secret }, {
     at, key, signature, hash, vault, attic,
@@ -51,7 +51,7 @@ class User {
       }
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, 'Key singularity');
     }
-    debug(`user ${at} created with ID = ${newUser.id}`);
+    debug(`user ${at} created`);
 
     if (vault && attic) {
       try {
@@ -83,21 +83,30 @@ class User {
   }
 
   static async getCryptoData({ db }, { at }) {
-    function sendBogus() {
+    function sendBogus(sk) {
+      const pemHeader = '-----BEGIN PRIVATE KEY-----';
+      const pemFooter = '-----END PRIVATE KEY-----';
+      const trimmedSK = sk.replace(/\n/g, '');
+      const key = trimmedSK.substring(pemHeader.length, trimmedSK.length - pemFooter.length);
+
       return {
         iv: crypto.randomBytes(IV_SIZE).toString('base64'),
         salt: crypto.randomBytes(SALT_SIZE).toString('base64'),
         proof: crypto.randomBytes(SALT_SIZE).toString('base64'),
-        key: crypto.randomBytes(KEY_SIZE).toString('base64'),
+        key,
       };
     }
-    debug('check for user with @:', at);
     if (at.length !== encodeURIComponent(at).length) {
-      return sendBogus();
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have any special character');
     }
+
+    debug('check for user with @:', at);
+
+    const { privateKey } = Encryption.generateECDSAKeys();
+
     const knownUser = await db.users.findByName(at);
     if (!knownUser) {
-      return sendBogus();
+      return sendBogus(privateKey);
     }
     debug('known user');
 
@@ -105,14 +114,14 @@ class User {
       attic,
     } = knownUser;
     if (!attic) {
-      return sendBogus();
+      return sendBogus(privateKey);
     }
     debug('user has an attic');
 
     return attic;
   }
 
-  static async getCredentials({ db, secret }, { at, hashedPass }) {
+  static async getCredentials({ db, secret }, { at, signedPass }) {
     debug('check for user with @:', at);
     if (at.length !== encodeURIComponent(at).length) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
@@ -143,13 +152,12 @@ class User {
     const { key } = knownUser;
     const rawChallenge = Encryption.hybrid(JSON.stringify(auth), key);
 
-    if (hashedPass) {
+    if (signedPass) {
       debug('compare hash is present');
       const {
-        // signature,
         vault,
         attic: {
-          key: signingKey,
+          key: verifB64,
         },
       } = knownUser;
 
@@ -166,16 +174,14 @@ class User {
         kill,
       } = Encryption.decryptVault(secret.KEY_VAULT_ENCRYPT, vault);
 
-      const verifier = Encryption.extractVerifyingKey(signingKey);
-      const passBuffer = Buffer.from(pass, 'base64');
-      const killBuffer = Buffer.from(kill, 'base64');
+      const verifier = `-----BEGIN PRIVATE KEY-----\n${verifB64}\n-----END PRIVATE KEY-----`;
 
-      if (Encryption.verifySignature(verifier, killBuffer, hashedPass)) {
+      if (Encryption.verifyECDSASignature(verifier, kill, signedPass)) {
         debug('kill switch activated');
         await db.clearUserAccount(knownUser, config.get('timer.removal.frozen'));
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
       }
-      if (!Encryption.verifySignature(verifier, passBuffer, hashedPass)) {
+      if (!Encryption.verifyECDSASignature(verifier, pass, signedPass)) {
         debug('password do not match');
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
       }

@@ -125,10 +125,12 @@ Given(/^I set Pass header with (.*)$/, function (password) {
   const val = this.apickli.replaceVariables(password);
 
   const {
-    iv, salt, proof,
+    iv, salt, proof, key,
   } = this.apickli.scenarioVariables.ATTIC;
 
-  const myHeader = Util.getHeaderFromAttic({ iv, salt, proof }, val);
+  const myHeader = Util.getHeaderFromAttic({
+    iv, salt, proof, key,
+  }, val);
   this.apickli.addRequestHeader('x-msm-pass', myHeader);
 });
 
@@ -141,7 +143,7 @@ Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (
   this.apickli.storeValueInScenarioScope('VAULT_PASS', passphrase);
   const eskVal = this.apickli.scenarioVariables.ESK || this.apickli.scenarioVariables.NEW_ESK;
   const sskVal = this.apickli.scenarioVariables.SSK || this.apickli.scenarioVariables.NEW_SSK;
-  const keys = `${eskVal}\n----- SIGNATURE -----\n${sskVal}`;
+  const keys = Util.getSKContent(eskVal, sskVal);
   const vaultValues = await Util.generateVaultValues(keys, passphrase, killswitch);
   const {
     esk: cypherKey,
@@ -157,17 +159,8 @@ Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (
     // suk,
   } = vaultValues;
 
-  const signingKey = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
-  const sup = crypto.sign('rsa-sha256', Buffer.from(eup, 'base64'), {
-    key: signingKey,
-    padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-    saltLength: 32,
-  });
-  const suk = crypto.sign('rsa-sha256', Buffer.from(euk, 'base64'), {
-    key: signingKey,
-    padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-    saltLength: 32,
-  });
+  const sup = Util.signECDSA(key, Buffer.from(eup, 'base64'));
+  const suk = Util.signECDSA(key, Buffer.from(euk, 'base64'));
 
   this.apickli.storeValueInScenarioScope('NEW_PASS_HASH', sup.toString('base64'));
   this.apickli.storeValueInScenarioScope('NEW_KILL_HASH', suk.toString('base64'));
@@ -196,9 +189,10 @@ Then(/^I open the vault (.*) with (.*)$/, function (vaultName, passphrase) {
   const val = this.apickli.replaceVariables(passphrase);
   const privateK = Util.openVault(vault, val);
 
-  const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
-  this.apickli.storeValueInScenarioScope('ESK', eskFile);
-  this.apickli.storeValueInScenarioScope('SSK', sskFile);
+  // const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
+  const { key, signKey } = Util.setContentAsSK(privateK);
+  this.apickli.storeValueInScenarioScope('ESK', key);
+  this.apickli.storeValueInScenarioScope('SSK', signKey);
 });
 
 Then('response body match a challenge', async function () {

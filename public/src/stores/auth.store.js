@@ -56,7 +56,7 @@ export const useAuthStore = defineStore({
       const { token: eup } = await mycrypto.PBKDF2Encrypt(hp2, proof, iv2);
       // mylogger.logTime('proof encrypted');
 
-      const sup = await mycrypto.signWithContent(pemContent, eup);
+      const sup = await mycrypto.signWithECDSA(pemContent, eup);
       // mylogger.logTime('proof signed');
 
       const passHeader = {
@@ -79,7 +79,7 @@ export const useAuthStore = defineStore({
       const dec = new TextDecoder();
       const keyFile = dec.decode(decryptedVault);
 
-      const [key, signKey] = keyFile.split(CryptoHelper.SEPARATOR);
+      const { key, signKey } = CryptoHelper.setContentAsSK(keyFile);
 
       await this.login(key, signKey, challenge, first);
       this.hasVault = true;

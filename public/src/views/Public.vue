@@ -1,6 +1,5 @@
 <script setup>
 import config from '@/lib/config';
-
 </script>
 
 <template>

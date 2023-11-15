@@ -137,7 +137,7 @@ export const useUsersStore = defineStore({
       const [{ key: hp1 }, { key: hp2 }, { key: hks }] = results;
       // mylogger.logTime('3 PBKDF2 hash done');
 
-      const sk = `${SK}${CryptoHelper.SEPARATOR}${signSK}`;
+      const sk = CryptoHelper.getSKContent(SK, signSK);
       const rp = mycrypto.ArBuffToBase64(window.crypto.getRandomValues(new Uint8Array(64)));
 
       const encrypts = await Promise.all([
@@ -149,7 +149,7 @@ export const useUsersStore = defineStore({
       const [{ token: esk }, { token: eup }, { token: euk }] = encrypts;
       // mylogger.logTime('3 encryption done');
 
-      const pemContents = await mycrypto.generateSignatureSKContent();
+      const pemContents = await mycrypto.generateECDSAKey();
       // mylogger.logTime('signing key generated');
 
       return {

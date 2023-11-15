@@ -21,7 +21,8 @@ Given(/^I create random user with length (.*)$/, async function (length) {
   this.randomUsers.push(username);
   this.userCounter += 1;
 
-  const keyVal = `${pem}\n----- SIGNATURE -----\n${ssk}`;
+  // const keyVal = `${pem}\n----- SIGNATURE -----\n${ssk}`;
+  const keyVal = Util.getSKContent(pem, ssk);
   const vaultValues = await Util.generateVaultValues(keyVal, username);
   const {
     esk: cypherKey,
@@ -83,80 +84,80 @@ Given(/^I create random user with length (.*)$/, async function (length) {
 });
 
 Then('I create random users file', function () {
-  fs.writeFileSync(`${__dirname}/../../data/randoms.json`, JSON.stringify(this.randomUsers));
+  fs.writeFileSync(`${__dirname}/../../../data/randoms_origin.json`, JSON.stringify(this.randomUsers));
 });
 
-Given('I update all users vault', async function () {
-  const fileContent = fs.readFileSync(`${__dirname}/../../data/randoms.json`);
-  const arrUsers = JSON.parse(fileContent);
-  arrUsers.unshift('vaultUser');
-  for (let i = 0; i < arrUsers.length; i += 1) {
-    this.apickli.removeRequestHeader('x-msm-sig');
-    this.apickli.removeRequestHeader('x-msm-pass');
-    const at = arrUsers[i];
-    const password = (i === 0) ? 'iamapoorlonesomecowboy' : at;
-    const killswitch = (i === 0) ? 'iamapoorlonesomecowgirl' : undefined;
-    const user = await Util.getValueInDB({ pk: `U#${at}`, sk: at });
-    console.log('user', i, at, !!user.vault);
-    if (user.vault) {
-      const privateK = Util.symmetricDecrypt(user.vault, password);
-      const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
-      const vaultValues = await Util.generateVaultValues(sskFile, privateK, password, killswitch);
-      const {
-        esk: cypherKey,
-        rs1,
-        rs2,
-        iv1,
-        iv2,
-        rp,
-        sup,
-        suk,
-      } = vaultValues;
+// Given('I update all users vault', async function () {
+//   const fileContent = fs.readFileSync(`${__dirname}/../../data/randoms.json`);
+//   const arrUsers = JSON.parse(fileContent);
+//   arrUsers.unshift('vaultUser');
+//   for (let i = 0; i < arrUsers.length; i += 1) {
+//     this.apickli.removeRequestHeader('x-msm-sig');
+//     this.apickli.removeRequestHeader('x-msm-pass');
+//     const at = arrUsers[i];
+//     const password = (i === 0) ? 'iamapoorlonesomecowboy' : at;
+//     const killswitch = (i === 0) ? 'iamapoorlonesomecowgirl' : undefined;
+//     const user = await Util.getValueInDB({ pk: `U#${at}`, sk: at });
+//     console.log('user', i, at, !!user.vault);
+//     if (user.vault) {
+//       const privateK = Util.symmetricDecrypt(user.vault, password);
+//       const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
+//       const vaultValues = await Util.generateVaultValues(sskFile, privateK, password, killswitch);
+//       const {
+//         esk: cypherKey,
+//         rs1,
+//         rs2,
+//         iv1,
+//         iv2,
+//         rp,
+//         sup,
+//         suk,
+//       } = vaultValues;
 
-      await Util.setValueInDB(at, `U#${at}`, 'vault', undefined);
-      await Util.setValueInDB(at, `U#${at}`, 'attic', undefined);
+//       await Util.setValueInDB(at, `U#${at}`, 'vault', undefined);
+//       await Util.setValueInDB(at, `U#${at}`, 'attic', undefined);
 
-      await this.get(`/identity/${at}`);
+//       await this.get(`/identity/${at}`);
 
-      const respBody = JSON.parse(this.apickli.httpResponse.body);
-      const resolved = Util.resolve(eskFile, respBody);
-      const {
-        token, contacts, ...restAuth
-      } = resolved;
+//       const respBody = JSON.parse(this.apickli.httpResponse.body);
+//       const resolved = Util.resolve(eskFile, respBody);
+//       const {
+//         token, contacts, ...restAuth
+//       } = resolved;
 
-      this.apickli.httpResponse.body = JSON.stringify(resolved);
-      this.apickli.setAccessTokenFromResponseBodyPath('$.token');
-      this.apickli.setBearerToken();
+//       this.apickli.httpResponse.body = JSON.stringify(resolved);
+//       this.apickli.setAccessTokenFromResponseBodyPath('$.token');
+//       this.apickli.setBearerToken();
 
-      const reqBody = {
-        vault: {
-          token: cypherKey,
-          salt: rs1,
-          iv: iv1,
-          pass: sup,
-          kill: suk,
-        },
-        attic: {
-          iv: iv2,
-          salt: rs2,
-          proof: rp,
-        },
-      };
+//       const reqBody = {
+//         vault: {
+//           token: cypherKey,
+//           salt: rs1,
+//           iv: iv1,
+//           pass: sup,
+//           kill: suk,
+//         },
+//         attic: {
+//           iv: iv2,
+//           salt: rs2,
+//           proof: rp,
+//         },
+//       };
 
-      this.apickli.setRequestBody(JSON.stringify(reqBody));
+//       this.apickli.setRequestBody(JSON.stringify(reqBody));
 
-      const data = JSON.stringify({
-        ...restAuth,
-        ...reqBody,
-      });
+//       const data = JSON.stringify({
+//         ...restAuth,
+//         ...reqBody,
+//       });
 
-      const sig = Util.sign(sskFile, data);
-      this.apickli.addRequestHeader('x-msm-sig', sig);
+//       const sig = Util.sign(sskFile, data);
+//       this.apickli.addRequestHeader('x-msm-sig', sig);
 
-      await this.put('/vault');
-    }
-  }
-});
+//       await this.put('/vault');
+//     }
+//   }
+// });
 
 Given(/^I am authenticated user (.*)$/, async function (folder) {
   this.apickli.removeRequestHeader('x-msm-sig');
@@ -253,7 +254,8 @@ Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (
   this.apickli.storeValueInScenarioScope('VAULT_PASS', passphrase);
   const eskVal = this.apickli.scenarioVariables.ESK || this.apickli.scenarioVariables.NEW_ESK;
   const sskVal = this.apickli.scenarioVariables.SSK || this.apickli.scenarioVariables.NEW_SSK;
-  const keys = `${eskVal}\n----- SIGNATURE -----\n${sskVal}`;
+  // const keys = `${eskVal}\n----- SIGNATURE -----\n${sskVal}`;
+  const keys = Util.getSKContent(eskVal, sskVal);
   const vaultValues = await Util.generateVaultValues(keys, passphrase, killswitch);
   const {
     esk: cypherKey,
@@ -269,17 +271,8 @@ Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (
     // suk,
   } = vaultValues;
 
-  const signingKey = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
-  const sup = crypto.sign('rsa-sha256', Buffer.from(eup, 'base64'), {
-    key: signingKey,
-    padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-    saltLength: 32,
-  });
-  const suk = crypto.sign('rsa-sha256', Buffer.from(euk, 'base64'), {
-    key: signingKey,
-    padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-    saltLength: 32,
-  });
+  const sup = Util.signECDSA(key, Buffer.from(eup, 'base64'));
+  const suk = Util.signECDSA(key, Buffer.from(euk, 'base64'));
 
   this.apickli.storeValueInScenarioScope('NEW_PASS_HASH', sup.toString('base64'));
   this.apickli.storeValueInScenarioScope('NEW_KILL_HASH', suk.toString('base64'));

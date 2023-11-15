@@ -8,6 +8,9 @@
   },
   "author": "MFT",
   "license": "MIT",
+  "dependencies": {
+    "@shared/tracing": "*"
+  },
   "devDependencies": {
     "eslint": "8.51.0",
     "eslint-config-airbnb-base": "^15.0.0",

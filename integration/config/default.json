@@ -14,7 +14,7 @@
     "clean-msg": "TestMsmMasterStack-MSMCle-MSMMessageCleanupLambdaF-zHXEqDvzjXbT"
   },
   "fixtures": {
-    "db": "backupdb",
+    "db": "dynamodb",
     "names": "randoms"
   }
 }

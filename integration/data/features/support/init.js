@@ -1,7 +1,7 @@
 const apickli = require('apickli');
 const config = require('config');
 const {
-  Before, BeforeAll,
+  Before, BeforeAll, AfterAll,
 } = require('@cucumber/cucumber');
 const { setDefaultTimeout } = require('@cucumber/cucumber');
 const Util = require('../../../features/support/utils');
@@ -54,4 +54,9 @@ Before(function () {
       resolve();
     });
   });
+});
+
+AfterAll((cb) => {
+  Util.backupTable('backupdb_origin')
+    .then(cb);
 });

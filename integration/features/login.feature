@@ -18,6 +18,7 @@ Scenario: Get our user authentication data using the vault
     And response body path $.iv should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
     And response body path $.salt should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
     And response body path $.proof should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+    And response body path $.key should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
     And I store the value of body path $ as ATTIC in scenario scope
     And I set Pass header with iamapoorlonesomecowboy
     And I GET /identity/vaultUser
@@ -111,13 +112,14 @@ Scenario: Signature header is mandatory to send a message
 
 Scenario: Signature header is mandatory to set up the vault
     Given I am authenticated user batmat
-    And I set var TOKEN to a 4164 characters long base64 string
+    And I set var TOKEN to a 4032 characters long base64 string
     And I set var IV to a 18 characters long base64 string
     And I set var SALT to a 66 characters long base64 string
     And I set var PROOF to a 66 characters long base64 string
-    And I sign hashed mycomplicatedpassword into PASS with SSK
-    And I sign hashed pasword1234 into KILL with SSK
-    And I set body to { "vault": { "token": "`TOKEN`", "iv": "`IV`", "salt": "`SALT`", "pass": "`PASS`", "kill": "`KILL`" }, "attic": { "proof": "`PROOF`", "iv": "`IV`", "salt": "`SALT`" } }
+    And I set var ECDSA to a 243 characters long base64 string
+    And I set var PASS to a 105 characters long base64 string
+    And I set var KILL to a 105 characters long base64 string
+    And I set body to { "vault": { "token": "`TOKEN`", "iv": "`IV`", "salt": "`SALT`", "pass": "`PASS`", "kill": "`KILL`" }, "attic": { "proof": "`PROOF`", "iv": "`IV`", "salt": "`SALT`", "key": "`ECDSA`" } }
     And I set false signature header
     When I PUT /vault
     Then response code should be 403

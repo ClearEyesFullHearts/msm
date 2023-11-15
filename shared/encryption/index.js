@@ -30,19 +30,18 @@ class Encryption {
     return Buffer.concat([decipher.update(crypted), decipher.final()]);
   }
 
-  static extractVerifyingKey(txt) {
-    const pem = `-----BEGIN PRIVATE KEY-----\n${txt}\n-----END PRIVATE KEY-----`;
-    const pubKeyObject = crypto.createPublicKey({
-      key: pem,
-      format: 'pem',
+  static generateECDSAKeys() {
+    return crypto.generateKeyPairSync('ec', {
+      namedCurve: 'secp521r1',
+      publicKeyEncoding: {
+        type: 'spki',
+        format: 'pem',
+      },
+      privateKeyEncoding: {
+        type: 'pkcs8',
+        format: 'pem',
+      },
     });
-
-    const publicKey = pubKeyObject.export({
-      format: 'pem',
-      type: 'spki',
-    });
-
-    return publicKey;
   }
 
   static hybrid(txt, key) {
@@ -73,6 +72,20 @@ class Encryption {
       padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
       saltLength: 32,
     }, bufSig);
+  }
+
+  static verifyECDSASignature(key, dataB64, signature) {
+    const bufData = Buffer.from(dataB64, 'base64');
+    const bufSig = Buffer.from(signature, 'base64');
+    return crypto.verify(
+      'sha512',
+      bufData,
+      {
+        key,
+        dsaEncoding: 'ieee-p1363',
+      },
+      bufSig,
+    );
   }
 
   static hash(txt) {
@@ -154,4 +167,4 @@ class Encryption {
   }
 }
 
-module.exports = AWSXRay.captureClass(Encryption, { ignoreList: ['isValidPemPk', 'isBase64', 'simpleEncrypt', 'simpleDecrypt', 'extractVerifyingKey'] });
+module.exports = AWSXRay.captureClass(Encryption, { ignoreList: ['isValidPemPk', 'isBase64', 'simpleEncrypt', 'simpleDecrypt'] });

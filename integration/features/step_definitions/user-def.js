@@ -48,7 +48,7 @@ Given('I am a new valid user', async function () {
   const username = Util.getRandomString(7);
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 
-  const keyVal = `${esk}\n----- SIGNATURE -----\n${ssk}`;
+  const keyVal = Util.getSKContent(esk, ssk);
   const vaultValues = await Util.generateVaultValues(keyVal);
   const {
     password,
@@ -66,8 +66,13 @@ Given('I am a new valid user', async function () {
     // suk,
   } = vaultValues;
 
+  const sup = Util.signECDSA(key, Buffer.from(eup, 'base64'));
+  const suk = Util.signECDSA(key, Buffer.from(euk, 'base64'));
+
   this.apickli.storeValueInScenarioScope('PASS_HASH', eup);
   this.apickli.storeValueInScenarioScope('KILL_HASH', euk);
+  this.apickli.storeValueInScenarioScope('SIGN_PASS_HASH', sup.toString('base64'));
+  this.apickli.storeValueInScenarioScope('SIGN_KILL_HASH', suk.toString('base64'));
   this.apickli.storeValueInScenarioScope('PASS', password);
   this.apickli.storeValueInScenarioScope('KILL', killswitch);
 
@@ -91,13 +96,6 @@ Given('I am a new valid user', async function () {
     },
   }));
   await this.post('/users');
-
-  const signingKey = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
-  const sup = crypto.sign('rsa-sha256', Buffer.from(eup, 'base64'), {
-    key: signingKey,
-    padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-    saltLength: 32,
-  });
 
   // get identity challenge
   this.apickli.addRequestHeader('x-msm-pass', sup.toString('base64'));
@@ -141,7 +139,8 @@ Given(/^I am existing (.*)$/, async function (varName) {
   const respBody = JSON.parse(this.apickli.httpResponse.body);
   const privateK = Util.openVault(respBody.vault, username);
 
-  const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
+  // const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
+  const { key: eskFile, signKey: sskFile } = Util.setContentAsSK(privateK);
   this.apickli.storeValueInScenarioScope('ESK', eskFile);
   this.apickli.storeValueInScenarioScope(`ESK.${username}`, eskFile);
   this.apickli.storeValueInScenarioScope('SSK', sskFile);

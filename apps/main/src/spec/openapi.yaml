@@ -96,8 +96,8 @@ paths:
           schema:
             type: string
             format: byte
-            minLength: 172
-            maxLength: 172
+            minLength: 176
+            maxLength: 176
         - name: at
           in: path
           description: Start of users name
@@ -967,8 +967,8 @@ components:
         token:
           type: string
           format: byte
-          minLength: 5552
-          maxLength: 5552
+          minLength: 5376
+          maxLength: 5376
         iv:
           type: string
           format: byte
@@ -1015,8 +1015,8 @@ components:
         key:
           type: string
           format: byte
-          minLength: 848
-          maxLength: 848
+          minLength: 324
+          maxLength: 324
     VaultItem:
       type: object
       required:
@@ -1027,8 +1027,8 @@ components:
         token:
           type: string
           format: byte
-          minLength: 5552
-          maxLength: 5552
+          minLength: 5376
+          maxLength: 5376
         iv:
           type: string
           format: byte

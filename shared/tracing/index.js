@@ -83,13 +83,12 @@ class XRayWrapper {
 
         func
           .then((result) => {
-            subsegment.close();
             resolve(result);
           })
           .catch((err) => {
             subsegment.addMetadata('error', JSON.stringify(err));
-            subsegment.close(err);
             reject(err);
+            subsegment.close(err);
           });
       });
     });
@@ -105,12 +104,12 @@ class XRayWrapper {
 
         func
           .then(() => {
-            segment.close();
             resolve();
+            segment.close();
           })
           .catch((err) => {
-            segment.close(err);
             reject(err);
+            segment.close(err);
           });
       });
     });

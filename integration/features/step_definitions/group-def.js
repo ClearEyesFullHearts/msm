@@ -39,10 +39,12 @@ Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (ad
   const attic = JSON.parse(this.apickli.httpResponse.body);
   this.apickli.storeValueInScenarioScope('ATTIC', attic);
   const {
-    iv, salt, proof,
+    iv, salt, proof, key,
   } = attic;
 
-  const myHeader = Util.getHeaderFromAttic({ iv, salt, proof }, creator);
+  const myHeader = Util.getHeaderFromAttic({
+    iv, salt, proof, key,
+  }, creator);
 
   this.apickli.addRequestHeader('x-msm-pass', myHeader);
   await this.get(`/identity/${creator}`);
@@ -50,7 +52,8 @@ Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (ad
   const respBody = JSON.parse(this.apickli.httpResponse.body);
   const privateK = Util.openVault(respBody.vault, creator);
 
-  const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
+  // const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
+  const { key: eskFile, signKey: sskFile } = Util.setContentAsSK(privateK);
   this.apickli.storeValueInScenarioScope(`ESK.${creator}`, eskFile);
   this.apickli.storeValueInScenarioScope(`SSK.${creator}`, sskFile);
 
@@ -115,7 +118,8 @@ Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (ad
 
     const mBody = JSON.parse(this.apickli.httpResponse.body);
     const pK = Util.openVault(mBody.vault, member);
-    const [mEsk] = pK.split('\n----- SIGNATURE -----\n');
+    // const [mEsk] = pK.split('\n----- SIGNATURE -----\n');
+    const { key: mEsk } = Util.setContentAsSK(pK);
     const mEpk = Util.extractPublicKey(mEsk);
 
     const memberKey = Util.encrypt(mEpk, pass);

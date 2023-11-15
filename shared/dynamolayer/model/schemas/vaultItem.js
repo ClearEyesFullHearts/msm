@@ -20,7 +20,7 @@ function getLengthControlledItem(length) {
 const itemSchema = new dynamoose.Schema({
   token: {
     type: Object,
-    schema: getLengthControlledItem(7424),
+    schema: getLengthControlledItem(7192),
     required: true,
   },
   iv: {
@@ -35,12 +35,12 @@ const itemSchema = new dynamoose.Schema({
   },
   pass: {
     type: Object,
-    schema: getLengthControlledItem(252),
+    schema: getLengthControlledItem(208),
     required: true,
   },
   kill: {
     type: Object,
-    schema: getLengthControlledItem(252),
+    schema: getLengthControlledItem(208),
     required: true,
   },
 });
