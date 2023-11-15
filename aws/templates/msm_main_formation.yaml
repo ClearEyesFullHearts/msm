@@ -71,12 +71,19 @@ Parameters:
   MSMTagName:
     Type: String
     Default: latest
-    Description: The ID of the hosted zone
+    Description: The version tag name
 
   MSMMainProvisionedNumber:
     Type: Number
     Default: 0
     Description: The number of provisioned lambda functions for main
+
+####################################################################################
+Conditions:
+####################################################################################
+
+  NoProvisionedFunctions:
+    !Equals [!Ref MSMMainProvisionedNumber, 0]
 
 ####################################################################################
 Resources:
@@ -184,20 +191,29 @@ Resources:
           SCHEDULER_ROLE: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${MSMCleanupSchedulerRole}'
           MARK_READ_QUEUE: !Ref MSMMarkReadQueueURL
 
-  # MSMMainAPILambdaVersion:
-  #   Type: AWS::Lambda::Version
-  #   Properties:
-  #     FunctionName: !Ref MSMMainAPILambdaFunction
-  #     Description: !Sub 'v${MSMTagName}'
+  MSMMainAPILambdaVersion:
+    Type: AWS::Lambda::Version
+    Properties:
+      FunctionName: !Ref MSMMainAPILambdaFunction
+      Description: !Sub 'v${MSMTagName}'
 
-  # MSMMainAPILambdaAlias:
-  #   Type: AWS::Lambda::Alias
-  #   Properties:
-  #     FunctionName: !Ref MSMMainAPILambdaFunction
-  #     FunctionVersion: !GetAtt MSMMainAPILambdaVersion.Version
-  #     Name: !Sub 'v${MSMTagName}'
-  #     ProvisionedConcurrencyConfig:
-  #       ProvisionedConcurrentExecutions: !Ref MSMMainProvisionedNumber
+  MSMMainAPILambdaAlias:
+    Type: AWS::Lambda::Alias
+    Condition: !Not [NoProvisionedFunctions]
+    Properties:
+      FunctionName: !Ref MSMMainAPILambdaFunction
+      FunctionVersion: !GetAtt MSMMainAPILambdaVersion.Version
+      Name: !Sub 'v${MSMTagName}'
+      ProvisionedConcurrencyConfig:
+        ProvisionedConcurrentExecutions: !Ref MSMMainProvisionedNumber
+
+  MSMMainAPILambdaAlias:
+    Type: AWS::Lambda::Alias
+    Condition: NoProvisionedFunctions
+    Properties:
+      FunctionName: !Ref MSMMainAPILambdaFunction
+      FunctionVersion: !GetAtt MSMMainAPILambdaVersion.Version
+      Name: !Sub 'v${MSMTagName}'
   
   MSMMainExpressAPI:
     Type: AWS::ApiGatewayV2::Api
@@ -212,8 +228,8 @@ Resources:
               x-amazon-apigateway-integration:
                 httpMethod: POST
                 type: aws_proxy
-                # uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMMainAPILambdaFunction.Arn}:v${MSMTagName}/invocations
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMMainAPILambdaFunction.Arn}/invocations
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMMainAPILambdaFunction.Arn}:v${MSMTagName}/invocations
+                # uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMMainAPILambdaFunction.Arn}/invocations
                 payloadFormatVersion: '2.0'
                 requestParameters:
                   "overwrite:path": "$request.path"
@@ -225,7 +241,7 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref MSMMainAPILambdaFunction
+      FunctionName: !Ref MSMMainAPILambdaAlias
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MSMMainExpressAPI}/${MSMStageName}/*'
 

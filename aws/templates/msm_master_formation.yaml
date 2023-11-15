@@ -57,6 +57,11 @@ Parameters:
     Default: 0
     Description: The number of provisioned lambda functions for main
 
+  MSMWssFallbackProvisionedNumber:
+    Type: Number
+    Default: 0
+    Description: The number of provisioned lambda functions for wss fallback
+
 ####################################################################################
 Resources:
 ####################################################################################
@@ -81,6 +86,8 @@ Resources:
         MSMStageName: !Ref MSMStageName
         MSMTableName: !Ref MSMTableName
         MSMSecretName: !Ref MSMSecretName
+        MSMWssFallbackProvisionedNumber: !Ref MSMWssFallbackProvisionedNumber
+        MSMTagName: !Ref MSMImageTag
         ConnectHandlerImageName: !Sub 'mft-msm-ws-connect.${MSMStageName}.${MSMImageTag}'
         DisconnectHandlerImageName: !Sub 'mft-msm-ws-disconnect.${MSMStageName}.${MSMImageTag}'
         FallbackHandlerImageName: !Sub 'mft-msm-ws-fallback.${MSMStageName}.${MSMImageTag}'

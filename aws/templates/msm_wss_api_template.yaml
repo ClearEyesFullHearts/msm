@@ -54,6 +54,23 @@ Parameters:
     Default: mft-msm-ws-fallback.test
     Description: Tag of the image to deploy.
 
+  MSMTagName:
+    Type: String
+    Default: latest
+    Description: The version tag name
+
+  MSMWssFallbackProvisionedNumber:
+    Type: Number
+    Default: 0
+    Description: The number of provisioned lambda functions for fallback
+
+####################################################################################
+Conditions:
+####################################################################################
+
+  NoProvisionedFunctions:
+    !Equals [!Ref MSMWssFallbackProvisionedNumber, 0]
+
 ####################################################################################
 Resources:
 ####################################################################################
@@ -141,6 +158,30 @@ Resources:
     DependsOn:
       - WssLambdaMSMPolicy
       - WssLambdaMSMRole
+      
+  MSMFallbackVersion:
+    Type: AWS::Lambda::Version
+    Properties:
+      FunctionName: !Ref MSMFallbackHandler
+      Description: !Sub 'v${MSMTagName}'
+
+  MSMFallbackAlias:
+    Type: AWS::Lambda::Alias
+    Condition: !Not [NoProvisionedFunctions]
+    Properties:
+      FunctionName: !Ref MSMFallbackHandler
+      FunctionVersion: !GetAtt MSMFallbackVersion.Version
+      Name: !Sub 'v${MSMTagName}'
+      ProvisionedConcurrencyConfig:
+        ProvisionedConcurrentExecutions: !Ref MSMWssFallbackProvisionedNumber
+
+  MSMFallbackAlias:
+    Type: AWS::Lambda::Alias
+    Condition: NoProvisionedFunctions
+    Properties:
+      FunctionName: !Ref MSMFallbackHandler
+      FunctionVersion: !GetAtt MSMFallbackVersion.Version
+      Name: !Sub 'v${MSMTagName}'
 
   MSMDisconnectHandler:
     Type: AWS::Lambda::Function
@@ -225,7 +266,7 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: 'lambda:InvokeFunction'
-      FunctionName: !GetAtt MSMFallbackHandler.Arn
+      FunctionName: !Ref MSMFallbackAlias
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/*/*fallback'
 
@@ -242,6 +283,7 @@ Resources:
           - !GetAtt 
             - MSMFallbackHandler
             - Arn
+          - !Sub ':v${MSMTagName}'
           - /invocations
 
   MsmWssApiFallbackRoute:

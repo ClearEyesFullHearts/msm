@@ -75,3 +75,4 @@ aws cloudformation deploy \
         MSMHttpApiDomainName="$HTTP_DOMAIN" \
         MSMWssApiDomainName="$WSS_DOMAIN" \
         MSMMainProvisionedNumber="$MAIN_PROVISION" \
+        MSMWssFallbackProvisionedNumber="$FALLBACK_PROVISION" \
