@@ -366,7 +366,7 @@ class CryptoHelper {
       binaryDer,
       {
         name: 'ECDSA',
-        hash: 'P-521',
+        namedCurve: 'P-521',
       },
       false,
       ['sign'],
