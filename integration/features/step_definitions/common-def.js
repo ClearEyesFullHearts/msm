@@ -284,3 +284,68 @@ Then(/^I wait for (.*) ms$/, async function (seconds) {
     setTimeout(resolve, time);
   });
 });
+
+Given('I update all users vault', async () => {
+  const fileContent = fs.readFileSync(`${__dirname}/../../data/randoms.json`);
+  const arrUsers = JSON.parse(fileContent);
+  arrUsers.push('vaultUser');
+
+  const ALGORITHM = 'aes-256-gcm';
+  const IV_SIZE = 16;
+  const secretTxt = '';
+  const keyTxt = '';
+
+  function simpleDecrypt({ value, vector }, keyBuffer) {
+    const ivBuffer = Buffer.from(vector, 'base64');
+    const cipher = Buffer.from(value, 'base64');
+    const authTag = cipher.subarray(cipher.length - 16);
+    const crypted = cipher.subarray(0, cipher.length - 16);
+    const decipher = crypto.createDecipheriv(ALGORITHM, keyBuffer, ivBuffer);
+    decipher.setAuthTag(authTag);
+    return Buffer.concat([decipher.update(crypted), decipher.final()]);
+  }
+
+  function simpleEncrypt(txt, keyBuffer) {
+    const iv = crypto.randomBytes(IV_SIZE);
+    const cipher = crypto.createCipheriv(ALGORITHM, keyBuffer, iv);
+    const encrypted = cipher.update(txt);
+    const result = Buffer.concat([encrypted, cipher.final(), cipher.getAuthTag()]);
+
+    return {
+      value: result.toString('base64'),
+      vector: iv.toString('base64'),
+    };
+  }
+
+  for (let i = 0; i < arrUsers.length; i += 1) {
+    const username = arrUsers[i];
+    const user = await Util.getValueInDB({ pk: `U#${username}`, sk: username });
+
+    const {
+      token,
+      salt,
+      iv,
+      pass,
+      kill,
+    } = user.vault;
+
+    const secretBuf = Buffer.from(secretTxt, 'base64');
+    const keyBuf = Buffer.from(keyTxt, 'base64');
+
+    const clearToken = simpleDecrypt(token, secretBuf).toString();
+    const clearSalt = simpleDecrypt(salt, secretBuf).toString();
+    const clearIv = simpleDecrypt(iv, secretBuf).toString();
+    const clearPass = simpleDecrypt(pass, secretBuf).toString();
+    const clearKill = simpleDecrypt(kill, secretBuf).toString();
+
+    const newVault = {
+      token: simpleEncrypt(clearToken, keyBuf),
+      salt: simpleEncrypt(clearSalt, keyBuf),
+      iv: simpleEncrypt(clearIv, keyBuf),
+      pass: simpleEncrypt(clearPass, keyBuf),
+      kill: simpleEncrypt(clearKill, keyBuf),
+    };
+
+    await Util.setValueInDB(username, `U#${username}`, 'vault', newVault);
+  }
+});

@@ -11,7 +11,7 @@
     "host": "localhost:4000"
   },
   "fixtures": {
-    "db": "backupdb_local",
-    "names": "randoms_local"
+    "db": "backupdb",
+    "names": "randoms"
   }
 }

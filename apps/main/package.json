@@ -6,7 +6,8 @@
   "scripts": {
     "win-launch": "set DEBUG=msm-main:*,dynamolayer:*,secrets:*&& node index.js",
     "win-launch-test": "set NO_CHAIN=true&&set NODE_ENV=test&& set DEBUG=msm-main:*,dynamolayer:*,secrets:*&& node index.js",
-    "test": "jest"
+    "test": "jest",
+    "local": "DEBUG=msm-main:*,dynamolayer:*,secrets:*,msm-error:* AWS_XRAY_CONTEXT_MISSING=LOG_ERROR NO_CHAIN=true node index"
   },
   "author": "MFT",
   "license": "MIT",
