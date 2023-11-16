@@ -41,7 +41,7 @@ async function initValidation(user, invokedFunctionArn) {
   await data.users.updateValidation(user.username, 'IS_VALIDATING');
 
   try {
-    const userId = Encryption.hash(user.username).toString('base64');
+    const userId = Encryption.hash(`${config.get('salt')}${user.username}`).toString('base64');
     await validator.validateUser({ userId, signature: user.hash });
     debug('Validation sent');
     await askConfirmation(user.username, 1, invokedFunctionArn);
@@ -55,7 +55,7 @@ async function initValidation(user, invokedFunctionArn) {
 async function confirmValidation(user, tries, invokedFunctionArn) {
   debug(`Confirming user ${user.username}, time ${tries}`);
 
-  const userId = Encryption.hash(user.username).toString('base64');
+  const userId = Encryption.hash(`${config.get('salt')}${user.username}`).toString('base64');
   const isValid = await validator.isValidated(userId);
   if (isValid) {
     debug('Validation confirmed');

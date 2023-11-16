@@ -14,6 +14,7 @@
     "retries": {
       "max": 60,
       "interval": 10000
-    }
+    },
+    "salt": "GVDIMezogpWUNRQHXM1V2A=="
   }
     

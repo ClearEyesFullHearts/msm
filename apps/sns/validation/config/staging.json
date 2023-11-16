@@ -3,5 +3,6 @@
     "local": false,
     "tableName": "BetaTableMSM",
     "createTable": false
-  }
+  },
+  "salt": "BNgn87BFaoc3xunf0KaOKQ=="
 }

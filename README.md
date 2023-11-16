@@ -83,26 +83,51 @@ The attic is the recipient of the public informations needed to allow this conne
 - We generate a random proof (RP)
 - We encrypt `RP` with `HP2` as key and a random initialization vector (IV2) resulting in (EUP)
 - We encrypt `RP` with `HKS` as key and vector `IV2` resulting in (EUK)
-- We use our Secret Key to get the signature of `EUP` as (SUP)
-- We use our Secret Key to get the signature of `EUK` as (SUK)
-- We send `ESK`, `RS1`, `RS2`, `IV1`, `IV2`, `RP`, `SUP` and `SUK` to the server  
+- We generate an ECDSA secret key (ECDSA) that will be shared as public
+- We send `ESK`, `RS1`, `RS2`, `IV1`, `IV2`, `RP`, `EUP`, `EUK` and `ECDSA` to the server  
   
-The server stores `RS2`, `IV2` and `RP` in clear in the attic.  
-The server stores `ESK`, `RS1`, `IV1`, `SUP` and `SUK` in the vault. All data in the vault are encrypted server side with the other secret managed by the back end.  
+The server stores `ECDSA`, `RS2`, `IV2` and `RP` in clear in the attic.  
+The server stores `ESK`, `RS1`, `IV1`, `EUP` and `EUK` in the vault. All data in the vault are encrypted server side with the other secret managed by the back end.  
 
-#### Using the Vault
-- We have a username and a password (PSW)
-- We first ask the server for the username's attic, we get `RS2`, `IV2` and `RP`
-- We hash `PSW` through a PBKDF2 algorithm with salt `RS2` to get our comparison hash (HPU)
-- We encrypt `RP` with `HPU` as key and vector `IV2` resulting in (EUU)
-- We ask for the username's connection information with `EUU` in a header
-- The server verifies `EUU` against the `SUK` signature using the user's Public Key
-- If it matches, `PSW` was the kill switch and the user's account is deleted, if not we continue
-- The server verifies `EUU` against `SUP` using the user's Public Key
-- If it matches, `PSW` was the password and we get `ESK`, `RS1`, and `IV1` and the connection information encrypted using the user's Public Key (JWT)
-- We hash `PSW` through a PBKDF2 algorithm with salt `RS1` to get our encryption hash (HP1)
+#### Using the Vault with the correct password
+- We have a username and a password `PSW`
+- We first ask the server for the username's attic, we get `ECDSA`, `RS2`, `IV2` and `RP`
+- We hash `PSW` through a PBKDF2 algorithm with salt `RS2` to get our comparison hash `HP2`
+- We encrypt `RP` with `HP2` as key and vector `IV2` resulting in `EUP`
+- We use `ECDSA` to get the signature of `EUP` as (SUP)
+- We ask for the username's connection information with `SUP` in a header
+- The server verifies `SUP` against the vault's kill switch comparison hash `EUK` using `ECDSA`
+- `PSW` is not the kill switch so it doesn't verify
+- The server verifies `SUP` against the vault's password comparison hash `EUP` using `ECDSA`
+- `PSW` is the password so it verifies
+- The server send back `ESK`, `RS1`, and `IV1` and the connection information encrypted using the user's Public Key (JWT)
+- We hash `PSW` through a PBKDF2 algorithm with salt `RS1` to get our encryption hash `HP1`
 - Using `HP1` We decrypt `ESK` with vector `IV1` to get our Secret Key back
 - We then decrypt `JWT` with it to get our connection information  
+
+#### Using the Vault with the kill switch
+- We have a username and a password `PKS`
+- We first ask the server for the username's attic, we get `ECDSA`, `RS2`, `IV2` and `RP`
+- We hash `PKS` through a PBKDF2 algorithm with salt `RS2` to get our comparison hash `HKS`
+- We encrypt `RP` with `HKS` as key and vector `IV2` resulting in `EUK`
+- We use `ECDSA` to get the signature of `EUK` as (SUK)
+- We ask for the username's connection information with `SUK` in a header
+- The server verifies `SUK` against the vault's kill switch comparison hash `EUK` using `ECDSA`
+- `PKS` is the kill switch so it verifies
+- The account is deleted and the server send back a 400 HTTP error   
+
+#### Using the Vault with a wrong password
+- We have a username and a password (PSX)
+- We first ask the server for the username's attic, we get `ECDSA`, `RS2`, `IV2` and `RP`
+- We hash `PSX` through a PBKDF2 algorithm with salt `RS2` to get our comparison hash `HP2`
+- We encrypt `RP` with `HP2` as key and vector `IV2` resulting in (EUX)
+- We use `ECDSA` to get the signature of `EUX` as (SUX)
+- We ask for the username's connection information with `SUX` in a header
+- The server verifies `SUX` against the vault's kill switch comparison hash `EUK` using `ECDSA`
+- `PSX` is not the kill switch so it doesn't verify
+- The server verifies `SUX` against the vault's password comparison hash `EUP` using `ECDSA`
+- `PSX` is not the password so it doesn't verify
+- The server send back a 400 HTTP error   
   
 ### Messages
 The client is supposed to send 3 pieces of information to send a message:

@@ -1,4 +1,5 @@
-/* eslint no-param-reassign: ["error", { "props": true, "ignorePropertyModificationsFor": ["user"] }] */
+/* eslint no-param-reassign:
+["error", { "props": true, "ignorePropertyModificationsFor": ["user"] }] */
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const config = require('config');

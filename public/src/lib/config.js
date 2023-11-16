@@ -6,15 +6,16 @@ const BASE_URL = `${import.meta.env.BASE_URL}`;
 const COMMIT_HASH = `${import.meta.env.VITE_COMMIT_HASH}`;
 const WSS_URL = `${import.meta.env.VITE_WSS_URL}`;
 const VAPID_KEY = `${import.meta.env.VITE_PUBLIC_VAPID_KEY}`;
+const CHAIN_SALT = `${import.meta.env.VITE_CHAIN_SALT}`;
 
-    
 export default {
-    NETWORK: NETWORK,
-    API_KEY: API_KEY,
-    CONTRACT_ADDRESS: CONTRACT_ADDRESS,
-    BASE_URL: BASE_URL,
-    API_URL: API_URL,
-    COMMIT_HASH: COMMIT_HASH,
-    WSS_URL: WSS_URL,
-    VAPID_KEY: VAPID_KEY,
-}
+  NETWORK,
+  API_KEY,
+  CONTRACT_ADDRESS,
+  BASE_URL,
+  API_URL,
+  COMMIT_HASH,
+  WSS_URL,
+  VAPID_KEY,
+  CHAIN_SALT,
+};

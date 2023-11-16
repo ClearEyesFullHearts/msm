@@ -15,6 +15,7 @@ import Config from '@/lib/config';
 // const mylogger = new TimeLogger('auth store');
 
 const baseUrl = Config.API_URL;
+const chainSalt = Config.CHAIN_SALT;
 const mycrypto = new CryptoHelper();
 const myvalidator = new ChainHelper();
 let interval;
@@ -165,7 +166,7 @@ export const useAuthStore = defineStore({
       const alertStore = useAlertStore();
       const spk = await mycrypto.getSigningPublicKey(this.signing);
       try {
-        const userId = mycrypto.hash(this.user.user.username);
+        const userId = mycrypto.hash(`${chainSalt}${this.user.user.username}`);
         const isValidatedOnChain = await myvalidator.isValidated(userId);
         if (isValidatedOnChain) {
           const { signature } = isValidatedOnChain;

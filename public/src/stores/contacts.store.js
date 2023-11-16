@@ -14,6 +14,7 @@ const mycrypto = new CryptoHelper();
 const myvalidator = new ChainHelper();
 
 const baseUrl = Config.API_URL;
+const chainSalt = Config.CHAIN_SALT;
 
 export const useContactsStore = defineStore({
   id: 'contacts',
@@ -230,7 +231,7 @@ export const useContactsStore = defineStore({
     },
     async autoValidation(user) {
       try {
-        const userId = mycrypto.hash(user.at);
+        const userId = mycrypto.hash(`${chainSalt}${user.at}`);
         const isValidatedOnChain = await myvalidator.isValidated(userId);
         if (!isValidatedOnChain) return;
 
