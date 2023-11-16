@@ -71,6 +71,9 @@ Conditions:
   NoProvisionedFunctions:
     !Equals [!Ref MSMWssFallbackProvisionedNumber, 0]
 
+  HasProvisionedFunctions:
+    !Not [!Equals [!Ref MSMWssFallbackProvisionedNumber, 0]]
+
 ####################################################################################
 Resources:
 ####################################################################################
@@ -161,27 +164,20 @@ Resources:
       
   MSMFallbackVersion:
     Type: AWS::Lambda::Version
+    Condition: HasProvisionedFunctions
     Properties:
       FunctionName: !Ref MSMFallbackHandler
       Description: !Sub 'v${MSMTagName}'
 
   MSMFallbackAlias:
     Type: AWS::Lambda::Alias
-    Condition: !Not [NoProvisionedFunctions]
+    Condition: HasProvisionedFunctions
     Properties:
       FunctionName: !Ref MSMFallbackHandler
       FunctionVersion: !GetAtt MSMFallbackVersion.Version
       Name: !Sub 'v${MSMTagName}'
       ProvisionedConcurrencyConfig:
         ProvisionedConcurrentExecutions: !Ref MSMWssFallbackProvisionedNumber
-
-  MSMFallbackAlias:
-    Type: AWS::Lambda::Alias
-    Condition: NoProvisionedFunctions
-    Properties:
-      FunctionName: !Ref MSMFallbackHandler
-      FunctionVersion: !GetAtt MSMFallbackVersion.Version
-      Name: !Sub 'v${MSMTagName}'
 
   MSMDisconnectHandler:
     Type: AWS::Lambda::Function
@@ -266,8 +262,12 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: 'lambda:InvokeFunction'
-      FunctionName: !Ref MSMFallbackAlias
       Principal: apigateway.amazonaws.com
+      FunctionName:
+        !If 
+          - NoProvisionedFunctions
+          - !Ref MSMFallbackHandler
+          - !Ref MSMFallbackAlias
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MsmWssApi}/*/*fallback'
 
   MsmWssApiFallbackIntegration:
@@ -275,16 +275,11 @@ Resources:
     Properties:
       ApiId: !Ref MsmWssApi
       IntegrationType: AWS_PROXY
-      IntegrationUri: !Join 
-        - ''
-        - - 'arn:aws:apigateway:'
-          - !Ref 'AWS::Region'
-          - ':lambda:path/2015-03-31/functions/'
-          - !GetAtt 
-            - MSMFallbackHandler
-            - Arn
-          - !Sub ':v${MSMTagName}'
-          - /invocations
+      IntegrationUri:
+        !If 
+          - NoProvisionedFunctions
+          - !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMFallbackHandler.Arn}/invocations'
+          - !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMFallbackHandler.Arn}:v${MSMTagName}/invocations'
 
   MsmWssApiFallbackRoute:
     Type: AWS::ApiGatewayV2::Route

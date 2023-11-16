@@ -185,23 +185,32 @@ function onDownloadSK() {
           Full explanation
         </h4>
         <div class="card-body">
+          <p style="font-size: smaller;">
+            <b><i>Please note that using a password to connect to your account is intrinsically
+              less secure than using your secret key file directly.<br>
+              The right balance between security and ease of use is to
+              "create an account with key file",
+              open the welcoming message,
+              wait for your on-chain validation to be confirmed
+              and only then come here to set up your vault with a password.</i></b>
+          </p>
           <p>
             Your vault securely stores your secret key,
             which is encrypted using a strong hash of your password.
           </p>
           <p>
             Upon creating your account or setting up your vault, we calculate a hash of your
-            password and kill switch. Your secret key is then encrypted with the former,
-            and both your encrypted secret key
-            and the signatures of an encrypted random proof by both hashes are stored in your vault.
+            password and kill switch. Your secret key is then encrypted with the former and
+            a random piece of data is encrypted to provide a differentiator between both
+            and those are sent and stored in your vault.
           </p>
           <p>
             Every piece of data in your vault is encrypted on the server side for storage.
           </p>
           <p>
-            When you log in, you transmit the computed encrypted random proof by the hash of
+            When you log in, you transmit the signed encrypted random proof by the hash of
             your password to us, which is
-            cross-verified against the signatures of your kill switch and password.<br>
+            cross-verified against what is stored server side.<br>
             If you provide your kill switch password, your account is immediately deleted.<br>
             If you provide your connection password,
             we respond by sending your vault and connection data, which is encrypted.

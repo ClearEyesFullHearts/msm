@@ -85,6 +85,9 @@ Conditions:
   NoProvisionedFunctions:
     !Equals [!Ref MSMMainProvisionedNumber, 0]
 
+  HasProvisionedFunctions:
+    !Not [!Equals [!Ref MSMMainProvisionedNumber, 0]]
+
 ####################################################################################
 Resources:
 ####################################################################################
@@ -193,27 +196,20 @@ Resources:
 
   MSMMainAPILambdaVersion:
     Type: AWS::Lambda::Version
+    Condition: HasProvisionedFunctions
     Properties:
       FunctionName: !Ref MSMMainAPILambdaFunction
       Description: !Sub 'v${MSMTagName}'
 
   MSMMainAPILambdaAlias:
     Type: AWS::Lambda::Alias
-    Condition: !Not [NoProvisionedFunctions]
+    Condition: HasProvisionedFunctions
     Properties:
       FunctionName: !Ref MSMMainAPILambdaFunction
       FunctionVersion: !GetAtt MSMMainAPILambdaVersion.Version
       Name: !Sub 'v${MSMTagName}'
       ProvisionedConcurrencyConfig:
         ProvisionedConcurrentExecutions: !Ref MSMMainProvisionedNumber
-
-  MSMMainAPILambdaAlias:
-    Type: AWS::Lambda::Alias
-    Condition: NoProvisionedFunctions
-    Properties:
-      FunctionName: !Ref MSMMainAPILambdaFunction
-      FunctionVersion: !GetAtt MSMMainAPILambdaVersion.Version
-      Name: !Sub 'v${MSMTagName}'
   
   MSMMainExpressAPI:
     Type: AWS::ApiGatewayV2::Api
@@ -228,8 +224,11 @@ Resources:
               x-amazon-apigateway-integration:
                 httpMethod: POST
                 type: aws_proxy
-                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMMainAPILambdaFunction.Arn}:v${MSMTagName}/invocations
-                # uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMMainAPILambdaFunction.Arn}/invocations
+                uri: 
+                  !If 
+                    - NoProvisionedFunctions
+                    - !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMMainAPILambdaFunction.Arn}/invocations'
+                    - !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MSMMainAPILambdaFunction.Arn}:v${MSMTagName}/invocations'
                 payloadFormatVersion: '2.0'
                 requestParameters:
                   "overwrite:path": "$request.path"
@@ -241,7 +240,11 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref MSMMainAPILambdaAlias
+      FunctionName: 
+        !If 
+          - NoProvisionedFunctions
+          - !Ref MSMMainAPILambdaFunction
+          - !Ref MSMMainAPILambdaAlias
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MSMMainExpressAPI}/${MSMStageName}/*'
 
