@@ -137,7 +137,8 @@ The kind of attack we could encounter are:
 In that case I think we're ok, all sensitive datas are stored encrypted, either by the user's public key or by a random secret for the vault itself.
 - An attacker could intercept the communications send by the client to the server  
 The goal is to prevent the attacker to get whatever we use for the password/kill switch comparison ahead of time.  
-On connection we send only a signature, wich is not deterministic, so that no two attempts are done with the same header, hence just by observing you cannot know if someone is sending the proper password or the kill switch. If they intercept the account creation that's another story.  
+On connection we send only a signature, wich is not deterministic, so that no two attempts are done with the same header, hence just by observing you cannot identify the proper password and try to verify ahead of time if you're sending the password or the kill switch.  
+If they intercept the account creation they can identify `EUK` and `EUP` and be sure not to send the kill switch.  
 - An attacker could take control of the server  
 In that case and particularly if you register with the vault, we're done for. An attacker with full control could potentially replace all keys (public and private) just with a brute force attack on the vault.  
 One mitigation is to create the account without the vault and wait for the on chain validation to be confirmed so that at least you'd be aware of any keys replacement.  
