@@ -95,9 +95,9 @@ paths:
           description: Password hash
           schema:
             type: string
-            format: byte
-            minLength: 176
-            maxLength: 176
+            pattern: '^(\d{10})000:[A-Za-z0-9+\/]*(=|==)?$'
+            minLength: 190
+            maxLength: 190
         - name: at
           in: path
           description: Start of users name

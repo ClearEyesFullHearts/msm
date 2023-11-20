@@ -12,6 +12,13 @@ const MessageAction = require('./messages');
 const SALT_SIZE = 64;
 const IV_SIZE = 16;
 
+function roundTimeToNext(secondsNumber) {
+  const epoch = Date.now();
+  const coeff = (1000 * secondsNumber);
+  const minutesChunk = Math.floor(epoch / coeff) * coeff;
+  return minutesChunk + coeff;
+}
+
 class User {
   static async createUser({ db, secret }, {
     at, key, signature, hash, vault, attic,
@@ -122,7 +129,7 @@ class User {
     return attic;
   }
 
-  static async getCredentials({ db, secret }, { at, signedPass }) {
+  static async getCredentials({ db, secret }, { at, passHeader }) {
     debug('check for user with @:', at);
     if (at.length !== encodeURIComponent(at).length) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
@@ -153,8 +160,20 @@ class User {
     const { key } = knownUser;
     const rawChallenge = Encryption.hybrid(JSON.stringify(auth), key);
 
-    if (signedPass) {
-      debug('compare hash is present');
+    if (passHeader) {
+      debug('compare header is present');
+      const [ttl, signedPass] = passHeader.split(':');
+      if (!Encryption.isBase64(signedPass)) {
+        throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
+      }
+      debug('compare signature is present');
+      const serverTtl = roundTimeToNext(1);
+      if (ttl !== serverTtl.toString()) {
+        console.log('ttl received', ttl);
+        console.log('ttl computed', serverTtl);
+        throw ErrorHelper.getCustomError(419, ErrorHelper.CODE.SESSION_EXPIRED, 'Time to live is expired');
+      }
+      debug('time to live is right');
       const {
         vault,
         attic: {
@@ -177,12 +196,14 @@ class User {
 
       const verifier = `-----BEGIN PRIVATE KEY-----\n${verifB64}\n-----END PRIVATE KEY-----`;
 
-      if (Encryption.verifyECDSASignature(verifier, kill, signedPass)) {
+      const killCompare = Encryption.hash(`${ttl}${kill}`).toString('base64');
+      if (Encryption.verifyECDSASignature(verifier, killCompare, signedPass)) {
         debug('kill switch activated');
         await db.clearUserAccount(knownUser, config.get('timer.removal.frozen'));
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
       }
-      if (!Encryption.verifyECDSASignature(verifier, pass, signedPass)) {
+      const passCompare = Encryption.hash(`${ttl}${pass}`).toString('base64');
+      if (!Encryption.verifyECDSASignature(verifier, passCompare, signedPass)) {
         debug('password do not match');
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
       }

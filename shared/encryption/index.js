@@ -6,6 +6,7 @@ const PASS_SIZE = 32;
 const IV_SIZE = 16;
 const PK_START = '-----BEGIN PUBLIC KEY-----';
 const PK_END = '-----END PUBLIC KEY-----';
+const base64regExp = /^[A-Za-z0-9+/]*(=|==)?$/;
 
 class Encryption {
   static simpleEncrypt(txt, keyBuffer) {
@@ -104,8 +105,8 @@ class Encryption {
     return true;
   }
 
-  static isBase64(str) {
-    return Buffer.from(str, 'base64').toString('base64') === str;
+  static isBase64(b) {
+    return b.length % 4 === 0 && base64regExp.test(b);
   }
 
   static encryptVault(key, {

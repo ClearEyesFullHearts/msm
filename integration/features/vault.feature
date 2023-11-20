@@ -9,7 +9,7 @@ Scenario: Set the vault up and use it
   And I set signature header
   When I PUT /vault
   Then response code should be 200
-  And I set X-msm-Pass header to `NEW_PASS_HASH`
+  And I set Pass header with iamapoorlonesomecowboy
   And I GET /identity/`MY_AT`
   And response code should be 200
   And response body should contain vault
@@ -29,7 +29,7 @@ Scenario: Set the vault up and use the switch
   And I set signature header
   When I PUT /vault
   Then response code should be 200
-  And I set X-msm-Pass header to `NEW_KILL_HASH`
+  And I set Pass header with iamapoorlonesomecowgirl
   And I GET /identity/`MY_AT`
   Then response code should be 400
   And response body path $.code should be BAD_REQUEST_FORMAT

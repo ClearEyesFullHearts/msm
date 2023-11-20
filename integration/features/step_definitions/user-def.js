@@ -97,8 +97,15 @@ Given('I am a new valid user', async function () {
   }));
   await this.post('/users');
 
+  const myHeader = Util.getHeaderFromAttic({
+    iv: iv2,
+    salt: rs2,
+    proof: rp,
+    key,
+  }, password);
+
   // get identity challenge
-  this.apickli.addRequestHeader('x-msm-pass', sup.toString('base64'));
+  this.apickli.addRequestHeader('x-msm-pass', myHeader);
   await this.get(`/identity/${username}`);
 
   // resolve it for body

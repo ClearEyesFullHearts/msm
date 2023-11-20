@@ -21,6 +21,26 @@ const myvalidator = new ChainHelper();
 let interval;
 let verificationTimeoutID;
 
+function roundTimeToNext(secondsNumber) {
+  const epoch = Date.now();
+  const coeff = (1000 * secondsNumber);
+  const minutesChunk = Math.floor(epoch / coeff) * coeff;
+  return minutesChunk + coeff;
+}
+async function getCredentials(username, pemContent, eup) {
+  const ttl = roundTimeToNext(5);
+  const headerHash = await mycrypto.hash(`${ttl}${eup}`);
+
+  const sup = await mycrypto.signWithECDSA(pemContent, headerHash);
+  // mylogger.logTime('proof signed');
+
+  const passHeader = {
+    'X-msm-Pass': `${ttl}:${sup}`,
+  };
+  const credentials = await fetchWrapper.get(`${baseUrl}/identity/${username}`, false, passHeader);
+  return credentials;
+}
+
 export const useAuthStore = defineStore({
   id: 'auth',
   state: () => ({
@@ -57,13 +77,17 @@ export const useAuthStore = defineStore({
       const { token: eup } = await mycrypto.PBKDF2Encrypt(hp2, proof, iv2);
       // mylogger.logTime('proof encrypted');
 
-      const sup = await mycrypto.signWithECDSA(pemContent, eup);
-      // mylogger.logTime('proof signed');
-
-      const passHeader = {
-        'X-msm-Pass': sup,
-      };
-      const { vault, ...challenge } = await fetchWrapper.get(`${baseUrl}/identity/${username}`, false, passHeader);
+      let credentials;
+      try {
+        credentials = getCredentials(username, pemContent, eup);
+      } catch (err) {
+        if (err === 'Time to live is expired') {
+          // retry once
+          credentials = getCredentials(username, pemContent, eup);
+        }
+        throw err;
+      }
+      const { vault, ...challenge } = credentials;
       // mylogger.logTime('get vault & identity challenge');
 
       const {

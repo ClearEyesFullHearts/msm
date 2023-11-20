@@ -159,11 +159,17 @@ Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (
     // suk,
   } = vaultValues;
 
-  const sup = Util.signECDSA(key, Buffer.from(eup, 'base64'));
-  const suk = Util.signECDSA(key, Buffer.from(euk, 'base64'));
+  // const sup = Util.signECDSA(key, Buffer.from(eup, 'base64'));
+  // const suk = Util.signECDSA(key, Buffer.from(euk, 'base64'));
 
-  this.apickli.storeValueInScenarioScope('NEW_PASS_HASH', sup.toString('base64'));
-  this.apickli.storeValueInScenarioScope('NEW_KILL_HASH', suk.toString('base64'));
+  // this.apickli.storeValueInScenarioScope('NEW_PASS_HASH', sup.toString('base64'));
+  // this.apickli.storeValueInScenarioScope('NEW_KILL_HASH', suk.toString('base64'));
+  this.apickli.storeValueInScenarioScope('ATTIC', {
+    iv: iv2,
+    salt: rs2,
+    proof: rp,
+    key,
+  });
   this.apickli.storeValueInScenarioScope('NEW_SALT', rs1);
   this.apickli.storeValueInScenarioScope('NEW_IV', iv1);
 

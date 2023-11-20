@@ -38,6 +38,12 @@ function formatSK(privateKey) {
 
   return `${pemHeader}\n${pemContents}\n${pemFooter}`;
 }
+function roundTimeToNext(secondsNumber) {
+  const epoch = Date.now();
+  const coeff = (1000 * secondsNumber);
+  const minutesChunk = Math.floor(epoch / coeff) * coeff;
+  return minutesChunk + coeff;
+}
 
 const TABLE_NAME = config.get('dynamo.table');
 const ALGORITHM = 'aes-256-gcm';
@@ -213,9 +219,11 @@ class Util {
     const eupOreuk = Buffer.concat([
       cipherEUP.update(proof), cipherEUP.final(), cipherEUP.getAuthTag(),
     ]);
-    const sup = Util.signECDSA(key, eupOreuk);
+    const ttl = roundTimeToNext(1);
+    const hash = this.hashToBase64(`${ttl}${eupOreuk.toString('base64')}`);
+    const sup = Util.signECDSA(key, Buffer.from(hash, 'base64'));
 
-    return sup.toString('base64');
+    return `${ttl}:${sup.toString('base64')}`;
   }
 
   static generateFalseKeyPair() {
@@ -803,55 +811,6 @@ class Util {
 
   static async setValueInDB(sk, pk, prop, val) {
     const Everything = Util.getEverythingModel();
-    // const Keys = dynamoose.model('Keys', new dynamoose.Schema({
-    //   pk: {
-    //     type: String,
-    //     hashKey: true,
-    //   },
-    //   sk: {
-    //     type: String,
-    //     rangeKey: true,
-    //   },
-    //   vault: {
-    //     type: Object,
-    //     schema: {
-    //       token: {
-    //         type: String,
-    //       },
-    //       iv: {
-    //         type: String,
-    //       },
-    //       salt: {
-    //         type: String,
-    //       },
-    //       pass: {
-    //         type: String,
-    //       },
-    //       kill: {
-    //         type: String,
-    //       },
-    //     },
-    //   },
-    //   attic: {
-    //     type: Object,
-    //     schema: {
-    //       iv: {
-    //         type: String,
-    //       },
-    //       salt: {
-    //         type: String,
-    //       },
-    //       proof: {
-    //         type: String,
-    //       },
-    //     },
-    //   },
-    // }), { tableName: TABLE_NAME, create: config.get('dynamo.createTable') });
-    // const ddb = new dynamoose.aws.ddb.DynamoDB({});
-
-    // // Set DynamoDB instance to the Dynamoose DDB instance
-    // dynamoose.aws.ddb.set(ddb);
-    // if (config.get('dynamo.local')) dynamoose.aws.ddb.local(config.get('dynamo.local.url'));
 
     await Everything.update(
       { pk, sk },

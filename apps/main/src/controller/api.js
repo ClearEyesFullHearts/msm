@@ -76,8 +76,8 @@ module.exports = {
       },
     } = req;
 
-    const signedPass = headers['x-msm-pass'];
-    User.getCredentials({ db, secret }, { at, signedPass })
+    const passHeader = headers['x-msm-pass'];
+    User.getCredentials({ db, secret }, { at, passHeader })
       .then((challenge) => {
         res.json(challenge);
       })
@@ -334,7 +334,7 @@ module.exports = {
         app: {
           locals: {
             db,
-            secret
+            secret,
           },
         },
       } = req;
