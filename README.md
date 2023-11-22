@@ -71,78 +71,7 @@ The secret used for that computation is one of only two secrets really managed o
 We mitigate that risk by verifying the user signature for all actions on its account (all PUT, POST and DELETE request) to be sure that regardless of our authentication mechanism the user has access to the secret key relative to its account.  
 
 ### The Vault & the Attic
-The vault is designed to offer the possibility to store a user's Secret Key as securely as possible and enable the possibility to connect through a simple username/password scheme. It is also designed to allow the use of a password kill switch.  
-The attic is the recipient of the public informations needed to allow this connection scheme.  
-
-#### Setting up the Vault
-- We have a password (PSW) and a password kill switch (PKS) and our Secret Key
-- We hash `PSW` through a PBKDF2 algorithm with a random salt (RS1) to get our encryption hash (HP1)
-- We hash `PSW` through a PBKDF2 algorithm with a random salt (RS2) to get our comparison hash (HP2)
-- We hash `PKS` through a PBKDF2 algorithm with salt `RS2` to get our comparison kill switch hash (HKS)
-- We encrypt our Secret Key with `HP1` as key and a random initialization vector (IV1) resulting in (ESK)
-- We generate a random proof (RP)
-- We encrypt `RP` with `HP2` as key and a random initialization vector (IV2) resulting in (EUP)
-- We encrypt `RP` with `HKS` as key and vector `IV2` resulting in (EUK)
-- We generate an ECDSA secret key (ECDSA) that will be shared as public
-- We send `ESK`, `RS1`, `RS2`, `IV1`, `IV2`, `RP`, `EUP`, `EUK` and `ECDSA` to the server  
-  
-The server stores `ECDSA`, `RS2`, `IV2` and `RP` in clear in the attic.  
-The server stores `ESK`, `RS1`, `IV1`, `EUP` and `EUK` in the vault. All data in the vault are encrypted server side with the other secret managed by the back end.  
-
-#### Using the Vault with the correct password
-- We have a username and a password `PSW`
-- We first ask the server for the username's attic, we get `ECDSA`, `RS2`, `IV2` and `RP`
-- We hash `PSW` through a PBKDF2 algorithm with salt `RS2` to get our comparison hash `HP2`
-- We encrypt `RP` with `HP2` as key and vector `IV2` resulting in `EUP`
-- We use `ECDSA` to get the signature of `EUP` as (SUP)
-- We ask for the username's connection information with `SUP` in a header
-- The server verifies `SUP` against the vault's kill switch comparison hash `EUK` using `ECDSA`
-- `PSW` is not the kill switch so it doesn't verify
-- The server verifies `SUP` against the vault's password comparison hash `EUP` using `ECDSA`
-- `PSW` is the password so it verifies
-- The server send back `ESK`, `RS1`, and `IV1` and the connection information encrypted using the user's Public Key (JWT)
-- We hash `PSW` through a PBKDF2 algorithm with salt `RS1` to get our encryption hash `HP1`
-- Using `HP1` We decrypt `ESK` with vector `IV1` to get our Secret Key back
-- We then decrypt `JWT` with it to get our connection information  
-
-#### Using the Vault with the kill switch
-- We have a username and a password `PKS`
-- We first ask the server for the username's attic, we get `ECDSA`, `RS2`, `IV2` and `RP`
-- We hash `PKS` through a PBKDF2 algorithm with salt `RS2` to get our comparison hash `HKS`
-- We encrypt `RP` with `HKS` as key and vector `IV2` resulting in `EUK`
-- We use `ECDSA` to get the signature of `EUK` as (SUK)
-- We ask for the username's connection information with `SUK` in a header
-- The server verifies `SUK` against the vault's kill switch comparison hash `EUK` using `ECDSA`
-- `PKS` is the kill switch so it verifies
-- The account is deleted and the server send back a 400 HTTP error   
-
-#### Using the Vault with a wrong password
-- We have a username and a password (PSX)
-- We first ask the server for the username's attic, we get `ECDSA`, `RS2`, `IV2` and `RP`
-- We hash `PSX` through a PBKDF2 algorithm with salt `RS2` to get our comparison hash `HP2`
-- We encrypt `RP` with `HP2` as key and vector `IV2` resulting in (EUX)
-- We use `ECDSA` to get the signature of `EUX` as (SUX)
-- We ask for the username's connection information with `SUX` in a header
-- The server verifies `SUX` against the vault's kill switch comparison hash `EUK` using `ECDSA`
-- `PSX` is not the kill switch so it doesn't verify
-- The server verifies `SUX` against the vault's password comparison hash `EUP` using `ECDSA`
-- `PSX` is not the password so it doesn't verify
-- The server send back a 400 HTTP error   
-
-#### Security considerations concerning the vault
-First let's admit that any connection scheme based on a password is vulnerable to a brute force attack, at least to obtain the connection information of one or some few targeted accounts. So on that front there is nothing we can really do, maybe using more advanced hashing algorithm i.e. Argon2 could mitigate that better but I'm not sure it would prevent the attack on one targeted account and it is not available in SubtleCrypto so that would mean importing an external library wich is something i'm trying to avoid as much as possible in the client.  
-  
-The kind of attack we could encounter are:
-- An attacker could get a copy of the database  
-In that case I think we're ok, all sensitive datas are stored encrypted, either by the user's public key or by a random secret for the vault itself.
-- An attacker could intercept the communications send by the client to the server  
-The goal is to prevent the attacker to get whatever we use for the password/kill switch comparison ahead of time.  
-On connection we send only a signature, wich is not deterministic, so that no two attempts are done with the same header, hence just by observing you cannot identify the proper password and try to verify ahead of time if you're sending the password or the kill switch.  
-If they intercept the account creation they can identify `EUK` and `EUP` and be sure not to send the kill switch.  
-- An attacker could take control of the server  
-In that case and particularly if you register with the vault, we're done for. An attacker with full control could potentially replace all keys (public and private) just with a brute force attack on the vault.  
-One mitigation is to create the account without the vault and wait for the on chain validation to be confirmed so that at least you'd be aware of any keys replacement.  
-The only way to protect against that is to not use the vault.  
+See [VAULT.md](https://github.com/ClearEyesFullHearts/msm/blob/main/VAULT.md)
 
 ### Messages
 The client is supposed to send 3 pieces of information to send a message:
