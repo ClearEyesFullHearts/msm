@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const challengeSchema = require('./schemas/challenge');
 const vaultItemSchema = require('./schemas/vaultItem');
 const atticItemSchema = require('./schemas/atticItem');
+const sessionSchema = require('./schemas/session');
 
 class UserData {
   constructor() {
@@ -53,6 +54,11 @@ class UserData {
       attic: {
         type: Object,
         schema: atticItemSchema,
+        default: null,
+      },
+      session: {
+        type: Object,
+        schema: sessionSchema,
         default: null,
       },
       contacts: {
@@ -249,6 +255,33 @@ class UserData {
       { pk: `U#${username}`, sk: username },
       {
         $SET: { validation: val },
+      },
+    );
+  }
+
+  async setSession(username, session) {
+    await this.Entity.update(
+      { pk: `U#${username}`, sk: username },
+      {
+        $SET: { session },
+      },
+    );
+  }
+
+  async usedSession(username) {
+    await this.Entity.update(
+      { pk: `U#${username}`, sk: username },
+      {
+        $SET: { session: { usage: 0 } },
+      },
+    );
+  }
+
+  async emptySession(username) {
+    await this.Entity.update(
+      { pk: `U#${username}`, sk: username },
+      {
+        $REMOVE: ['session'],
       },
     );
   }

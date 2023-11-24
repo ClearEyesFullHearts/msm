@@ -47,6 +47,7 @@ module.exports = {
       params: {
         at,
       },
+      headers,
       app: {
         locals: {
           db,
@@ -54,7 +55,8 @@ module.exports = {
       },
     } = req;
 
-    User.getCryptoData({ db }, { at })
+    const cpk = headers['x-msm-cpk'];
+    User.getCryptoData({ db }, { at, cpk })
       .then((attic) => {
         res.json(attic);
       })

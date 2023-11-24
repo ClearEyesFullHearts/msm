@@ -61,6 +61,15 @@ paths:
       operationId: attic
       x-eov-operation-handler: api
       parameters:
+        - in: header
+          name: X-msm-Cpk
+          required: false
+          description: Client DH public key
+          schema:
+            type: string
+            format: byte
+            minLength: 88
+            maxLength: 88
         - name: at
           in: path
           description: Start of users name
@@ -95,9 +104,9 @@ paths:
           description: Password hash
           schema:
             type: string
-            pattern: '^(\d{10})000:[A-Za-z0-9+\/]*(=|==)?$'
-            minLength: 190
-            maxLength: 190
+            pattern: '^[A-Za-z0-9+\/]*(=|==)?.[A-Za-z0-9+\/]*(=|==)?.[A-Za-z0-9+\/]*(=|==)?$'
+            minLength: 194
+            maxLength: 194
         - name: at
           in: path
           description: Start of users name
@@ -318,15 +327,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - vault
-                - attic
-              properties:
-                vault:
-                  $ref: '#/components/schemas/Vault'
-                attic:
-                  $ref: '#/components/schemas/Attic'
+              $ref: '#/components/schemas/Vault'
       responses:
         '200':
           description: Key saved
@@ -847,10 +848,6 @@ components:
           format: byte
           minLength: 172
           maxLength: 172
-        vault:
-          $ref: '#/components/schemas/Vault'
-        attic:
-          $ref: '#/components/schemas/Attic'
     Challenge:
       type: object
       required:
@@ -958,56 +955,38 @@ components:
     Vault:
       type: object
       required:
-        - token
+        - vault
         - iv
-        - salt
-        - pass
-        - kill
+        - sessionSalt
+        - passSalt
       properties:
-        token:
+        vault:
           type: string
           format: byte
-          minLength: 5376
-          maxLength: 5376
+          minLength: 7860
+          maxLength: 7860
         iv:
           type: string
           format: byte
           minLength: 24
           maxLength: 24
-        salt:
+        sessionSalt:
           type: string
           format: byte
           minLength: 88
           maxLength: 88
-        pass:
+        passSalt:
           type: string
           format: byte
-          minLength: 140
-          maxLength: 140
-        kill:
-          type: string
-          format: byte
-          minLength: 140
-          maxLength: 140
+          minLength: 88
+          maxLength: 88
     Attic:
       type: object
       required:
-        - iv
         - salt
-        - proof
         - key
       properties:
-        iv:
-          type: string
-          format: byte
-          minLength: 24
-          maxLength: 24
         salt:
-          type: string
-          format: byte
-          minLength: 88
-          maxLength: 88
-        proof:
           type: string
           format: byte
           minLength: 88
@@ -1015,8 +994,8 @@ components:
         key:
           type: string
           format: byte
-          minLength: 324
-          maxLength: 324
+          minLength: 88
+          maxLength: 88
     VaultItem:
       type: object
       required:

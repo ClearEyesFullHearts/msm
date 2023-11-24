@@ -90,43 +90,72 @@ class User {
     return newUser;
   }
 
-  static async getCryptoData({ db }, { at }) {
-    function sendBogus(sk) {
-      const pemHeader = '-----BEGIN PRIVATE KEY-----';
-      const pemFooter = '-----END PRIVATE KEY-----';
-      const trimmedSK = sk.replace(/\n/g, '');
-      const key = trimmedSK.substring(pemHeader.length, trimmedSK.length - pemFooter.length);
+  static async getCryptoData({ db }, { at, cpk }) {
+    const { spk, tss } = Encryption.generateECDHKeys(cpk);
+    const bogus = {
+      key: spk,
+      salt: crypto.randomBytes(SALT_SIZE).toString('base64'),
+    };
 
-      return {
-        iv: crypto.randomBytes(IV_SIZE).toString('base64'),
-        salt: crypto.randomBytes(SALT_SIZE).toString('base64'),
-        proof: crypto.randomBytes(SALT_SIZE).toString('base64'),
-        key,
-      };
-    }
     if (at.length !== encodeURIComponent(at).length) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have any special character');
     }
 
     debug('check for user with @:', at);
 
-    const { privateKey } = Encryption.generateECDSAKeys();
-
     const knownUser = await db.users.findByName(at);
     if (!knownUser) {
-      return sendBogus(privateKey);
+      return bogus;
     }
     debug('known user');
 
     const {
       attic,
+      session,
     } = knownUser;
-    if (!attic) {
-      return sendBogus(privateKey);
+    let rs = bogus.salt;
+    if (attic) {
+      rs = attic.salt;
     }
-    debug('user has an attic');
+    debug('salt is chosen');
 
-    return attic;
+    const time = Date.now();
+    let minTime = time;
+    if (session) {
+      debug('session exists');
+
+      const {
+        usage, minTtl, spk: oldKey, maxTtl,
+      } = session;
+
+      if (time < minTtl) return bogus;
+
+      if (usage > 0 && time < maxTtl) {
+        debug('retry previous session');
+        return {
+          salt: rs,
+          key: oldKey,
+        };
+      }
+      debug('session expired');
+
+      const deltaTime = minTtl - (maxTtl - 5000);
+      if (deltaTime === 0) {
+        minTime += 200;
+      } else {
+        minTime += 2 * deltaTime;
+      }
+    }
+
+    await db.users.setSession(at, {
+      spk, tss, minTtl: minTime, maxTtl: time + 5000, usage: 1,
+    });
+    debug('session set');
+
+    return {
+      salt: rs,
+      key: spk,
+    };
   }
 
   static async getCredentials({ db, secret }, { at, passHeader }) {
@@ -162,29 +191,36 @@ class User {
 
     if (passHeader) {
       debug('compare header is present');
-      const [ttl, signedPass] = passHeader.split(':');
-      if (!Encryption.isBase64(signedPass)) {
-        throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
-      }
-      debug('compare signature is present');
-      const serverTtl = roundTimeToNext(1);
-      if (ttl !== serverTtl.toString()) {
-        console.log('ttl received', ttl);
-        console.log('ttl computed', serverTtl);
-        throw ErrorHelper.getCustomError(419, ErrorHelper.CODE.SESSION_EXPIRED, 'Time to live is expired');
-      }
-      debug('time to live is right');
+
       const {
         vault,
-        attic: {
-          key: verifB64,
-        },
+        session,
+        signature: signingKey,
       } = knownUser;
+
+      if (!session) {
+        throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
+      }
+      debug('session is set');
+
+      const { tss, maxTtl, usage } = session;
+
+      if (Date.now() > maxTtl || usage <= 0) {
+        throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
+      }
+      debug('session is active');
+      await db.users.usedSession(at);
 
       if (!vault) {
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
       }
       debug('vault is present');
+      const [iv2, header, rs3] = passHeader.split('.');
+
+      const compareHash = Encryption.decryptSharedSecret({
+        secret: tss, iv: iv2, token: header, salt: rs3, info: `${at}-login`,
+      });
+      const signedPass = Buffer.from(compareHash, 'base64');
 
       const {
         token,
@@ -194,27 +230,25 @@ class User {
         kill,
       } = Encryption.decryptVault(secret.KEY_VAULT_ENCRYPT, vault);
 
-      const verifier = `-----BEGIN PRIVATE KEY-----\n${verifB64}\n-----END PRIVATE KEY-----`;
-
-      const killCompare = Encryption.hash(`${ttl}${kill}`).toString('base64');
-      if (Encryption.verifyECDSASignature(verifier, killCompare, signedPass)) {
+      if (Encryption.verifySignature(signingKey, signedPass, kill)) {
         debug('kill switch activated');
         await db.clearUserAccount(knownUser, config.get('timer.removal.frozen'));
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
       }
-      const passCompare = Encryption.hash(`${ttl}${pass}`).toString('base64');
-      if (!Encryption.verifyECDSASignature(verifier, passCompare, signedPass)) {
+      if (!Encryption.verifySignature(signingKey, signedPass, pass)) {
         debug('password do not match');
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
       }
       debug('password is good');
+
+      const data = Encryption.encryptSharedSecret({ secret: tss, text: JSON.stringify({ token, salt, iv }), info: `${at}-connection` });
+      debug('vault encrypted');
+
+      await db.users.emptySession(at);
+      debug('session empty');
       return {
         ...rawChallenge,
-        vault: {
-          token,
-          salt,
-          iv,
-        },
+        vault: data,
       };
     }
 

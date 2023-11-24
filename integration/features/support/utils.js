@@ -111,6 +111,149 @@ class Util {
     };
   }
 
+  static generateECDHKeyPair() {
+    const alice = crypto.createECDH('secp256k1');
+    alice.generateKeys();
+
+    return {
+      csk: alice.getPrivateKey('base64'),
+      cpk: alice.getPublicKey('base64'),
+    };
+  }
+
+  static generateVaultWithECDH({ csk, spk, info }, { ESK, SSK }, password, killswitch) {
+    let rPass = Buffer.from(crypto.randomBytes(32).toString('base64'));
+    if (password) {
+      rPass = Buffer.from(password);
+    }
+    let rKill = Buffer.from(crypto.randomBytes(32).toString('base64'));
+    if (killswitch) {
+      rKill = Buffer.from(killswitch);
+    }
+    const rs1 = crypto.randomBytes(64);
+    const rs2 = crypto.randomBytes(64);
+
+    const hp1 = crypto.pbkdf2Sync(rPass, rs1, PBDKF_ITERATIONS, PBDKF_KEY_LEN, PBDKF_HASH);
+    const hp2 = crypto.pbkdf2Sync(rPass, rs2, PBDKF_ITERATIONS, PBDKF_KEY_LEN, PBDKF_HASH);
+    const sup = crypto.sign('rsa-sha256', hp2, {
+      key: SSK,
+      padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+      saltLength: 32,
+    });
+    const hks = crypto.pbkdf2Sync(rKill, rs2, PBDKF_ITERATIONS, PBDKF_KEY_LEN, PBDKF_HASH);
+    const suk = crypto.sign('rsa-sha256', hks, {
+      key: SSK,
+      padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+      saltLength: 32,
+    });
+
+    const clearSK = this.getSKContent(ESK, SSK);
+
+    const iv1 = crypto.randomBytes(IV_SIZE);
+
+    const cipherESK = crypto.createCipheriv(ALGORITHM, hp1, iv1);
+    const key = Buffer.concat([
+      cipherESK.update(clearSK), cipherESK.final(), cipherESK.getAuthTag(),
+    ]);
+
+    const data = {
+      rs1: rs1.toString('base64'),
+      iv1: iv1.toString('base64'),
+      key: key.toString('base64'),
+      sup: sup.toString('base64'),
+      suk: suk.toString('base64'),
+    };
+
+    const rs3 = crypto.randomBytes(64);
+
+    const alice = crypto.createECDH('secp256k1');
+    alice.setPrivateKey(Buffer.from(csk, 'base64'));
+    const secret = alice.computeSecret(Buffer.from(spk, 'base64'));
+    const hkdf = crypto.hkdfSync('sha512', secret, rs3, Buffer.from(info), 32);
+
+    const iv2 = crypto.randomBytes(IV_SIZE);
+
+    const cipherData = crypto.createCipheriv(ALGORITHM, hkdf, iv2);
+    const vault = Buffer.concat([
+      cipherData.update(JSON.stringify(data)), cipherData.final(), cipherData.getAuthTag(),
+    ]);
+
+    return {
+      tss: Buffer.from(secret).toString('base64'),
+      password: rPass.toString(),
+      killswitch: rKill.toString(),
+      rs1: rs1.toString('base64'),
+      iv1: iv1.toString('base64'),
+      key: key.toString('base64'),
+      rs2: rs2.toString('base64'),
+      hp1: hp1.toString('base64'),
+      hp2: hp2.toString('base64'),
+      hks: hks.toString('base64'),
+      sup: sup.toString('base64'),
+      suk: suk.toString('base64'),
+      body: {
+        sessionSalt: rs3.toString('base64'),
+        iv: iv2.toString('base64'),
+        passSalt: rs2.toString('base64'),
+        vault: vault.toString('base64'),
+      },
+    };
+  }
+
+  static openVaultWithECDH({ token: ebt, salt: rs4, iv: iv3 }, { tss, info }, passphrase) {
+    const dek2 = crypto.hkdfSync('sha512', Buffer.from(tss, 'base64'), Buffer.from(rs4, 'base64'), Buffer.from(info), 32);
+
+    const authTag1 = ebt.subarray(ebt.length - 16);
+    const crypted1 = ebt.subarray(0, ebt.length - 16);
+    const decipher1 = crypto.createDecipheriv('aes-256-gcm', dek2, Buffer.from(iv3, 'base64'));
+    decipher1.setAuthTag(authTag1);
+    const vaultStr = Buffer.concat([decipher1.update(crypted1), decipher1.final()]).toString();
+
+    const {
+      salt,
+      iv,
+      token,
+    } = JSON.parse(vaultStr);
+
+    const rPass = Buffer.from(passphrase);
+    const rs1 = Buffer.from(salt, 'base64');
+    const iv1 = Buffer.from(iv, 'base64');
+    const hp1 = crypto.pbkdf2Sync(rPass, rs1, PBDKF_ITERATIONS, PBDKF_KEY_LEN, PBDKF_HASH);
+
+    const algorithm = 'aes-256-gcm';
+    const cipher = Buffer.from(token, 'base64');
+    const authTag = cipher.subarray(cipher.length - 16);
+    const crypted = cipher.subarray(0, cipher.length - 16);
+
+    const decipher = crypto.createDecipheriv(algorithm, hp1, iv1);
+    decipher.setAuthTag(authTag);
+    const decData = Buffer.concat([decipher.update(crypted), decipher.final()]);
+
+    return decData.toString();
+  }
+
+  static getLoginHeaderWithECDH({ csk, spk, info }, salt, passphrase) {
+    const rPass = Buffer.from(passphrase);
+    const rs2 = Buffer.from(salt, 'base64');
+    const hpu = crypto.pbkdf2Sync(rPass, rs2, PBDKF_ITERATIONS, PBDKF_KEY_LEN, PBDKF_HASH);
+
+    const rs3 = crypto.randomBytes(64);
+
+    const alice = crypto.createECDH('secp256k1');
+    alice.setPrivateKey(Buffer.from(csk, 'base64'));
+    const tss = alice.computeSecret(Buffer.from(spk, 'base64'));
+    const dek1 = crypto.hkdfSync('sha512', tss, rs3, Buffer.from(info), 32);
+
+    const iv2 = crypto.randomBytes(IV_SIZE);
+
+    const cipherData = crypto.createCipheriv(ALGORITHM, dek1, iv2);
+    const header = Buffer.concat([
+      cipherData.update(hpu.toString('base64')), cipherData.final(), cipherData.getAuthTag(),
+    ]);
+
+    return `${iv2.toString('base64')}.${header.toString('base64')}.${rs3.toString('base64')}`;
+  }
+
   static async generateVaultValues(clearSK, password, killswitch) {
     let rPass = Buffer.from(crypto.randomBytes(32).toString('base64'));
     if (password) {

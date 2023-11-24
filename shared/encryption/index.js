@@ -2,7 +2,9 @@ const crypto = require('crypto');
 const AWSXRay = require('@shared/tracing');
 
 const ALGORITHM = 'aes-256-gcm';
+const SALT_SIZE = 64;
 const PASS_SIZE = 32;
+const HKDF_LEN = 32;
 const IV_SIZE = 16;
 const PK_START = '-----BEGIN PUBLIC KEY-----';
 const PK_END = '-----END PUBLIC KEY-----';
@@ -31,18 +33,53 @@ class Encryption {
     return Buffer.concat([decipher.update(crypted), decipher.final()]);
   }
 
-  static generateECDSAKeys() {
-    return crypto.generateKeyPairSync('ec', {
-      namedCurve: 'secp521r1',
-      publicKeyEncoding: {
-        type: 'spki',
-        format: 'pem',
-      },
-      privateKeyEncoding: {
-        type: 'pkcs8',
-        format: 'pem',
-      },
-    });
+  static generateECDHKeys(bobKey) {
+    const alice = crypto.createECDH('secp256k1');
+    alice.generateKeys();
+
+    const tss = alice.computeSecret(Buffer.from(bobKey, 'base64'), 'base64');
+
+    return {
+      ssk: alice.getPrivateKey('base64'),
+      spk: alice.getPublicKey('base64'),
+      tss,
+    };
+  }
+
+  static decryptSharedSecret({
+    secret, iv, token, salt, info,
+  }) {
+    const dek = crypto.hkdfSync('sha512', Buffer.from(secret, 'base64'), Buffer.from(salt, 'base64'), Buffer.from(info), HKDF_LEN);
+
+    const ehp = Buffer.from(token, 'base64');
+    const authTag = ehp.subarray(ehp.length - 16);
+    const crypted = ehp.subarray(0, ehp.length - 16);
+
+    const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(dek), iv);
+    decipher.setAuthTag(authTag);
+    const decData = Buffer.concat([decipher.update(crypted), decipher.final()]);
+
+    return decData.toString();
+  }
+
+  static encryptSharedSecret(
+    { secret, text, info },
+  ) {
+    const salt = crypto.randomBytes(SALT_SIZE);
+    const dek = crypto.hkdfSync('sha512', Buffer.from(secret, 'base64'), salt, Buffer.from(info), HKDF_LEN);
+
+    const iv = crypto.randomBytes(IV_SIZE);
+
+    const cipherData = crypto.createCipheriv(ALGORITHM, Buffer.from(dek), iv);
+    const crypted = Buffer.concat([
+      cipherData.update(JSON.stringify(text)), cipherData.final(), cipherData.getAuthTag(),
+    ]);
+
+    return {
+      iv: iv.toString('base64'),
+      salt: salt.toString('base64'),
+      token: crypted.toString('base64'),
+    };
   }
 
   static hybrid(txt, key) {
@@ -73,20 +110,6 @@ class Encryption {
       padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
       saltLength: 32,
     }, bufSig);
-  }
-
-  static verifyECDSASignature(key, dataB64, signature) {
-    const bufData = Buffer.from(dataB64, 'base64');
-    const bufSig = Buffer.from(signature, 'base64');
-    return crypto.verify(
-      'sha512',
-      bufData,
-      {
-        key,
-        dsaEncoding: 'ieee-p1363',
-      },
-      bufSig,
-    );
   }
 
   static hash(txt) {
