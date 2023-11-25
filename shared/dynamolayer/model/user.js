@@ -268,11 +268,15 @@ class UserData {
     );
   }
 
-  async usedSession(username) {
+  async usedSession(username, session) {
+    const spentSession = {
+      ...session,
+      usage: 0,
+    };
     await this.Entity.update(
       { pk: `U#${username}`, sk: username },
       {
-        $SET: { session: { usage: 0 } },
+        $SET: { session: spentSession },
       },
     );
   }

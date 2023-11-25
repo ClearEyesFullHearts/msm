@@ -10,18 +10,10 @@ const ErrorHelper = require('@shared/error');
 const MessageAction = require('./messages');
 
 const SALT_SIZE = 64;
-const IV_SIZE = 16;
-
-function roundTimeToNext(secondsNumber) {
-  const epoch = Date.now();
-  const coeff = (1000 * secondsNumber);
-  const minutesChunk = Math.floor(epoch / coeff) * coeff;
-  return minutesChunk + coeff;
-}
 
 class User {
-  static async createUser({ db, secret }, {
-    at, key, signature, hash, vault, attic,
+  static async createUser({ db }, {
+    at, key, signature, hash,
   }) {
     debug('check for user with username:', at);
     if (at.length !== encodeURIComponent(at).length) {
@@ -60,17 +52,6 @@ class User {
       throw ErrorHelper.getCustomError(403, ErrorHelper.CODE.USER_EXISTS, 'Key singularity');
     }
     debug(`user ${at} created`);
-
-    if (vault && attic) {
-      try {
-        const cypheredVault = Encryption.encryptVault(secret.KEY_VAULT_ENCRYPT, vault);
-        await db.users.addVault(at, { vault: cypheredVault, attic });
-      } catch (err) {
-        debug('Error on vault set up, user is removed');
-        await db.clearUserAccount(newUser, config.get('timer.removal.frozen'), false);
-        throw ErrorHelper.getCustomError(500, ErrorHelper.CODE.SERVER_ERROR, 'Server error');
-      }
-    }
 
     try {
       debug('send welcoming message');
@@ -209,7 +190,9 @@ class User {
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
       }
       debug('session is active');
-      await db.users.usedSession(at);
+
+      await db.users.usedSession(at, session);
+      debug('session is used');
 
       if (!vault) {
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
@@ -334,13 +317,38 @@ class User {
     debug('vault item removed');
   }
 
-  static async setVaultItem({ db, user, secret }, { vault, attic }) {
+  static async setVaultItem({ db, user, secret }, {
+    vault, passSalt, sessionSalt, iv,
+  }) {
     debug(`set vault item for ${user.username}`);
 
-    const cypheredVault = Encryption.encryptVault(secret.KEY_VAULT_ENCRYPT, vault);
-    await db.users.addVault(user.username, { vault: cypheredVault, attic });
+    const { session } = user;
+    if (!session) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
+    }
+    debug('session is set');
 
+    const { tss, maxTtl, usage } = session;
+
+    if (Date.now() > maxTtl || usage <= 0) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
+    }
+    debug('session is active');
+
+    await db.users.usedSession(user.username, session);
+    debug('session is used');
+
+    const data = Encryption.decryptSharedSecret({
+      secret: tss, iv, token: vault, salt: sessionSalt, info: `${user.username}-set-vault`,
+    });
+    debug('session is decrypted');
+
+    const cypheredVault = Encryption.encryptVault(secret.KEY_VAULT_ENCRYPT, JSON.parse(data));
+    await db.users.addVault(user.username, { vault: cypheredVault, attic: { salt: passSalt } });
     debug('vault item set');
+
+    await db.users.emptySession(user.username);
+    debug('session empty');
   }
 
   static async setContacts({ db, user }, challenge) {

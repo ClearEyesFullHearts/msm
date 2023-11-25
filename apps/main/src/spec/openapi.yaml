@@ -963,8 +963,8 @@ components:
         vault:
           type: string
           format: byte
-          minLength: 7860
-          maxLength: 7860
+          minLength: 7864
+          maxLength: 7864
         iv:
           type: string
           format: byte
@@ -1006,8 +1006,8 @@ components:
         token:
           type: string
           format: byte
-          minLength: 5376
-          maxLength: 5376
+          minLength: 7400
+          maxLength: 7400
         iv:
           type: string
           format: byte

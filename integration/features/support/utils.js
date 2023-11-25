@@ -157,11 +157,11 @@ class Util {
     ]);
 
     const data = {
-      rs1: rs1.toString('base64'),
-      iv1: iv1.toString('base64'),
-      key: key.toString('base64'),
-      sup: sup.toString('base64'),
-      suk: suk.toString('base64'),
+      salt: rs1.toString('base64'),
+      iv: iv1.toString('base64'),
+      token: key.toString('base64'),
+      pass: sup.toString('base64'),
+      kill: suk.toString('base64'),
     };
 
     const rs3 = crypto.randomBytes(64);
@@ -169,13 +169,15 @@ class Util {
     const alice = crypto.createECDH('secp256k1');
     alice.setPrivateKey(Buffer.from(csk, 'base64'));
     const secret = alice.computeSecret(Buffer.from(spk, 'base64'));
+
     const hkdf = crypto.hkdfSync('sha512', secret, rs3, Buffer.from(info), 32);
 
     const iv2 = crypto.randomBytes(IV_SIZE);
 
-    const cipherData = crypto.createCipheriv(ALGORITHM, hkdf, iv2);
+    const bufferData = Buffer.from(JSON.stringify(data));
+    const cipherData = crypto.createCipheriv(ALGORITHM, Buffer.from(hkdf), iv2);
     const vault = Buffer.concat([
-      cipherData.update(JSON.stringify(data)), cipherData.final(), cipherData.getAuthTag(),
+      cipherData.update(bufferData), cipherData.final(), cipherData.getAuthTag(),
     ]);
 
     return {

@@ -15,12 +15,15 @@ const sessionSchema = new dynamoose.Schema({
   },
   minTtl: {
     type: Number,
+    required: true,
   },
   maxTtl: {
     type: Number,
+    required: true,
   },
   usage: {
     type: Number,
+    required: true,
   },
 });
 

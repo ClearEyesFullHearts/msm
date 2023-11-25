@@ -34,6 +34,36 @@ Given(/^I load up (.*) private keys$/, function (folder) {
   this.apickli.storeValueInScenarioScope('NEW_SSK', sskFile);
 });
 
+Given(/^I load up new RSA keys$/, async function () {
+  const {
+    public: {
+      encrypt: formattedPK,
+      signature: formattedSPK,
+      signedHash,
+    },
+    private: sk,
+  } = await Util.generateKeyPair();
+
+  this.apickli.storeValueInScenarioScope('EPK', JSON.stringify(formattedPK));
+  this.apickli.storeValueInScenarioScope('SPK', JSON.stringify(formattedSPK));
+  this.apickli.storeValueInScenarioScope('SHA', signedHash);
+  this.apickli.storeValueInScenarioScope('NEW_EPK', JSON.stringify(formattedPK));
+  this.apickli.storeValueInScenarioScope('NEW_SPK', JSON.stringify(formattedSPK));
+  this.apickli.storeValueInScenarioScope('NEW_SHA', signedHash);
+  this.apickli.storeValueInScenarioScope('NEW_ESK', sk.encrypt);
+  this.apickli.storeValueInScenarioScope('NEW_SSK', sk.signature);
+});
+
+Given(/^I load up new ECDH keys$/, async function () {
+  const {
+    cpk,
+    csk,
+  } = await Util.generateECDHKeyPair();
+
+  this.apickli.storeValueInScenarioScope('CPK', cpk);
+  this.apickli.storeValueInScenarioScope('CSK', csk);
+});
+
 Given(/^I set var (.*) to a (.*) characters long (.*)string$/, function (varName, length, format) {
   const isBase64 = format === 'base64 ';
   let str = Util.getRandomString(length, isBase64);
@@ -104,6 +134,12 @@ Given(/^I sign hashed (.*) into (.*) with (.*)$/, async function (valueToHash, v
   this.apickli.storeValueInScenarioScope(varName, signedHash);
 });
 
+Given('I clear headers', function () {
+  this.apickli.removeRequestHeader('x-msm-pass');
+  this.apickli.removeRequestHeader('x-msm-sig');
+  this.apickli.removeRequestHeader('x-msm-cpk');
+});
+
 Given('I set signature header', function () {
   this.apickli.removeRequestHeader('x-msm-sig');
   const {
@@ -124,13 +160,20 @@ Given(/^I set Pass header with (.*)$/, function (password) {
   this.apickli.removeRequestHeader('x-msm-pass');
   const val = this.apickli.replaceVariables(password);
 
-  const {
-    iv, salt, proof, key,
-  } = this.apickli.scenarioVariables.ATTIC;
+  const { salt } = this.apickli.scenarioVariables.ATTIC;
+  const spk = this.apickli.scenarioVariables.SPK;
+  const csk = this.apickli.scenarioVariables.CSK;
+  const username = this.apickli.scenarioVariables.MY_AT;
 
-  const myHeader = Util.getHeaderFromAttic({
-    iv, salt, proof, key,
-  }, val);
+  const myHeader = Util.getLoginHeaderWithECDH(
+    { csk, spk, info: `${username}-login` },
+    salt,
+    val,
+  );
+
+  // const myHeader = Util.getHeaderFromAttic({
+  //   iv, salt, proof, key,
+  // }, val);
   this.apickli.addRequestHeader('x-msm-pass', myHeader);
 });
 
@@ -139,6 +182,45 @@ Given('I set false signature header', function () {
   this.apickli.addRequestHeader('x-msm-sig', falseSig);
 });
 
+Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (varName, passphrase, killswitch) {
+  this.apickli.storeValueInScenarioScope('VAULT_PASS', passphrase);
+  const eskVal = this.apickli.scenarioVariables.ESK || this.apickli.scenarioVariables.NEW_ESK;
+  const sskVal = this.apickli.scenarioVariables.SSK || this.apickli.scenarioVariables.NEW_SSK;
+  const spk = this.apickli.scenarioVariables.SPK;
+  const csk = this.apickli.scenarioVariables.CSK;
+  const username = this.apickli.scenarioVariables.MY_AT;
+  const vaultValues = await Util.generateVaultWithECDH(
+    { csk, spk, info: `${username}-set-vault` },
+    { ESK: eskVal, SSK: sskVal },
+    passphrase,
+    killswitch,
+  );
+  const {
+    tss,
+    // password,
+    // killswitch,
+    // rs1,
+    // iv1,
+    // key,
+    rs2,
+    // hp1,
+    // hp2,
+    // hks,
+    // sup,
+    // suk,
+    body,
+  } = vaultValues;
+  this.apickli.storeValueInScenarioScope('ATTIC', {
+    salt: rs2,
+  });
+  this.apickli.storeValueInScenarioScope('TSS', tss);
+
+  // console.log('vault.length', body.vault.length)
+
+  this.apickli.storeValueInScenarioScope(varName, JSON.stringify(body));
+});
+
+/*
 Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (varName, passphrase, killswitch) {
   this.apickli.storeValueInScenarioScope('VAULT_PASS', passphrase);
   const eskVal = this.apickli.scenarioVariables.ESK || this.apickli.scenarioVariables.NEW_ESK;
@@ -189,6 +271,7 @@ Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (
     },
   }));
 });
+*/
 
 Then(/^I open the vault (.*) with (.*)$/, function (vaultName, passphrase) {
   const vault = this.apickli.scenarioVariables[vaultName];

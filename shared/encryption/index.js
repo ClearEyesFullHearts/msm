@@ -37,12 +37,12 @@ class Encryption {
     const alice = crypto.createECDH('secp256k1');
     alice.generateKeys();
 
-    const tss = alice.computeSecret(Buffer.from(bobKey, 'base64'), 'base64');
+    const tss = alice.computeSecret(Buffer.from(bobKey, 'base64'));
 
     return {
       ssk: alice.getPrivateKey('base64'),
       spk: alice.getPublicKey('base64'),
-      tss,
+      tss: tss.toString('base64'),
     };
   }
 
@@ -55,7 +55,7 @@ class Encryption {
     const authTag = ehp.subarray(ehp.length - 16);
     const crypted = ehp.subarray(0, ehp.length - 16);
 
-    const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(dek), iv);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(dek), Buffer.from(iv, 'base64'));
     decipher.setAuthTag(authTag);
     const decData = Buffer.concat([decipher.update(crypted), decipher.final()]);
 

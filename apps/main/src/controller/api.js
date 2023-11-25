@@ -14,19 +14,16 @@ module.exports = {
         key,
         signature,
         hash,
-        vault,
-        attic,
       },
       app: {
         locals: {
           db,
-          secret,
         },
       },
     } = req;
 
-    User.createUser({ db, secret }, {
-      at, key, signature, hash, vault, attic,
+    User.createUser({ db }, {
+      at, key, signature, hash,
     })
       .then(({ username }) => {
         AsyncAction.autoUserRemoval(db, username)
