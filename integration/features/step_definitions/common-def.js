@@ -165,16 +165,13 @@ Given(/^I set Pass header with (.*)$/, function (password) {
   const csk = this.apickli.scenarioVariables.CSK;
   const username = this.apickli.scenarioVariables.MY_AT;
 
-  const myHeader = Util.getLoginHeaderWithECDH(
+  const { tss, header } = Util.getLoginHeaderWithECDH(
     { csk, spk, info: `${username}-login` },
     salt,
     val,
   );
-
-  // const myHeader = Util.getHeaderFromAttic({
-  //   iv, salt, proof, key,
-  // }, val);
-  this.apickli.addRequestHeader('x-msm-pass', myHeader);
+  this.apickli.storeValueInScenarioScope('TSS', tss);
+  this.apickli.addRequestHeader('x-msm-pass', header);
 });
 
 Given('I set false signature header', function () {
@@ -215,63 +212,20 @@ Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (
   });
   this.apickli.storeValueInScenarioScope('TSS', tss);
 
-  // console.log('vault.length', body.vault.length)
-
   this.apickli.storeValueInScenarioScope(varName, JSON.stringify(body));
 });
 
-/*
-Given(/^I set my vault item (.*) with password (.*) and (.*)$/, async function (varName, passphrase, killswitch) {
-  this.apickli.storeValueInScenarioScope('VAULT_PASS', passphrase);
-  const eskVal = this.apickli.scenarioVariables.ESK || this.apickli.scenarioVariables.NEW_ESK;
-  const sskVal = this.apickli.scenarioVariables.SSK || this.apickli.scenarioVariables.NEW_SSK;
-  const keys = Util.getSKContent(eskVal, sskVal);
-  const vaultValues = await Util.generateVaultValues(keys, passphrase, killswitch);
+Given(/^I open the session (.*) in (.*)$/, function (sessionVar, targetVar) {
+  const tss = this.apickli.scenarioVariables.TSS;
+  const username = this.apickli.scenarioVariables.MY_AT;
   const {
-    esk: cypherKey,
-    eup,
-    euk,
-    rs1,
-    rs2,
-    iv1,
-    iv2,
-    rp,
-    key,
-    // sup,
-    // suk,
-  } = vaultValues;
+    token, salt, iv,
+  } = this.apickli.scenarioVariables[sessionVar];
 
-  // const sup = Util.signECDSA(key, Buffer.from(eup, 'base64'));
-  // const suk = Util.signECDSA(key, Buffer.from(euk, 'base64'));
+  const vaultItem = Util.openSessionWithECDH({ token, salt, iv }, { tss, info: `${username}-connection` });
 
-  // this.apickli.storeValueInScenarioScope('NEW_PASS_HASH', sup.toString('base64'));
-  // this.apickli.storeValueInScenarioScope('NEW_KILL_HASH', suk.toString('base64'));
-  this.apickli.storeValueInScenarioScope('ATTIC', {
-    iv: iv2,
-    salt: rs2,
-    proof: rp,
-    key,
-  });
-  this.apickli.storeValueInScenarioScope('NEW_SALT', rs1);
-  this.apickli.storeValueInScenarioScope('NEW_IV', iv1);
-
-  this.apickli.storeValueInScenarioScope(varName, JSON.stringify({
-    vault: {
-      token: cypherKey,
-      salt: rs1,
-      iv: iv1,
-      pass: eup,
-      kill: euk,
-    },
-    attic: {
-      iv: iv2,
-      salt: rs2,
-      proof: rp,
-      key,
-    },
-  }));
+  this.apickli.storeValueInScenarioScope(targetVar, vaultItem);
 });
-*/
 
 Then(/^I open the vault (.*) with (.*)$/, function (vaultName, passphrase) {
   const vault = this.apickli.scenarioVariables[vaultName];

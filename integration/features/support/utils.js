@@ -202,36 +202,17 @@ class Util {
     };
   }
 
-  static openVaultWithECDH({ token: ebt, salt: rs4, iv: iv3 }, { tss, info }, passphrase) {
+  static openSessionWithECDH({ token, salt: rs4, iv: iv3 }, { tss, info }) {
     const dek2 = crypto.hkdfSync('sha512', Buffer.from(tss, 'base64'), Buffer.from(rs4, 'base64'), Buffer.from(info), 32);
 
+    const ebt = Buffer.from(token, 'base64');
     const authTag1 = ebt.subarray(ebt.length - 16);
     const crypted1 = ebt.subarray(0, ebt.length - 16);
-    const decipher1 = crypto.createDecipheriv('aes-256-gcm', dek2, Buffer.from(iv3, 'base64'));
+    const decipher1 = crypto.createDecipheriv('aes-256-gcm', Buffer.from(dek2), Buffer.from(iv3, 'base64'));
     decipher1.setAuthTag(authTag1);
-    const vaultStr = Buffer.concat([decipher1.update(crypted1), decipher1.final()]).toString();
+    const val = Buffer.concat([decipher1.update(crypted1), decipher1.final()]);
 
-    const {
-      salt,
-      iv,
-      token,
-    } = JSON.parse(vaultStr);
-
-    const rPass = Buffer.from(passphrase);
-    const rs1 = Buffer.from(salt, 'base64');
-    const iv1 = Buffer.from(iv, 'base64');
-    const hp1 = crypto.pbkdf2Sync(rPass, rs1, PBDKF_ITERATIONS, PBDKF_KEY_LEN, PBDKF_HASH);
-
-    const algorithm = 'aes-256-gcm';
-    const cipher = Buffer.from(token, 'base64');
-    const authTag = cipher.subarray(cipher.length - 16);
-    const crypted = cipher.subarray(0, cipher.length - 16);
-
-    const decipher = crypto.createDecipheriv(algorithm, hp1, iv1);
-    decipher.setAuthTag(authTag);
-    const decData = Buffer.concat([decipher.update(crypted), decipher.final()]);
-
-    return decData.toString();
+    return JSON.parse(val.toString());
   }
 
   static getLoginHeaderWithECDH({ csk, spk, info }, salt, passphrase) {
@@ -253,7 +234,7 @@ class Util {
       cipherData.update(hpu.toString('base64')), cipherData.final(), cipherData.getAuthTag(),
     ]);
 
-    return `${iv2.toString('base64')}.${header.toString('base64')}.${rs3.toString('base64')}`;
+    return { tss: tss.toString('base64'), header: `${iv2.toString('base64')}.${header.toString('base64')}.${rs3.toString('base64')}` };
   }
 
   static async generateVaultValues(clearSK, password, killswitch) {

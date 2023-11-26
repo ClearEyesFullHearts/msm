@@ -13,8 +13,9 @@ const base64regExp = /^[A-Za-z0-9+/]*(=|==)?$/;
 class Encryption {
   static simpleEncrypt(txt, keyBuffer) {
     const iv = crypto.randomBytes(IV_SIZE);
+    const bufferText = Buffer.from(txt);
     const cipher = crypto.createCipheriv(ALGORITHM, keyBuffer, iv);
-    const encrypted = cipher.update(txt);
+    const encrypted = cipher.update(bufferText);
     const result = Buffer.concat([encrypted, cipher.final(), cipher.getAuthTag()]);
 
     return {
@@ -69,10 +70,11 @@ class Encryption {
     const dek = crypto.hkdfSync('sha512', Buffer.from(secret, 'base64'), salt, Buffer.from(info), HKDF_LEN);
 
     const iv = crypto.randomBytes(IV_SIZE);
+    const bufferText = Buffer.from(text);
 
     const cipherData = crypto.createCipheriv(ALGORITHM, Buffer.from(dek), iv);
     const crypted = Buffer.concat([
-      cipherData.update(JSON.stringify(text)), cipherData.final(), cipherData.getAuthTag(),
+      cipherData.update(bufferText), cipherData.final(), cipherData.getAuthTag(),
     ]);
 
     return {
@@ -85,9 +87,12 @@ class Encryption {
   static hybrid(txt, key) {
     const pass = crypto.randomBytes(PASS_SIZE);
     const iv = crypto.randomBytes(IV_SIZE);
+    const bufferText = Buffer.from(txt);
 
     const cipher = crypto.createCipheriv(ALGORITHM, pass, iv);
-    const cypheredText = Buffer.concat([cipher.update(txt), cipher.final(), cipher.getAuthTag()]);
+    const cypheredText = Buffer.concat([
+      cipher.update(bufferText), cipher.final(), cipher.getAuthTag(),
+    ]);
 
     const cypheredPass = crypto.publicEncrypt({
       key,

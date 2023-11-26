@@ -1006,8 +1006,8 @@ components:
         token:
           type: string
           format: byte
-          minLength: 7400
-          maxLength: 7400
+          minLength: 7380
+          maxLength: 7380
         iv:
           type: string
           format: byte
