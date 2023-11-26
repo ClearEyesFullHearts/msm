@@ -16,6 +16,7 @@ Scenario: Validate "mat" user
     And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
     When I GET /message/`FIRST_MSG_ID`
     Then response code should be 200
+    And I validate mat manually if needed
 
 Scenario: Validate "batmat" user
     Given I load up batmat public keys
@@ -31,6 +32,7 @@ Scenario: Validate "batmat" user
     And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
     When I GET /message/`FIRST_MSG_ID`
     Then response code should be 200
+    And I validate batmat manually if needed
 
 Scenario: Validate "vaultUser" user
     Given I load up vaultUser public keys
@@ -46,6 +48,7 @@ Scenario: Validate "vaultUser" user
     And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
     When I GET /message/`FIRST_MSG_ID`
     Then response code should be 200
+    And I validate batmat manually if needed
 
 Scenario: Create users
     Given I create random user with length 5
@@ -87,6 +90,7 @@ Scenario: Put baby in the freezer
     And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
     When I GET /message/`FIRST_MSG_ID`
     Then response code should be 200
+    And I validate baby manually if needed
     And I wait for 5 seconds
     And I set signature header
     When I DELETE /user/baby
@@ -115,14 +119,19 @@ Scenario: Send 1 message to batmat
 
 Scenario: Set up vaultUser vault
     Given I am authenticated user vaultUser
+    And I load up new ECDH keys
+    And I set x-msm-cpk header to `CPK`
+    When I GET /attic/`MY_AT`
+    Then response code should be 200
+    And I store the value of body path $.key as SPK in scenario scope
     And I set my vault item VAULT_ITEM with password iamapoorlonesomecowboy and iamapoorlonesomecowgirl
     And I set body to `VAULT_ITEM`
     And I set signature header
     When I PUT /vault
     Then response code should be 200
 
-Scenario: I wait a bit before ending
-    Given I wait for 50 seconds
+# Scenario: I wait a bit before ending
+#     Given I wait for 50 seconds
 
 # Scenario: Delete random users
 #     Given I am existing `RANDOM_USER.0`

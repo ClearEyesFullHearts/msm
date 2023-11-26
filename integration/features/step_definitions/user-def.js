@@ -32,6 +32,7 @@ Given('I am a new invalidated user', async function () {
 Given('I am a new valid user', async function () {
   this.apickli.removeRequestHeader('x-msm-sig');
   this.apickli.removeRequestHeader('x-msm-pass');
+  this.apickli.removeRequestHeader('x-msm-cpk');
   const keys = await Util.generateKeyPair();
   const epk = keys.public.encrypt;
   const spk = keys.public.signature;
@@ -48,64 +49,13 @@ Given('I am a new valid user', async function () {
   const username = Util.getRandomString(7);
   this.apickli.storeValueInScenarioScope('MY_AT', username);
 
-  const keyVal = Util.getSKContent(esk, ssk);
-  const vaultValues = await Util.generateVaultValues(keyVal);
-  const {
-    password,
-    killswitch,
-    esk: cypherKey,
-    eup,
-    euk,
-    rs1,
-    rs2,
-    iv1,
-    iv2,
-    rp,
-    key,
-    // sup,
-    // suk,
-  } = vaultValues;
-
-  const sup = Util.signECDSA(key, Buffer.from(eup, 'base64'));
-  const suk = Util.signECDSA(key, Buffer.from(euk, 'base64'));
-
-  this.apickli.storeValueInScenarioScope('PASS_HASH', eup);
-  this.apickli.storeValueInScenarioScope('KILL_HASH', euk);
-  this.apickli.storeValueInScenarioScope('SIGN_PASS_HASH', sup.toString('base64'));
-  this.apickli.storeValueInScenarioScope('SIGN_KILL_HASH', suk.toString('base64'));
-  this.apickli.storeValueInScenarioScope('PASS', password);
-  this.apickli.storeValueInScenarioScope('KILL', killswitch);
-
   this.apickli.setRequestBody(JSON.stringify({
     at: username,
     key: epk,
     signature: spk,
     hash: sha,
-    vault: {
-      token: cypherKey,
-      salt: rs1,
-      iv: iv1,
-      pass: eup,
-      kill: euk,
-    },
-    attic: {
-      iv: iv2,
-      salt: rs2,
-      proof: rp,
-      key,
-    },
   }));
   await this.post('/users');
-
-  const myHeader = Util.getHeaderFromAttic({
-    iv: iv2,
-    salt: rs2,
-    proof: rp,
-    key,
-  }, password);
-
-  // get identity challenge
-  this.apickli.addRequestHeader('x-msm-pass', myHeader);
   await this.get(`/identity/${username}`);
 
   // resolve it for body
@@ -127,24 +77,41 @@ Given('I am a new valid user', async function () {
 Given(/^I am existing (.*)$/, async function (varName) {
   this.apickli.removeRequestHeader('x-msm-sig');
   this.apickli.removeRequestHeader('x-msm-pass');
+  this.apickli.removeRequestHeader('x-msm-cpk');
   const username = this.apickli.replaceVariables(varName);
 
+  const {
+    cpk,
+    csk,
+  } = await Util.generateECDHKeyPair();
+
+  this.apickli.addRequestHeader('x-msm-cpk', cpk);
   await this.get(`/attic/${username}`);
 
   const attic = JSON.parse(this.apickli.httpResponse.body);
   this.apickli.storeValueInScenarioScope('ATTIC', attic);
   const {
-    iv, salt, proof, key,
+    salt, key,
   } = attic;
+  this.apickli.removeRequestHeader('x-msm-cpk');
 
-  const myHeader = Util.getHeaderFromAttic({
-    iv, salt, proof, key,
-  }, username);
+  const { tss, header } = Util.getLoginHeaderWithECDH(
+    { csk, spk: key, info: `${username}-login` },
+    salt,
+    username,
+  );
 
-  this.apickli.addRequestHeader('x-msm-pass', myHeader);
+  this.apickli.addRequestHeader('x-msm-pass', header);
   await this.get(`/identity/${username}`);
+
   const respBody = JSON.parse(this.apickli.httpResponse.body);
-  const privateK = Util.openVault(respBody.vault, username);
+  const {
+    vault: {
+      token, salt: rs2, iv,
+    },
+  } = respBody;
+  const vaultItem = Util.openSessionWithECDH({ token, salt: rs2, iv }, { tss, info: `${username}-connection` });
+  const privateK = Util.openVault(vaultItem, username);
 
   // const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
   const { key: eskFile, signKey: sskFile } = Util.setContentAsSK(privateK);

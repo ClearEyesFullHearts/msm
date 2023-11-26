@@ -32,25 +32,42 @@ Given('I generate new shared key', async function () {
 Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (admin, group, members, index) {
   this.apickli.removeRequestHeader('x-msm-sig');
   this.apickli.removeRequestHeader('x-msm-pass');
+  this.apickli.removeRequestHeader('x-msm-cpk');
   const creator = this.apickli.replaceVariables(admin);
+
+  const {
+    cpk,
+    csk,
+  } = await Util.generateECDHKeyPair();
+
+  this.apickli.addRequestHeader('x-msm-cpk', cpk);
 
   await this.get(`/attic/${creator}`);
 
   const attic = JSON.parse(this.apickli.httpResponse.body);
   this.apickli.storeValueInScenarioScope('ATTIC', attic);
   const {
-    iv, salt, proof, key,
+    salt, key,
   } = attic;
+  this.apickli.removeRequestHeader('x-msm-cpk');
 
-  const myHeader = Util.getHeaderFromAttic({
-    iv, salt, proof, key,
-  }, creator);
+  const { tss, header } = Util.getLoginHeaderWithECDH(
+    { csk, spk: key, info: `${creator}-login` },
+    salt,
+    creator,
+  );
 
-  this.apickli.addRequestHeader('x-msm-pass', myHeader);
+  this.apickli.addRequestHeader('x-msm-pass', header);
   await this.get(`/identity/${creator}`);
 
   const respBody = JSON.parse(this.apickli.httpResponse.body);
-  const privateK = Util.openVault(respBody.vault, creator);
+  const {
+    vault: {
+      token: vToken, salt: rs2, iv,
+    },
+  } = respBody;
+  const vaultItem = Util.openSessionWithECDH({ token: vToken, salt: rs2, iv }, { tss, info: `${creator}-connection` });
+  const privateK = Util.openVault(vaultItem, creator);
 
   // const [eskFile, sskFile] = privateK.split('\n----- SIGNATURE -----\n');
   const { key: eskFile, signKey: sskFile } = Util.setContentAsSK(privateK);
@@ -105,22 +122,23 @@ Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (ad
   for (let i = 0; i < membersArray.length; i += 1) {
     this.apickli.removeRequestHeader('x-msm-sig');
     this.apickli.removeRequestHeader('x-msm-pass');
+    this.apickli.removeRequestHeader('x-msm-cpk');
     const member = this.apickli.replaceVariables(membersArray[i]);
 
-    await this.get(`/attic/${member}`);
+    // await this.get(`/attic/${member}`);
 
-    const memberAttic = JSON.parse(this.apickli.httpResponse.body);
+    // const memberAttic = JSON.parse(this.apickli.httpResponse.body);
 
-    const memberHeader = Util.getHeaderFromAttic(memberAttic, member);
+    // const memberHeader = Util.getHeaderFromAttic(memberAttic, member);
 
-    this.apickli.addRequestHeader('x-msm-pass', memberHeader);
-    await this.get(`/identity/${member}`);
+    // this.apickli.addRequestHeader('x-msm-pass', memberHeader);
+    await this.get(`/user/${member}`);
 
-    const mBody = JSON.parse(this.apickli.httpResponse.body);
-    const pK = Util.openVault(mBody.vault, member);
-    // const [mEsk] = pK.split('\n----- SIGNATURE -----\n');
-    const { key: mEsk } = Util.setContentAsSK(pK);
-    const mEpk = Util.extractPublicKey(mEsk);
+    const { key: mEpk } = JSON.parse(this.apickli.httpResponse.body);
+    // const pK = Util.openVault(mBody.vault, member);
+    // // const [mEsk] = pK.split('\n----- SIGNATURE -----\n');
+    // const { key: mEsk } = Util.setContentAsSK(pK);
+    // const mEpk = Util.extractPublicKey(mEsk);
 
     const memberKey = Util.encrypt(mEpk, pass);
     const mNum = membersArray[i].split('.')[1];
