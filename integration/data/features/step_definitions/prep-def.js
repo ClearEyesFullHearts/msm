@@ -179,6 +179,16 @@ Then('I create random users file', function () {
   fs.writeFileSync(`${__dirname}/../../../data/randoms_origin.json`, JSON.stringify(this.randomUsers));
 });
 
+Given(/^I load up new ECDH keys$/, async function () {
+  const {
+    cpk,
+    csk,
+  } = await Util.generateECDHKeyPair();
+
+  this.apickli.storeValueInScenarioScope('CPK', cpk);
+  this.apickli.storeValueInScenarioScope('CSK', csk);
+});
+
 // Given('I update all users vault', async function () {
 //   const fileContent = fs.readFileSync(`${__dirname}/../../data/randoms.json`);
 //   const arrUsers = JSON.parse(fileContent);
@@ -276,6 +286,7 @@ Given(/^I am authenticated user (.*)$/, async function (folder) {
   const pem = this.apickli.scenarioVariables.ESK;
   const resolved = Util.resolve(pem, respBody);
 
+  this.apickli.storeValueInScenarioScope('MY_AT', folder);
   this.apickli.storeValueInScenarioScope('AUTH', resolved);
 
   this.apickli.httpResponse.body = JSON.stringify(resolved);

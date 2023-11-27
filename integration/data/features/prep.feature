@@ -121,7 +121,7 @@ Scenario: Set up vaultUser vault
     Given I am authenticated user vaultUser
     And I load up new ECDH keys
     And I set x-msm-cpk header to `CPK`
-    When I GET /attic/`MY_AT`
+    When I GET /attic/vaultUser
     Then response code should be 200
     And I store the value of body path $.key as SPK in scenario scope
     And I set my vault item VAULT_ITEM with password iamapoorlonesomecowboy and iamapoorlonesomecowgirl

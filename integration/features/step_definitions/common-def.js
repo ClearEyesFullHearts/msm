@@ -77,6 +77,11 @@ Given(/^I set var (.*) to a (.*) characters long (.*)string$/, function (varName
   this.apickli.storeValueInScenarioScope(varName, str);
 });
 
+Given(/^I set var (.*) to (.*) value$/, function (varName, value) {
+  const str = this.apickli.replaceVariables(value);
+  this.apickli.storeValueInScenarioScope(varName, str);
+});
+
 Given('I generate a false encryption key', async function () {
   const keys = await Util.generateKeyPair();
   const spk = keys.public.signature;
@@ -170,6 +175,7 @@ Given(/^I set Pass header with (.*)$/, function (password) {
     salt,
     val,
   );
+
   this.apickli.storeValueInScenarioScope('TSS', tss);
   this.apickli.addRequestHeader('x-msm-pass', header);
 });
@@ -308,10 +314,17 @@ Then(/^response body path (.*) should match Signature Public Key$/, async functi
 });
 
 Then(/^response body path (.*) should strictly be equal to (.*)$/, function (path, value) {
-  const obj = this.apickli.scenarioVariables.resolved;
+  const obj = JSON.parse(this.apickli.httpResponse.body);
   const trueValue = this.apickli.replaceVariables(value);
   const test = Util.getPathValue(obj, path);
-  const success = assert.strictEqual(test, trueValue);
+  assert.strictEqual(test, trueValue);
+});
+
+Then(/^response body path (.*) should strictly not be equal to (.*)$/, function (path, value) {
+  const obj = JSON.parse(this.apickli.httpResponse.body);
+  const trueValue = this.apickli.replaceVariables(value);
+  const test = Util.getPathValue(obj, path);
+  assert.notStrictEqual(test, trueValue);
 });
 
 Then(/^I wait for (.*) seconds$/, async function (seconds) {

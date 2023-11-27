@@ -72,14 +72,22 @@ class User {
   }
 
   static async getCryptoData({ db }, { at, cpk }) {
-    const { spk, tss } = Encryption.generateECDHKeys(cpk);
+    let spk;
+    let tss;
+    try {
+      const result = Encryption.generateECDHKeys(cpk);
+      spk = result.spk;
+      tss = result.tss;
+    } catch (err) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
+    }
     const bogus = {
       key: spk,
       salt: crypto.randomBytes(SALT_SIZE).toString('base64'),
     };
 
     if (at.length !== encodeURIComponent(at).length) {
-      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, '@ name should not have any special character');
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
     }
 
     debug('check for user with @:', at);
@@ -109,7 +117,12 @@ class User {
         usage, minTtl, spk: oldKey, maxTtl,
       } = session;
 
-      if (time < minTtl) return bogus;
+      console.log('deltaTime', minTtl - (maxTtl - config.get('timer.session.maxTTL')));
+
+      if (time < minTtl) {
+        console.log('minttl send bogus');
+        return bogus;
+      }
 
       if (usage > 0 && time < maxTtl) {
         debug('retry previous session');
@@ -120,16 +133,17 @@ class User {
       }
       debug('session expired');
 
-      const deltaTime = minTtl - (maxTtl - 5000);
+      const deltaTime = minTtl - (maxTtl - config.get('timer.session.maxTTL'));
       if (deltaTime === 0) {
-        minTime += 200;
+        minTime += config.get('timer.session.deltaTTL');
       } else {
         minTime += 2 * deltaTime;
       }
     }
 
+    console.log('min ttl delay', minTime - time);
     await db.users.setSession(at, {
-      spk, tss, minTtl: minTime, maxTtl: time + 5000, usage: 1,
+      spk, tss, minTtl: minTime, maxTtl: time + config.get('timer.session.maxTTL'), usage: 1,
     });
     debug('session set');
 
@@ -184,7 +198,11 @@ class User {
       }
       debug('session is set');
 
-      const { tss, maxTtl, usage } = session;
+      const {
+        tss, maxTtl, usage, minTtl,
+      } = session;
+
+      console.log('deltaTime', minTtl - (maxTtl - config.get('timer.session.maxTTL')));
 
       if (Date.now() > maxTtl || usage <= 0) {
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');

@@ -13,24 +13,27 @@ Scenario: Get our user authentication data without password
     And response body path $.contacts should be null
 
 Scenario: Get our user authentication data using the vault
-    Given I GET /attic/vaultUser
-    And response code should be 200
-    And response body path $.iv should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-    And response body path $.salt should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-    And response body path $.proof should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-    And response body path $.key should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-    And I store the value of body path $ as ATTIC in scenario scope
-    And I set Pass header with iamapoorlonesomecowboy
-    And I GET /identity/vaultUser
-    And response code should be 200
-    And response body path $.vault.token should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-    And response body path $.vault.iv should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-    And I store the value of body path $.vault as VAULT_ITEM in scenario scope
-    When I open the vault VAULT_ITEM with iamapoorlonesomecowboy
-    Then response body match a challenge
-    And response body path $.user.username should be vaultUser
-    And response body path $.token should be ^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$
-    And response body path $.contacts should be null
+  Given I set var MY_AT to vaultUser value
+  And I load up new ECDH keys
+  And I set x-msm-cpk header to `CPK`
+  When I GET /attic/vaultUser
+  Then response code should be 200
+  And I store the value of body path $ as ATTIC in scenario scope
+  And I store the value of body path $.key as SPK in scenario scope
+  Given I set Pass header with iamapoorlonesomecowboy
+  When I GET /identity/vaultUser
+  And response code should be 200
+  And response body should contain vault
+  And response body path $.vault.token should be ^[A-Za-z0-9+/]*(=|==)?$
+  And response body path $.vault.salt should be ^[A-Za-z0-9+/]*(=|==)?$
+  And response body path $.vault.iv should be ^[A-Za-z0-9+/]*(=|==)?$
+  And I store the value of body path $.vault as SESSION in scenario scope
+  When I open the session SESSION in VAULT
+  And I open the vault VAULT with iamapoorlonesomecowboy
+  Then response body match a challenge
+  And response body path $.user.username should be vaultUser
+  And response body path $.token should be ^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$
+  And response body path $.contacts should be null
 
 Scenario: Unknown username returns an error
     When I GET /identity/Unknown
@@ -54,11 +57,12 @@ Scenario: Username should not contain any special character
     And response body path $.code should be BAD_REQUEST_FORMAT
 
 Scenario: Unknown user has an attic
+    Given I load up new ECDH keys
+    And I set x-msm-cpk header to `CPK`
     When I GET /attic/Unknown
     Then response code should be 200
-    And response body path $.iv should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-    And response body path $.salt should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-    And response body path $.proof should be ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+    And response body path $.salt should be ^[A-Za-z0-9+/]*(=|==)?$
+    And response body path $.key should be ^[A-Za-z0-9+/]*(=|==)?$
 
 Scenario: Authenticated user has access to its inbox
     Given I am a new invalidated user
@@ -112,14 +116,11 @@ Scenario: Signature header is mandatory to send a message
 
 Scenario: Signature header is mandatory to set up the vault
     Given I am authenticated user batmat
-    And I set var TOKEN to a 4032 characters long base64 string
+    And I set var TOKEN to a 5898 characters long base64 string
     And I set var IV to a 18 characters long base64 string
-    And I set var SALT to a 66 characters long base64 string
-    And I set var PROOF to a 66 characters long base64 string
-    And I set var ECDSA to a 243 characters long base64 string
-    And I set var PASS to a 105 characters long base64 string
-    And I set var KILL to a 105 characters long base64 string
-    And I set body to { "vault": { "token": "`TOKEN`", "iv": "`IV`", "salt": "`SALT`", "pass": "`PASS`", "kill": "`KILL`" }, "attic": { "proof": "`PROOF`", "iv": "`IV`", "salt": "`SALT`", "key": "`ECDSA`" } }
+    And I set var PASS_SALT to a 66 characters long base64 string
+    And I set var SESS_SALT to a 66 characters long base64 string
+    And I set body to { "vault": "`TOKEN`", "iv": "`IV`", "passSalt": "`PASS_SALT`", "sessionSalt": "`SESS_SALT`" }
     And I set false signature header
     When I PUT /vault
     Then response code should be 403

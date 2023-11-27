@@ -138,11 +138,13 @@ Given(/^I am existing (.*)$/, async function (varName) {
   this.apickli.setRequestBody(JSON.stringify({}));
   this.apickli.removeRequestHeader('x-msm-sig');
   this.apickli.removeRequestHeader('x-msm-pass');
+  this.apickli.removeRequestHeader('x-msm-cpk');
 });
 
 Given(/^I am authenticated user (.*)$/, async function (folder) {
   this.apickli.removeRequestHeader('x-msm-sig');
   this.apickli.removeRequestHeader('x-msm-pass');
+  this.apickli.removeRequestHeader('x-msm-cpk');
   // load keys
   const file = fs.readFileSync(`./data/users/${folder}/public.pem`).toString();
   const [publicK, hash] = file.split('\n----- HASH -----\n');

@@ -63,7 +63,7 @@ paths:
       parameters:
         - in: header
           name: X-msm-Cpk
-          required: false
+          required: true
           description: Client DH public key
           schema:
             type: string

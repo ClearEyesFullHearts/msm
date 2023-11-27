@@ -11,7 +11,7 @@
     "cors":{
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,OPTION",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, Content-Length, X-msm-Sig, X-msm-Pass"
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, Content-Length, X-msm-Sig, X-msm-Pass, X-msm-Cpk"
     }
   },
   "welcome": {
@@ -26,6 +26,10 @@
     },
     "interval": {
       "poll": 120000
+    },
+    "session": {
+      "maxTTL": 5000,
+      "deltaTTL": 25
     }
   }
 }
