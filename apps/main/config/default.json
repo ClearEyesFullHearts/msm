@@ -29,7 +29,8 @@
     },
     "session": {
       "maxTTL": 5000,
-      "deltaTTL": 25
+      "deltaTTL": 25,
+      "maxDelay": 3600000
     }
   }
 }

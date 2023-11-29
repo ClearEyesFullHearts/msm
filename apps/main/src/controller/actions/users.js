@@ -117,12 +117,7 @@ class User {
         usage, minTtl, spk: oldKey, maxTtl,
       } = session;
 
-      console.log('deltaTime', minTtl - (maxTtl - config.get('timer.session.maxTTL')));
-
-      if (time < minTtl) {
-        console.log('minttl send bogus');
-        return bogus;
-      }
+      if (time < minTtl) return bogus;
 
       if (usage > 0 && time < maxTtl) {
         debug('retry previous session');
@@ -136,12 +131,13 @@ class User {
       const deltaTime = minTtl - (maxTtl - config.get('timer.session.maxTTL'));
       if (deltaTime === 0) {
         minTime += config.get('timer.session.deltaTTL');
-      } else {
+      } else if (deltaTime < config.get('timer.session.maxDelay')) {
         minTime += 2 * deltaTime;
+      } else {
+        minTime += config.get('timer.session.maxDelay');
       }
     }
 
-    console.log('min ttl delay', minTime - time);
     await db.users.setSession(at, {
       spk, tss, minTtl: minTime, maxTtl: time + config.get('timer.session.maxTTL'), usage: 1,
     });
@@ -199,10 +195,8 @@ class User {
       debug('session is set');
 
       const {
-        tss, maxTtl, usage, minTtl,
+        tss, maxTtl, usage,
       } = session;
-
-      console.log('deltaTime', minTtl - (maxTtl - config.get('timer.session.maxTTL')));
 
       if (Date.now() > maxTtl || usage <= 0) {
         throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');

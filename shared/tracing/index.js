@@ -84,6 +84,7 @@ class XRayWrapper {
         func
           .then((result) => {
             resolve(result);
+            subsegment.close();
           })
           .catch((err) => {
             subsegment.addMetadata('error', JSON.stringify(err));

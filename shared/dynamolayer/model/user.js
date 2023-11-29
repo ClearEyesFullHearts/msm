@@ -156,7 +156,12 @@ class UserData {
       ]);
 
       if (!result) {
-        result = await this.findByName(username);
+        result = {
+          ...newUser,
+          username,
+          validation: 'NO_VALIDATION',
+          msgCount: 0,
+        };
       } else {
         [result] = result;
       }
