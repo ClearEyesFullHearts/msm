@@ -48,7 +48,7 @@ Scenario: Validate "vaultUser" user
     And I store the value of body path $.0.id as FIRST_MSG_ID in scenario scope
     When I GET /message/`FIRST_MSG_ID`
     Then response code should be 200
-    And I validate batmat manually if needed
+    And I validate vaultUser manually if needed
 
 Scenario: Create users
     Given I create random user with length 5
@@ -124,14 +124,16 @@ Scenario: Set up vaultUser vault
     When I GET /attic/vaultUser
     Then response code should be 200
     And I store the value of body path $.key as SPK in scenario scope
+    And I store the value of body path $ as ATTIC in scenario scope
+    And I set var MY_AT to vaultUser value
     And I set my vault item VAULT_ITEM with password iamapoorlonesomecowboy and iamapoorlonesomecowgirl
     And I set body to `VAULT_ITEM`
     And I set signature header
     When I PUT /vault
     Then response code should be 200
 
-# Scenario: I wait a bit before ending
-#     Given I wait for 50 seconds
+Scenario: I wait a bit before ending
+    Given I wait for 50 seconds
 
 # Scenario: Delete random users
 #     Given I am existing `RANDOM_USER.0`

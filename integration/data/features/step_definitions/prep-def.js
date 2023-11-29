@@ -1,87 +1,7 @@
 const fs = require('fs');
 const { Given, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
-const crypto = require('crypto');
 const Util = require('../../../features/support/utils');
-
-// Given(/^I create random user with length (.*)$/, async function (length) {
-//   const keys = await Util.generateKeyPair();
-//   const epk = keys.public.encrypt;
-//   const spk = keys.public.signature;
-//   const sha = keys.public.signedHash;
-
-//   const pem = keys.private.encrypt;
-//   const ssk = keys.private.signature;
-
-//   const rand = Util.getRandomString(length);
-//   const inject = Math.floor(length * Math.random());
-//   const username = `${rand.substring(0, inject)}mat${rand.substring(inject)}`;
-
-//   if (!this.randomUsers) this.randomUsers = [];
-//   this.randomUsers.push(username);
-//   this.userCounter += 1;
-
-//   // const keyVal = `${pem}\n----- SIGNATURE -----\n${ssk}`;
-//   const keyVal = Util.getSKContent(pem, ssk);
-//   const vaultValues = await Util.generateVaultValues(keyVal, username);
-//   const {
-//     esk: cypherKey,
-//     eup,
-//     euk,
-//     rs1,
-//     rs2,
-//     iv1,
-//     iv2,
-//     rp,
-//     key,
-//   } = vaultValues;
-
-//   this.apickli.setRequestBody(JSON.stringify({
-//     at: username,
-//     key: epk,
-//     signature: spk,
-//     hash: sha,
-//     vault: {
-//       token: cypherKey,
-//       salt: rs1,
-//       iv: iv1,
-//       pass: eup,
-//       kill: euk,
-//     },
-//     attic: {
-//       iv: iv2,
-//       salt: rs2,
-//       proof: rp,
-//       key,
-//     },
-//   }));
-//   await this.post('/users');
-
-//   const myHeader = Util.getHeaderFromAttic({
-//     iv: iv2, salt: rs2, proof: rp, key,
-//   }, username);
-
-//   // get identity challenge
-//   this.apickli.addRequestHeader('x-msm-pass', myHeader);
-//   await this.get(`/identity/${username}`);
-//   this.apickli.removeRequestHeader('x-msm-pass');
-
-//   // resolve it for body
-//   const respBody = JSON.parse(this.apickli.httpResponse.body);
-//   const resolved = Util.resolve(pem, respBody);
-//   this.apickli.httpResponse.body = JSON.stringify(resolved);
-
-//   this.apickli.setAccessTokenFromResponseBodyPath('$.token');
-//   this.apickli.setBearerToken();
-
-//   await this.get('/inbox');
-//   const [{ id }] = JSON.parse(this.apickli.httpResponse.body);
-
-//   await this.get(`/message/${id}`);
-
-//   this.apickli.removeRequestHeader('x-msm-sig');
-//   this.apickli.removeRequestHeader('Authorization');
-// });
 
 Given(/^I create random user with length (.*)$/, async function (length) {
   const keys = await Util.generateKeyPair();
@@ -98,7 +18,6 @@ Given(/^I create random user with length (.*)$/, async function (length) {
 
   if (!this.randomUsers) this.randomUsers = [];
   this.randomUsers.push(username);
-  this.userCounter += 1;
 
   this.apickli.setRequestBody(JSON.stringify({
     at: username,
@@ -166,6 +85,10 @@ Given(/^I create random user with length (.*)$/, async function (length) {
     Util.setValueInDB(username, `U#${username}`, 'lastActivity', Date.now());
     Util.setValueInDB(username, `U#${username}`, 'validation', 'VALIDATED');
   }
+
+  const privateKeys = `${pem}\n----- SIGNATURE -----\n${ssk}`;
+  fs.writeFileSync(`${__dirname}/../../../data/users/temp/${this.userCounter}.pem`, privateKeys);
+  this.userCounter += 1;
 });
 
 Then(/^I validate (.*) manually if needed$/, (name) => {
@@ -187,6 +110,77 @@ Given(/^I load up new ECDH keys$/, async function () {
 
   this.apickli.storeValueInScenarioScope('CPK', cpk);
   this.apickli.storeValueInScenarioScope('CSK', csk);
+});
+
+Given(/^I set var (.*) to (.*) value$/, function (varName, value) {
+  const str = this.apickli.replaceVariables(value);
+  this.apickli.storeValueInScenarioScope(varName, str);
+});
+
+Given('I update random users vaults', async function () {
+  const fileContent = fs.readFileSync(`${__dirname}/../../randoms.json`);
+  const arrUsers = JSON.parse(fileContent);
+
+  for (let i = 0; i < arrUsers.length; i += 1) {
+    this.apickli.removeRequestHeader('x-msm-sig');
+    this.apickli.removeRequestHeader('x-msm-pass');
+    this.apickli.removeRequestHeader('x-msm-cpk');
+
+    const at = arrUsers[i];
+    const password = at;
+
+    const file = fs.readFileSync(`${__dirname}/../../users/temp/${i}.pem`).toString();
+    const [eskFile, sskFile] = file.split('\n----- SIGNATURE -----\n');
+
+    // get identity challenge
+    await this.get(`/identity/${at}`);
+
+    // resolve it for body
+    const respBody = JSON.parse(this.apickli.httpResponse.body);
+    const resolved = Util.resolve(eskFile, respBody);
+
+    this.apickli.httpResponse.body = JSON.stringify(resolved);
+
+    const {
+      token, contacts, ...restAuth
+    } = resolved;
+
+    // set bearer token
+    this.apickli.setAccessTokenFromResponseBodyPath('$.token');
+    this.apickli.setBearerToken();
+
+    const {
+      cpk,
+      csk,
+    } = await Util.generateECDHKeyPair();
+    this.apickli.addRequestHeader('x-msm-cpk', cpk);
+
+    await this.get(`/attic/${at}`);
+    const { key: spk } = JSON.parse(this.apickli.httpResponse.body);
+    this.apickli.removeRequestHeader('x-msm-cpk');
+
+    const vaultValues = await Util.generateVaultWithECDH(
+      { csk, spk, info: `${at}-set-vault` },
+      { ESK: eskFile, SSK: sskFile },
+      password,
+    );
+    const {
+      body,
+    } = vaultValues;
+
+    this.apickli.setBearerToken();
+    this.apickli.setRequestBody(JSON.stringify(body));
+
+    const bodyObj = JSON.parse(this.apickli.requestBody);
+    const data = JSON.stringify({
+      ...restAuth,
+      ...bodyObj,
+    });
+
+    const sig = Util.sign(sskFile, data);
+    this.apickli.addRequestHeader('x-msm-sig', sig);
+    await this.put('/vault');
+  }
 });
 
 // Given('I update all users vault', async function () {

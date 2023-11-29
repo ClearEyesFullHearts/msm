@@ -21,6 +21,7 @@ Scenario: You can only subscribe to real web push server
   Then response code should be 400
   And response body path $.code should be BAD_REQUEST_FORMAT
 
+@Online
 Scenario: Connected target is notified when they received a message
   Given I am existing `RANDOM_USER.10`
   And `RANDOM_USER.10` is connected
@@ -30,6 +31,7 @@ Scenario: Connected target is notified when they received a message
   Then `RANDOM_USER.10` last message action match mail
   And response body path $.message.from should be mat
 
+@Online
 Scenario: Connected targets are notified when they received a message from group
   Given `RANDOM_USER.1` creates a group firstNameGroup for ["`RANDOM_USER.14`", "`RANDOM_USER.3`", "`RANDOM_USER.4`"] with index 0
   And I am existing `RANDOM_USER.1`
@@ -53,6 +55,7 @@ Scenario: Connected targets are notified when they received a message from group
   Then `RANDOM_USER.3` last message action match mail
   And response body path $.message.from should be `GROUP_ID.0`
 
+@Online
 Scenario: When a member is added others are notified
   Given `RANDOM_USER.1` creates a group best group for ["`RANDOM_USER.14`", "`RANDOM_USER.3`"] with index 0
   And I am existing `RANDOM_USER.5`
@@ -77,6 +80,7 @@ Scenario: When a member is added others are notified
   Then `RANDOM_USER.3` last message action match group-add
   And response body path $.message.from should be `GROUP_ID.0`
 
+@Online
 Scenario: When a member quit, others are notified
   Given `RANDOM_USER.1` creates a group best group for ["`RANDOM_USER.14`", "`RANDOM_USER.3`", "`RANDOM_USER.5`"] with index 0
   And I am existing `RANDOM_USER.1`
@@ -99,6 +103,7 @@ Scenario: When a member quit, others are notified
   Then `RANDOM_USER.3` last message action match group-remove
   And response body path $.message.from should be `GROUP_ID.0`
 
+@Online
 Scenario: When a member is revoked others are notified
   Given `RANDOM_USER.1` creates a group best group for ["`RANDOM_USER.14`", "`RANDOM_USER.3`", "`RANDOM_USER.5`"] with index 0
   And I am existing `RANDOM_USER.1`

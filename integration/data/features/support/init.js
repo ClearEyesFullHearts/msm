@@ -11,6 +11,10 @@ setDefaultTimeout(60 * 1000);
 BeforeAll((cb) => {
   Util.emptyTable()
     .then(cb);
+  // Util.emptyTable()
+  //   .then(() => Util.restoreTable('backupdb_origin'))
+  // // .then(() => Util.backupTable())
+  //   .then(cb);
 });
 
 Before(function () {
@@ -20,6 +24,7 @@ Before(function () {
   this.apickli = new apickli.Apickli(protocol, host, 'data');
   this.apickli.addRequestHeader('Cache-Control', 'no-cache');
   this.apickli.addRequestHeader('Content-Type', 'application/json');
+  this.userCounter = 0;
 
   this.get = (url) => new Promise((resolve, reject) => {
     this.apickli.get(url, (error) => {
@@ -57,6 +62,6 @@ Before(function () {
 });
 
 AfterAll((cb) => {
-  Util.backupTable('backupdb_origin')
+  Util.backupTable('backupdb_target')
     .then(cb);
 });

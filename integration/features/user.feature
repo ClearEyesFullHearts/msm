@@ -140,6 +140,7 @@ Scenario: I cannot register 2 users with the same signature key
     Then response code should be 403
     And response body path $.code should be USER_EXISTS
 
+@Online
 Scenario: Inactivate user is removed after a time
     Given I am a new invalidated user
     When I wait for 1 seconds

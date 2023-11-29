@@ -2,6 +2,7 @@ Feature: Ws connection function Test
 
     Lambda called when there is a websocket connection to the API Getaway
 
+@Online
 Scenario: `RANDOM_USER.16` and `RANDOM_USER.19` connects and disconnect
     Given I am existing `RANDOM_USER.16`
     And I am existing `RANDOM_USER.19`
@@ -11,6 +12,7 @@ Scenario: `RANDOM_USER.16` and `RANDOM_USER.19` connects and disconnect
     And `RANDOM_USER.19` is connected
     And `RANDOM_USER.19` disconnects
 
+@Online
 Scenario: `RANDOM_USER.10` and `RANDOM_USER.7` are chatting
     Given I am existing `RANDOM_USER.7`
     And I am existing `RANDOM_USER.10`
@@ -31,6 +33,7 @@ Scenario: `RANDOM_USER.10` and `RANDOM_USER.7` are chatting
     And response body path $.from should be `RANDOM_USER.10`
     And response body path $.requestId should be `REQ.RANDOM_USER.10`
 
+@Online
 Scenario: Bad content send error
     Given I am existing `RANDOM_USER.7`
     And `RANDOM_USER.7` is connected
@@ -38,6 +41,7 @@ Scenario: Bad content send error
     When `RANDOM_USER.7` send next fallback message to `RANDOM_USER.7`
     Then `RANDOM_USER.7` last message action match error
 
+@Online
 Scenario: Bad requestId send error
     Given I am existing `RANDOM_USER.7`
     And `RANDOM_USER.7` is connected
@@ -46,6 +50,7 @@ Scenario: Bad requestId send error
     When `RANDOM_USER.7` send next fallback message to `RANDOM_USER.7`
     Then `RANDOM_USER.7` last message action match error
 
+@Online
 Scenario: Disconnected target send event
     Given I am existing `RANDOM_USER.10`
     Given I am existing `RANDOM_USER.7`
@@ -57,6 +62,7 @@ Scenario: Disconnected target send event
     Then `RANDOM_USER.7` last message action match disconnected
     And response body path $.message.username should be `RANDOM_USER.10`
 
+@Online
 Scenario: Get connection status of a list
   Given I am existing `RANDOM_USER.7`
   And `RANDOM_USER.7` is connected

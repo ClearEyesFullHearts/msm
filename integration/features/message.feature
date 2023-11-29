@@ -28,6 +28,7 @@ Scenario: Only the target can read a message
   Then response code should be 404
   And response body path $.code should be NOT_FOUND
 
+@Online
 Scenario: Messages is deleted after reading
   Given mat write a message as { "to": "`RANDOM_USER.7`" , "title": "Write one message" , "content": "My message content" }
   And I am existing `RANDOM_USER.7`
