@@ -19,6 +19,7 @@ const schema = Yup.object().shape({
 });
 let loginInput = '';
 const fileInput = ref(null);
+const isSubmitting = ref(false);
 
 onMounted(() => {
   const usersStore = useUsersStore();
@@ -42,6 +43,7 @@ async function onUpload(keys) {
 
 async function onFilePicked(evt) {
   FileHelper.onFilePicked(evt, onUpload);
+  isSubmitting.value = true;
 }
 
 async function onSubmit() {
@@ -56,7 +58,7 @@ async function onSubmit() {
     </h4>
     <div class="card-body">
       <Form
-        v-slot="{ values, errors, isSubmitting }"
+        v-slot="{ values, errors }"
         :validation-schema="schema"
         @submit="onSubmit"
       >

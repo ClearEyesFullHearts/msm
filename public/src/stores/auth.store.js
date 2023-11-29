@@ -63,6 +63,62 @@ export const useAuthStore = defineStore({
       await this.login(key, signKey, challenge, first);
       // mylogger.logTime('login done');
     },
+
+    async connectWithDH(username, passphrase, first = false) {
+      // create ECDH keys
+      // const { cpk, csk } = await mycrypto.generateECDHKeyPair();
+
+      // ask the server for our attic
+      const ecdhHeader = {
+        'X-msm-Cpk': 'cpk',
+      };
+      const { salt: rs1, key: spk } = await fetchWrapper.get(`${baseUrl}/attic/${username}`, false, ecdhHeader);
+
+      // computes the shared secret
+      // const tss = await mycrypto.computeSharedSecret({ csk, spk });
+      // derive an encryption key
+      // const { key: dek, salt: rs3} = await mycrypto.deriveKey(tss);
+
+      // get comparison hash from the password
+      const { key: hpx } = await mycrypto.PBKDF2Hash(passphrase, rs1);
+
+      // encrypt our comparison hash with our derived key
+      const { iv: iv2, token: ehp } = await mycrypto.symmetricEncrypt(hpx, 'dek', false);
+
+      // get our login information encrypted
+      const passHeader = {
+        'X-msm-Pass': `${iv2}.${ehp}.{rs3}`,
+      };
+      const credentials = await fetchWrapper.get(`${baseUrl}/identity/${username}`, false, passHeader);
+      const { vault: { token: ebt, iv: iv3, salt: rs4 } } = credentials;
+
+      // derive an encryption key
+      // const { key: dek2} = await mycrypto.deriveKey(tss, rs4);
+
+      // decrypt the vault
+      const vaultAsString = await mycrypto.symmetricDecrypt('dek2', iv3, ebt);
+
+      const {
+        token,
+        salt: vaultSalt,
+        iv: iv1,
+      } = JSON.parse(vaultAsString);
+
+      const rs2 = mycrypto.base64ToArBuff(vaultSalt);
+      const { key: hp1 } = await mycrypto.PBKDF2Hash(passphrase, rs2);
+      // mylogger.logTime('password hashed for keys decryption');
+
+      const decryptedVault = await mycrypto.symmetricDecrypt(hp1, iv1, token);
+      // mylogger.logTime('keys decrypted');
+      const dec = new TextDecoder();
+      const keyFile = dec.decode(decryptedVault);
+
+      const { key, signKey } = CryptoHelper.setContentAsSK(keyFile);
+
+      const { challenge } = credentials;
+      await this.login(key, signKey, challenge, first);
+      this.hasVault = true;
+    },
     async connectWithPassword(username, passphrase, first = false) {
       // mylogger.start();
       const {
@@ -79,13 +135,14 @@ export const useAuthStore = defineStore({
 
       let credentials;
       try {
-        credentials = getCredentials(username, pemContent, eup);
+        credentials = await getCredentials(username, pemContent, eup);
       } catch (err) {
         if (err === 'Time to live is expired') {
           // retry once
-          credentials = getCredentials(username, pemContent, eup);
+          credentials = await getCredentials(username, pemContent, eup);
+        } else {
+          throw err;
         }
-        throw err;
       }
       const { vault, ...challenge } = credentials;
       // mylogger.logTime('get vault & identity challenge');
