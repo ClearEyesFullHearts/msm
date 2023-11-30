@@ -59,7 +59,7 @@ class Encryption {
     const authTag = ehp.subarray(ehp.length - 16);
     const crypted = ehp.subarray(0, ehp.length - 16);
 
-    const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(dek), Buffer.from(iv, 'base64'));
+    const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(dek), Buffer.from(iv, 'base64'));
     decipher.setAuthTag(authTag);
     const decData = Buffer.concat([decipher.update(crypted), decipher.final()]);
 

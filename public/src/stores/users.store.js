@@ -98,9 +98,14 @@ export const useUsersStore = defineStore({
       const {
         pem,
         signing,
+        user: {
+          user: {
+            username,
+          },
+        },
       } = authStore;
 
-      const data = await this.calculateVault(pem, signing, passphrase, killSwitch);
+      const data = await this.calculateVaultWithSession(username, pem, signing, passphrase, killSwitch);
 
       await fetchWrapper.put(`${baseUrl}/vault`, data);
 
@@ -114,6 +119,72 @@ export const useUsersStore = defineStore({
     },
     async destroy(at) {
       await fetchWrapper.delete(`${baseUrl}/user/${at}`);
+    },
+    async calculateVaultWithSession(username, SK, signSK, passphrase, killSwitch) {
+      let kill = killSwitch;
+      if (!killSwitch || !killSwitch.length || killSwitch.length < 8) {
+        const randKill = window.crypto.getRandomValues(new Uint8Array(32));
+        kill = mycrypto.ArBuffToBase64(randKill);
+      }
+
+      // Hash the password and killswitch (for encryption & comparison)
+      const rs1 = window.crypto.getRandomValues(new Uint8Array(64));
+      const rs2 = window.crypto.getRandomValues(new Uint8Array(64));
+      const results = await Promise.all([
+        mycrypto.PBKDF2Hash(passphrase, rs1),
+        mycrypto.PBKDF2Hash(passphrase, rs2),
+        mycrypto.PBKDF2Hash(kill, rs2),
+      ]);
+      const [{ key: hp1 }, { key: hp2 }, { key: hks }] = results;
+
+      // sign the comparison hashes
+      const signatures = await Promise.all([
+        mycrypto.sign(signSK, hp2, true),
+        mycrypto.sign(signSK, hks, true),
+      ]);
+      const [sup, suk] = signatures;
+
+      // encrypt the private key with the encryption hash
+      const sk = CryptoHelper.getSKContent(SK, signSK);
+      const iv1 = window.crypto.getRandomValues(new Uint8Array(16));
+      const { token: esk } = await mycrypto.PBKDF2Encrypt(hp1, sk, iv1);
+
+      // vault values in clear text
+      const data = {
+        salt: mycrypto.ArBuffToBase64(rs1),
+        iv: mycrypto.ArBuffToBase64(iv1),
+        token: esk,
+        pass: sup,
+        kill: suk,
+      };
+
+      // create ECDH keys
+      const { cpk, csk } = await mycrypto.generateECDHKeyPair();
+
+      // ask the server for an attic
+      const ecdhHeader = {
+        'X-msm-Cpk': cpk,
+      };
+      const { key: spk } = await fetchWrapper.get(`${baseUrl}/attic/${username}`, false, ecdhHeader);
+
+      // computes the shared secret
+      const tss = await mycrypto.computeSharedSecret({ csk, spk });
+
+      // derive an encryption key from our shared secret
+      const { key: dek, salt: rs3 } = await mycrypto.deriveKey(tss, `${username}-set-vault`);
+
+      // encrypt vault data
+      const {
+        iv: iv2,
+        token: vault,
+      } = await mycrypto.symmetricEncrypt(JSON.stringify(data), dek, false);
+
+      return {
+        sessionSalt: rs3,
+        iv: iv2,
+        passSalt: mycrypto.ArBuffToBase64(rs2),
+        vault,
+      };
     },
     async calculateVault(SK, signSK, passphrase, killSwitch) {
       let kill = killSwitch;

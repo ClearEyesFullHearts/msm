@@ -78,23 +78,24 @@ export const useAuthStore = defineStore({
 
       // computes the shared secret
       const tss = await mycrypto.computeSharedSecret({ csk, spk });
-      // derive an encryption key
+
+      // derive an encryption key from our shared secret
       const { key: dek, salt: rs3 } = await mycrypto.deriveKey(tss, `${username}-login`);
 
       // get comparison hash from the password
       const { key: hpx } = await mycrypto.PBKDF2Hash(passphrase, mycrypto.base64ToArBuff(rs1));
 
-      // // encrypt our comparison hash with our derived key
+      // encrypt our comparison hash with our derived key
       const { iv: iv2, token: ehp } = await mycrypto.symmetricEncrypt(hpx, dek, false);
 
-      // // get our login information encrypted
+      // get our login information encrypted
       const passHeader = {
         'X-msm-Pass': `${iv2}.${ehp}.${rs3}`,
       };
       const credentials = await fetchWrapper.get(`${baseUrl}/identity/${username}`, false, passHeader);
       const { vault: { token: ebt, iv: iv3, salt: rs4 }, ...challenge } = credentials;
 
-      // derive an encryption key
+      // derive an encryption key from our shared secret
       const { key: dek2 } = await mycrypto.deriveKey(tss, `${username}-connection`, rs4);
 
       // decrypt the vault
@@ -107,15 +108,13 @@ export const useAuthStore = defineStore({
         iv: iv1,
       } = JSON.parse(vaultAsString);
 
+      // get encryption hash from the password
       const rs2 = mycrypto.base64ToArBuff(vaultSalt);
       const { key: hp1 } = await mycrypto.PBKDF2Hash(passphrase, rs2);
-      // mylogger.logTime('password hashed for keys decryption');
 
-      const decryptedVault = await mycrypto.symmetricDecrypt(hp1, iv1, token);
-      // mylogger.logTime('keys decrypted');
-      const dec = new TextDecoder();
-      const keyFile = dec.decode(decryptedVault);
-
+      // decrypt the secret key file
+      const decryptedKeys = await mycrypto.symmetricDecrypt(hp1, iv1, token);
+      const keyFile = new TextDecoder().decode(decryptedKeys);
       const { key, signKey } = CryptoHelper.setContentAsSK(keyFile);
 
       await this.login(key, signKey, challenge, first);

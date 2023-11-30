@@ -14,8 +14,6 @@ class CryptoHelper {
     trimmedSK = SSK.replace(/\n/g, '');
     const sskContent = trimmedSK
       .substring(pemHeader.length, trimmedSK.length - pemFooter.length);
-    console.log(eskContent.length);
-    console.log(sskContent.length);
 
     return `${eskContent}${sskContent}`;
   }
@@ -389,7 +387,6 @@ class CryptoHelper {
       arrPass,
       {
         name: 'AES-GCM',
-        iv,
       },
       false,
       ['encrypt'],

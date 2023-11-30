@@ -7,11 +7,11 @@ They'll sometime have to produce random byte arrays too, for initialization vect
 They will write a class to make it easy:
 ```
 class Helper {
-    static clearTextToBuffer(txt);
-    static base64ToBuffer(b64Txt);
-    static bufferToBase64(buffer);
-    static bufferToClearText(buffer);
-    static getRandomBuffer(size);
+    static clearTextToBuffer(txt:String) => Buffer;
+    static base64ToBuffer(b64Txt:String) => Buffer;
+    static bufferToBase64(buffer:Buffer) => String;
+    static bufferToClearText(buffer:Buffer) => String;
+    static getRandomBuffer(size:Integer) => Buffer;
 }
 ```
 
