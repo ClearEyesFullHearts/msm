@@ -112,7 +112,7 @@ class Util {
   }
 
   static generateECDHKeyPair() {
-    const alice = crypto.createECDH('secp256k1');
+    const alice = crypto.createECDH('prime256v1');
     alice.generateKeys();
 
     return {
@@ -166,7 +166,7 @@ class Util {
 
     const rs3 = crypto.randomBytes(64);
 
-    const alice = crypto.createECDH('secp256k1');
+    const alice = crypto.createECDH('prime256v1');
     alice.setPrivateKey(Buffer.from(csk, 'base64'));
     const secret = alice.computeSecret(Buffer.from(spk, 'base64'));
 
@@ -222,7 +222,7 @@ class Util {
 
     const rs3 = crypto.randomBytes(64);
 
-    const alice = crypto.createECDH('secp256k1');
+    const alice = crypto.createECDH('prime256v1');
     alice.setPrivateKey(Buffer.from(csk, 'base64'));
     const tss = alice.computeSecret(Buffer.from(spk, 'base64'));
     const dek1 = crypto.hkdfSync('sha512', tss, rs3, Buffer.from(info), 32);

@@ -2,6 +2,9 @@ const crypto = require('crypto');
 const AWSXRay = require('@shared/tracing');
 
 const ALGORITHM = 'aes-256-gcm';
+const NAMED_CURVE = 'prime256v1'; // P-256
+// const NAMED_CURVE = 'secp384r1'; // P-384
+// const NAMED_CURVE = 'secp521r1'; // P-521
 const SALT_SIZE = 64;
 const PASS_SIZE = 32;
 const HKDF_LEN = 32;
@@ -35,7 +38,7 @@ class Encryption {
   }
 
   static generateECDHKeys(bobKey) {
-    const alice = crypto.createECDH('secp256k1');
+    const alice = crypto.createECDH(NAMED_CURVE);
     alice.generateKeys();
 
     const tss = alice.computeSecret(Buffer.from(bobKey, 'base64'));

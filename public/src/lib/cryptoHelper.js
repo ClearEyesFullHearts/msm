@@ -156,6 +156,101 @@ class CryptoHelper {
     };
   }
 
+  async generateECDHKeyPair() {
+    const keyPair = await window.crypto.subtle.generateKey(
+      {
+        name: 'ECDH',
+        namedCurve: 'P-256',
+      },
+      true,
+      ['deriveKey', 'deriveBits'],
+    );
+
+    const PK = await window.crypto.subtle.exportKey('raw', keyPair.publicKey);
+    const SK = await window.crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+
+    return {
+      csk: this.ArBuffToBase64(SK),
+      cpk: this.ArBuffToBase64(PK),
+    };
+  }
+
+  async computeSharedSecret({ csk, spk }) {
+    // import server public key
+    const binaryPK = this.base64ToArBuff(spk);
+    const PK = await window.crypto.subtle.importKey(
+      'raw',
+      binaryPK,
+      {
+        name: 'ECDH',
+        namedCurve: 'P-256',
+      },
+      false,
+      [],
+    );
+
+    // import client secret key
+    const binarySK = this.base64ToArBuff(csk);
+    const SK = await window.crypto.subtle.importKey(
+      'pkcs8',
+      binarySK,
+      {
+        name: 'ECDH',
+        namedCurve: 'P-256',
+      },
+      false,
+      ['deriveKey', 'deriveBits'],
+    );
+
+    // get derived shared secret
+    const sharedSecret = await window.crypto.subtle.deriveBits(
+      {
+        name: 'ECDH',
+        namedCurve: 'P-256',
+        public: PK,
+      },
+      SK,
+      256,
+    );
+
+    // import for HKDF derivation
+    const TSS = await window.crypto.subtle.importKey(
+      'raw',
+      sharedSecret,
+      { name: 'HKDF' },
+      false,
+      ['deriveKey', 'deriveBits'],
+    );
+    // const TEMP = await window.crypto.subtle.exportKey('raw', TSS);
+    // console.log('shared', this.ArBuffToBase64(TEMP));
+
+    return TSS;
+  }
+
+  async deriveKey(sharedSecret, info, salt) {
+    let mySalt = window.crypto.getRandomValues(new Uint8Array(64));
+    if (salt) {
+      mySalt = this.base64ToArBuff(salt);
+    }
+    const myInfo = this.clearTextToArBuff(info);
+    const derivedSecret = await window.crypto.subtle.deriveBits(
+      {
+        name: 'HKDF',
+        hash: 'SHA-512',
+        salt: mySalt,
+        info: myInfo,
+      },
+      sharedSecret,
+      256,
+    );
+
+    return {
+      key: this.ArBuffToBase64(derivedSecret),
+      salt: this.ArBuffToBase64(mySalt),
+    };
+  }
+
+  /*
   async generateECDSAKey() {
     const keyPair = await window.crypto.subtle.generateKey(
       {
@@ -170,6 +265,7 @@ class CryptoHelper {
 
     return pemContent;
   }
+  */
 
   async getPublicKey(pem) {
     const privateKey = await this.importCryptoKey(pem, 'pkcs8', 'PRIVATE', true);
@@ -358,6 +454,7 @@ class CryptoHelper {
     return this.ArBuffToBase64(signature);
   }
 
+  /*
   async signWithECDSA(pemContent, dataStr) {
     const binaryDer = this.base64ToArBuff(pemContent);
 
@@ -383,6 +480,7 @@ class CryptoHelper {
 
     return this.ArBuffToBase64(signature);
   }
+  */
 
   async verify(verifyKey, dataStr, signature, isBase64 = false) {
     const publicKey = await this.importSigningKey(verifyKey, 'spki', 'PUBLIC');

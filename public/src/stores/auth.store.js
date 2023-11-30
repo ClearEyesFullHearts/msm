@@ -21,6 +21,7 @@ const myvalidator = new ChainHelper();
 let interval;
 let verificationTimeoutID;
 
+/*
 function roundTimeToNext(secondsNumber) {
   const epoch = Date.now();
   const coeff = (1000 * secondsNumber);
@@ -40,6 +41,7 @@ async function getCredentials(username, pemContent, eup) {
   const credentials = await fetchWrapper.get(`${baseUrl}/identity/${username}`, false, passHeader);
   return credentials;
 }
+*/
 
 export const useAuthStore = defineStore({
   id: 'auth',
@@ -64,39 +66,40 @@ export const useAuthStore = defineStore({
       // mylogger.logTime('login done');
     },
 
-    async connectWithDH(username, passphrase, first = false) {
+    async connectWithPassword(username, passphrase, first = false) {
       // create ECDH keys
-      // const { cpk, csk } = await mycrypto.generateECDHKeyPair();
+      const { cpk, csk } = await mycrypto.generateECDHKeyPair();
 
       // ask the server for our attic
       const ecdhHeader = {
-        'X-msm-Cpk': 'cpk',
+        'X-msm-Cpk': cpk,
       };
       const { salt: rs1, key: spk } = await fetchWrapper.get(`${baseUrl}/attic/${username}`, false, ecdhHeader);
 
       // computes the shared secret
-      // const tss = await mycrypto.computeSharedSecret({ csk, spk });
+      const tss = await mycrypto.computeSharedSecret({ csk, spk });
       // derive an encryption key
-      // const { key: dek, salt: rs3} = await mycrypto.deriveKey(tss);
+      const { key: dek, salt: rs3 } = await mycrypto.deriveKey(tss, `${username}-login`);
 
       // get comparison hash from the password
-      const { key: hpx } = await mycrypto.PBKDF2Hash(passphrase, rs1);
+      const { key: hpx } = await mycrypto.PBKDF2Hash(passphrase, mycrypto.base64ToArBuff(rs1));
 
-      // encrypt our comparison hash with our derived key
-      const { iv: iv2, token: ehp } = await mycrypto.symmetricEncrypt(hpx, 'dek', false);
+      // // encrypt our comparison hash with our derived key
+      const { iv: iv2, token: ehp } = await mycrypto.symmetricEncrypt(hpx, dek, false);
 
-      // get our login information encrypted
+      // // get our login information encrypted
       const passHeader = {
-        'X-msm-Pass': `${iv2}.${ehp}.{rs3}`,
+        'X-msm-Pass': `${iv2}.${ehp}.${rs3}`,
       };
       const credentials = await fetchWrapper.get(`${baseUrl}/identity/${username}`, false, passHeader);
-      const { vault: { token: ebt, iv: iv3, salt: rs4 } } = credentials;
+      const { vault: { token: ebt, iv: iv3, salt: rs4 }, ...challenge } = credentials;
 
       // derive an encryption key
-      // const { key: dek2} = await mycrypto.deriveKey(tss, rs4);
+      const { key: dek2 } = await mycrypto.deriveKey(tss, `${username}-connection`, rs4);
 
       // decrypt the vault
-      const vaultAsString = await mycrypto.symmetricDecrypt('dek2', iv3, ebt);
+      const vaultAsBuffer = await mycrypto.symmetricDecrypt(dek2, iv3, ebt);
+      const vaultAsString = new TextDecoder().decode(vaultAsBuffer);
 
       const {
         token,
@@ -115,10 +118,10 @@ export const useAuthStore = defineStore({
 
       const { key, signKey } = CryptoHelper.setContentAsSK(keyFile);
 
-      const { challenge } = credentials;
       await this.login(key, signKey, challenge, first);
       this.hasVault = true;
     },
+    /*
     async connectWithPassword(username, passphrase, first = false) {
       // mylogger.start();
       const {
@@ -167,6 +170,7 @@ export const useAuthStore = defineStore({
       this.hasVault = true;
       // mylogger.logTime('login done');
     },
+    */
     async login(key, signKey, challenge, firstTime = false) {
       const alertStore = useAlertStore();
       try {
