@@ -240,7 +240,7 @@ const key = await window.crypto.subtle.importKey(
 );
 
 const iv = Helper.getRandomBuffer(16);
-const bufferTxt = Helper.base64ToBuffer(textToEncrypt);
+const bufferTxt = Helper.clearTextToBuffer(textToEncrypt);
 const bufferCypher = await window.crypto.subtle.encrypt({
   name: 'AES-GCM',
   iv,
@@ -351,3 +351,233 @@ return Helper.bufferToClearText(bufferText);
 </tr>
 </table>
   
+## Asymmetric encryption/decryption
+While symmetric encryption rely on a shared secret between Alice and Bob, asymmetric encryption uses a pair of keys, one public and one secret to enable message sharing.  
+
+### RSA
+The RSA algorithm for encryption is "RSA-OAEP" in subtle which match "rsa" in node.  
+#### Key pair generation
+Alice and Bob have to decide a common format to exchange their keys.  
+PEM is the default (spki for the public key and pkcs8 for the private one) but since subtle export only the base64 content of the PEM file (without line breaks) and node export the PEM file formatted by openSSL, they need to change the format to have a common one.  
+So the produce of their formatting is:
+- PEM header
+- 1 Line break
+- PEM content
+- 1 Line break
+- PEM footer
+  
+Note that while the public keys length are constant for each modulus, the length of the private keys can vary slightly.  
+Note also that Alice has to define the hash function used during key generation while Bob doesn't. He will have to use the same hash during encryption.  
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<tr>
+<td>Alice has to transform the CryptoKey into a transportable format (spki for the public key, pkcs8 for the private one) through the "export" function before getting the content of the PEM file.<br>
+Alice has to define the hash function here.</td>
+<td>Bob gets the keys in the openSSL PEM format.<br>
+Bob doesn't have to define the hash function here.</td>
+</tr>
+<tr>
+<td>
+
+```javascript
+const modulo = 4096;
+const keyPair = await window.crypto.subtle.generateKey(
+  {
+    name: 'RSA-OAEP',
+    modulusLength: modulo,
+    publicExponent: new Uint8Array([1, 0, 1]),
+    hash: 'SHA-256',
+  },
+  true,
+  ['encrypt', 'decrypt'],
+);
+
+const {
+  publicKey,
+  privateKey,
+} = keyPair;
+
+const bufferPublicKey = await window.crypto.subtle.exportKey('spki', publicKey);
+const pemContentPublicKey = Helper.bufferToBase64(bufferPublicKey);
+const pemPublicKey = `-----BEGIN PUBLIC KEY-----\n${pemContentPublicKey}\n-----END PUBLIC KEY-----`;
+
+const bufferPrivateKey = await window.crypto.subtle.exportKey('pkcs8', privateKey);
+const pemContentPrivateKey = Helper.bufferToBase64(bufferPrivateKey);
+const pemPrivateKey = `-----BEGIN PUBLIC KEY-----\n${pemContentPrivateKey}\n-----END PUBLIC KEY-----`;
+
+return {
+  publicKey: pemPublicKey,
+  privateKey: pemPrivateKey,
+};
+```
+
+</td>
+<td>
+
+```javascript
+const modulo = 4096;
+const keyPair = crypto.generateKeyPairSync('rsa', {
+    modulusLength: modulo,
+    publicKeyEncoding: {
+      type: 'spki',
+      format: 'pem',
+    },
+    privateKeyEncoding: {
+      type: 'pkcs8',
+      format: 'pem',
+    },
+  }
+);
+
+const {
+  publicKey,
+  privateKey,
+} = keyPair;
+
+const publicHeader = '-----BEGIN PUBLIC KEY-----';
+const publicFooter = '-----END PUBLIC KEY-----';
+const trimmedPK = publicKey.replace(/\n/g, '');
+const pemContentPublicKey = trimmedPK.substring(publicHeader.length, trimmedPK.length - publicFooter.length);
+
+const pemPublicKey = `${publicHeader}\n${pemContentPublicKey}\n${publicFooter}`;
+
+const privateHeader = '-----BEGIN PRIVATE KEY-----';
+const privateFooter = '-----END PRIVATE KEY-----';
+const trimmedSK = privateKey.replace(/\n/g, '');
+const pemContentPublicKey = trimmedSK.substring(privateHeader.length, trimmedSK.length - privateFooter.length);
+
+const pemPrivateKey = `${privateHeader}\n${pemContentPublicKey}\n${privateFooter}`;
+
+return {
+  publicKey: pemPublicKey,
+  privateKey: pemPrivateKey,
+};
+```
+
+</td>
+</tr>
+</table>
+  
+#### Public encrypt
+The amount of data that Alice and Bob can encrypt with an RSA public key is limited by its modulus. A 4096 bits modulus means that they cannot encrypt something bigger than 512 bytes and even less than that since OAEP needs some space for padding.  
+The produce of an RSA encryption is always equal in length to the modulus, so 4096 gives 512 bytes and a base64 encoded string of length 684. It is not deterministic so 2 encryptions of the same data by the same public key will produce 2 different results.  
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<tr>
+<td>Just like she had to format her keys in PEM format, Alice has to extract the content of Bob's public key PEM file, by removing the header and the footer before importing it. It is not shown here.</td>
+<td>Bob can use Alice's formatted PEM file directly.<br>
+Bob has to define the hash function here.</td>
+</tr>
+<tr>
+<td>
+
+```javascript
+const bufferBobPemContent = Helper.base64ToBuffer(bobPublicKeyPemContent);
+
+const bobKey = await window.crypto.subtle.importKey(
+  'spki',
+  bufferBobPemContent,
+  {
+    name: 'RSA-OAEP',
+    hash: 'SHA-256',
+  },
+  true,
+  ['encrypt'],
+);
+
+const bufferText = Helper.clearTextToBuffer(plaintext);
+
+const encrypted = await window.crypto.subtle.encrypt(
+  { name: 'RSA-OAEP' },
+  bobKey,
+  bufferText,
+);
+
+return Helper.bufferToBase64(encrypted);
+```
+
+</td>
+<td>
+
+```javascript
+const pem = alicePublicKeyPemFile;
+
+const bufferText = Helper.clearTextToBuffer(plaintext);
+
+const encrypted = crypto.publicEncrypt({
+  key: pem,
+  oaepHash: 'sha256',
+  padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+}, bufferText);
+
+return Helper.bufferToBase64(encrypted);
+```
+
+</td>
+</tr>
+</table>
+  
+#### Private decryption
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<tr>
+<td>
+
+```javascript
+const bufferAlicePemContent = Helper.base64ToBuffer(alicePrivateKeyPemContent);
+
+const aliceKey = await window.crypto.subtle.importKey(
+  'pkcs8',
+  bufferAlicePemContent,
+  {
+    name: 'RSA-OAEP',
+    hash: 'SHA-256',
+  },
+  true,
+  ['decrypt'],
+);
+
+const bufferCypher = Helper.base64ToBuffer(cypherFromBob);
+
+const decripted = await window.crypto.subtle.decrypt(
+  { name: 'RSA-OAEP' },
+  aliceKey,
+  bufferCypher,
+);
+
+return Helper.bufferToClearText(decripted);
+```
+
+</td>
+<td>
+
+```javascript
+const pem = bobPrivateKeyPemFile;
+const bufferCypher = Helper.base64ToBuffer(cypherFromAlice);
+
+const decripted = crypto.privateDecrypt({
+  key: pem,
+  oaepHash: 'sha256',
+  padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+}, bufferCypher);
+
+return Helper.bufferToClearText(decripted);
+```
+
+</td>
+</tr>
+</table>
+  
+### ECDH
