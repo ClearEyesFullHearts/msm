@@ -152,12 +152,25 @@ Note that the output key length here is in bits, 256 which is 32*8</td>
 const salt = Helper.getRandomBuffer(64);
 // const salt = Helper.base64ToBuffer(saltFromBob);
 const passwordBuffer = Helper.clearTextToBuffer(password);
-const importedKey = await window.crypto.subtle.importKey('raw', passwordBuffer, { name: 'PBKDF2' }, false, ['deriveBits']);
+const importedKey = await window.crypto.subtle.importKey(
+  'raw',
+  passwordBuffer,
+  { name: 'PBKDF2' },
+  false,
+  ['deriveBits']
+);
 
 const params = {
-  name: 'PBKDF2', hash: 'SHA-512', salt, iterations: 600000,
+  name: 'PBKDF2',
+  hash: 'SHA-512',
+  salt,
+  iterations: 600000,
 };
-const longHash = await window.crypto.subtle.deriveBits(params, importedKey, 256);
+const longHash = await window.crypto.subtle.deriveBits(
+  params, 
+  importedKey, 
+  256 // output length in bits
+);
 
 return {
   salt: Helper.bufferToBase64(salt),
@@ -173,7 +186,13 @@ return {
 const salt = Helper.base64ToBuffer(saltFromAlice);
 const passwordBuffer = Helper.clearTextToBuffer(password);
 
-const longHash = crypto.pbkdf2Sync(passwordBuffer, salt, 600000, 32, 'sha512');
+const longHash = crypto.pbkdf2Sync(
+  passwordBuffer,
+  salt,
+  600000,
+  32, // output length in bytes
+  'sha512'
+);
 
 return {
   salt: saltFromAlice,
@@ -200,6 +219,10 @@ The output of the encrypt function will be unique thanks to the iv but its lengt
 <tr>
 <th>Alice</th>
 <th>Bob</th>
+</tr>
+<tr>
+<td>Alice has to transform the password into a CryptoKey object through the "import" function (in raw format) to be able to use it in the "encrypt" function.</td>
+<td></td>
 </tr>
 <tr>
 <td>
@@ -238,7 +261,13 @@ return {
 const bufferKey = Helper.base64ToBuffer(chosenKey);
 const iv = Helper.getRandomBuffer(16);
 
-const cipher = crypto.createCipheriv('aes-256-gcm', bufferKey, iv, { authTagLength: 16 });
+const cipher = crypto.createCipheriv(
+  'aes-256-gcm',
+  bufferKey,
+  iv,
+  { authTagLength: 16 }
+);
+
 const bufferCypher = Buffer.concat([
   cipher.update(textToEncrypt), 
   cipher.final(), 
@@ -257,13 +286,16 @@ return {
   
 
 ### AES Decryption
-Decryption is really only the inverse of the encryption.  
-Just note that while the auth tag is automatically managed by the API for Alice, Bob has to extract it himself.   
+Decryption is really only the inverse of the encryption.   
 
 <table>
 <tr>
 <th>Alice</th>
 <th>Bob</th>
+</tr>
+<tr>
+<td>Alice has to transform the password into a CryptoKey object through the "import" function (in raw format) to be able to use it in the "decrypt" function.</td>
+<td>Bob has to extract and set the authentication tag himself</td>
 </tr>
 <tr>
 <td>
