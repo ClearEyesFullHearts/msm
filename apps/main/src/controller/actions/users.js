@@ -212,10 +212,15 @@ class User {
       debug('vault is present');
       const [iv2, header, rs3] = passHeader.split('.');
 
-      const compareHash = Encryption.decryptSharedSecret({
-        secret: tss, iv: iv2, token: header, salt: rs3, info: `${at}-login`,
-      });
-      const signedPass = Buffer.from(compareHash, 'base64');
+      let signedPass;
+      try {
+        const compareHash = Encryption.decryptSharedSecret({
+          secret: tss, iv: iv2, token: header, salt: rs3, info: `${at}-login`,
+        });
+        signedPass = Buffer.from(compareHash, 'base64');
+      } catch (err) {
+        signedPass = crypto.randomBytes(32).toString('base64');
+      }
 
       const {
         token,
@@ -350,12 +355,17 @@ class User {
     await db.users.usedSession(user.username, session);
     debug('session is used');
 
-    const data = Encryption.decryptSharedSecret({
-      secret: tss, iv, token: vault, salt: sessionSalt, info: `${user.username}-set-vault`,
-    });
-    debug('session is decrypted');
+    let cypheredVault;
+    try {
+      const data = Encryption.decryptSharedSecret({
+        secret: tss, iv, token: vault, salt: sessionSalt, info: `${user.username}-set-vault`,
+      });
+      debug('session is decrypted');
 
-    const cypheredVault = Encryption.encryptVault(secret.KEY_VAULT_ENCRYPT, JSON.parse(data));
+      cypheredVault = Encryption.encryptVault(secret.KEY_VAULT_ENCRYPT, JSON.parse(data));
+    } catch (err) {
+      throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
+    }
     await db.users.addVault(user.username, { vault: cypheredVault, attic: { salt: passSalt } });
     debug('vault item set');
 
