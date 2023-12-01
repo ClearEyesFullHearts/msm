@@ -4,7 +4,10 @@ import * as Yup from 'yup';
 
 import { useUsersStore, useAlertStore, useAuthStore } from '@/stores';
 import { router } from '@/router';
+import { fetchWrapper } from '@/helpers';
+import Config from '@/lib/config';
 
+const baseUrl = Config.API_URL;
 const usersStore = useUsersStore();
 const alertStore = useAlertStore();
 const authStore = useAuthStore();
@@ -26,10 +29,13 @@ async function onSubmit(values) {
   try {
     const { ESK, SSK } = await usersStore.createUser(values);
 
-    await authStore.connect(values.username, ESK, SSK, true);
+    const challenge = await fetchWrapper.get(`${baseUrl}/identity/${values.username}`);
+    await authStore.setIdentityUp(ESK, SSK, challenge);
 
     await usersStore.setVault(values.passphrase);
     authStore.hasVault = true;
+
+    await authStore.login(ESK, SSK, challenge, true);
 
     router.push('/conversations');
   } catch (error) {

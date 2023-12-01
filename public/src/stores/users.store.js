@@ -105,7 +105,7 @@ export const useUsersStore = defineStore({
         },
       } = authStore;
 
-      const data = await this.calculateVaultWithSession(username, pem, signing, passphrase, killSwitch);
+      const data = await this.calculateVault(username, pem, signing, passphrase, killSwitch);
 
       await fetchWrapper.put(`${baseUrl}/vault`, data);
 
@@ -120,7 +120,7 @@ export const useUsersStore = defineStore({
     async destroy(at) {
       await fetchWrapper.delete(`${baseUrl}/user/${at}`);
     },
-    async calculateVaultWithSession(username, SK, signSK, passphrase, killSwitch) {
+    async calculateVault(username, SK, signSK, passphrase, killSwitch) {
       let kill = killSwitch;
       if (!killSwitch || !killSwitch.length || killSwitch.length < 8) {
         const randKill = window.crypto.getRandomValues(new Uint8Array(32));
@@ -186,6 +186,7 @@ export const useUsersStore = defineStore({
         vault,
       };
     },
+    /*
     async calculateVault(SK, signSK, passphrase, killSwitch) {
       let kill = killSwitch;
       if (!killSwitch || !killSwitch.length || killSwitch.length < 8) {
@@ -239,5 +240,6 @@ export const useUsersStore = defineStore({
         },
       };
     },
+    */
   },
 });

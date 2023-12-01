@@ -250,7 +250,7 @@ export const useAuthStore = defineStore({
       const alertStore = useAlertStore();
       const spk = await mycrypto.getSigningPublicKey(this.signing);
       try {
-        const userId = mycrypto.hash(`${chainSalt}${this.user.user.username}`);
+        const userId = await mycrypto.hash(`${chainSalt}${this.user.user.username}`);
         const isValidatedOnChain = await myvalidator.isValidated(userId);
         if (isValidatedOnChain) {
           const { signature } = isValidatedOnChain;
