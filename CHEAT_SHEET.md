@@ -239,17 +239,17 @@ const key = await window.crypto.subtle.importKey(
   ['encrypt', 'decrypt'],
 );
 
-const iv = Helper.getRandomBuffer(16);
+const bufferIv = Helper.getRandomBuffer(16);
 const bufferTxt = Helper.clearTextToBuffer(textToEncrypt);
 const bufferCypher = await window.crypto.subtle.encrypt({
   name: 'AES-GCM',
-  iv,
+  iv: bufferIv,
   tagLength: 128, //length of the auth tag
 }, key, bufferTxt);
 
 return {
   cypher: Helper.bufferToBase64(bufferCypher),
-  iv: Helper.bufferToBase64(iv),
+  iv: Helper.bufferToBase64(bufferIv),
 }
 
 ```
@@ -318,7 +318,7 @@ const importedKey = await window.crypto.subtle.importKey(
 const bufferText = await window.crypto.subtle.decrypt(
   { 
     name: 'AES-GCM',
-    iv,
+    iv: bufferIv,
     tagLength: 128,
   },
   importedKey,
