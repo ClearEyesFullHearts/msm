@@ -461,6 +461,89 @@ return {
 </td>
 </tr>
 </table>
+
+#### Extracting the public key
+It's always possible to re-extract the public key from the private key which can be useful if Alice and Bob choose to store only the private key and not the whole pair.  
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<tr>
+<td>
+
+```javascript
+  const bufferAlicePrivateKey = Helper.base64ToBuffer(alicePrivateKeyPemContent);
+
+  const aliceKey = await window.crypto.subtle.importKey(
+    'pkcs8',
+    bufferAlicePrivateKey,
+    {
+      name: 'RSA-OAEP',
+      hash: 'SHA-256',
+    },
+    true,
+    ['decrypt'],
+  );
+
+  // export private key to JWK
+  const jwk = await window.crypto.subtle.exportKey('jwk', aliceKey);
+
+  // remove private data from JWK
+  delete jwk.d;
+  delete jwk.dp;
+  delete jwk.dq;
+  delete jwk.q;
+  delete jwk.qi;
+  jwk.key_ops = ['encrypt'];
+
+  // import public key
+  const publicKey = await window.crypto.subtle.importKey(
+    'jwk',
+    jwk,
+    {
+      name: 'RSA-OAEP',
+      modulusLength: 4096,
+      publicExponent: new Uint8Array([1, 0, 1]),
+      hash: 'SHA-256',
+    },
+    true,
+    ['encrypt'],
+  );
+
+  const bufferPublicKey = await window.crypto.subtle.exportKey('spki', publicKey);
+  const pemContentPublicKey = Helper.bufferToBase64(bufferPublicKey);
+  return `-----BEGIN PUBLIC KEY-----\n${pemContentPublicKey}\n-----END PUBLIC KEY-----`;
+```
+
+</td>
+<td>
+
+```javascript
+  const pem = bobPrivateKeyPemFile;
+  const pubKeyObject = crypto.createPublicKey({
+    key: pem,
+    format: 'pem',
+  });
+
+  const publicKey = pubKeyObject.export({
+    format: 'pem',
+    type: 'spki',
+  });
+
+  const publicHeader = '-----BEGIN PUBLIC KEY-----';
+  const publicFooter = '-----END PUBLIC KEY-----';
+  const trimmedPK = publicKey.replace(/\n/g, '');
+  const pemContentPublicKey = trimmedPK.substring(publicHeader.length, trimmedPK.length - publicFooter.length);
+
+  return `${publicHeader}\n${pemContentPublicKey}\n${publicFooter}`;
+```
+
+</td>
+</tr>
+</table>
+  
   
 #### Public encrypt
 The amount of data that Alice and Bob can encrypt with an RSA public key is limited by its modulus. A 4096 bits modulus means that they cannot encrypt something bigger than 512 bytes and even less than that since OAEP needs some space for padding.  
@@ -581,3 +664,202 @@ return Helper.bufferToClearText(decripted);
 </table>
   
 ### ECDH
+Alice thinks EC mean "Elastic Curve" while Bob is persuaded that it means "Electric Curve". Turns out they are both wrong since it means "Elliptic Curve" and DH stands for Diffie-Hellman.  
+EC key pairs are shorter and faster than RSA keys and while they can be used directly for asymmetric encryption they are more often found when the need for a DH key exchange is required.  
+Alice and Bob have to exchange their public keys to compute a shared secret from their private key and each other public key, this is the DH key exchange. This shared secret can be used directly for symmetric encryption but it is not recommended to use a shared secret more than once, so they will derive a different key from this shared secret each time they want to send each other a message thanks to a HKDF algorithm.
+  
+#### Key pair generation
+First Alice and Bob have to agree on a curve, Alice doesn't have much choice only P-256, p-384 and P-521 are available to her. Bob has access to all curves defined by openSSL (crypto.getCurves()) so we have:
+- P-256 => prime256v1 (pk 88 base64 characters, sk 44)
+- P-384 => secp384r1 (pk 132 base64 characters, sk 64)
+- p-521 => secp521r1 (pk 180 base64 characters, sk 88)
+  
+They want to share as small keys as possible so they settle on P-256.  
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<tr>
+<td>
+
+```javascript
+const AliceKeyPair = await window.crypto.subtle.generateKey(
+  {
+    name: 'ECDH',
+    namedCurve: 'P-256',
+  },
+  true,
+  ['deriveBits'],
+);
+
+const PK = await window.crypto.subtle.exportKey('raw', AliceKeyPair.publicKey);
+const SK = await window.crypto.subtle.exportKey('pkcs8', AliceKeyPair.privateKey);
+
+return {
+  privateKey: Helper.bufferToBase64(SK),
+  publicKey: Helper.bufferToBase64(PK),
+};
+```
+
+</td>
+<td>
+
+```javascript
+  const bob = crypto.createECDH('prime256v1');
+  bob.generateKeys();
+
+  // base64 raw format
+  return {
+    privateKey: bob.getPrivateKey('base64'),
+    publicKey: bob.getPublicKey('base64'),
+  };
+```
+
+</td>
+</tr>
+</table>
+  
+#### Computing the shared secret
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<tr>
+<td>The shared secret is never to be shared so Alice keeps it as a buffer.</td>
+<td>The shared secret is never to be shared so Bob keeps it as a buffer.</td>
+</tr>
+<tr>
+<td>
+
+```javascript
+  const bufferAlicePrivateKey = Helper.base64ToBuffer(AlicePrivateKey);
+  const bufferBobPublicKey = Helper.base64ToBuffer(BobPublicKey);
+
+  // import bob public key
+  const PK = await window.crypto.subtle.importKey(
+    'raw',
+    bufferBobPublicKey,
+    {
+      name: 'ECDH',
+      namedCurve: 'P-256',
+    },
+    false,
+    [], // no key usage
+  );
+
+  // import alice secret key
+  const SK = await window.crypto.subtle.importKey(
+    'pkcs8', // match previous export
+    bufferAlicePrivateKey,
+    {
+      name: 'ECDH',
+      namedCurve: 'P-256',
+    },
+    false,
+    ['deriveBits'],
+  );
+
+  // get derived shared secret
+  const sharedSecret = await window.crypto.subtle.deriveBits(
+    {
+      name: 'ECDH',
+      namedCurve: 'P-256',
+      public: PK,
+    },
+    SK,
+    256,
+  );
+```
+
+</td>
+<td>
+
+```javascript
+  const bufferBobPrivateKey = Helper.base64ToBuffer(BobPrivateKey);
+  const bufferAlicePublicKey = Helper.base64ToBuffer(AlicePublicKey);
+
+  const bob = crypto.createECDH('prime256v1');
+  bob.setPrivateKey(bufferBobPrivateKey);
+
+  const sharedSecret = bob.computeSecret(bufferAlicePublicKey);
+```
+
+</td>
+</tr>
+</table>
+  
+#### Derive an encryption key
+To get a usable encryption key from their shared secret Alice and Bob will use the HKDF algorithm. HKDF needs a salt, an info value and an output key length.  
+There is an argument between Alice and Bob about the usage of the salt and the info parameter related to how the HKDF algorithm handle both which is summed up in this [article](https://soatok.blog/2021/11/17/understanding-hkdf/) (with some bonus furry art if that's your thing) and they settle on not following its recommendations for now and use the salt as a random and info as a context value.  
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<tr>
+<td>
+
+```javascript
+  const sharedSecretKey = await window.crypto.subtle.importKey(
+    'raw',
+    sharedSecret, // the shared secret comes as a buffer from the previous step
+    { name: 'HKDF' },
+    false,
+    ['deriveBits'],
+  );
+
+  const randomSalt = window.crypto.getRandomValues(new Uint8Array(64));
+  const info = Helper.clearTextToBuffer('session-alice-and-bob');
+
+  const bufferKey = await window.crypto.subtle.deriveBits(
+    {
+      name: 'HKDF',
+      hash: 'SHA-512',
+      salt: randomSalt,
+      info,
+    },
+    sharedSecretKey,
+    256 // size of the derived key (bits)
+  );
+
+  return {
+    key: Helper.bufferToBase64(bufferKey),
+    salt: Helper.bufferToBase64(randomSalt),
+  }
+```
+
+</td>
+<td>
+
+```javascript
+  const randomSalt = crypto.randomBytes(64);
+  const info = Helper.clearTextToBuffer('session-alice-and-bob');
+
+  const hkdfUIntArray = crypto.hkdfSync(
+    'sha512',
+    sharedSecret, // the shared secret comes as a buffer from the previous step
+    randomSalt,
+    info,
+    32 // size of the derived key (bytes)
+  );
+
+  // hkdfSync doesn't return a Buffer object but a typed array
+  // To be consistent we convert it to a real Buffer
+  const bufferKey = Buffer.from(hkdfUIntArray);
+
+  return {
+    key: Helper.bufferToBase64(bufferKey),
+    salt: Helper.bufferToBase64(randomSalt),
+  }
+```
+
+</td>
+</tr>
+</table>
+  
+After the derivation step Alice and Bob can use the resulting key for symmetric encryption/decryption. Bob can just use the key directly for AES GCM encryption with `crypto.createCipheriv` while Alice just has to import the key once again for AES-GCM before using it.  
