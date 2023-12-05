@@ -13,10 +13,10 @@ async function verifyAuth(req) {
     }
 
     const bearer = heads[1];
-    const [salt, ...token] = bearer.split('.');
+    const [authSalt, ...token] = bearer.split('.');
     debug('verify token');
     const { secret } = req.app.locals;
-    const { key: authKey } = secret.getKeyAuthSign(salt);
+    const { key: authKey } = secret.getKeyAuthSign(authSalt);
     const payload = await Auth.verifyToken(token.join('.'), authKey, config.get('timer.removal.session'));
     const { user } = payload;
     req.auth = user;

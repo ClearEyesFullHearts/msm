@@ -172,9 +172,9 @@ class User {
       },
     };
 
-    const { salt, key: authKey } = secret.getKeyAuthSign();
+    const { salt: authSalt, key: authKey } = secret.getKeyAuthSign();
     const auth = {
-      token: `${salt}.${jwt.sign(payload, authKey)}`,
+      token: `${authSalt}.${jwt.sign(payload, authKey)}`,
       contacts: knownUser.contacts,
       ...payload,
     };
