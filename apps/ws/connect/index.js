@@ -115,9 +115,11 @@ const handler = async (event) => {
         const token = Buffer.from(protToken, 'hex').toString();
         const signature = Buffer.from(protSignature.trimStart(), 'hex').toString();
 
+        const [salt, ...rest] = token.split('.');
+        const { key: authKey } = tokenSecret.getKeyAuthSign(salt);
         const payload = await AWSXRay.captureAsyncFunc(
           'Auth.verifyToken',
-          Auth.verifyToken(token, tokenSecret.KEY_AUTH_SIGN, config.get('timer.removal.session')),
+          Auth.verifyToken(rest.join('.'), authKey, config.get('timer.removal.session')),
         );
         debug('token is verified, we have payload');
 

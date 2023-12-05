@@ -171,8 +171,10 @@ class User {
         username: knownUser.username,
       },
     };
+
+    const { salt, key: authKey } = secret.getKeyAuthSign();
     const auth = {
-      token: jwt.sign(payload, secret.KEY_AUTH_SIGN),
+      token: `${salt}.${jwt.sign(payload, authKey)}`,
       contacts: knownUser.contacts,
       ...payload,
     };

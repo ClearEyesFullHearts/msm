@@ -12,10 +12,12 @@ async function verifyAuth(req) {
       throw ErrorHelper.getCustomError(401, ErrorHelper.CODE.MIS_AUTH_HEADER, 'Misformed authorization header');
     }
 
-    const token = heads[1];
+    const bearer = heads[1];
+    const [salt, ...token] = bearer.split('.');
     debug('verify token');
     const { secret } = req.app.locals;
-    const payload = await Auth.verifyToken(token, secret.KEY_AUTH_SIGN, config.get('timer.removal.session'));
+    const { key: authKey } = secret.getKeyAuthSign(salt);
+    const payload = await Auth.verifyToken(token.join('.'), authKey, config.get('timer.removal.session'));
     const { user } = payload;
     req.auth = user;
     debug('token is good, user is set');

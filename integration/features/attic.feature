@@ -13,7 +13,7 @@ Scenario: Register a new user, use the vault and killswitch
     And response body should not contain vault
     Then response body match a challenge
     And I store the value of body path $ as AUTH in scenario scope
-    And response body path $.token should be ^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$
+    And response body path $.token should be ^[A-Za-z0-9+/]*(=|==)?\.[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$
     And I store the value of body path $.token as access token
     Given I load up new ECDH keys
     And I set x-msm-cpk header to `CPK`
@@ -46,7 +46,7 @@ Scenario: Register a new user, use the vault and killswitch
     And I open the vault VAULT with iamapoorlonesomecowboy
     Then response body match a challenge
     And response body path $.user.username should be `MY_AT`
-    And response body path $.token should be ^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$
+    And response body path $.token should be ^[A-Za-z0-9+/]*(=|==)?\.[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$
     And response body path $.contacts should be null
     And I store the value of body path $.token as access token
     And I set bearer token

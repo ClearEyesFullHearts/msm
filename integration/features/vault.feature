@@ -32,7 +32,7 @@ Scenario: Set the vault up and use it
   And I open the vault VAULT with iamapoorlonesomecowboy
   Then response body match a challenge
   And response body path $.user.username should be `MY_AT`
-  And response body path $.token should be ^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$
+  And response body path $.token should be ^[A-Za-z0-9+/]*(=|==)?\.[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$
   And response body path $.contacts should be null
     
 Scenario: Set the vault up and use the switch

@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const debug = require('debug')('secrets:starter');
 const AWSXRay = require('@shared/tracing');
 const {
@@ -14,6 +15,46 @@ class Secret {
     this.PRIVATE_VAPID_KEY = 'N/A';
     this.KEY_WALLET_SECRET = 'N/A';
     this.loaded = false;
+  }
+
+  getKeyAuthSign(salt = false) {
+    let rs = crypto.randomBytes(16);
+    if (salt) rs = Buffer.from(salt, 'base64');
+
+    const constant = Buffer.alloc(32);
+
+    const dek = crypto.hkdfSync(
+      'sha512',
+      Buffer.from(this.KEY_AUTH_SIGN, 'base64'),
+      constant,
+      Buffer.concat([rs, Buffer.from('KEY_AUTH_SIGN')]),
+      32,
+    );
+
+    return {
+      salt: rs.toString('base64'),
+      key: Buffer.from(dek).toString('base64'),
+    };
+  }
+
+  getKeyVaultEncrypt(info, salt = false) {
+    let rs = crypto.randomBytes(16);
+    if (salt) rs = Buffer.from(salt, 'base64');
+
+    const constant = Buffer.alloc(32);
+
+    const dek = crypto.hkdfSync(
+      'sha512',
+      Buffer.from(this.KEY_VAULT_ENCRYPT, 'base64'),
+      constant,
+      Buffer.concat([rs, Buffer.from(`KEY_VAULT_ENCRYPT_${info}`)]),
+      32,
+    );
+
+    return {
+      salt: rs.toString('base64'),
+      key: Buffer.from(dek).toString('base64'),
+    };
   }
 
   async getTracedSecretValue() {
