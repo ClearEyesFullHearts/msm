@@ -865,3 +865,247 @@ In these examples they both convert the key to a base64 string for convenience w
   
 After the derivation step Alice and Bob can use the resulting key for symmetric encryption/decryption. Bob can just use the key directly for AES GCM encryption with `crypto.createCipheriv` while Alice just has to import the key once again for AES-GCM before using it.  
   
+## Signature
+Alice and Bob would really like to be sure they are talking to each other and for that they can use one feature of the Public/Private keys infrastructure which is Signature and verification.  
+Inversely to the encryption/decryption mechanism, where everyone can encrypt with a public key and only the owner of the private key can decrypt the message, here only the owner of the private key will be able to sign a message while everyone will be able to verify that signature with the matching public key.  
+
+### RSA
+#### Key pair generation
+While theorically Bob could use the same key pair he used for encryption to sign his messages it is absolutely not recommended and he'll generate another key pair for this usage. Alice doesn't have a choice here since subtle crypto enforce the desired behavior by forcing to choose the possible usage of your key as well as the algorithm on creation. For signature schemes Alice will use RSA-PSS and "sign" / "verify" usages.  
+Just like for encryption the length of the signature is of the same size as the modulo of the key.  
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<tr>
+<td>
+
+```javascript
+
+const modulo = 1024;
+const keyPair = await window.crypto.subtle.generateKey(
+  {
+    name: 'RSA-PSS',
+    modulusLength: modulo,
+    publicExponent: new Uint8Array([1, 0, 1]),
+    hash: 'SHA-256',
+  },
+  true,
+  ['sign', 'verify'],
+);
+
+const {
+  publicKey,
+  privateKey,
+} = keyPair;
+
+const bufferPublicKey = await window.crypto.subtle.exportKey('spki', publicKey);
+const pemContentPublicKey = Helper.bufferToBase64(bufferPublicKey);
+const pemPublicKey = `-----BEGIN PUBLIC KEY-----\n${pemContentPublicKey}\n-----END PUBLIC KEY-----`;
+
+const bufferPrivateKey = await window.crypto.subtle.exportKey('pkcs8', privateKey);
+const pemContentPrivateKey = Helper.bufferToBase64(bufferPrivateKey);
+const pemPrivateKey = `-----BEGIN PUBLIC KEY-----\n${pemContentPrivateKey}\n-----END PUBLIC KEY-----`;
+
+return {
+  publicKey: pemPublicKey,
+  privateKey: pemPrivateKey,
+};
+```
+
+</td>
+<td>
+
+```javascript
+const modulo = 1024;
+const keyPair = crypto.generateKeyPairSync('rsa', {
+    modulusLength: modulo,
+    publicKeyEncoding: {
+      type: 'spki',
+      format: 'pem',
+    },
+    privateKeyEncoding: {
+      type: 'pkcs8',
+      format: 'pem',
+    },
+  }
+);
+
+const {
+  publicKey,
+  privateKey,
+} = keyPair;
+
+const publicHeader = '-----BEGIN PUBLIC KEY-----';
+const publicFooter = '-----END PUBLIC KEY-----';
+const trimmedPK = publicKey.replace(/\n/g, '');
+const pemContentPublicKey = trimmedPK.substring(publicHeader.length, trimmedPK.length - publicFooter.length);
+
+const pemPublicKey = `${publicHeader}\n${pemContentPublicKey}\n${publicFooter}`;
+
+const privateHeader = '-----BEGIN PRIVATE KEY-----';
+const privateFooter = '-----END PRIVATE KEY-----';
+const trimmedSK = privateKey.replace(/\n/g, '');
+const pemContentPublicKey = trimmedSK.substring(privateHeader.length, trimmedSK.length - privateFooter.length);
+
+const pemPrivateKey = `${privateHeader}\n${pemContentPublicKey}\n${privateFooter}`;
+
+return {
+  publicKey: pemPublicKey,
+  privateKey: pemPrivateKey,
+};
+```
+
+</td>
+</tr>
+</table>
+  
+#### Signing
+Alice and Bob have decided to use a sign-and-encrypt approach meaning they'll take the clear text, hash it, sign the hash, append the signature to the text and then encrypt the whole thing.  
+The encryption is not shown here.  
+  
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<td>
+
+```javascript
+  const buffer = Helper.clearTextToBuffer(clearText);
+  const digest = await window.crypto.subtle.digest({
+      name: 'SHA-256',
+  }, buffer);
+
+  const bufferAlicePemContent = Helper.base64ToBuffer(alicePrivateKeyPemContent);
+  const aliceKey = await window.crypto.subtle.importKey(
+    'pkcs8',
+    bufferAlicePemContent,
+    {
+      name: 'RSA-PSS',
+      hash: 'SHA-256',
+    },
+    false,
+    ['sign'],
+  );
+
+  const signature = await window.crypto.subtle.sign(
+    {
+      name: 'RSA-PSS',
+      saltLength: 32,
+    },
+    aliceKey,
+    digest,
+  );
+
+  const toEncrypt = {
+    text: clearText,
+    signature: Helper.bufferToBase64(signature),
+  };
+```
+
+</td>
+<td>
+
+```javascript
+  const pem = bobPrivateKeyPemFile;
+
+  const hash = crypto.createHash('sha256');
+  hash.update(clearText);
+  const digest = hash.digest();
+
+  const signature = crypto.sign('rsa-sha256', digest, {
+    key: pem,
+    padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+    saltLength: 32,
+  });
+
+  const toEncrypt = {
+    text: clearText,
+    signature: Helper.bufferToBase64(signature),
+  };
+```
+
+</td>
+</tr>
+</table>
+  
+#### Verifying
+The result of the verify function is by definition a boolean.  
+The decryption occuring before the verification of the signature is not shown here.  
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<td>
+
+```javascript
+  const {
+    text,
+    signature,
+  } = decrypted;
+
+  const buffer = Helper.clearTextToBuffer(text);
+  const digest = await window.crypto.subtle.digest({
+      name: 'SHA-256',
+  }, buffer);
+
+  const bufferBobPemContent = Helper.base64ToBuffer(bobPublicKeyPemContent);
+  const bobKey = await window.crypto.subtle.importKey(
+    'spki',
+    bufferBobPemContent,
+    {
+      name: 'RSA-PSS',
+      hash: 'SHA-256',
+    },
+    true,
+    ['verify'],
+  );
+
+  const signatureBuffer = Helper.base64ToBuffer(signature);
+  const result = await window.crypto.subtle.verify(
+    {
+      name: 'RSA-PSS',
+      saltLength: 32,
+    },
+    bobKey,
+    signatureBuffer,
+    digest,
+  );
+
+  return result;
+```
+
+</td>
+<td>
+
+```javascript
+  const {
+    text,
+    signature,
+  } = decrypted;
+
+  const pem = alicePublicKeyPemFile;
+  
+  const hash = crypto.createHash('sha256');
+  hash.update(text);
+  const digest = hash.digest();
+
+  const signatureBuffer = Helper.base64ToBuffer(signature);
+  const result = crypto.verify('rsa-sha256', digest, {
+    key: pem,
+    padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+    saltLength: 32,
+  }, signatureBuffer);
+
+  return result;
+```
+
+</td>
+</tr>
+</table>
+  
