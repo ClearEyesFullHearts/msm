@@ -794,7 +794,7 @@ return {
   
 #### Derive an encryption key
 To get a usable encryption key from their shared secret Alice and Bob will use the HKDF algorithm. HKDF needs a salt, an info value and an output key length.  
-There is an argument between Alice and Bob about the usage of the salt and the info parameter related to how the HKDF algorithm handle both which is summed up in this [article](https://soatok.blog/2021/11/17/understanding-hkdf/) (with some bonus furry art if that's your thing) and they settle on not following its recommendations for now and use the salt as a random and info as a context value.  
+There is an argument between Alice and Bob about the usage of the salt and the info parameter related to how the HKDF algorithm handle both which is summed up in this [article](https://soatok.blog/2021/11/17/understanding-hkdf/) (with some cool furry art as a bonus!) and they settle on not following its recommendations for now and use the salt as a random and info as a context value.  
 In these examples they both convert the key to a base64 string for convenience which is probably useless since the derived key should be used immediately for encryption/decryption and never to be shared or stored for long.  
 
 <table>

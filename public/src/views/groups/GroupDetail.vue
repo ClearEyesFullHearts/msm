@@ -3,10 +3,13 @@ import { storeToRefs } from 'pinia';
 import {
   ref, defineProps, onMounted, onUnmounted,
 } from 'vue';
-import { useGroupStore, useContactsStore, useAuthStore } from '@/stores';
+import {
+  useAlertStore, useGroupStore, useContactsStore, useAuthStore,
+} from '@/stores';
 import { Autocomplete, ClickAndEdit } from '@/components';
 import { router } from '@/router';
 
+const alertStore = useAlertStore();
 const groupStore = useGroupStore();
 const contactsStore = useContactsStore();
 const authStore = useAuthStore();
@@ -48,14 +51,26 @@ onUnmounted(() => {
 });
 
 function groupAdd(user) {
-  groupStore.addMember(user);
+  try {
+    groupStore.addMember(user);
+  } catch (err) {
+    alertStore.error(err);
+  }
 }
 function setAdmin(contact) {
-  groupStore.setAdmin(contact);
+  try {
+    groupStore.setAdmin(contact);
+  } catch (err) {
+    alertStore.error(err);
+  }
 }
 function revoke(contact) {
   if (window.confirm('Revoking a user can lead to some unreadable messages for other users, do you want to proceed?')) {
-    groupStore.revoke(contact);
+    try {
+      groupStore.revoke(contact);
+    } catch (err) {
+      alertStore.error(err);
+    }
   }
 }
 async function quit() {

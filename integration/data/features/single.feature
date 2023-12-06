@@ -3,7 +3,8 @@ Feature: Data preparation
     Prepare signle Data
 
 Scenario: Update vaults
-    Given I update random users vaults
+    Given I do what i do
+    And I update random users vaults
     And I am authenticated user vaultUser
     And I load up new ECDH keys
     And I set x-msm-cpk header to `CPK`

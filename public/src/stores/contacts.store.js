@@ -85,8 +85,8 @@ export const useContactsStore = defineStore({
     },
     async setContactList(pem, contacts) {
       const groupStore = useGroupStore();
+      this.list = [];
       if (!contacts) {
-        this.list = [];
         if (groupStore.list.length > 0) {
           this.list.unshift(...groupStore.list);
         }

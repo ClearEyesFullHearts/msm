@@ -572,6 +572,9 @@ class Util {
       vault: {
         type: Object,
         schema: {
+          info: {
+            type: String,
+          },
           token: {
             type: Object,
             schema: {
@@ -632,160 +635,10 @@ class Util {
       attic: {
         type: Object,
         schema: {
-          iv: {
-            type: String,
-          },
           salt: {
             type: String,
           },
-          proof: {
-            type: String,
-          },
-          key: {
-            type: String,
-          },
         },
-      },
-      contacts: {
-        type: Object,
-        schema: {
-          token: {
-            type: String,
-          },
-          passphrase: {
-            type: String,
-          },
-          iv: {
-            type: String,
-          },
-        },
-      },
-      lastActivity: {
-        type: Number,
-      },
-      validation: {
-        type: String,
-      },
-      msgCount: {
-        type: Number,
-      },
-      expirationDate: {
-        type: Number,
-      },
-      hasBeenRead: {
-        type: Number,
-      },
-      header: {
-        type: Object,
-        schema: {
-          token: {
-            type: String,
-          },
-          passphrase: {
-            type: String,
-          },
-          iv: {
-            type: String,
-          },
-        },
-      },
-      full: {
-        type: Object,
-        schema: {
-          token: {
-            type: String,
-          },
-          passphrase: {
-            type: String,
-          },
-          iv: {
-            type: String,
-          },
-        },
-      },
-      size: {
-        type: Number,
-      },
-      at: {
-        type: String,
-      },
-      stage: {
-        type: String,
-      },
-      domainName: {
-        type: String,
-      },
-      groupName: {
-        type: String,
-      },
-      isAdmin: {
-        type: Number,
-      },
-      auth: {
-        type: String,
-      },
-      p256dh: {
-        type: String,
-      },
-    }), { tableName: tableName || TABLE_NAME, create: config.get('dynamo.createTable') });
-    const ddb = new dynamoose.aws.ddb.DynamoDB({});
-
-    // Set DynamoDB instance to the Dynamoose DDB instance
-    dynamoose.aws.ddb.set(ddb);
-    if (config.get('dynamo.local')) dynamoose.aws.ddb.local(config.get('dynamo.local.url'));
-
-    return Everything;
-  }
-
-  static getAllAttributesModel(tableName = false) {
-    const Everything = dynamoose.model('Everything', new dynamoose.Schema({
-      pk: {
-        type: String,
-        hashKey: true,
-      },
-      sk: {
-        type: String,
-        rangeKey: true,
-      },
-      id: {
-        type: String,
-      },
-      key: {
-        type: String,
-      },
-      signature: {
-        type: String,
-      },
-      hash: {
-        type: String,
-      },
-      vault: {
-        type: Object,
-        schema: {
-          token: {
-            type: String,
-          },
-          iv: {
-            type: String,
-          },
-        },
-      },
-      switch: {
-        type: Object,
-        schema: {
-          token: {
-            type: String,
-          },
-          iv: {
-            type: String,
-          },
-        },
-      },
-      pass: {
-        type: String,
-      },
-      kill: {
-        type: String,
       },
       contacts: {
         type: Object,

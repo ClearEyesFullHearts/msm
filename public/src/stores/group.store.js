@@ -208,7 +208,6 @@ export const useGroupStore = defineStore({
         return;
       }
       this.current.members.unshift({ at, isAdmin: false });
-      this.current.members.sort(sortMembers);
       try {
         const user = await fetchWrapper.get(`${baseUrl}/user/${at}`);
 
@@ -217,9 +216,10 @@ export const useGroupStore = defineStore({
 
         await fetchWrapper.post(`${baseUrl}/group/${this.current.at}/member`, { username: at, key: targetSecret });
       } catch (err) {
-        if (this.current && this.current.member) this.current.member.shift();
+        if (this.current && this.current.members) this.current.members.shift();
         throw err;
       }
+      this.current.members.sort(sortMembers);
     },
     async setAdmin(member) {
       const mIndex = this.current.members.findIndex((m) => m.at === member.at);

@@ -141,6 +141,7 @@ class Encryption {
   }
 
   static encryptVault(key, {
+    info,
     token,
     salt,
     iv,
@@ -150,6 +151,7 @@ class Encryption {
     const keyBuffer = Buffer.from(key, 'base64');
 
     return {
+      info,
       token: this.simpleEncrypt(token, keyBuffer),
       salt: this.simpleEncrypt(salt, keyBuffer),
       iv: this.simpleEncrypt(iv, keyBuffer),

@@ -9,12 +9,12 @@ const Util = require('../../../features/support/utils');
 setDefaultTimeout(60 * 1000);
 
 BeforeAll((cb) => {
-  Util.emptyTable()
-    .then(cb);
   // Util.emptyTable()
-  //   .then(() => Util.restoreTable('backupdb_origin'))
-  // // .then(() => Util.backupTable())
   //   .then(cb);
+  Util.emptyTable()
+    .then(() => Util.restoreTable('dynamodb'))
+  // .then(() => Util.backupTable())
+    .then(cb);
 });
 
 Before(function () {
@@ -62,6 +62,6 @@ Before(function () {
 });
 
 AfterAll((cb) => {
-  Util.backupTable('backupdb_target')
+  Util.backupTable('dynamodb_target')
     .then(cb);
 });

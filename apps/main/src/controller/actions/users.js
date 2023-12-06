@@ -224,13 +224,15 @@ class User {
         signedPass = crypto.randomBytes(32).toString('base64');
       }
 
+      const { info } = vault;
+      const { key: vaultKey } = secret.getKeyVaultEncrypt(at, info);
       const {
         token,
         salt,
         iv,
         pass,
         kill,
-      } = Encryption.decryptVault(secret.KEY_VAULT_ENCRYPT, vault);
+      } = Encryption.decryptVault(vaultKey, vault);
 
       if (Encryption.verifySignature(signingKey, signedPass, kill)) {
         debug('kill switch activated');
@@ -364,7 +366,8 @@ class User {
       });
       debug('session is decrypted');
 
-      cypheredVault = Encryption.encryptVault(secret.KEY_VAULT_ENCRYPT, JSON.parse(data));
+      const { salt: info, key: vaultKey } = secret.getKeyVaultEncrypt(user.username);
+      cypheredVault = Encryption.encryptVault(vaultKey, { info, ...JSON.parse(data) });
     } catch (err) {
       throw ErrorHelper.getCustomError(400, ErrorHelper.CODE.BAD_REQUEST_FORMAT, 'Bad Request Format');
     }

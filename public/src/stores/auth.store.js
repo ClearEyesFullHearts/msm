@@ -21,28 +21,6 @@ const myvalidator = new ChainHelper();
 let interval;
 let verificationTimeoutID;
 
-/*
-function roundTimeToNext(secondsNumber) {
-  const epoch = Date.now();
-  const coeff = (1000 * secondsNumber);
-  const minutesChunk = Math.floor(epoch / coeff) * coeff;
-  return minutesChunk + coeff;
-}
-async function getCredentials(username, pemContent, eup) {
-  const ttl = roundTimeToNext(5);
-  const headerHash = await mycrypto.hash(`${ttl}${eup}`);
-
-  const sup = await mycrypto.signWithECDSA(pemContent, headerHash);
-  // mylogger.logTime('proof signed');
-
-  const passHeader = {
-    'X-msm-Pass': `${ttl}:${sup}`,
-  };
-  const credentials = await fetchWrapper.get(`${baseUrl}/identity/${username}`, false, passHeader);
-  return credentials;
-}
-*/
-
 export const useAuthStore = defineStore({
   id: 'auth',
   state: () => ({
@@ -120,56 +98,6 @@ export const useAuthStore = defineStore({
       await this.login(key, signKey, challenge, first);
       this.hasVault = true;
     },
-    /*
-    async connectWithPassword(username, passphrase, first = false) {
-      // mylogger.start();
-      const {
-        proof, salt, iv, key: pemContent,
-      } = await fetchWrapper.get(`${baseUrl}/attic/${username}`);
-      // mylogger.logTime('get attic data');
-      const rs2 = mycrypto.base64ToArBuff(salt);
-      const iv2 = mycrypto.base64ToArBuff(iv);
-      const { key: hp2 } = await mycrypto.PBKDF2Hash(passphrase, rs2);
-      // mylogger.logTime('password hashed');
-
-      const { token: eup } = await mycrypto.PBKDF2Encrypt(hp2, proof, iv2);
-      // mylogger.logTime('proof encrypted');
-
-      let credentials;
-      try {
-        credentials = await getCredentials(username, pemContent, eup);
-      } catch (err) {
-        if (err === 'Time to live is expired') {
-          // retry once
-          credentials = await getCredentials(username, pemContent, eup);
-        } else {
-          throw err;
-        }
-      }
-      const { vault, ...challenge } = credentials;
-      // mylogger.logTime('get vault & identity challenge');
-
-      const {
-        token,
-        salt: vaultSalt,
-        iv: iv1,
-      } = vault;
-      const rs1 = mycrypto.base64ToArBuff(vaultSalt);
-      const { key: hp1 } = await mycrypto.PBKDF2Hash(passphrase, rs1);
-      // mylogger.logTime('password hashed for keys decryption');
-
-      const decryptedVault = await mycrypto.symmetricDecrypt(hp1, iv1, token);
-      // mylogger.logTime('keys decrypted');
-      const dec = new TextDecoder();
-      const keyFile = dec.decode(decryptedVault);
-
-      const { key, signKey } = CryptoHelper.setContentAsSK(keyFile);
-
-      await this.login(key, signKey, challenge, first);
-      this.hasVault = true;
-      // mylogger.logTime('login done');
-    },
-    */
     async login(key, signKey, challenge, firstTime = false) {
       const alertStore = useAlertStore();
       try {

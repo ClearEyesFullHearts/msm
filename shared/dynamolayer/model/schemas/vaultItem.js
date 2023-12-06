@@ -18,6 +18,12 @@ function getLengthControlledItem(length) {
 }
 
 const itemSchema = new dynamoose.Schema({
+  info: {
+    type: String,
+    required: true,
+    minLength: 24,
+    maxLength: 24,
+  },
   token: {
     type: Object,
     schema: getLengthControlledItem(7192),

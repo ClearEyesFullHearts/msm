@@ -9,9 +9,9 @@
     "host": "test.ysypya.com"
   },
   "lambdas": {
-    "cleanup": "TestMsmMasterStack-MSMCle-MSMCleanupLambdaFunction-cJ4OyzmUzLQo",
-    "clean-user": "TestMsmMasterStack-MSMCle-MSMAccountCleanupLambdaF-3xv2rFzE7TgC",
-    "clean-msg": "TestMsmMasterStack-MSMCle-MSMMessageCleanupLambdaF-zHXEqDvzjXbT"
+    "cleanup": "TestMsmMasterStack-MSMCle-MSMCleanupLambdaFunction-lYE4qIy0wk62",
+    "clean-user": "TestMsmMasterStack-MSMCle-MSMAccountCleanupLambdaF-sYZOFCs3PB1P",
+    "clean-msg": "TestMsmMasterStack-MSMCle-MSMMessageCleanupLambdaF-nnvUZTpTHvzO"
   },
   "fixtures": {
     "db": "dynamodb",

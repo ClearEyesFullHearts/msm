@@ -1,4 +1,5 @@
 const fs = require('fs');
+const crypto = require('crypto');
 const { Given, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
 const Util = require('../../../features/support/utils');
@@ -115,6 +116,60 @@ Given(/^I load up new ECDH keys$/, async function () {
 Given(/^I set var (.*) to (.*) value$/, function (varName, value) {
   const str = this.apickli.replaceVariables(value);
   this.apickli.storeValueInScenarioScope(varName, str);
+});
+
+Given('I do what i do', async () => {
+  const fileContent = fs.readFileSync(`${__dirname}/../../randoms.json`);
+  const arrUsers = JSON.parse(fileContent);
+
+  const key = '';
+
+  function simpleDecrypt({ value, vector }, keyBuffer) {
+    const ivBuffer = Buffer.from(vector, 'base64');
+    const cipher = Buffer.from(value, 'base64');
+    const authTag = cipher.subarray(cipher.length - 16);
+    const crypted = cipher.subarray(0, cipher.length - 16);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', keyBuffer, ivBuffer);
+    decipher.setAuthTag(authTag);
+    return Buffer.concat([decipher.update(crypted), decipher.final()]);
+  }
+  function decryptVault({
+    token,
+    salt,
+    iv,
+    pass,
+    kill,
+  }) {
+    const keyBuffer = Buffer.from(key, 'base64');
+
+    return {
+      token: token ? simpleDecrypt(token, keyBuffer).toString() : undefined,
+      salt: salt ? simpleDecrypt(salt, keyBuffer).toString() : undefined,
+      iv: iv ? simpleDecrypt(iv, keyBuffer).toString() : undefined,
+      pass: pass ? simpleDecrypt(pass, keyBuffer).toString() : undefined,
+      kill: kill ? simpleDecrypt(kill, keyBuffer).toString() : undefined,
+    };
+  }
+  for (let i = 0; i < arrUsers.length; i += 1) {
+    const at = arrUsers[i];
+    const { vault } = await Util.getValueInDB({ sk: at, pk: `U#${at}` });
+
+    const {
+      token,
+      salt,
+      iv,
+    } = decryptVault(vault);
+
+    const keyContent = await Util.openVault({
+      token,
+      salt,
+      iv,
+    }, at);
+
+    const { key: encKey, signKey } = Util.setContentAsSK(keyContent);
+
+    fs.writeFileSync(`${__dirname}/../../users/temp/${i}.pem`, `${encKey}\n----- SIGNATURE -----\n${signKey}`);
+  }
 });
 
 Given('I update random users vaults', async function () {
