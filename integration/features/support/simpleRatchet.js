@@ -51,6 +51,7 @@ class SimpleRatchet {
     const pkBuffer = Buffer.from(otherPublicKey, 'base64');
 
     const sharedSecret = this.ecdh.computeSecret(pkBuffer);
+
     this.keyChain.push(sharedSecret);
     this.chainStarted = true;
   }

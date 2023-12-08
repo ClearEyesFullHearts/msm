@@ -38,8 +38,6 @@ class Helper {
         bufView[i] = txt.charCodeAt(i);
     }
     return buf;
-    // alternatively we could do
-    // return new TextEncoder().encode(txt).buffer;
   }
   static base64ToBuffer(b64Txt) {
     const str = window.atob(b64Txt); // decode base64
@@ -51,8 +49,6 @@ class Helper {
   }
   static bufferToClearText(buffer) {
     return String.fromCharCode.apply(null, new Uint8Array(buffer));
-    // alternatively we could do
-    // return new TextDecoder().decode(buffer);
   }
   static getRandomBuffer(size) {
     return window.crypto.getRandomValues(new Uint8Array(size));
