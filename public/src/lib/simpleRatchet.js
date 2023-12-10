@@ -22,9 +22,25 @@ function bufferToBase64(buffer) {
 }
 
 class SimpleRatchet {
+  #myPublicKey = null;
+
+  #myPrivateKey = null;
+
+  #chainStarted = false;
+
+  #keyChain = [];
+
+  #myChain = [];
+
+  #copyChain = [];
+
+  #iamInitiator = false;
+
+  #myCounter = -1;
+
   async #ratchet() {
-    const counter = this.keyChain.length - 1;
-    const lastKey = this.keyChain[counter];
+    const counter = this.#keyChain.length - 1;
+    const lastKey = this.#keyChain[counter];
     const salt = new ArrayBuffer(96);
 
     const info = clearTextToBuffer(`session-${counter}`);
@@ -49,36 +65,24 @@ class SimpleRatchet {
     );
 
     const key = bufferKeys.slice(0, 32);
-    const mine = this.iamInitiator ? bufferKeys.slice(32, 64) : bufferKeys.slice(64);
-    const copy = this.iamInitiator ? bufferKeys.slice(64) : bufferKeys.slice(32, 64);
+    const mine = this.#iamInitiator ? bufferKeys.slice(32, 64) : bufferKeys.slice(64);
+    const copy = this.#iamInitiator ? bufferKeys.slice(64) : bufferKeys.slice(32, 64);
 
-    this.keyChain.push(key);
-    this.myChain.push(mine);
-    this.copyChain.push(copy);
+    this.#keyChain.push(key);
+    this.#myChain.push(mine);
+    this.#copyChain.push(copy);
 
     const bufView = new Uint8Array(lastKey);
     bufView.fill(0);
-    this.keyChain[counter] = false;
-  }
-
-  constructor() {
-    this.myPublicKey = null;
-    this.myPrivateKey = null;
-    this.chainStarted = false;
-
-    this.keyChain = [];
-    this.myChain = [];
-    this.copyChain = [];
-    this.iamInitiator = false;
-    this.myCounter = -1;
+    this.#keyChain[counter] = false;
   }
 
   get publicKey() {
-    if (!this.myPublicKey) {
+    if (!this.#myPublicKey) {
       throw new Error('DH is not started');
     }
 
-    return this.myPublicKey;
+    return this.#myPublicKey;
   }
 
   async initECDH() {
@@ -91,13 +95,13 @@ class SimpleRatchet {
       ['deriveBits'],
     );
 
-    this.myPrivateKey = privateKey;
+    this.#myPrivateKey = privateKey;
     const bufferPublicKey = await window.crypto.subtle.exportKey('raw', publicKey);
-    this.myPublicKey = bufferToBase64(bufferPublicKey);
+    this.#myPublicKey = bufferToBase64(bufferPublicKey);
   }
 
   async initChains(iStart, otherPublicKey) {
-    this.iamInitiator = iStart;
+    this.#iamInitiator = iStart;
 
     const otherKeyBuffer = base64ToBuffer(otherPublicKey);
     const otherKeyObject = await window.crypto.subtle.importKey(
@@ -117,31 +121,30 @@ class SimpleRatchet {
         namedCurve: 'P-521',
         public: otherKeyObject,
       },
-      this.myPrivateKey,
+      this.#myPrivateKey,
       528,
     );
 
-    this.keyChain.push(sharedSecret);
-    this.chainStarted = true;
-    this.myPrivateKey = null;
-    delete this.myPrivateKey;
+    this.#keyChain.push(sharedSecret);
+    this.#chainStarted = true;
+    this.#myPrivateKey = null;
   }
 
   async send(message) {
-    if (!this.chainStarted) {
+    if (!this.#chainStarted) {
       throw new Error('Chain is not initialized');
     }
 
-    this.myCounter += 1;
-    while (this.myChain.length <= this.myCounter) {
+    this.#myCounter += 1;
+    while (this.#myChain.length <= this.#myCounter) {
       await this.#ratchet();
     }
 
-    if (!this.myChain[this.myCounter]) {
+    if (!this.#myChain[this.#myCounter]) {
       throw new Error('You cannot reuse a key');
     }
 
-    const bufferKey = this.myChain[this.myCounter];
+    const bufferKey = this.#myChain[this.#myCounter];
 
     const key = await window.crypto.subtle.importKey(
       'raw',
@@ -163,29 +166,29 @@ class SimpleRatchet {
 
     const bufView = new Uint8Array(bufferKey);
     bufView.fill(0);
-    this.myChain[this.myCounter] = false;
+    this.#myChain[this.#myCounter] = false;
 
     return {
-      counter: this.myCounter,
+      counter: this.#myCounter,
       cypher: bufferToBase64(bufferCypher),
       iv: bufferToBase64(bufferIv),
     };
   }
 
   async receive({ cypher, iv, counter }) {
-    if (!this.chainStarted) {
+    if (!this.#chainStarted) {
       throw new Error('Chain is not initialized');
     }
 
-    while (this.copyChain.length <= counter) {
+    while (this.#copyChain.length <= counter) {
       await this.#ratchet();
     }
 
-    if (!this.copyChain[counter]) {
+    if (!this.#copyChain[counter]) {
       throw new Error('You cannot reuse a key');
     }
 
-    const bufferKey = this.copyChain[counter];
+    const bufferKey = this.#copyChain[counter];
     const bufferIv = base64ToBuffer(iv);
     const bufferCypher = base64ToBuffer(cypher);
 
@@ -211,7 +214,7 @@ class SimpleRatchet {
 
     const bufView = new Uint8Array(bufferKey);
     bufView.fill(0);
-    this.copyChain[counter] = false;
+    this.#copyChain[counter] = false;
 
     return bufferToClearText(bufferText);
   }

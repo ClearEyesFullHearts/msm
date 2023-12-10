@@ -1,55 +1,5 @@
 <script setup>
-import {
-  onMounted,
-} from 'vue';
 import config from '@/lib/config';
-import SimpleRatchet from '@/lib/simpleRatchet';
-
-onMounted(async () => {
-  const alice = new SimpleRatchet();
-  const bob = new SimpleRatchet();
-  await alice.initECDH();
-  await bob.initECDH();
-
-  await alice.initChains(true, bob.publicKey);
-  await bob.initChains(false, alice.publicKey);
-
-  const message0 = await alice.send('Hello Bob!');
-  const received0 = await bob.receive(message0);
-
-  console.log(received0);
-
-  const message1 = await alice.send('How are you?');
-  const received1 = await bob.receive(message1);
-
-  console.log(received1);
-
-  const message2 = await bob.send('Hello! I\'m fine and you?');
-  const received2 = await alice.receive(message2);
-
-  console.log(received2);
-
-  const message4 = await bob.send('I\'m losing contact');
-  const message5 = await bob.send('Hello! Hello!');
-  const message6 = await bob.send('Are you there?');
-
-  const message7 = await alice.send('I lost you for a while');
-  const received7 = await bob.receive(message7);
-
-  console.log(received7);
-
-  const message8 = await bob.send('Glad to see you again!');
-  const received8 = await alice.receive(message8);
-
-  console.log(received8);
-
-  const received6 = await alice.receive(message6);
-  console.log(received6);
-  const received4 = await alice.receive(message4);
-  console.log(received4);
-  const received5 = await alice.receive(message5);
-  console.log(received5);
-});
 </script>
 
 <template>

@@ -1104,4 +1104,366 @@ The decryption occuring before the verification of the signature is not shown he
 </td>
 </tr>
 </table>
+
+### ECDSA
+TODO
   
+## Simple Ratchet
+Alice and Bob agree that they should try to achieve perfect forward secrecy for their communications and decide to implement a simple ratchet algorithm inspired by the first part of Signal's Double Ratchet algorithm.  
+Both recommended curves (Curve25519 and Curve448) are unavailable to Alice so they decide to use P-521 this time. Bob has some reading problems and Alice has to repeatedly insist that it is P dash five hundred and twenty one and not P dash five hundred and twelve but they finally make it work.  
+Bob do not control the size of the computed secret he get from `ecdh.computeSecret` so they agree to use that size for Alice's `crypto.subtle.deriveBits`. Bob computed secret's length for secp521r1 curve is 66 bytes so Alice has to derive her computed secret to a 528 bits buffer.   
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<td>
+
+```javascript
+class SimpleRatchet {
+  #myPublicKey = null;
+
+  #myPrivateKey = null;
+
+  #chainStarted = false;
+
+  #keyChain = [];
+
+  #myChain = [];
+
+  #copyChain = [];
+
+  #iamInitiator = false;
+
+  #myCounter = -1;
+
+  async #ratchet() {
+    const counter = this.#keyChain.length - 1;
+    const lastKey = this.#keyChain[counter];
+    const salt = new ArrayBuffer(96);
+
+    const info = Helper.clearTextToBuffer(`session-${counter}`);
+
+    const sharedSecretKey = await window.crypto.subtle.importKey(
+      'raw',
+      lastKey,
+      { name: 'HKDF' },
+      false,
+      ['deriveBits'],
+    );
+
+    const bufferKeys = await window.crypto.subtle.deriveBits(
+      {
+        name: 'HKDF',
+        hash: 'SHA-512',
+        salt,
+        info,
+      },
+      sharedSecretKey,
+      768,
+    );
+
+    const key = bufferKeys.slice(0, 32);
+    const mine = this.#iamInitiator ? bufferKeys.slice(32, 64) : bufferKeys.slice(64);
+    const copy = this.#iamInitiator ? bufferKeys.slice(64) : bufferKeys.slice(32, 64);
+
+    this.#keyChain.push(key);
+    this.#myChain.push(mine);
+    this.#copyChain.push(copy);
+
+    const bufView = new Uint8Array(lastKey);
+    bufView.fill(0);
+    this.#keyChain[counter] = false;
+  }
+
+  get publicKey() {
+    if (!this.#myPublicKey) {
+      throw new Error('DH is not started');
+    }
+
+    return this.#myPublicKey;
+  }
+
+  async initECDH() {
+    const { publicKey, privateKey } = await window.crypto.subtle.generateKey(
+      {
+        name: 'ECDH',
+        namedCurve: 'P-521',
+      },
+      true,
+      ['deriveBits'],
+    );
+
+    this.#myPrivateKey = privateKey;
+    const bufferPublicKey = await window.crypto.subtle.exportKey('raw', publicKey);
+    this.#myPublicKey = Helper.bufferToBase64(bufferPublicKey);
+  }
+
+  async initChains(iStart, otherPublicKey) {
+    this.#iamInitiator = iStart;
+
+    const otherKeyBuffer = Helper.base64ToBuffer(otherPublicKey);
+    const otherKeyObject = await window.crypto.subtle.importKey(
+      'raw',
+      otherKeyBuffer,
+      {
+        name: 'ECDH',
+        namedCurve: 'P-521',
+      },
+      false,
+      [],
+    );
+
+    const sharedSecret = await window.crypto.subtle.deriveBits(
+      {
+        name: 'ECDH',
+        namedCurve: 'P-521',
+        public: otherKeyObject,
+      },
+      this.#myPrivateKey,
+      528,
+    );
+
+    this.#keyChain.push(sharedSecret);
+    this.#chainStarted = true;
+    this.#myPrivateKey = null;
+  }
+
+  async send(message) {
+    if (!this.#chainStarted) {
+      throw new Error('Chain is not initialized');
+    }
+
+    this.#myCounter += 1;
+    while (this.#myChain.length <= this.#myCounter) {
+      await this.#ratchet();
+    }
+
+    if (!this.#myChain[this.#myCounter]) {
+      throw new Error('You cannot reuse a key');
+    }
+
+    const bufferKey = this.#myChain[this.#myCounter];
+
+    const key = await window.crypto.subtle.importKey(
+      'raw',
+      bufferKey,
+      {
+        name: 'AES-GCM',
+      },
+      false,
+      ['encrypt'],
+    );
+
+    const bufferIv = window.crypto.getRandomValues(new Uint8Array(16));
+    const bufferTxt = Helper.clearTextToBuffer(message);
+    const bufferCypher = await window.crypto.subtle.encrypt({
+      name: 'AES-GCM',
+      iv: bufferIv,
+      tagLength: 128,
+    }, key, bufferTxt);
+
+    const bufView = new Uint8Array(bufferKey);
+    bufView.fill(0);
+    this.#myChain[this.#myCounter] = false;
+
+    return {
+      counter: this.#myCounter,
+      cypher: Helper.bufferToBase64(bufferCypher),
+      iv: Helper.bufferToBase64(bufferIv),
+    };
+  }
+
+  async receive({ cypher, iv, counter }) {
+    if (!this.#chainStarted) {
+      throw new Error('Chain is not initialized');
+    }
+
+    while (this.#copyChain.length <= counter) {
+      await this.#ratchet();
+    }
+
+    if (!this.#copyChain[counter]) {
+      throw new Error('You cannot reuse a key');
+    }
+
+    const bufferKey = this.#copyChain[counter];
+    const bufferIv = Helper.base64ToBuffer(iv);
+    const bufferCypher = Helper.base64ToBuffer(cypher);
+
+    const importedKey = await window.crypto.subtle.importKey(
+      'raw',
+      bufferKey,
+      {
+        name: 'AES-GCM',
+      },
+      false,
+      ['decrypt'],
+    );
+
+    const bufferText = await window.crypto.subtle.decrypt(
+      {
+        name: 'AES-GCM',
+        iv: bufferIv,
+        tagLength: 128,
+      },
+      importedKey,
+      bufferCypher,
+    );
+
+    const bufView = new Uint8Array(bufferKey);
+    bufView.fill(0);
+    this.#copyChain[counter] = false;
+
+    return Helper.bufferToClearText(bufferText);
+  }
+}
+```
+
+</td>
+<td>
+
+```javascript
+class SimpleRatchet {
+  #myPublicKey = null;
+
+  #ecdh = null;
+
+  #chainStarted = false;
+
+  #keyChain = [];
+
+  #myChain = [];
+
+  #copyChain = [];
+
+  #iamInitiator = false;
+
+  #myCounter = -1;
+
+  #ratchet() {
+    const counter = this.#keyChain.length - 1;
+    const lastKey = this.#keyChain[counter];
+    const salt = Buffer.alloc(96);
+
+    const info = Buffer.from(`session-${counter}`);
+
+    const hkdfUIntArray = crypto.hkdfSync(
+      'sha512',
+      lastKey,
+      salt,
+      info,
+      96,
+    );
+
+    const bufferKeys = Buffer.from(hkdfUIntArray);
+    const key = bufferKeys.subarray(0, 32);
+    const mine = this.#iamInitiator ? bufferKeys.subarray(32, 64) : bufferKeys.subarray(64);
+    const copy = this.#iamInitiator ? bufferKeys.subarray(64) : bufferKeys.subarray(32, 64);
+
+    this.#keyChain.push(key);
+    this.#myChain.push(mine);
+    this.#copyChain.push(copy);
+
+    lastKey.fill();
+    this.#keyChain[counter] = false;
+  }
+
+  constructor() {
+    this.#ecdh = crypto.createECDH('secp521r1');
+    this.#ecdh.generateKeys();
+
+    this.#myPublicKey = this.#ecdh.getPublicKey('base64');
+  }
+
+  get publicKey() {
+    return this.#myPublicKey;
+  }
+
+  initChains(iStart, otherPublicKey) {
+    this.#iamInitiator = iStart;
+    const pkBuffer = Buffer.from(otherPublicKey, 'base64');
+
+    const sharedSecret = this.#ecdh.computeSecret(pkBuffer);
+
+    this.#keyChain.push(sharedSecret);
+    this.#chainStarted = true;
+    this.#ecdh = null;
+  }
+
+  send(message) {
+    if (!this.#chainStarted) {
+      throw new Error('Chain is not initialized');
+    }
+
+    this.#myCounter += 1;
+    while (this.#myChain.length <= this.#myCounter) {
+      this.#ratchet();
+    }
+
+    if (!this.#myChain[this.#myCounter]) {
+      throw new Error('You cannot reuse a key');
+    }
+
+    const bufferKey = this.#myChain[this.#myCounter];
+
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(
+      'aes-256-gcm',
+      bufferKey,
+      iv,
+      { authTagLength: 16 },
+    );
+
+    const bufferCypher = Buffer.concat([
+      cipher.update(message),
+      cipher.final(),
+      cipher.getAuthTag(),
+    ]);
+
+    bufferKey.fill();
+    this.#myChain[this.#myCounter] = false;
+
+    return {
+      counter: this.#myCounter,
+      cypher: bufferCypher.toString('base64'),
+      iv: iv.toString('base64'),
+    };
+  }
+
+  receive({ cypher, iv, counter }) {
+    if (!this.#chainStarted) {
+      throw new Error('Chain is not initialized');
+    }
+
+    while (this.#copyChain.length <= counter) {
+      this.#ratchet();
+    }
+
+    if (!this.#copyChain[counter]) {
+      throw new Error('You cannot reuse a key');
+    }
+
+    const bufferKey = this.#copyChain[counter];
+    const bufferIv = Buffer.from(iv, 'base64');
+    const bufferCypher = Buffer.from(cypher, 'base64');
+
+    const authTag = bufferCypher.subarray(bufferCypher.length - 16);
+    const crypted = bufferCypher.subarray(0, bufferCypher.length - 16);
+
+    const decipher = crypto.createDecipheriv('aes-256-gcm', bufferKey, bufferIv);
+    decipher.setAuthTag(authTag);
+    const bufferText = Buffer.concat([decipher.update(crypted), decipher.final()]);
+
+    bufferKey.fill();
+    this.#copyChain[counter] = false;
+
+    return bufferText.toString();
+  }
+}
+```
+
+</td>
+</tr>
+</table>
