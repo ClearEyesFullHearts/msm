@@ -1467,3 +1467,60 @@ class SimpleRatchet {
 </td>
 </tr>
 </table>
+
+### Usage
+  
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<td>
+
+```javascript
+  const alice = new SimpleRatchet();
+
+  // Bob has made its public key available to Alice
+  // and she starts the conversation
+
+  await alice.initECDH();
+  await alice.initChains(true, bobPublicKey);
+
+  const message = await alice.send('Hello Bob!');
+  
+  // she send her public key along her first message
+  return {
+    header: alice.publicKey,
+    body: message
+  }
+```
+
+</td>
+<td>
+
+```javascript
+  const bob = new SimpleRatchet();
+  
+  // Bob's public key is available with bob.publicKey
+
+  // He gets Alice's PK with her first message
+  // and initialize the conversation with it
+
+  const {
+    header: alicePublicKey,
+    body: { 
+      cypher,
+      iv,
+      counter
+    }
+  }
+
+  bob.initChains(false, alicePublicKey);
+  const received = bob.receive({ cypher, iv, counter });
+
+  // received is Alice's 'Hello Bob!'
+
+  const message = bob.send('Hello! I\'m fine and you?');
+  
+  return message;
+```
