@@ -810,6 +810,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /test:
+    post:
+      summary: Create a new user
+      operationId: post
+      x-eov-operation-handler: test
+      responses:
+        '200':
+          description: test post
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Create a new user
+      operationId: put
+      x-eov-operation-handler: test
+      responses:
+        '200':
+          description: test put
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    
 components:
   securitySchemes:
     bearerAuth:
