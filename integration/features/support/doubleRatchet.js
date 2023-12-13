@@ -1,6 +1,8 @@
 const crypto = require('crypto');
 const SymmetricRatchet = require('./symmetricRatchet');
 
+const MAX_ACTIVE_CHAINS = 5;
+
 class DoubleRatchet {
   #ecdh;
 
@@ -11,6 +13,8 @@ class DoubleRatchet {
   #receiving = new SymmetricRatchet();
 
   #memories = {};
+
+  #actives = [];
 
   #previousCounter = -1;
 
@@ -74,7 +78,7 @@ class DoubleRatchet {
     lastKey.fill();
     this.#keyChain[counter] = false;
 
-    if (PN <= this.#receiving.counter) {
+    if (this.#receiving.counter <= PN) {
       this.#receiving.counter = PN;
     }
 
@@ -82,10 +86,14 @@ class DoubleRatchet {
     sr.initKey(CKr);
     this.#receiving = sr;
     this.#memories[otherPublicKey] = sr;
+    this.#actives.push(sr);
+    if (this.#actives.length > MAX_ACTIVE_CHAINS) {
+      const tooOld = this.#actives.shift();
+      tooOld.clear();
+    }
   }
 
-  constructor(name) {
-    this.name = name;
+  constructor() {
     this.#ecdh = crypto.createECDH('secp521r1');
     this.#ecdh.generateKeys();
   }
@@ -118,7 +126,10 @@ class DoubleRatchet {
 
   receive(otherPublicKey, message) {
     if (this.#memories[otherPublicKey]) {
-      return this.#memories[otherPublicKey].receive(message);
+      if (this.#memories[otherPublicKey].active) {
+        return this.#memories[otherPublicKey].receive(message);
+      }
+      throw new Error('Receiving chain too old');
     }
 
     const { PN } = message;

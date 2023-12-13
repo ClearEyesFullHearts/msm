@@ -1,5 +1,7 @@
 const crypto = require('crypto');
 
+const MAX_SKIPPED_MESSAGES = 5;
+
 class SymmetricRatchet {
   #chainStarted = false;
 
@@ -31,6 +33,10 @@ class SymmetricRatchet {
 
     lastKey.fill();
     this.#keyChain[counter] = false;
+  }
+
+  get active() {
+    return this.#chainStarted;
   }
 
   get counter() {
@@ -99,7 +105,7 @@ class SymmetricRatchet {
       throw new Error('Chain is not initialized');
     }
 
-    if (counter - this.#sharedChain.length > 5) {
+    if (counter - this.#sharedChain.length > MAX_SKIPPED_MESSAGES) {
       throw new Error('Too many missed messages');
     }
 
@@ -141,6 +147,7 @@ class SymmetricRatchet {
       }
       return false;
     });
+    this.#chainStarted = false;
   }
 }
 
