@@ -1,5 +1,63 @@
 <script setup>
+import { onMounted } from 'vue';
 import config from '@/lib/config';
+import DoubleRatchet from '@/lib/doubleRatchet';
+
+onMounted(async () => {
+  const then = Date.now();
+
+  const alice = new DoubleRatchet();
+  await alice.initECDH();
+  const bob = new DoubleRatchet();
+  await bob.initECDH();
+
+  const RKa = window.crypto.getRandomValues(new Uint8Array(32));
+  const RKb = new Uint8Array(RKa);
+  await alice.init(RKa, bob.publicKey);
+  await bob.init(RKb);
+
+  const message0 = await alice.send('Hello Bob!');
+  const received0 = await bob.receive(message0.publicKey, message0.body);
+
+  console.log(received0);
+
+  const message1 = await alice.send('How are you?');
+  const received1 = await bob.receive(message1.publicKey, message1.body);
+
+  console.log(received1);
+
+  const message2 = await bob.send('Hello! I\'m fine and you?');
+  const received2 = await alice.receive(message2.publicKey, message2.body);
+
+  console.log(received2);
+
+  const message3 = await alice.send('Are you here?');
+  const message4 = await alice.send('I cannot hear you?');
+  const message5 = await alice.send('Helloooooo');
+  const received3 = await bob.receive(message3.publicKey, message3.body);
+
+  console.log(received3);
+
+  const message6 = await bob.send('Hello again, I\'m here');
+  const received4 = await alice.receive(message6.publicKey, message6.body);
+
+  console.log(received4);
+
+  const message7 = await alice.send('Lost you for a while, good to see you');
+  const received5 = await bob.receive(message7.publicKey, message7.body);
+
+  console.log(received5);
+
+  const received6 = await bob.receive(message5.publicKey, message5.body);
+
+  console.log(received6);
+
+  const received7 = await bob.receive(message4.publicKey, message4.body);
+
+  console.log(received7);
+
+  console.log(`Duration: ${Date.now() - then} ms`);
+});
 </script>
 
 <template>

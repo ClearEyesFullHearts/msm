@@ -24,7 +24,7 @@ class DoubleRatchet {
     const counter = this.#keyChain.length - 1;
     const lastKey = this.#keyChain[counter];
 
-    this.#ecdh = crypto.createECDH('secp521r1');
+    this.#ecdh = crypto.createECDH('prime256v1');
     this.#ecdh.generateKeys();
     const dhOut = this.#ecdh.computeSecret(pk);
 
@@ -94,7 +94,7 @@ class DoubleRatchet {
   }
 
   constructor() {
-    this.#ecdh = crypto.createECDH('secp521r1');
+    this.#ecdh = crypto.createECDH('prime256v1');
     this.#ecdh.generateKeys();
   }
 
