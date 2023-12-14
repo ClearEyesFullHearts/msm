@@ -62,7 +62,7 @@ class SymmetricRatchet {
     this.#chainStarted = true;
   }
 
-  send(message) {
+  send(message, aad) {
     if (!this.#chainStarted) {
       throw new Error('Chain is not initialized');
     }
@@ -84,6 +84,8 @@ class SymmetricRatchet {
       { authTagLength: 16 },
     );
 
+    if (aad) cipher.setAAD(aad);
+
     const bufferCypher = Buffer.concat([
       cipher.update(message),
       cipher.final(),
@@ -100,7 +102,7 @@ class SymmetricRatchet {
     };
   }
 
-  receive({ cypher, iv, counter }) {
+  receive({ cypher, iv, counter }, aad) {
     if (!this.#chainStarted) {
       throw new Error('Chain is not initialized');
     }
@@ -126,7 +128,11 @@ class SymmetricRatchet {
 
     const decipher = crypto.createDecipheriv('aes-256-gcm', bufferKey, bufferIv);
     decipher.setAuthTag(authTag);
-    const bufferText = Buffer.concat([decipher.update(crypted), decipher.final()]);
+    if (aad) decipher.setAAD(aad);
+    const bufferText = Buffer.concat([
+      decipher.update(crypted),
+      decipher.final(),
+    ]);
 
     bufferKey.fill();
     this.#sharedChain[counter] = false;

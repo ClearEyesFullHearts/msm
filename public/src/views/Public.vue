@@ -1,62 +1,82 @@
 <script setup>
 import { onMounted } from 'vue';
 import config from '@/lib/config';
+import Helper from '@/lib/encodingHelper';
 import DoubleRatchet from '@/lib/doubleRatchet';
+import { fetchWrapper } from '@/helpers';
+
+const baseUrl = config.API_URL;
 
 onMounted(async () => {
-  const then = Date.now();
-
   const alice = new DoubleRatchet();
   await alice.initECDH();
-  const bob = new DoubleRatchet();
-  await bob.initECDH();
+  const key = window.crypto.getRandomValues(new Uint8Array(32));
+  const RK = Helper.bufferToBase64(key);
+  const sessionId = window.crypto.randomUUID();
+  const { publicKey } = await fetchWrapper.post(`${baseUrl}/test`, { RK, sessionId });
 
-  const RKa = window.crypto.getRandomValues(new Uint8Array(32));
-  const RKb = new Uint8Array(RKa);
-  await alice.init(RKa, bob.publicKey);
-  await bob.init(RKb);
+  await alice.init(RK, publicKey);
 
-  const message0 = await alice.send('Hello Bob!');
-  const received0 = await bob.receive(message0.publicKey, message0.body);
+  const { publicKey: mpk, body } = await alice.send('Hello Bob!');
+  const { resp1, resp2 } = await fetchWrapper.put(`${baseUrl}/test`, { publicKey: mpk, message: body });
 
-  console.log(received0);
+  const rec1 = await alice.receive(resp1.publicKey, resp1.body, sessionId);
+  console.log('rec 1', rec1);
+  const rec2 = await alice.receive(resp2.publicKey, resp2.body, sessionId);
+  console.log('rec 2', rec2);
+  // const then = Date.now();
 
-  const message1 = await alice.send('How are you?');
-  const received1 = await bob.receive(message1.publicKey, message1.body);
+  // const alice = new DoubleRatchet();
+  // await alice.initECDH();
+  // const bob = new DoubleRatchet();
+  // await bob.initECDH();
 
-  console.log(received1);
+  // const RKa = window.crypto.getRandomValues(new Uint8Array(32));
+  // const RKb = new Uint8Array(RKa);
+  // await alice.init(RKa, bob.publicKey);
+  // await bob.init(RKb);
 
-  const message2 = await bob.send('Hello! I\'m fine and you?');
-  const received2 = await alice.receive(message2.publicKey, message2.body);
+  // const message0 = await alice.send('Hello Bob!');
+  // const received0 = await bob.receive(message0.publicKey, message0.body);
 
-  console.log(received2);
+  // console.log(received0);
 
-  const message3 = await alice.send('Are you here?');
-  const message4 = await alice.send('I cannot hear you?');
-  const message5 = await alice.send('Helloooooo');
-  const received3 = await bob.receive(message3.publicKey, message3.body);
+  // const message1 = await alice.send('How are you?');
+  // const received1 = await bob.receive(message1.publicKey, message1.body);
 
-  console.log(received3);
+  // console.log(received1);
 
-  const message6 = await bob.send('Hello again, I\'m here');
-  const received4 = await alice.receive(message6.publicKey, message6.body);
+  // const message2 = await bob.send('Hello! I\'m fine and you?');
+  // const received2 = await alice.receive(message2.publicKey, message2.body);
 
-  console.log(received4);
+  // console.log(received2);
 
-  const message7 = await alice.send('Lost you for a while, good to see you');
-  const received5 = await bob.receive(message7.publicKey, message7.body);
+  // const message3 = await alice.send('Are you here?');
+  // const message4 = await alice.send('I cannot hear you?');
+  // const message5 = await alice.send('Helloooooo');
+  // const received3 = await bob.receive(message3.publicKey, message3.body);
 
-  console.log(received5);
+  // console.log(received3);
 
-  const received6 = await bob.receive(message5.publicKey, message5.body);
+  // const message6 = await bob.send('Hello again, I\'m here');
+  // const received4 = await alice.receive(message6.publicKey, message6.body);
 
-  console.log(received6);
+  // console.log(received4);
 
-  const received7 = await bob.receive(message4.publicKey, message4.body);
+  // const message7 = await alice.send('Lost you for a while, good to see you');
+  // const received5 = await bob.receive(message7.publicKey, message7.body);
 
-  console.log(received7);
+  // console.log(received5);
 
-  console.log(`Duration: ${Date.now() - then} ms`);
+  // const received6 = await bob.receive(message5.publicKey, message5.body);
+
+  // console.log(received6);
+
+  // const received7 = await bob.receive(message4.publicKey, message4.body);
+
+  // console.log(received7);
+
+  // console.log(`Duration: ${Date.now() - then} ms`);
 });
 </script>
 

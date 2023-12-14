@@ -114,20 +114,28 @@ class DoubleRatchet {
     }
   }
 
-  send(message) {
+  send(message, aad = false) {
+    let AAD = aad;
+    if (aad) {
+      AAD = Buffer.from(String(aad));
+    }
     return {
       publicKey: this.publicKey,
       body: {
-        ...this.#sending.send(message),
+        ...this.#sending.send(message, AAD),
         PN: this.#previousCounter,
       },
     };
   }
 
-  receive(otherPublicKey, message) {
+  receive(otherPublicKey, message, aad = false) {
+    let AAD = aad;
+    if (aad) {
+      AAD = Buffer.from(String(aad));
+    }
     if (this.#memories[otherPublicKey]) {
       if (this.#memories[otherPublicKey].active) {
-        return this.#memories[otherPublicKey].receive(message);
+        return this.#memories[otherPublicKey].receive(message, AAD);
       }
       throw new Error('Receiving chain too old');
     }
@@ -137,7 +145,7 @@ class DoubleRatchet {
     this.#ratchetReceivingChain(otherPublicKey, PN);
     this.#ratchetSendingChain(otherPublicKey);
 
-    return this.#receiving.receive(message);
+    return this.#receiving.receive(message, AAD);
   }
 }
 

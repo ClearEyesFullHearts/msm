@@ -177,8 +177,12 @@ class DoubleRatchet {
     }
   }
 
-  async send(message) {
-    const encryption = await this.#sending.send(message);
+  async send(message, aad = false) {
+    let AAD = aad;
+    if (aad) {
+      AAD = Helper.clearTextToBuffer(String(aad));
+    }
+    const encryption = await this.#sending.send(message, AAD);
     return {
       publicKey: this.publicKey,
       body: {
@@ -188,10 +192,14 @@ class DoubleRatchet {
     };
   }
 
-  async receive(otherPublicKey, message) {
+  async receive(otherPublicKey, message, aad = false) {
+    let AAD = aad;
+    if (aad) {
+      AAD = Helper.clearTextToBuffer(String(aad));
+    }
     if (this.#memories[otherPublicKey]) {
       if (this.#memories[otherPublicKey].active) {
-        const result = await this.#memories[otherPublicKey].receive(message);
+        const result = await this.#memories[otherPublicKey].receive(message, AAD);
         return result;
       }
       throw new Error('Receiving chain too old');
@@ -202,7 +210,7 @@ class DoubleRatchet {
     await this.#ratchetReceivingChain(otherPublicKey, PN);
     await this.#ratchetSendingChain(otherPublicKey);
 
-    const result = await this.#receiving.receive(message);
+    const result = await this.#receiving.receive(message, AAD);
     return result;
   }
 }

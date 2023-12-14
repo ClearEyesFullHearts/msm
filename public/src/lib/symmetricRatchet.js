@@ -73,7 +73,7 @@ class SymmetricRatchet {
     this.#chainStarted = true;
   }
 
-  async send(message) {
+  async send(message, aad) {
     if (!this.#chainStarted) {
       throw new Error('Chain is not initialized');
     }
@@ -103,6 +103,7 @@ class SymmetricRatchet {
       name: 'AES-GCM',
       iv: bufferIv,
       tagLength: 128,
+      additionalData: aad || undefined,
     }, key, bufferTxt);
 
     const bufView = new Uint8Array(bufferKey);
@@ -116,7 +117,7 @@ class SymmetricRatchet {
     };
   }
 
-  async receive({ cypher, iv, counter }) {
+  async receive({ cypher, iv, counter }, aad) {
     if (!this.#chainStarted) {
       throw new Error('Chain is not initialized');
     }
@@ -152,6 +153,7 @@ class SymmetricRatchet {
         name: 'AES-GCM',
         iv: bufferIv,
         tagLength: 128,
+        additionalData: aad || undefined,
       },
       importedKey,
       bufferCypher,
