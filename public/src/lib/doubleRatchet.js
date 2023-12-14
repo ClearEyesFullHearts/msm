@@ -2,7 +2,6 @@ import Helper from './encodingHelper';
 import SymmetricRatchet from './symmetricRatchet';
 
 const MAX_ACTIVE_CHAINS = 5;
-
 class DoubleRatchet {
   #myPublicKey;
 

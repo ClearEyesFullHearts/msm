@@ -1524,3 +1524,755 @@ class SimpleRatchet {
   
   return message;
 ```
+
+</td>
+</tr>
+</table>
+
+## Double Ratchet
+"Double the ratchet, double the fun!" is a phrase nobody ever uttered but Alice and Bob having come this far still think they should take a shot at [Signal's true Double Ratchet algorithm](https://signal.org/docs/specifications/doubleratchet/).  
+First they will have to create a symmetric ratchet and combine it with a DH ratchet to achieve the target algorithm. They try to stay as true as possible to the definition which means that the first root key is supposed to be agreed upon and shared between themselves before the ratchet session by another mean and it will be possible to add authenticated additional data during the encryption and decryption.  
+No X3DH or encrypted header in this one though for now, they're planning to use RSA keys for the initial key agreement and authentications.  
+This time they go back to the P-256 curve, it is shorter and faster than the P-521 and secure enough for their usage.  
+
+### Symmetric Ratchet
+The symmetric ratchet object let's you use it for sending and receiving messages but each object should be used only for one of the actions
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<td>
+
+```javascript
+const MAX_SKIPPED_MESSAGES = 5;
+class SymmetricRatchet {
+  #chainStarted = false;
+
+  #keyChain = [];
+
+  #sharedChain = [];
+
+  async #ratchet() {
+    const counter = this.#keyChain.length - 1;
+    const lastKey = this.#keyChain[counter];
+    const salt = new ArrayBuffer(64);
+
+    const info = Helper.clearTextToBuffer(`session-${counter}`);
+
+    const sharedSecretKey = await window.crypto.subtle.importKey(
+      'raw',
+      lastKey,
+      { name: 'HKDF' },
+      false,
+      ['deriveBits'],
+    );
+
+    const bufferKeys = await window.crypto.subtle.deriveBits(
+      {
+        name: 'HKDF',
+        hash: 'SHA-512',
+        salt,
+        info,
+      },
+      sharedSecretKey,
+      512,
+    );
+
+    const key = bufferKeys.slice(0, 32);
+    const shared = bufferKeys.slice(32);
+
+    this.#keyChain.push(key);
+    this.#sharedChain.push(shared);
+
+    const bufView = new Uint8Array(lastKey);
+    bufView.fill(0);
+    this.#keyChain[counter] = false;
+  }
+
+  get active() {
+    return this.#chainStarted;
+  }
+
+  get counter() {
+    return this.#keyChain.length - 1;
+  }
+
+  async setCounter(val) {
+    if (val - this.#sharedChain.length > 5) {
+      throw new Error('Too many missed messages');
+    }
+    while (this.#sharedChain.length <= val) {
+      await this.#ratchet();
+    }
+  }
+
+  initKey(rootKey) {
+    let sharedSecret = rootKey;
+    if (!(rootKey instanceof ArrayBuffer)) {
+      sharedSecret = Helper.base64ToBuffer(rootKey);
+    }
+
+    this.#keyChain.push(sharedSecret);
+    this.#chainStarted = true;
+  }
+
+  async send(message, aad) {
+    if (!this.#chainStarted) {
+      throw new Error('Chain is not initialized');
+    }
+
+    const counter = this.#sharedChain.length;
+    await this.#ratchet();
+
+    if (!this.#sharedChain[counter]) {
+      throw new Error('You cannot reuse a key');
+    }
+
+    const bufferKey = this.#sharedChain[counter];
+
+    const key = await window.crypto.subtle.importKey(
+      'raw',
+      bufferKey,
+      {
+        name: 'AES-GCM',
+      },
+      false,
+      ['encrypt'],
+    );
+
+    const bufferIv = window.crypto.getRandomValues(new Uint8Array(16));
+    const bufferTxt = Helper.clearTextToBuffer(message);
+    const bufferCypher = await window.crypto.subtle.encrypt({
+      name: 'AES-GCM',
+      iv: bufferIv,
+      tagLength: 128,
+      additionalData: aad || undefined,
+    }, key, bufferTxt);
+
+    const bufView = new Uint8Array(bufferKey);
+    bufView.fill(0);
+    this.#sharedChain[counter] = false;
+
+    return {
+      counter,
+      cypher: Helper.bufferToBase64(bufferCypher),
+      iv: Helper.bufferToBase64(bufferIv),
+    };
+  }
+
+  async receive({ cypher, iv, counter }, aad) {
+    if (!this.#chainStarted) {
+      throw new Error('Chain is not initialized');
+    }
+
+    if (counter - this.#sharedChain.length > MAX_SKIPPED_MESSAGES) {
+      throw new Error('Too many missed messages');
+    }
+
+    while (this.#sharedChain.length <= counter) {
+      await this.#ratchet();
+    }
+
+    if (!this.#sharedChain[counter]) {
+      throw new Error('You cannot reuse a key');
+    }
+
+    const bufferKey = this.#sharedChain[counter];
+    const bufferIv = Helper.base64ToBuffer(iv);
+    const bufferCypher = Helper.base64ToBuffer(cypher);
+
+    const importedKey = await window.crypto.subtle.importKey(
+      'raw',
+      bufferKey,
+      {
+        name: 'AES-GCM',
+      },
+      false,
+      ['decrypt'],
+    );
+
+    const bufferText = await window.crypto.subtle.decrypt(
+      {
+        name: 'AES-GCM',
+        iv: bufferIv,
+        tagLength: 128,
+        additionalData: aad || undefined,
+      },
+      importedKey,
+      bufferCypher,
+    );
+
+    const bufView = new Uint8Array(bufferKey);
+    bufView.fill(0);
+    this.#sharedChain[counter] = false;
+
+    return Helper.bufferToClearText(bufferText);
+  }
+
+  clear() {
+    this.#keyChain = this.#keyChain.map((key) => {
+      if (key) {
+        const view = new Uint8Array(key);
+        view.fill(0);
+      }
+      return false;
+    });
+    this.#sharedChain = this.#sharedChain.map((key) => {
+      if (key) {
+        const view = new Uint8Array(key);
+        view.fill(0);
+      }
+      return false;
+    });
+    this.#chainStarted = false;
+  }
+}
+```
+
+</td>
+<td>
+
+```javascript
+const MAX_SKIPPED_MESSAGES = 5;
+class SymmetricRatchet {
+  #chainStarted = false;
+
+  #keyChain = [];
+
+  #sharedChain = [];
+
+  #ratchet() {
+    const counter = this.#keyChain.length - 1;
+    const lastKey = this.#keyChain[counter];
+    const salt = Buffer.alloc(64);
+
+    const info = Buffer.from(`session-${counter}`);
+
+    const hkdfUIntArray = crypto.hkdfSync(
+      'sha512',
+      lastKey,
+      salt,
+      info,
+      64,
+    );
+
+    const bufferKeys = Buffer.from(hkdfUIntArray);
+    const key = bufferKeys.subarray(0, 32);
+    const shared = bufferKeys.subarray(32);
+
+    this.#keyChain.push(key);
+    this.#sharedChain.push(shared);
+
+    lastKey.fill();
+    this.#keyChain[counter] = false;
+  }
+
+  get active() {
+    return this.#chainStarted;
+  }
+
+  get counter() {
+    return this.#keyChain.length - 1;
+  }
+
+  set counter(val) {
+    if (val - this.#sharedChain.length > 5) {
+      throw new Error('Too many missed messages');
+    }
+    while (this.#sharedChain.length <= val) {
+      this.#ratchet();
+    }
+  }
+
+  initKey(rootKey) {
+    let sharedSecret = rootKey;
+    if (!Buffer.isBuffer(rootKey)) {
+      sharedSecret = Buffer.from(rootKey, 'base64');
+    }
+
+    this.#keyChain.push(sharedSecret);
+    this.#chainStarted = true;
+  }
+
+  send(message, aad) {
+    if (!this.#chainStarted) {
+      throw new Error('Chain is not initialized');
+    }
+
+    const counter = this.#sharedChain.length;
+    this.#ratchet();
+
+    if (!this.#sharedChain[counter]) {
+      throw new Error('You cannot reuse a key');
+    }
+
+    const bufferKey = this.#sharedChain[counter];
+
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(
+      'aes-256-gcm',
+      bufferKey,
+      iv,
+      { authTagLength: 16 },
+    );
+
+    if (aad) cipher.setAAD(aad);
+
+    const bufferCypher = Buffer.concat([
+      cipher.update(message),
+      cipher.final(),
+      cipher.getAuthTag(),
+    ]);
+
+    bufferKey.fill();
+    this.#sharedChain[counter] = false;
+
+    return {
+      counter,
+      cypher: bufferCypher.toString('base64'),
+      iv: iv.toString('base64'),
+    };
+  }
+
+  receive({ cypher, iv, counter }, aad) {
+    if (!this.#chainStarted) {
+      throw new Error('Chain is not initialized');
+    }
+
+    if (counter - this.#sharedChain.length > MAX_SKIPPED_MESSAGES) {
+      throw new Error('Too many missed messages');
+    }
+
+    while (this.#sharedChain.length <= counter) {
+      this.#ratchet();
+    }
+
+    if (!this.#sharedChain[counter]) {
+      throw new Error('You cannot reuse a key');
+    }
+
+    const bufferKey = this.#sharedChain[counter];
+    const bufferIv = Buffer.from(iv, 'base64');
+    const bufferCypher = Buffer.from(cypher, 'base64');
+
+    const authTag = bufferCypher.subarray(bufferCypher.length - 16);
+    const crypted = bufferCypher.subarray(0, bufferCypher.length - 16);
+
+    const decipher = crypto.createDecipheriv('aes-256-gcm', bufferKey, bufferIv);
+    decipher.setAuthTag(authTag);
+    if (aad) decipher.setAAD(aad);
+    const bufferText = Buffer.concat([
+      decipher.update(crypted),
+      decipher.final(),
+    ]);
+
+    bufferKey.fill();
+    this.#sharedChain[counter] = false;
+
+    return bufferText.toString();
+  }
+
+  clear() {
+    this.#keyChain = this.#keyChain.map((key) => {
+      if (key) {
+        key.fill();
+      }
+      return false;
+    });
+    this.#sharedChain = this.#sharedChain.map((key) => {
+      if (key) {
+        key.fill();
+      }
+      return false;
+    });
+    this.#chainStarted = false;
+  }
+}
+```
+
+</td>
+</tr>
+</table>
+
+### Double Ratchet
+  
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<td>
+
+```javascript
+const MAX_ACTIVE_CHAINS = 5;
+class DoubleRatchet {
+  #myPublicKey;
+
+  #myPrivateKey;
+
+  #keyChain = [];
+
+  #sending = new SymmetricRatchet();
+
+  #receiving = new SymmetricRatchet();
+
+  #memories = {};
+
+  #actives = [];
+
+  #previousCounter = -1;
+
+  static async #computeDerivationKey(pkBuffer, skKey) {
+    const otherKeyObject = await window.crypto.subtle.importKey(
+      'raw',
+      pkBuffer,
+      {
+        name: 'ECDH',
+        namedCurve: 'P-256',
+      },
+      false,
+      [],
+    );
+
+    const dhComputed = await window.crypto.subtle.deriveBits(
+      {
+        name: 'ECDH',
+        namedCurve: 'P-256',
+        public: otherKeyObject,
+      },
+      skKey,
+      256,
+    );
+
+    const dhForDerivation = await window.crypto.subtle.importKey(
+      'raw',
+      dhComputed,
+      { name: 'HKDF' },
+      false,
+      ['deriveBits'],
+    );
+
+    return dhForDerivation;
+  }
+
+  async #resetEcdh() {
+    const { publicKey, privateKey } = await window.crypto.subtle.generateKey(
+      {
+        name: 'ECDH',
+        namedCurve: 'P-256',
+      },
+      true,
+      ['deriveBits'],
+    );
+
+    this.#myPrivateKey = privateKey;
+    const bufferPublicKey = await window.crypto.subtle.exportKey('raw', publicKey);
+    this.#myPublicKey = Helper.bufferToBase64(bufferPublicKey);
+  }
+
+  async #ratchetSendingChain(otherPublicKey) {
+    const otherKeyBuffer = Helper.base64ToBuffer(otherPublicKey);
+
+    const counter = this.#keyChain.length - 1;
+    const lastKey = this.#keyChain[counter];
+
+    await this.#resetEcdh();
+
+    const dhOut = await DoubleRatchet.#computeDerivationKey(otherKeyBuffer, this.#myPrivateKey);
+
+    const info = Helper.clearTextToBuffer(`double-ratchet-${counter}`);
+
+    const bufferKeys = await window.crypto.subtle.deriveBits(
+      {
+        name: 'HKDF',
+        hash: 'SHA-512',
+        salt: lastKey,
+        info,
+      },
+      dhOut,
+      512,
+    );
+    const RK = bufferKeys.slice(0, 32);
+    const CKs = bufferKeys.slice(32);
+
+    this.#keyChain.push(RK);
+    const bufView = new Uint8Array(lastKey);
+    bufView.fill(0);
+    this.#keyChain[counter] = false;
+
+    this.#previousCounter = this.#sending.counter;
+
+    this.#sending.clear();
+    const sr = new SymmetricRatchet();
+    sr.initKey(CKs);
+    this.#sending = sr;
+  }
+
+  async #ratchetReceivingChain(otherPublicKey, PN) {
+    const otherKeyBuffer = Helper.base64ToBuffer(otherPublicKey);
+
+    const counter = this.#keyChain.length - 1;
+    const lastKey = this.#keyChain[counter];
+
+    const dhOut = await DoubleRatchet.#computeDerivationKey(otherKeyBuffer, this.#myPrivateKey);
+
+    const info = Helper.clearTextToBuffer(`double-ratchet-${counter}`);
+
+    const bufferKeys = await window.crypto.subtle.deriveBits(
+      {
+        name: 'HKDF',
+        hash: 'SHA-512',
+        salt: lastKey,
+        info,
+      },
+      dhOut,
+      512,
+    );
+
+    const RK = bufferKeys.slice(0, 32);
+    const CKr = bufferKeys.slice(32);
+
+    this.#keyChain.push(RK);
+    const bufView = new Uint8Array(lastKey);
+    bufView.fill(0);
+    this.#keyChain[counter] = false;
+
+    if (this.#receiving.counter <= PN) {
+      await this.#receiving.setCounter(PN);
+    }
+
+    const sr = new SymmetricRatchet();
+    sr.initKey(CKr);
+    this.#receiving = sr;
+    this.#memories[otherPublicKey] = sr;
+    this.#actives.push(sr);
+    if (this.#actives.length > MAX_ACTIVE_CHAINS) {
+      const tooOld = this.#actives.shift();
+      tooOld.clear();
+    }
+  }
+
+  get publicKey() {
+    if (!this.#myPublicKey) {
+      throw new Error('DH is not started');
+    }
+
+    return this.#myPublicKey;
+  }
+
+  async initECDH() {
+    if (this.#myPublicKey) {
+      throw new Error('ECDH already initialized');
+    }
+    await this.#resetEcdh();
+  }
+
+  async init(rootKey, otherPublicKey = false) {
+    let sharedSecret = rootKey;
+    if (!ArrayBuffer.isView(rootKey)) {
+      sharedSecret = Helper.base64ToBuffer(rootKey);
+    }
+    this.#keyChain.push(sharedSecret);
+
+    if (otherPublicKey) {
+      await this.#ratchetSendingChain(otherPublicKey);
+    }
+  }
+
+  async send(message, aad = false) {
+    let AAD = aad;
+    if (aad) {
+      AAD = Helper.clearTextToBuffer(String(aad));
+    }
+    const encryption = await this.#sending.send(message, AAD);
+    return {
+      publicKey: this.publicKey,
+      body: {
+        ...encryption,
+        PN: this.#previousCounter,
+      },
+    };
+  }
+
+  async receive(otherPublicKey, message, aad = false) {
+    let AAD = aad;
+    if (aad) {
+      AAD = Helper.clearTextToBuffer(String(aad));
+    }
+    if (this.#memories[otherPublicKey]) {
+      if (this.#memories[otherPublicKey].active) {
+        const result = await this.#memories[otherPublicKey].receive(message, AAD);
+        return result;
+      }
+      throw new Error('Receiving chain too old');
+    }
+
+    const { PN } = message;
+
+    await this.#ratchetReceivingChain(otherPublicKey, PN);
+    await this.#ratchetSendingChain(otherPublicKey);
+
+    const result = await this.#receiving.receive(message, AAD);
+    return result;
+  }
+}
+```
+
+</td>
+<td>
+
+```javascript
+const MAX_ACTIVE_CHAINS = 5;
+class DoubleRatchet {
+  #ecdh;
+
+  #keyChain = [];
+
+  #sending = new SymmetricRatchet();
+
+  #receiving = new SymmetricRatchet();
+
+  #memories = {};
+
+  #actives = [];
+
+  #previousCounter = -1;
+
+  #ratchetSendingChain(otherPublicKey) {
+    const pk = Buffer.from(otherPublicKey, 'base64');
+
+    const counter = this.#keyChain.length - 1;
+    const lastKey = this.#keyChain[counter];
+
+    this.#ecdh = crypto.createECDH('prime256v1');
+    this.#ecdh.generateKeys();
+    const dhOut = this.#ecdh.computeSecret(pk);
+
+    const info = Buffer.from(`double-ratchet-${counter}`);
+
+    const hkdfUIntArray = crypto.hkdfSync(
+      'sha512',
+      dhOut,
+      lastKey,
+      info,
+      64,
+    );
+    const bufferKeys = Buffer.from(hkdfUIntArray);
+    const RK = bufferKeys.subarray(0, 32);
+    const CKs = bufferKeys.subarray(32);
+
+    this.#keyChain.push(RK);
+    lastKey.fill();
+    this.#keyChain[counter] = false;
+
+    this.#previousCounter = this.#sending.counter;
+
+    this.#sending.clear();
+    const sr = new SymmetricRatchet();
+    sr.initKey(CKs);
+    this.#sending = sr;
+  }
+
+  #ratchetReceivingChain(otherPublicKey, PN) {
+    const pk = Buffer.from(otherPublicKey, 'base64');
+
+    const counter = this.#keyChain.length - 1;
+    const lastKey = this.#keyChain[counter];
+
+    const dhOut = this.#ecdh.computeSecret(pk);
+
+    const info = Buffer.from(`double-ratchet-${counter}`);
+
+    const hkdfUIntArray = crypto.hkdfSync(
+      'sha512',
+      dhOut,
+      lastKey,
+      info,
+      64,
+    );
+    const bufferKeys = Buffer.from(hkdfUIntArray);
+    const RK = bufferKeys.subarray(0, 32);
+    const CKr = bufferKeys.subarray(32);
+
+    this.#keyChain.push(RK);
+    lastKey.fill();
+    this.#keyChain[counter] = false;
+
+    if (this.#receiving.counter <= PN) {
+      this.#receiving.counter = PN;
+    }
+
+    const sr = new SymmetricRatchet();
+    sr.initKey(CKr);
+    this.#receiving = sr;
+    this.#memories[otherPublicKey] = sr;
+    this.#actives.push(sr);
+    if (this.#actives.length > MAX_ACTIVE_CHAINS) {
+      const tooOld = this.#actives.shift();
+      tooOld.clear();
+    }
+  }
+
+  constructor() {
+    this.#ecdh = crypto.createECDH('prime256v1');
+    this.#ecdh.generateKeys();
+  }
+
+  get publicKey() {
+    return this.#ecdh.getPublicKey('base64');
+  }
+
+  init(rootKey, otherPublicKey = false) {
+    let sharedSecret = rootKey;
+    if (!Buffer.isBuffer(rootKey)) {
+      sharedSecret = Buffer.from(rootKey, 'base64');
+    }
+    this.#keyChain.push(sharedSecret);
+
+    if (otherPublicKey) {
+      this.#ratchetSendingChain(otherPublicKey);
+    }
+  }
+
+  send(message, aad = false) {
+    let AAD = aad;
+    if (aad) {
+      AAD = Buffer.from(String(aad));
+    }
+    return {
+      publicKey: this.publicKey,
+      body: {
+        ...this.#sending.send(message, AAD),
+        PN: this.#previousCounter,
+      },
+    };
+  }
+
+  receive(otherPublicKey, message, aad = false) {
+    let AAD = aad;
+    if (aad) {
+      AAD = Buffer.from(String(aad));
+    }
+    if (this.#memories[otherPublicKey]) {
+      if (this.#memories[otherPublicKey].active) {
+        return this.#memories[otherPublicKey].receive(message, AAD);
+      }
+      throw new Error('Receiving chain too old');
+    }
+
+    const { PN } = message;
+
+    this.#ratchetReceivingChain(otherPublicKey, PN);
+    this.#ratchetSendingChain(otherPublicKey);
+
+    return this.#receiving.receive(message, AAD);
+  }
+}
+```
+
+</td>
+</tr>
+</table>

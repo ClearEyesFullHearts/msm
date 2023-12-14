@@ -2,7 +2,6 @@ const crypto = require('crypto');
 const SymmetricRatchet = require('./symmetricRatchet');
 
 const MAX_ACTIVE_CHAINS = 5;
-
 class DoubleRatchet {
   #ecdh;
 

@@ -1,7 +1,6 @@
 import Helper from './encodingHelper';
 
 const MAX_SKIPPED_MESSAGES = 5;
-
 class SymmetricRatchet {
   #chainStarted = false;
 
