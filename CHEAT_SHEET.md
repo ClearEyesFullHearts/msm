@@ -1898,7 +1898,6 @@ class SymmetricRatchet {
 
 ### Double Ratchet
   
-
 <table>
 <tr>
 <th>Alice</th>
@@ -2271,6 +2270,70 @@ class DoubleRatchet {
     return this.#receiving.receive(message, AAD);
   }
 }
+```
+
+</td>
+</tr>
+</table>
+
+### Usage
+
+<table>
+<tr>
+<th>Alice</th>
+<th>Bob</th>
+</tr>
+<td>
+
+```javascript
+// Alice starts a session
+const alice = new DoubleRatchet();
+await alice.initECDH();
+
+// Alice generate a random root key
+const key = window.crypto.getRandomValues(new Uint8Array(32));
+const RK = Helper.bufferToBase64(key);
+
+// Alice generate a session id
+const sessionId = window.crypto.randomUUID();
+
+///////////////////////////////////////////
+// send RK and sessionId to Bob securely
+//////////////////////////////////////////
+
+const { bobPublicKey } = // Bob reply with its Public key
+
+// Alice initiate the first ratchet with Bob's public key
+await alice.init(RK, bobPublicKey);
+
+// Alice send a message to Bob with the session id as AAD
+const { publicKey, body } = await alice.send('Hello Bob!', sessionId);
+
+const { response } = // Bob reply to Alice message
+
+// Alice decrypt Bob's message using the sessionId as AAD
+const clearText = await alice.receive(response.publicKey, response.body, sessionId);
+```
+
+</td>
+<td>
+
+```javascript
+const { RK, sessonId } = // Bob receives the root key and the session id from Alice
+
+// Bob starts a session
+const bob = new DoubleRatchet();
+bob.init(RK);
+
+// Bob replies with its public key (bob.publicKey)
+
+const { alicePublicKey, message } = // Bob receives Alice first message
+
+// Bob decrypt Alice's message using the sessionId as AAD
+const clearText = bob.receive(alicePublicKey, message, sessionId);
+
+// Bob send a message to Alice with the session id as AAD
+const { publicKey, body } = bob.send('Hello Alice!', sessionId);
 ```
 
 </td>
