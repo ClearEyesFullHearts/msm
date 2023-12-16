@@ -830,6 +830,7 @@ components:
         - key
         - signature
         - hash
+      additionalProperties: false
       properties:
         at:
           type: string
@@ -854,6 +855,7 @@ components:
         - token
         - passphrase
         - iv
+      additionalProperties: false
       properties:
         token:
           type: string
@@ -869,12 +871,28 @@ components:
           minLength: 24
           maxLength: 24
     Identity:
-      allOf:
-        - $ref: '#/components/schemas/Challenge'
-        - type: object
-          properties:
-            vault:
-              $ref: "#/components/schemas/VaultItem"
+      type: object
+      required:
+        - token
+        - passphrase
+        - iv
+      additionalProperties: false
+      properties:
+        token:
+          type: string
+          format: byte
+        passphrase:
+          type: string
+          format: byte
+          minLength: 684
+          maxLength: 684
+        iv:
+          type: string
+          format: byte
+          minLength: 24
+          maxLength: 24
+        vault:
+          $ref: "#/components/schemas/VaultItem"
     User:
       type: object
       required:
@@ -882,6 +900,7 @@ components:
         - at
         - key
         - signature
+      additionalProperties: false
       properties:
         id:
           type: string
@@ -916,6 +935,7 @@ components:
       required:
         - id
         - challenge
+      additionalProperties: false
       properties:
         id:
           type: integer
@@ -926,6 +946,7 @@ components:
       required:
         - id
         - challenge
+      additionalProperties: false
       properties:
         id:
           type: integer
@@ -937,6 +958,7 @@ components:
         - to
         - title
         - content
+      additionalProperties: false
       properties:
         to:
           type: string
@@ -959,6 +981,7 @@ components:
         - iv
         - sessionSalt
         - passSalt
+      additionalProperties: false
       properties:
         vault:
           type: string
@@ -985,6 +1008,7 @@ components:
       required:
         - salt
         - key
+      additionalProperties: false
       properties:
         salt:
           type: string
@@ -1002,6 +1026,7 @@ components:
         - token
         - iv
         - salt
+      additionalProperties: false
       properties:
         token:
           type: string
@@ -1023,6 +1048,7 @@ components:
       required:
         - endpoint
         - keys
+      additionalProperties: false
       properties:
         endpoint:
           type: string
@@ -1046,6 +1072,7 @@ components:
       required:
         - name
         - key
+      additionalProperties: false
       properties:
         name:
           type: string
@@ -1061,6 +1088,7 @@ components:
       required:
         - username
         - key
+      additionalProperties: false
       properties:
         username:
           type: string
@@ -1080,6 +1108,8 @@ components:
       required:
         - token
         - iv
+        - salt
+      additionalProperties: false
       properties:
         token:
           type: string
@@ -1088,12 +1118,13 @@ components:
           type: string
           format: byte
           minLength: 24
-          maxLength: 24
+          maxLength: 88
     GroupPost:
       type: object
       required:
         - title
         - content
+      additionalProperties: false
       properties:
         title:
           $ref: "#/components/schemas/EncryptedItem"
@@ -1103,6 +1134,7 @@ components:
       type: object
       required:
         - isAdmin
+      additionalProperties: false
       properties:
         isAdmin:
           type: boolean
@@ -1110,6 +1142,7 @@ components:
       type: object
       required:
         - name
+      additionalProperties: false
       properties:
         name:
           type: string

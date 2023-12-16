@@ -330,7 +330,7 @@ class Group {
     if (members.length < 2) return;
 
     // encrypt message for members
-    const from = writer.groupName;
+    const from = user.username;
     const sentAt = Date.now();
 
     const headerPlain = {

@@ -509,6 +509,66 @@ class Util {
     return decData.toString();
   }
 
+  static groupEncrypt(txt, passphrase, groupId, sender) {
+    const constant = Buffer.alloc(32);
+    const salt = crypto.randomBytes(64);
+    // const iv = crypto.randomBytes(IV_SIZE);
+    const aad = Buffer.concat([
+      Buffer.from(groupId),
+      Buffer.from(sender),
+    ]);
+
+    const info = Buffer.concat([
+      salt,
+      aad,
+    ]);
+    const arr = crypto.hkdfSync('sha512', Buffer.from(passphrase, 'base64'), constant, info, 48);
+    const hkdf = Buffer.from(arr);
+    const pass = hkdf.subarray(0, 32);
+    const iv = hkdf.subarray(32);
+    const cipher = crypto.createCipheriv(ALGORITHM, pass, iv);
+    cipher.setAAD(aad);
+    const encrypted = cipher.update(txt);
+    const cypheredText = Buffer.concat([encrypted, cipher.final(), cipher.getAuthTag()]);
+
+    return {
+      token: cypheredText.toString('base64'),
+      iv: iv.toString('base64'),
+      salt: salt.toString('base64'),
+    };
+  }
+
+  static groupDecrypt(item, passphrase, groupId, sender) {
+    const { token, iv: salt } = item;
+    const constant = Buffer.alloc(64);
+    const aad = Buffer.concat([
+      Buffer.from(groupId),
+      Buffer.from(sender),
+    ]);
+
+    const info = Buffer.concat([
+      Buffer.from(salt, 'base64'),
+      aad,
+    ]);
+    const arr = crypto.hkdfSync('sha512', Buffer.from(passphrase, 'base64'), constant, info, 48);
+    const hkdf = Buffer.from(arr);
+    const pass = hkdf.subarray(0, 32);
+    const iv = hkdf.subarray(32);
+
+    const algorithm = 'aes-256-gcm';
+    const cipher = Buffer.from(token, 'base64');
+    const authTag = cipher.subarray(cipher.length - 16);
+    const crypted = cipher.subarray(0, cipher.length - 16);
+
+    // console.log('decrypt key', Buffer.from(hkdf).toString('base64'))
+    const decipher = crypto.createDecipheriv(algorithm, pass, iv);
+    decipher.setAAD(aad);
+    decipher.setAuthTag(authTag);
+    const decData = Buffer.concat([decipher.update(crypted), decipher.final()]);
+
+    return decData.toString();
+  }
+
   static getPathValue(obj, path) {
     if (path[0] !== '$') throw new Error('Wrong path format');
     const props = path.split('.');

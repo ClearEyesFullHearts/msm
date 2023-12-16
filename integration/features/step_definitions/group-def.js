@@ -125,20 +125,9 @@ Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (ad
     this.apickli.removeRequestHeader('x-msm-cpk');
     const member = this.apickli.replaceVariables(membersArray[i]);
 
-    // await this.get(`/attic/${member}`);
-
-    // const memberAttic = JSON.parse(this.apickli.httpResponse.body);
-
-    // const memberHeader = Util.getHeaderFromAttic(memberAttic, member);
-
-    // this.apickli.addRequestHeader('x-msm-pass', memberHeader);
     await this.get(`/user/${member}`);
 
     const { key: mEpk } = JSON.parse(this.apickli.httpResponse.body);
-    // const pK = Util.openVault(mBody.vault, member);
-    // // const [mEsk] = pK.split('\n----- SIGNATURE -----\n');
-    // const { key: mEsk } = Util.setContentAsSK(pK);
-    // const mEpk = Util.extractPublicKey(mEsk);
 
     const memberKey = Util.encrypt(mEpk, pass);
     const mNum = membersArray[i].split('.')[1];
@@ -206,3 +195,52 @@ Then('resolved challenge should match a group message', function () {
   }
   this.apickli.storeValueInScenarioScope('resolved', { ...resolved, title: clearTitle, content: clearContent });
 });
+
+/*
+
+Given(/^(.*) set group (.*) message body to (.*)$/, async function (user, index, messageBody) {
+  const { title, content } = JSON.parse(messageBody);
+  const sender = this.apickli.replaceVariables(user);
+  const passphrase = this.apickli.scenarioVariables.GROUP_HASH;
+  const groupId = this.apickli.scenarioVariables[`GROUP_ID.${index}`];
+
+  const cypheredTitle = Util.groupEncrypt(title, passphrase, groupId, sender);
+  const cypheredContent = Util.groupEncrypt(content, passphrase, groupId, sender);
+
+  this.apickli.setRequestBody(JSON.stringify({
+    title: cypheredTitle,
+    content: cypheredContent,
+  }));
+});
+
+Then('resolved challenge should match a group message', function () {
+  const { resolved } = this.apickli.scenarioVariables;
+  const {
+    id,
+    from,
+    sentAt,
+    title,
+    content,
+    groupId,
+  } = resolved;
+
+  assert.ok(id);
+  assert.ok(from);
+  assert.ok(sentAt);
+  assert.ok(title);
+  assert.ok(groupId);
+
+  const key = this.apickli.scenarioVariables.MY_GROUP_KEY;
+  const pem = this.apickli.scenarioVariables.ESK;
+
+  const passphrase = Util.decrypt(pem, key, false);
+
+  const clearTitle = Util.groupDecrypt(title, passphrase.toString('base64'), groupId, from);
+  let clearContent;
+  if (content) {
+    clearContent = Util.groupDecrypt(content, passphrase.toString('base64'), groupId, from);
+  }
+  this.apickli.storeValueInScenarioScope('resolved', { ...resolved, title: clearTitle, content: clearContent });
+});
+
+*/
