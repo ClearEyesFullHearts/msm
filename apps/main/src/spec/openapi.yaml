@@ -1116,7 +1116,7 @@ components:
         iv:
           type: string
           format: byte
-          minLength: 24
+          minLength: 88
           maxLength: 88
     GroupPost:
       type: object
