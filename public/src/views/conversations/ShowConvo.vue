@@ -61,7 +61,11 @@ async function sendMessage() {
   if (typingArea.value.value.trim() === '') return;
   if (current.value.target.group) {
     const txt = typingArea.value.value;
-    await conversationStore.sendGroupMail(txt);
+    canWrite.value = false;
+    conversationStore.sendGroupMail(txt)
+      .then(() => {
+        canWrite.value = true;
+      });
 
     typingArea.value.value = '';
     contentLength.value = 0;

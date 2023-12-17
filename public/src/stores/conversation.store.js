@@ -89,24 +89,10 @@ export const useConversationStore = defineStore({
           if (!group) return undefined;
 
           try {
-            const {
-              iv: titleIV,
-              token: titleToken,
-            } = cryptedTitle;
-            const titleBuff = await mycrypto
-              .symmetricDecrypt(group.secret, titleIV, titleToken);
-
-            const {
-              iv: contentIV,
-              token: contentToken,
-            } = cryptedContent;
-            const contentBuff = await mycrypto
-              .symmetricDecrypt(group.secret, contentIV, contentToken);
-
-            let dec = new TextDecoder();
-            title = dec.decode(titleBuff);
-            dec = new TextDecoder();
-            content = dec.decode(contentBuff);
+            title = await mycrypto
+              .decryptGroupMessage(cryptedTitle, group.secret, groupId, from);
+            content = await mycrypto
+              .decryptGroupMessage(cryptedContent, group.secret, groupId, title);
           } catch (err) {
             title = 'Unreadable message';
             content = 'The content of this message is unreadable';
@@ -205,18 +191,20 @@ export const useConversationStore = defineStore({
       };
       this.current.messages.push(message);
       try {
-        const { secret } = this.current.target;
+        const { secret, at } = this.current.target;
 
         const authStore = useAuthStore();
         const from = authStore.user.user.username;
+        const msgTitle = this.encodeText(`From ${from}`);
+
         const {
           iv: titleIV,
           token: titleToken,
-        } = await mycrypto.symmetricEncrypt(this.encodeText(`From ${from}`), secret, false);
+        } = await mycrypto.encryptGroupMessage(msgTitle, secret, at, from);
         const {
           iv: contentIV,
           token: contentToken,
-        } = await mycrypto.symmetricEncrypt(this.encodeText(text), secret, false);
+        } = await mycrypto.encryptGroupMessage(this.encodeText(text), secret, at, msgTitle);
 
         const reqBody = {
           title: {

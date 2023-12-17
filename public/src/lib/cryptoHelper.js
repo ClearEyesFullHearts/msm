@@ -98,6 +98,15 @@ class CryptoHelper {
 
       return importedKey;
     };
+
+    this.concatArrayBuffers = (...bufs) => {
+      const result = new Uint8Array(bufs.reduce((totalSize, buf) => totalSize + buf.byteLength, 0));
+      bufs.reduce((offset, buf) => {
+        result.set(buf, offset);
+        return offset + buf.byteLength;
+      }, 0);
+      return result.buffer;
+    };
   }
 
   async generateKeyPair() {
@@ -538,6 +547,123 @@ class CryptoHelper {
     return {
       token: this.ArBuffToBase64(ctBuffer),
     };
+  }
+
+  async encryptGroupMessage(txt, key, groupId, ad) {
+    const constant = new ArrayBuffer(32);
+    const salt = window.crypto.getRandomValues(new Uint8Array(64));
+
+    const aad = this.clearTextToArBuff(`${groupId}${ad}`);
+    const info = this.concatArrayBuffers(salt, new Uint8Array(aad));
+
+    // import raw key for HKDF derivation
+    const tss = await window.crypto.subtle.importKey(
+      'raw',
+      this.base64ToArBuff(key),
+      { name: 'HKDF' },
+      false,
+      ['deriveBits'],
+    );
+
+    // HKDF derivation
+    const dss = await window.crypto.subtle.deriveBits(
+      {
+        name: 'HKDF',
+        hash: 'SHA-512',
+        salt: constant,
+        info,
+      },
+      tss,
+      384,
+    );
+
+    const bufferKey = dss.slice(0, 32);
+    const iv = dss.slice(32);
+
+    // import derived key for encryption
+    const pass = await window.crypto.subtle.importKey(
+      'raw',
+      bufferKey,
+      {
+        name: 'AES-GCM',
+      },
+      false,
+      ['encrypt'],
+    );
+
+    // Encrypt
+    const bufferTxt = this.clearTextToArBuff(txt);
+    const bufferCypher = await window.crypto.subtle.encrypt({
+      name: 'AES-GCM',
+      iv,
+      tagLength: 128,
+      additionalData: aad,
+    }, pass, bufferTxt);
+
+    return {
+      token: this.ArBuffToBase64(bufferCypher),
+      iv: this.ArBuffToBase64(salt),
+    };
+  }
+
+  async decryptGroupMessage(cypher, key, groupId, ad) {
+    const { token, iv: salt } = cypher;
+    const constant = new ArrayBuffer(32);
+
+    const aad = this.clearTextToArBuff(`${groupId}${ad}`);
+    const info = this.concatArrayBuffers(
+      new Uint8Array(this.base64ToArBuff(salt)),
+      new Uint8Array(aad),
+    );
+
+    // import for HKDF derivation
+    const tss = await window.crypto.subtle.importKey(
+      'raw',
+      this.base64ToArBuff(key),
+      { name: 'HKDF' },
+      false,
+      ['deriveBits'],
+    );
+
+    // HKDF derivation
+    const dss = await window.crypto.subtle.deriveBits(
+      {
+        name: 'HKDF',
+        hash: 'SHA-512',
+        salt: constant,
+        info,
+      },
+      tss,
+      384,
+    );
+
+    const bufferKey = dss.slice(0, 32);
+    const iv = dss.slice(32);
+
+    // import derived key for decryption
+    const pass = await window.crypto.subtle.importKey(
+      'raw',
+      bufferKey,
+      {
+        name: 'AES-GCM',
+      },
+      false,
+      ['decrypt'],
+    );
+
+    // decrypt
+    const bufferText = await window.crypto.subtle.decrypt(
+      {
+        name: 'AES-GCM',
+        iv,
+        tagLength: 128,
+        additionalData: aad,
+      },
+      pass,
+      this.base64ToArBuff(token),
+    );
+
+    return new TextDecoder().decode(bufferText);
   }
 
   getRandomBase64Password() {
