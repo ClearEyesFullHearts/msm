@@ -1108,7 +1108,6 @@ components:
       required:
         - token
         - iv
-        - salt
       additionalProperties: false
       properties:
         token:

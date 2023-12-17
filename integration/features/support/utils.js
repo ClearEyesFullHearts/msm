@@ -533,8 +533,7 @@ class Util {
 
     return {
       token: cypheredText.toString('base64'),
-      iv: iv.toString('base64'),
-      salt: salt.toString('base64'),
+      iv: salt.toString('base64'),
     };
   }
 

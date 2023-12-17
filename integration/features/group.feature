@@ -103,7 +103,7 @@ Scenario: Cannot add an invalidated user
 Scenario: Writing to a group
   Given `RANDOM_USER.1` creates a group best group for ["`RANDOM_USER.14`", "`RANDOM_USER.3`", "`RANDOM_USER.4`"] with index 0
   And I am existing `RANDOM_USER.4`
-  And I set group message body to { "title": "Write one group message" , "content": "My group message content" }
+  And `RANDOM_USER.4` set group 0 message body to { "title": "Write one group message" , "content": "My group message content" }
   And I set signature header
   When I POST to /group/`GROUP_ID.0`/message
   Then response code should be 201
@@ -120,7 +120,7 @@ Scenario: Writing to a group
   And response body path $ should match a challenge
   And resolved challenge should match a group message
   And resolved challenge path $.groupId should match `GROUP_ID.0`
-  And resolved challenge path $.from should match best group
+  And resolved challenge path $.from should match `RANDOM_USER.4`
   And resolved challenge path $.title should match Write one group message
   And resolved challenge path $.content should match My group message content
   Given I am existing `RANDOM_USER.14`
@@ -134,7 +134,7 @@ Scenario: Writing to a group
   And response body path $ should match a challenge
   And resolved challenge should match a group message
   And resolved challenge path $.groupId should match `GROUP_ID.0`
-  And resolved challenge path $.from should match best group
+  And resolved challenge path $.from should match `RANDOM_USER.4`
   And resolved challenge path $.title should match Write one group message
   And resolved challenge path $.content should match My group message content
   Given I am existing `RANDOM_USER.3`
@@ -148,14 +148,14 @@ Scenario: Writing to a group
   And response body path $ should match a challenge
   And resolved challenge should match a group message
   And resolved challenge path $.groupId should match `GROUP_ID.0`
-  And resolved challenge path $.from should match best group
+  And resolved challenge path $.from should match `RANDOM_USER.4`
   And resolved challenge path $.title should match Write one group message
   And resolved challenge path $.content should match My group message content
 
 Scenario: Cannot write to a group if you're not a member
   Given `RANDOM_USER.1` creates a group best group for [] with index 0
   And I am existing `RANDOM_USER.4`
-  And I set group message body to { "title": "Write one group message" , "content": "My group message content" }
+  And `RANDOM_USER.4` set group 0 message body to { "title": "Write one group message" , "content": "My group message content" }
   And I set signature header
   When I POST to /group/`GROUP_ID.0`/message
   Then response code should be 404
@@ -188,7 +188,7 @@ Scenario: Cannot get membership information if you're not a member
 Scenario: Member can read group message
   Given `RANDOM_USER.8` creates a group readingGroup for ["`RANDOM_USER.10`"] with index 0
   And I am existing `RANDOM_USER.10`
-  And I set group message body to { "title": "From RANDOM_USER.10" , "content": "Hello besties!" }
+  And `RANDOM_USER.10` set group 0 message body to { "title": "From RANDOM_USER.10" , "content": "Hello besties!" }
   And I set signature header
   When I POST to /group/`GROUP_ID.0`/message
   Then response code should be 201
@@ -203,7 +203,7 @@ Scenario: Member can read group message
   And response body path $ should match a challenge
   And resolved challenge should match a group message
   And resolved challenge path $.groupId should match `GROUP_ID.0`
-  And resolved challenge path $.from should match readingGroup
+  And resolved challenge path $.from should match `RANDOM_USER.10`
   And resolved challenge path $.title should match From RANDOM_USER.10
   And resolved challenge path $.content should match Hello besties!
 

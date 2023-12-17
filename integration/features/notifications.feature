@@ -44,7 +44,7 @@ Scenario: Connected targets are notified when they received a message from group
   And `RANDOM_USER.3` is connected
   And `RANDOM_USER.3` is listening
   And I am existing `RANDOM_USER.4`
-  And I set group message body to { "title": "Write one group message" , "content": "My group message content" }
+  And `RANDOM_USER.4` set group 0 message body to { "title": "Write one group message" , "content": "My group message content" }
   And I set signature header
   When I POST to /group/`GROUP_ID.0`/message
   Then I wait for 3 seconds

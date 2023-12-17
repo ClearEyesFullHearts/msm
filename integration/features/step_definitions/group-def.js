@@ -153,7 +153,7 @@ Given(/^(.*) creates a group (.*) for (.*) with index (.*)$/, async function (ad
     await this.post(`/group/${id}/member`);
   }
 });
-
+/*
 Given(/^I set group message body to (.*)$/, async function (messageBody) {
   const { title, content } = JSON.parse(messageBody);
   const passphrase = this.apickli.scenarioVariables.GROUP_HASH;
@@ -195,8 +195,8 @@ Then('resolved challenge should match a group message', function () {
   }
   this.apickli.storeValueInScenarioScope('resolved', { ...resolved, title: clearTitle, content: clearContent });
 });
+*/
 
-/*
 
 Given(/^(.*) set group (.*) message body to (.*)$/, async function (user, index, messageBody) {
   const { title, content } = JSON.parse(messageBody);
@@ -205,7 +205,7 @@ Given(/^(.*) set group (.*) message body to (.*)$/, async function (user, index,
   const groupId = this.apickli.scenarioVariables[`GROUP_ID.${index}`];
 
   const cypheredTitle = Util.groupEncrypt(title, passphrase, groupId, sender);
-  const cypheredContent = Util.groupEncrypt(content, passphrase, groupId, sender);
+  const cypheredContent = Util.groupEncrypt(content, passphrase, groupId, title);
 
   this.apickli.setRequestBody(JSON.stringify({
     title: cypheredTitle,
@@ -238,9 +238,10 @@ Then('resolved challenge should match a group message', function () {
   const clearTitle = Util.groupDecrypt(title, passphrase.toString('base64'), groupId, from);
   let clearContent;
   if (content) {
-    clearContent = Util.groupDecrypt(content, passphrase.toString('base64'), groupId, from);
+    clearContent = Util.groupDecrypt(content, passphrase.toString('base64'), groupId, clearTitle);
   }
   this.apickli.storeValueInScenarioScope('resolved', { ...resolved, title: clearTitle, content: clearContent });
 });
 
+/*
 */
