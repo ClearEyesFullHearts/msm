@@ -71,6 +71,7 @@ export const useConversationStore = defineStore({
           sentAt,
           title: cryptedTitle,
           content: cryptedContent,
+          signature,
           groupId,
         } = JSON.parse(objStr);
 
@@ -83,6 +84,21 @@ export const useConversationStore = defineStore({
           title = dec.decode(titleBuff);
           dec = new TextDecoder();
           content = dec.decode(contentBuff);
+          if (signature) {
+            const signKey = this.current.target?.server?.signingKey;
+            if (signKey) {
+              const msgHash = await mycrypto.hash(`${title}${content}`);
+              const verification = await mycrypto.verify(signKey, msgHash, signature, true);
+              if (!verification) {
+                title = 'Compromised message';
+                content = `The integrity of this message is compromised:\n${content}`;
+              }
+            } else {
+              title = 'Missing signing key';
+            }
+          } else {
+            title = 'Unsigned message';
+          }
         } else {
           const groupStore = useGroupStore();
           const group = groupStore.list.find((g) => g.at === groupId);
@@ -92,7 +108,7 @@ export const useConversationStore = defineStore({
             title = await mycrypto
               .decryptGroupMessage(cryptedTitle, group.secret, groupId, from);
             content = await mycrypto
-              .decryptGroupMessage(cryptedContent, group.secret, groupId, title);
+              .decryptGroupMessage(cryptedContent, group.secret, groupId, `${from}${title}`);
           } catch (err) {
             title = 'Unreadable message';
             content = 'The content of this message is unreadable';
@@ -170,13 +186,21 @@ export const useConversationStore = defineStore({
         content: text,
       };
       const { at, key: targetPem } = this.current.target;
-      const b64Title = await mycrypto.publicEncrypt(targetPem, this.encodeText('Missed'));
-      const b64Content = await mycrypto.publicEncrypt(targetPem, this.encodeText(text));
+      const clearTtitle = this.encodeText('Missed');
+      const clearContent = this.encodeText(text);
+      const b64Title = await mycrypto.publicEncrypt(targetPem, clearTtitle);
+      const b64Content = await mycrypto.publicEncrypt(targetPem, clearContent);
+
+      const authStore = useAuthStore();
+      const { signing } = authStore;
+      const msgHash = await mycrypto.hash(`${clearTtitle}${clearContent}`);
+      const signature = await mycrypto.sign(signing, msgHash, true);
 
       const reqBody = {
         to: at,
         title: b64Title,
         content: b64Content,
+        signature,
       };
 
       await fetchWrapper.post(`${baseUrl}/message`, reqBody);
@@ -204,7 +228,7 @@ export const useConversationStore = defineStore({
         const {
           iv: contentIV,
           token: contentToken,
-        } = await mycrypto.encryptGroupMessage(this.encodeText(text), secret, at, msgTitle);
+        } = await mycrypto.encryptGroupMessage(this.encodeText(text), secret, at, `${from}${msgTitle}`);
 
         const reqBody = {
           title: {

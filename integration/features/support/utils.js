@@ -455,6 +455,18 @@ class Util {
     return Buffer.from(signature).toString('base64');
   }
 
+  static verify(key, data, signature) {
+    const dataBuffer = Buffer.from(data);
+    const signatureBuffer = Buffer.from(signature, 'base64');
+    const result = crypto.verify('rsa-sha256', dataBuffer, {
+      key,
+      padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+      saltLength: 32,
+    }, signatureBuffer);
+
+    return result;
+  }
+
   static signECDSA(key, data) {
     const bufData = Buffer.from(data);
     const signature = crypto.sign('sha512', bufData, {

@@ -550,7 +550,7 @@ class CryptoHelper {
   }
 
   async encryptGroupMessage(txt, key, groupId, ad) {
-    const constant = new ArrayBuffer(32);
+    const constant = new ArrayBuffer(48);
     const salt = window.crypto.getRandomValues(new Uint8Array(64));
 
     const aad = this.clearTextToArBuff(`${groupId}${ad}`);
@@ -608,7 +608,7 @@ class CryptoHelper {
 
   async decryptGroupMessage(cypher, key, groupId, ad) {
     const { token, iv: salt } = cypher;
-    const constant = new ArrayBuffer(32);
+    const constant = new ArrayBuffer(48);
 
     const aad = this.clearTextToArBuff(`${groupId}${ad}`);
     const info = this.concatArrayBuffers(

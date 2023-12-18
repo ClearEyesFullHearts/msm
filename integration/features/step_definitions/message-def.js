@@ -19,14 +19,19 @@ Given(/^I set message body to (.*)$/, async function (messageBody) {
 
   const cypheredTitle = Util.encrypt(epkFile, title);
   const cypheredContent = Util.encrypt(epkFile, content);
+
+  const signatureKey = this.apickli.scenarioVariables.SSK || this.apickli.scenarioVariables.NEW_SSK;
+  const contentHash = Util.hashToBase64(`${title}${content}`);
+  const signature = Util.sign(signatureKey, contentHash);
   this.apickli.setRequestBody(JSON.stringify({
     to,
     title: cypheredTitle,
     content: cypheredContent,
+    signature,
   }));
 });
 
-Then('resolved challenge should match a message', function () {
+Then('resolved challenge should match a message', async function () {
   const { resolved } = this.apickli.scenarioVariables;
   const {
     id,
@@ -34,6 +39,7 @@ Then('resolved challenge should match a message', function () {
     sentAt,
     title,
     content,
+    signature,
   } = resolved;
 
   assert.ok(id);
@@ -46,6 +52,25 @@ Then('resolved challenge should match a message', function () {
   let clearContent;
   if (content) {
     clearContent = Util.decrypt(pem, content);
+  }
+
+  if (signature) {
+    const username = from.substring(1);
+    let spkFile;
+    if (fs.existsSync(`./data/users/${username}/public.pem`)) {
+      const publicK = fs.readFileSync(`./data/users/${username}/public.pem`).toString();
+      const [_, sigKey] = publicK.split('\n----- SIGNATURE -----\n');
+      spkFile = sigKey;
+    } else {
+      await this.get(`/user/${username}`);
+      const { signature: sigKey } = JSON.parse(this.apickli.httpResponse.body);
+      spkFile = sigKey;
+    }
+
+    const contentHash = Util.hashToBase64(`${clearTitle}${clearContent}`);
+    const integrity = Util.verify(spkFile, contentHash, signature);
+
+    assert.ok(integrity);
   }
   this.apickli.storeValueInScenarioScope('resolved', { ...resolved, title: clearTitle, content: clearContent });
 });
@@ -95,10 +120,14 @@ Given(/^(.*) write a message as (.*)$/, async function (from, messageBody) {
 
   const cypheredTitle = Util.encrypt(targetEpkFile, title);
   const cypheredContent = Util.encrypt(targetEpkFile, content);
+
+  const contentHash = Util.hashToBase64(`${title}${content}`);
+  const signature = Util.sign(sskFile, contentHash);
   this.apickli.setRequestBody(JSON.stringify({
     to,
     title: cypheredTitle,
     content: cypheredContent,
+    signature,
   }));
 
   const {

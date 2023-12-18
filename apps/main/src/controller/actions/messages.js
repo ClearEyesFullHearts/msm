@@ -36,6 +36,7 @@ class Message {
       to,
       title,
       content,
+      signature,
     } = msg;
 
     if (user.lastActivity < 0) {
@@ -66,6 +67,7 @@ class Message {
       sentAt,
       title,
       content,
+      signature,
     };
     const fullChallenge = Encryption.hybrid(JSON.stringify(fullPlain), key);
 

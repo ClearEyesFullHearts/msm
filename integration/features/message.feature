@@ -96,7 +96,8 @@ Scenario: Message sent to an unknown user throws
   Given I am authenticated user mat
   And I set var ENCRYPTED_TITLE to a 513 characters long base64 string
   And I set var ENCRYPTED_CONTENT to a 513 characters long base64 string
-  And I set body to { "to": "unknownuser" , "title": "`ENCRYPTED_TITLE`" , "content": "`ENCRYPTED_CONTENT`" }
+  And I set var MSG_SIGNATURE to a 129 characters long base64 string
+  And I set body to { "to": "unknownuser" , "title": "`ENCRYPTED_TITLE`" , "content": "`ENCRYPTED_CONTENT`" , "signature": "`MSG_SIGNATURE`" }
   And I set signature header
   When I POST to /message
   Then response code should be 404

@@ -958,6 +958,7 @@ components:
         - to
         - title
         - content
+        - signature
       additionalProperties: false
       properties:
         to:
@@ -974,6 +975,11 @@ components:
           format: byte
           minLength: 684
           maxLength: 684
+        signature:
+          type: string
+          format: byte
+          minLength: 172
+          maxLength: 172
     Vault:
       type: object
       required:
