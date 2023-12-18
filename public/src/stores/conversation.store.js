@@ -95,6 +95,7 @@ export const useConversationStore = defineStore({
               }
             } else {
               title = 'Missing signing key';
+              content = `The sender of this message cannot be verified:\n${content}`;
             }
           } else {
             title = 'Unsigned message';

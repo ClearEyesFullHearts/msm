@@ -77,13 +77,14 @@ See [VAULT.md](https://github.com/ClearEyesFullHearts/msm/blob/main/VAULT.md)
 The client is supposed to send 3 pieces of information to send a message:
 - the target username in clear text
 - the title of the message encrypted
-- the content of the message encrypted
+- the text of the message encrypted
+- the signature of the clear content
   
 We add the sender identification information (the "From" part) to the message during our own encryption.  
 We cannot be sure that a joker wouldn't try to send anything in clear text to us though so we have some mechanism to be sure not to store any information we do not want to have.  
 First the format of the title and the content of the message is highly controlled. Since the public key of the target is directly used to encrypt those informations we know that the resulting data should be a base64 encoded string with exactly 684 characters, for both. (unfortunately or not it also limits the size of the content that can be sent to 446 bytes.)  
 Second every messages are separated as a header and a full object, each stored as a challenge, ensuring that everything is encrypted at least once.  
-The header contains only the sender information, the title of the message and the time it was sent and is used for display in the inbox. The full object adds the content of the message and once it has been requested by the user it triggers the deletion of the message after some time.  
+The header contains only the sender information, the title of the message and the time it was sent and is used for display in the inbox. The full object adds the content of the message and the signature so that you can verify the sender identity and the message integrity. Once it has been requested by the user it triggers the deletion of the message after some time.  
 
 ### Verification system
 What we want to verify is that the Public Keys users use to encrypt and send messages to each other are really each others' keys, so that whatever happen to the messages only the owner of the secret key will be able to open them.  
@@ -99,6 +100,11 @@ The problem is that these problems have been resolved for centuries now through 
 Hence the only use case for that technology is when you want to escape the power of the state or at least can't trust or rely on it, so mostly for criminal or political activities.  
 The crypto currency part of it is just stupid and only exists to scam and defraud people.  
 
+### Group chat
+When a user creates a group chat it creates a key that will be shared among all members. Each member, when added, receives a copy of that key encrypted with its own RSA public key.  
+Every group chat message is encrypted with a unique key derived from the group shared secret.  
+When an admin removes a user from a group it also revokes the group's shared secret, creates a new one and shares it again (encrypted) to all remaining members. It can lead to some lost messages though.  
+  
 ### Instant messaging
 The instant messaging capability is achieved thanks to a Web Socket server.  
 It uses the same authentication mechanism than the REST API (JWT + signature) to establish the connection and all messages are client-side encrypted. Obviously they are never recorded on the server side.  
