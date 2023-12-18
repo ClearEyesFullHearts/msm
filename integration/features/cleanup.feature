@@ -16,7 +16,7 @@ Scenario: Non validated account are cleaned up when they were missed
     # Then response code should be 400
     # And response body path $.code should be BAD_REQUEST_FORMAT
     Given I load up random public keys
-    And I set body to { "at": "`RANDOM_USER.17`", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`", "pass":"`PASS`", "kill":"`KILL`" }
+    And I set body to { "at": "`RANDOM_USER.17`", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`" }
     When I POST to /users
     Then response code should be 201
     And I record `RANDOM_USER.17`
@@ -53,7 +53,7 @@ Scenario: User that are inactive are frozen
     # Then response code should be 400
     # And response body path $.code should be BAD_REQUEST_FORMAT
     Given I load up random public keys
-    And I set body to { "at": "`RANDOM_USER.15`", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`", "pass":"`PASS`", "kill":"`KILL`" }
+    And I set body to { "at": "`RANDOM_USER.15`", "key":`EPK`, "signature":`SPK`, "hash":"`SHA`" }
     When I POST to /users
     Then response code should be 403
     And response body path $.code should be USER_EXISTS
