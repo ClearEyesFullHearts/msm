@@ -27,6 +27,7 @@ export const useAuthStore = defineStore({
     user: null,
     pem: null,
     signing: null,
+    verifying: null,
     publicHash: null,
     hasVault: false,
     countDownMsg: null,
@@ -105,17 +106,17 @@ export const useAuthStore = defineStore({
         // mylogger.logTime('a - setIdentityUp');
 
         const epk = await mycrypto.getPublicKey(this.pem);
-        const spk = await mycrypto.getSigningPublicKey(this.signing);
+        this.verifying = await mycrypto.getSigningPublicKey(this.signing);
         // mylogger.logTime('b - get public key');
 
-        this.publicHash = await mycrypto.hash(`${epk}\n${spk}`);
+        this.publicHash = await mycrypto.hash(`${epk}\n${this.verifying}`);
         // mylogger.logTime('c - get hash');
 
         const groupStore = useGroupStore();
         await groupStore.setGroupList(this.pem);
         // mylogger.logTime('d - setGroupList');
         const contactsStore = useContactsStore();
-        contactsStore.setContactList(this.pem, this.user.contacts)
+        contactsStore.setContactList(this.pem, this.verifying, this.user.contacts)
           .then(() => {
             contactsStore.updateMessages();
             if (!!window.Notification && window.Notification.permission === 'granted') {

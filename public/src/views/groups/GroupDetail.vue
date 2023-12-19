@@ -77,7 +77,7 @@ async function quit() {
   const group = await groupStore.quitGroup();
   if (group) {
     contactsStore.removeUser(group.id);
-    contactsStore.saveContactList(authStore.pem);
+    contactsStore.saveContactList(authStore.pem, authStore.signing);
     router.push('/conversations');
   }
 }
@@ -85,7 +85,7 @@ async function deleteGroup() {
   const group = await groupStore.deleteGroup();
   if (group) {
     contactsStore.removeUser(group.id);
-    contactsStore.saveContactList(authStore.pem);
+    contactsStore.saveContactList(authStore.pem, authStore.signing);
     router.push('/conversations');
   }
 }

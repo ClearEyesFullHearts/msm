@@ -149,7 +149,7 @@ export const useConnectionStore = defineStore({
         this.sendAck(from, requestId);
 
         const authStore = useAuthStore();
-        const { pem } = authStore;
+        const { pem, signing } = authStore;
         const contentBuff = await mycrypto.privateDecrypt(pem, content);
         const dec = new TextDecoder();
         const txt = dec.decode(contentBuff);
@@ -164,7 +164,7 @@ export const useConnectionStore = defineStore({
             content: conversationStore.decodeText(txt),
             sentAt: Date.now(),
           });
-          if (contactsStore.dirty) contactsStore.saveContactList(pem);
+          if (contactsStore.dirty) contactsStore.saveContactList(pem, signing);
         }
       }
     },

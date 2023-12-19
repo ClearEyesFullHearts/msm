@@ -24,7 +24,7 @@ async function onSubmit(values) {
     contactsStore.list.unshift(newGroup);
     contactsStore.dirty = true;
 
-    contactsStore.saveContactList(authStore.pem);
+    contactsStore.saveContactList(authStore.pem, authStore.signing);
     router.push(`/group/${newGroup.at}`);
   } catch (error) {
     alertStore.error(error);

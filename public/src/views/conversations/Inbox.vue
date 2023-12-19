@@ -26,16 +26,16 @@ onMounted(() => {
 async function addUser(user) {
   contactsStore.manualAdd(user)
     .then(() => {
-      contactsStore.saveContactList(authStore.pem);
+      contactsStore.saveContactList(authStore.pem, authStore.signing);
     });
 }
 function removeUser(user) {
   contactsStore.removeUser(user.id);
-  contactsStore.saveContactList(authStore.pem);
+  contactsStore.saveContactList(authStore.pem, authStore.signing);
 }
 function onVerify(contact) {
   contactsStore.verifyUser(contact.id);
-  contactsStore.saveContactList(authStore.pem);
+  contactsStore.saveContactList(authStore.pem, authStore.signing);
 }
 async function onUploadVerify() {
   verifyKeyInput.value.click();
@@ -45,7 +45,7 @@ async function onVerifyFilePicked(evt) {
   const security = await FileHelper.loadTextFromFile(files);
   contactsStore.fileAdd(JSON.parse(security))
     .then(() => {
-      contactsStore.saveContactList(authStore.pem);
+      contactsStore.saveContactList(authStore.pem, authStore.signing);
     });
 }
 function addGroup() {

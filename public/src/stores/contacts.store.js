@@ -3,7 +3,7 @@ import { reactive } from 'vue';
 import { defineStore } from 'pinia';
 import { fetchWrapper } from '@/helpers';
 import {
-  useAuthStore, useConversationStore, useToasterStore, useWorkerStore, useGroupStore,
+  useAlertStore, useAuthStore, useConversationStore, useToasterStore, useWorkerStore, useGroupStore,
 } from '@/stores';
 
 import CryptoHelper from '@/lib/cryptoHelper';
@@ -83,7 +83,7 @@ export const useContactsStore = defineStore({
       }
       return checking;
     },
-    async setContactList(pem, contacts) {
+    async setContactList(pem, signPK, contacts) {
       const groupStore = useGroupStore();
       this.list = [];
       if (!contacts) {
@@ -99,8 +99,16 @@ export const useContactsStore = defineStore({
         token,
       } = contacts;
 
-      const listStr = await mycrypto.resolve(pem, { token, passphrase, iv });
-      const myList = JSON.parse(listStr);
+      const dataStr = await mycrypto.resolve(pem, { token, passphrase, iv });
+      const { list: myList, signature } = JSON.parse(dataStr);
+      const listStr = JSON.stringify(myList);
+      const dataHash = await mycrypto.hash(listStr);
+      const result = await mycrypto.verify(signPK, dataHash, signature, true);
+
+      if (!result) {
+        const alertStore = useAlertStore();
+        alertStore.error('Contact list signature is wrong, it may be a sign of tampering');
+      }
 
       if (myList.length > 0) {
         const userAts = myList.reduce((acc, l) => {
@@ -146,7 +154,7 @@ export const useContactsStore = defineStore({
       const newGroups = groupStore.list.filter((g) => myList.findIndex((l) => l.id === g.at) < 0);
       this.list.unshift(...newGroups);
     },
-    async saveContactList(pem) {
+    async saveContactList(pem, signPem) {
       const saveList = this.list.map(({
         id,
         at,
@@ -165,7 +173,13 @@ export const useContactsStore = defineStore({
         group,
       }));
 
-      const listChallenge = await mycrypto.challenge(pem, JSON.stringify(saveList));
+      const data = JSON.stringify(saveList);
+      const dataHash = await mycrypto.hash(data);
+      const signature = await mycrypto.sign(signPem, dataHash, true);
+      const body = JSON.stringify({ list: saveList, signature });
+
+      const listChallenge = await mycrypto.challenge(pem, body);
+
       await fetchWrapper.put(`${baseUrl}/contacts`, listChallenge);
       this.dirty = false;
     },
@@ -383,7 +397,7 @@ export const useContactsStore = defineStore({
           workerStore.updateBadge(this.messageCount);
 
           if (this.dirty) {
-            return this.saveContactList(authStore.pem);
+            return this.saveContactList(authStore.pem, authStore.signing);
           }
           return true;
         })
