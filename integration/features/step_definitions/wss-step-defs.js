@@ -65,8 +65,6 @@ Given(/^(.*) disconnects$/, async function (name) {
 Given(/^I prepare fallback message (.*) for (.*)$/, function (txt, name) {
   const username = this.apickli.replaceVariables(name);
 
-  // const file = fs.readFileSync(`./data/users/${username}/public.pem`).toString();
-  // const [epkFile] = file.split('\n----- SIGNATURE -----\n');
   const {
     [`EPK.${username}`]: epkFile,
   } = this.apickli.scenarioVariables;
@@ -203,11 +201,15 @@ Then(/^(.*) decrypt content of message (.*) from route (.*)$/, function (name, i
   this.apickli.httpResponse.body = JSON.stringify({ from, requestId, content: body });
 });
 
-Then(/^(.*) last message action match (.*)$/, function (name, route) {
+Then(/^(.*) last message (.*) match (.*)$/, function (name, prop, expression) {
   const username = this.apickli.replaceVariables(name);
   const allMsg = this.apickli.scenarioVariables[`MSG.${username}`];
 
   const msg = JSON.parse(allMsg[allMsg.length - 1]);
+  const value = Util.getPathValue(msg, `$.${prop}`);
 
-  assert.strictEqual(msg.action, route);
+  const regex = new RegExp(expression);
+  const success = (regex.test(value));
+
+  assert.ok(success);
 });

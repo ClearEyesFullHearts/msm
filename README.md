@@ -74,7 +74,7 @@ We mitigate that risk by verifying the user signature for all actions on its acc
 See [VAULT.md](https://github.com/ClearEyesFullHearts/msm/blob/main/VAULT.md)
 
 ### Messages
-The client is supposed to send 3 pieces of information to send a message:
+The client is supposed to send 4 pieces of information to send a message:
 - the target username in clear text
 - the title of the message encrypted
 - the text of the message encrypted
